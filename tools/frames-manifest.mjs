@@ -25,6 +25,55 @@ export const CELLS = [
 
 export const MOVES = ['light', 'heavy', 'sweep', 'special'];
 
+// Geometric constraint beats pose adjectives for low stances: give the model
+// a composition rule it can verify, not anatomy words it can fudge.
+export const LOW =
+  'squatting EXTREMELY low with knees fully folded and hips at heel height — the entire figure occupies ONLY the BOTTOM HALF of the frame, nothing but empty green in the top half';
+export const LYING =
+  'lying completely FLAT on their back on the ground — the entire figure is a HORIZONTAL shape stretched along the BOTTOM QUARTER of the frame, nothing but empty green in the top three quarters';
+
+// ---- v2 sheet layout: six buttons × stand/crouch/air ----
+// stand moves get 3 cells (startup/active/recovery), crouch moves 2
+// (active/recovery), air moves 1. Cell names are looked up from meta.json by
+// the renderer, with fallbacks for legacy 23-cell sheets.
+export const V2_BUTTONS = ['lp', 'mp', 'hp', 'lk', 'mk', 'hk'];
+
+/** Ordered generation/pack job list for a character spec. */
+export function buildJobs(spec) {
+  const jobs = CELLS.map((c) => ({ id: c.id, pose: c.pose }));
+  if (spec.layout === 'v2') {
+    for (const b of V2_BUTTONS) {
+      for (const phase of ['startup', 'active', 'recovery']) {
+        jobs.push({ id: `${b}-${phase}`, pose: spec.moves6.stand[b][phase] });
+      }
+    }
+    for (const b of V2_BUTTONS) {
+      for (const phase of ['active', 'recovery']) {
+        jobs.push({ id: `c${b}-${phase}`, pose: `${spec.moves6.crouch[b][phase]}, ${LOW}` });
+      }
+    }
+    for (const b of V2_BUTTONS) {
+      jobs.push({ id: `j${b}`, pose: `airborne mid-jump, ${spec.moves6.air[b]}` });
+    }
+    for (const phase of ['startup', 'active', 'recovery']) {
+      jobs.push({ id: `special-${phase}`, pose: spec.moves6.special[phase] });
+    }
+  } else {
+    for (const move of MOVES) {
+      for (const phase of ['startup', 'active', 'recovery']) {
+        jobs.push({ id: `${move}-${phase}`, pose: spec.moves[move][phase] });
+      }
+    }
+  }
+  return jobs;
+}
+
+export function gridFor(spec) {
+  const n = buildJobs(spec).length;
+  const cols = spec.layout === 'v2' ? 8 : COLS;
+  return { cols, rows: Math.ceil(n / cols) };
+}
+
 export const CHARACTERS = {
   vincent: {
     canonical: 'assets/raw/style-tests/char-vincent-b-painted.png',
@@ -51,8 +100,11 @@ export const CHARACTERS = {
       },
     },
     extra: {
+      // NOTE: teal-on-green was unkeyable (chroma ate the whole rune) — this
+      // one lives on a magenta screen with its own key color.
       projectile:
-        'A single glowing teal arcane rune sigil energy ball projectile, spinning, painted cel-shaded anime style, small, centered, on solid flat chroma-key green background #00B140, no character, no text.',
+        'A single glowing blue-violet arcane rune sigil energy ball projectile with bright white core, spinning, painted cel-shaded anime style, small, centered, on solid flat magenta background #FF00FF, no character, no text, no watermark.',
+      projectileKey: '0xFF00FF',
     },
   },
   catherine: {
@@ -115,21 +167,73 @@ export const CHARACTERS = {
   },
   yulia: {
     canonical: 'assets/raw/style-tests/char-yulia-b-painted.png',
-    moves: {
-      light: {
-        startup: 'chambering a fast lead jab, shoulder rolled in',
-        active: 'lead jab fully extended at head height, sharp and fast',
-        recovery: 'retracting the jab back to guard',
+    layout: 'v2',
+    moves6: {
+      stand: {
+        lp: {
+          startup: 'chambering a fast lead jab, shoulder rolled in',
+          active: 'lead jab fully extended at head height, sharp and fast',
+          recovery: 'retracting the jab back to guard',
+        },
+        mp: {
+          startup: 'rotating the hips, winding up a straight right cross',
+          active: 'straight cross fully extended at chin height, shoulder driven through the punch',
+          recovery: 'pulling the cross back into a tight guard',
+        },
+        hp: {
+          startup: 'torso coiled winding up a big spinning backfist, red aura sparking at the fist',
+          active: 'spinning backfist connecting at head height, red aura streaking in an arc behind the fist',
+          recovery: 'finishing the spin, arm settling back into stance',
+        },
+        lk: {
+          startup: 'lead knee lifted, chambering a quick snap kick',
+          active: 'crisp snapping front kick at shin height',
+          recovery: 'foot returning to stance',
+        },
+        mk: {
+          startup: 'knee raised across the body, chambering a high roundhouse',
+          active: 'high roundhouse kick fully extended at chest height',
+          recovery: 'swinging the leg back down into stance',
+        },
+        hk: {
+          startup: 'lifting one long leg impossibly high overhead, flexible axe-kick chamber',
+          active: 'axe kick slamming down, heel at the bottom of its arc, red aura streaking behind the leg',
+          recovery: 'leg returning to the ground, settling back into stance',
+        },
       },
-      heavy: {
-        startup: 'lifting one long leg impossibly high overhead, flexible axe-kick chamber',
-        active: 'axe kick slamming down, heel at the bottom of its arc, red aura streaking behind the leg',
-        recovery: 'leg returning to the ground, settling back into stance',
+      crouch: {
+        lp: {
+          active: 'short straight jab snapped out at waist height from the squat',
+          recovery: 'jab arm retracted, still coiled in the squat',
+        },
+        mp: {
+          active: 'rising uppercut punched diagonally upward out of the squat',
+          recovery: 'uppercut arm returning down, weight sinking back into the squat',
+        },
+        hp: {
+          active: 'both palms thrust powerfully straight upward out of the squat, red aura flaring (anti-air)',
+          recovery: 'arms lowering from overhead, settling back into the squat',
+        },
+        lk: {
+          active: 'quick kick darting out at ankle height, leg low along the ground',
+          recovery: 'kicking leg pulled back under the body',
+        },
+        mk: {
+          active: 'long side kick fully extended at knee height, leg stretched along the ground',
+          recovery: 'extended leg sliding back beneath the body',
+        },
+        hk: {
+          active: 'low spinning slide sweep, both legs extended along the ground mid-rotation',
+          recovery: 'unwinding from the sweep spin, rising to one knee',
+        },
       },
-      sweep: {
-        startup: 'coiling into a low spin, palms on the ground, legs gathering',
-        active: 'low spinning slide sweep, both legs extended along the ground mid-rotation',
-        recovery: 'unwinding from the spin, rising to one knee',
+      air: {
+        lp: 'throwing a quick short downward-angled jab',
+        mp: 'straight punch driven at a 45-degree downward angle',
+        hp: 'double-fist overhead hammer blow swung downward, red aura trailing',
+        lk: 'sharp knee strike raised toward the opponent',
+        mk: 'side kick extended at a downward angle, body tilted',
+        hk: 'powerful flying roundhouse, long leg fully extended, red aura trail',
       },
       special: {
         startup: 'coiled low in a cossack-squat wind-up, fists clenched, red rage aura igniting',

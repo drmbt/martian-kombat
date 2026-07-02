@@ -18,14 +18,15 @@ import { characters } from '../data/characters';
 import { KeyboardSource } from '../input/keyboard';
 import { play } from './BootScene';
 
-// Cell layout is a contract with tools/frames-manifest.mjs — never reorder.
+// Cells are looked up BY NAME from each sheet's meta.json (written by
+// tools/pack-sheet.mjs), so v2 six-button sheets and legacy 23-cell sheets
+// coexist. Legacy sheets fall back: new buttons borrow the nearest old art.
 const CELL_W = 288;
 const CELL_H = 384;
-const CELL = {
-  idleA: 0, idleB: 1, walkA: 2, walkB: 3, crouch: 4, jump: 5,
-  block: 6, blockCrouch: 7, hit: 8, fall: 9, down: 10,
-} as const;
-const MOVE_BASE: Record<string, number> = { light: 11, heavy: 14, sweep: 17, special: 20 };
+const PHASE_NAME = ['startup', 'active', 'recovery'] as const;
+const LEGACY_BUTTON: Record<string, string> = {
+  lp: 'light', mp: 'light', hp: 'heavy', lk: 'light', mk: 'heavy', hk: 'heavy',
+};
 
 const BAR_W = 320;
 const BAR_X1 = 100;
@@ -61,6 +62,9 @@ export class FightScene extends Phaser.Scene {
   private sparks: Spark[] = [];
   private comboHits = 0;
   private comboTicks = 0;
+  private cellMaps: [Map<string, number>, Map<string, number>] = [new Map(), new Map()];
+  private paused = false;
+  private pauseOverlay!: Phaser.GameObjects.Container;
 
   constructor() {
     super('Fight');
@@ -89,6 +93,8 @@ export class FightScene extends Phaser.Scene {
 
     for (const slot of [0, 1] as const) {
       const id = this.chars[slot];
+      const meta = this.cache.json.get(`meta-${id}`) as { frames?: string[] } | undefined;
+      this.cellMaps[slot] = new Map((meta?.frames ?? []).map((n, i) => [n, i]));
       if (this.textures.exists(`sheet-${id}`)) {
         this.fighterSprites[slot] = this.add.sprite(0, 0, `sheet-${id}`, 0).setOrigin(0.5, 0.95).setDepth(2);
       }
@@ -124,12 +130,17 @@ export class FightScene extends Phaser.Scene {
       .setOrigin(1, 0)
       .setDepth(6);
     this.add
-      .text(STAGE_W / 2, STAGE_H - 14, 'P1: WASD+F/G/H   P2: ARROWS+K/L/;   R rematch   ENTER character select', {
+      .text(STAGE_W / 2, STAGE_H - 14, 'P1: WASD + RTY punches FGH kicks   P2: ARROWS + UIO punches JKL kicks   ESC move list', {
         ...font, fontSize: '12px', color: '#e8dcc8', stroke: '#000', strokeThickness: 3,
       })
       .setOrigin(0.5)
       .setDepth(6);
 
+    this.buildPauseOverlay();
+    this.input.keyboard!.on('keydown-ESC', () => {
+      this.paused = !this.paused;
+      this.pauseOverlay.setVisible(this.paused);
+    });
     this.input.keyboard!.on('keydown-F1', () => (this.debugBoxes = !this.debugBoxes));
     this.input.keyboard!.on('keydown-R', () => {
       if (this.state.phase === 'matchEnd') this.scene.restart({ p1: this.chars[0], p2: this.chars[1] });
@@ -142,6 +153,10 @@ export class FightScene extends Phaser.Scene {
   }
 
   update(_time: number, deltaMs: number): void {
+    if (this.paused) {
+      this.accumulator = 0;
+      return;
+    }
     // fixed timestep: rendering fps may vary, simulation never does
     this.accumulator += Math.min(deltaMs, 100);
     while (this.accumulator >= TICK_MS) {
@@ -210,7 +225,7 @@ export class FightScene extends Phaser.Scene {
         }
       }
       if (kind === 'blockstun' && was !== 'blockstun') play(this, 's-block', 0.6);
-      if (kind === 'attack' && was !== 'attack') {
+      if ((kind === 'attack' || kind === 'airAttack') && was !== kind) {
         play(this, 's-whoosh', 0.4);
         if (f.action.moveId === 'special') play(this, `v-${f.charId}-kiai`, 0.8);
       }
@@ -222,29 +237,53 @@ export class FightScene extends Phaser.Scene {
     if (this.comboTicks > 0 && --this.comboTicks === 0) this.comboHits = 0;
   }
 
-  /** engine action -> sheet cell (contract with tools/frames-manifest.mjs) */
-  private actionToCell(f: FighterState): number {
+  /** First cell name present in this fighter's sheet meta wins. */
+  private cellFor(slot: 0 | 1, candidates: string[]): number {
+    const map = this.cellMaps[slot];
+    for (const c of candidates) {
+      const idx = map.get(c);
+      if (idx !== undefined) return idx;
+    }
+    return 0;
+  }
+
+  /** Cell-name candidates for an attack, newest naming first, legacy last. */
+  private attackCells(moveId: string, phase: 0 | 1 | 2): string[] {
+    if (moveId === 'special') return [`special-${PHASE_NAME[phase]}`];
+    if (moveId.startsWith('j')) return [moveId, 'jump'];
+    if (moveId.startsWith('c')) {
+      // crouch normals have 2 cells on v2 sheets (active art covers startup)
+      const v2 = `${moveId}-${phase === 2 ? 'recovery' : 'active'}`;
+      return [v2, `sweep-${PHASE_NAME[phase]}`, 'crouch'];
+    }
+    return [`${moveId}-${PHASE_NAME[phase]}`, `${LEGACY_BUTTON[moveId]}-${PHASE_NAME[phase]}`];
+  }
+
+  /** engine action -> sheet cell index (names from tools/frames-manifest.mjs) */
+  private actionToCell(slot: 0 | 1, f: FighterState): number {
     const a = f.action;
     const t = this.state.tick;
     switch (a.kind) {
-      case 'idle': return (t >> 4) % 2 ? CELL.idleB : CELL.idleA;
+      case 'idle': return this.cellFor(slot, [(t >> 4) % 2 ? 'idle-b' : 'idle-a']);
       case 'walkF':
-      case 'walkB': return (t >> 3) % 2 ? CELL.walkB : CELL.walkA;
+      case 'walkB': return this.cellFor(slot, [(t >> 3) % 2 ? 'walk-b' : 'walk-a']);
       case 'crouch':
       case 'prejump':
-      case 'getup': return CELL.crouch;
-      case 'air': return CELL.jump;
-      case 'attack': {
+      case 'getup': return this.cellFor(slot, ['crouch']);
+      case 'air': return this.cellFor(slot, ['jump']);
+      case 'attack':
+      case 'airAttack': {
         const m = characters[f.charId].moves[a.moveId!];
         const phase = a.frame < m.startup ? 0 : a.frame < m.startup + m.active ? 1 : 2;
-        return MOVE_BASE[a.moveId!] + phase;
+        return this.cellFor(slot, this.attackCells(a.moveId!, phase as 0 | 1 | 2));
       }
-      case 'hitstun': return CELL.hit;
-      case 'blockstun': return a.guard === 'crouch' ? CELL.blockCrouch : CELL.block;
-      case 'airHit': return CELL.fall;
-      case 'knockdown': return CELL.down;
-      case 'ko': return f.y >= FLOOR_Y ? CELL.down : CELL.fall;
-      default: return CELL.idleA;
+      case 'hitstun': return this.cellFor(slot, ['hit']);
+      case 'blockstun':
+        return this.cellFor(slot, a.guard === 'crouch' ? ['block-crouch'] : ['block']);
+      case 'airHit': return this.cellFor(slot, ['fall']);
+      case 'knockdown': return this.cellFor(slot, ['down']);
+      case 'ko': return this.cellFor(slot, f.y >= FLOOR_Y ? ['down'] : ['fall']);
+      default: return 0;
     }
   }
 
@@ -271,7 +310,7 @@ export class FightScene extends Phaser.Scene {
         sprite.setDisplaySize((h * CELL_W) / CELL_H, h);
         sprite.setPosition(f.x, f.y + 6);
         sprite.setFlipX(f.facing === -1);
-        sprite.setFrame(this.actionToCell(f));
+        sprite.setFrame(this.actionToCell(slot, f));
         const k = f.action.kind;
         const mirrorTint = this.chars[0] === this.chars[1] && slot === 1 ? 0xffb0a0 : undefined;
         if (k === 'hitstun' || (k === 'airHit' && f.action.frame < 6)) sprite.setTintFill(0xffffff);
@@ -344,7 +383,7 @@ export class FightScene extends Phaser.Scene {
     g.fillStyle(color, 1).fillRoundedRect(body.l, f.y - h, body.r - body.l, h, 12);
     g.fillCircle(f.x + f.facing * 6, f.y - h - 20, 24);
     const a = f.action;
-    if (a.kind === 'attack') {
+    if (a.kind === 'attack' || a.kind === 'airAttack') {
       const m = def.moves[a.moveId!];
       if (m.hitbox && a.frame >= m.startup && a.frame < m.startup + m.active) {
         const hb = worldBox(f, m.hitbox);
@@ -358,13 +397,15 @@ export class FightScene extends Phaser.Scene {
     for (const slot of [0, 1] as const) {
       const f = this.state.fighters[slot];
       const def = characters[f.charId];
-      const hurt = f.action.kind === 'crouch' ? def.hurtCrouch : def.hurtStand;
-      const hr = worldBox(f, hurt);
+      const crouched =
+        f.action.kind === 'crouch' ||
+        (f.action.kind === 'attack' && f.action.moveId?.startsWith('c'));
+      const hr = worldBox(f, crouched ? def.hurtCrouch : def.hurtStand);
       g.lineStyle(1, 0x44ff88, 1).strokeRect(hr.l, hr.t, hr.r - hr.l, hr.b - hr.t);
       const br = worldBox(f, def.bodyBox);
       g.lineStyle(1, 0x4488ff, 1).strokeRect(br.l, br.t, br.r - br.l, br.b - br.t);
       const a = f.action;
-      if (a.kind === 'attack') {
+      if (a.kind === 'attack' || a.kind === 'airAttack') {
         const m = def.moves[a.moveId!];
         if (m.hitbox) {
           const phase = a.frame < m.startup ? 0xffff44 : a.frame < m.startup + m.active ? 0xff4444 : 0x999999;
@@ -419,5 +460,62 @@ export class FightScene extends Phaser.Scene {
       default:
         return '';
     }
+  }
+
+  // ---------- pause / move list ----------
+
+  private moveListText(slot: 0 | 1): string {
+    const def = characters[this.chars[slot]];
+    const m = def.moves;
+    const cell = (id: string) => {
+      const mv = m[id];
+      if (!mv) return '—'.padEnd(14);
+      const kd = mv.knockdown ? ' KD' : '';
+      return `${mv.damage}dmg ${mv.startup}f${kd}`.padEnd(14);
+    };
+    return [
+      def.name,
+      def.specialName ? `★ ${def.specialName}` : '',
+      '',
+      '        PUNCH         KICK',
+      ` L      ${cell('lp')}${cell('lk')}`,
+      ` M      ${cell('mp')}${cell('mk')}`,
+      ` H      ${cell('hp')}${cell('hk')}`,
+      '',
+      '↓+button   crouching versions',
+      '           (↓+kicks hit LOW: crouch-block them)',
+      'jump+button air versions',
+      '           (overheads: block them STANDING)',
+    ].join('\n');
+  }
+
+  private buildPauseOverlay(): void {
+    const font = { fontFamily: 'monospace', color: '#f5ead9' };
+    const panel = this.add
+      .rectangle(STAGE_W / 2, STAGE_H / 2, STAGE_W - 70, STAGE_H - 60, 0x0c0910, 0.94)
+      .setStrokeStyle(2, 0x594566);
+    const title = this.add
+      .text(STAGE_W / 2, 62, 'PAUSED — MOVE LIST', { ...font, fontSize: '26px', fontStyle: 'bold' })
+      .setOrigin(0.5);
+    const colL = this.add.text(80, 100, this.moveListText(0), { ...font, fontSize: '13px', lineSpacing: 5 });
+    const colR = this.add.text(STAGE_W / 2 + 40, 100, this.moveListText(1), { ...font, fontSize: '13px', lineSpacing: 5 });
+    const controls = this.add
+      .text(
+        STAGE_W / 2,
+        STAGE_H - 92,
+        'P1  WASD move · R/T/Y punches · F/G/H kicks        P2  ARROWS move · U/I/O punches · J/K/L kicks\n' +
+          'special: ↓ ↘ → + any punch      pads: X/Y/RB punches · A/B/RT kicks',
+        { ...font, fontSize: '13px', color: '#e8dcc8', align: 'center', lineSpacing: 6 },
+      )
+      .setOrigin(0.5);
+    const foot = this.add
+      .text(STAGE_W / 2, STAGE_H - 48, 'ESC resume · F1 hitbox debug (yellow startup / red active / grey recovery)', {
+        ...font, fontSize: '12px', color: '#9a8fa8',
+      })
+      .setOrigin(0.5);
+    this.pauseOverlay = this.add
+      .container(0, 0, [panel, title, colL, colR, controls, foot])
+      .setDepth(10)
+      .setVisible(false);
   }
 }

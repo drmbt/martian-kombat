@@ -90,16 +90,46 @@ function overlaps(a: Rect, b: Rect): boolean {
 
 // ---------- input helpers ----------
 
+export const BIT = {
+  left: 1, right: 2, up: 4, down: 8,
+  lp: 16, mp: 32, hp: 64, lk: 128, mk: 256, hk: 512,
+} as const;
+const PUNCH_BITS = BIT.lp | BIT.mp | BIT.hp;
+
 export function packInput(i: InputFrame): number {
   return (
-    (i.left ? 1 : 0) |
-    (i.right ? 2 : 0) |
-    (i.up ? 4 : 0) |
-    (i.down ? 8 : 0) |
-    (i.light ? 16 : 0) |
-    (i.heavy ? 32 : 0) |
-    (i.special ? 64 : 0)
+    (i.left ? BIT.left : 0) |
+    (i.right ? BIT.right : 0) |
+    (i.up ? BIT.up : 0) |
+    (i.down ? BIT.down : 0) |
+    (i.lp ? BIT.lp : 0) |
+    (i.mp ? BIT.mp : 0) |
+    (i.hp ? BIT.hp : 0) |
+    (i.lk ? BIT.lk : 0) |
+    (i.mk ? BIT.mk : 0) |
+    (i.hk ? BIT.hk : 0)
   );
+}
+
+/** True when any bit of `mask` is down this tick but was up last tick. */
+function freshPress(f: FighterState, mask: number): boolean {
+  const buf = f.inputBuffer;
+  const cur = (buf[buf.length - 1] ?? 0) & mask;
+  const prev = (buf[buf.length - 2] ?? 0) & mask;
+  return cur !== 0 && prev === 0;
+}
+
+/** Quarter-circle-forward (↓ ↘ →) inside the buffer window, facing-aware. */
+function hasQCF(f: FighterState): boolean {
+  const buf = f.inputBuffer;
+  const fwdBit = f.facing === 1 ? BIT.right : BIT.left;
+  let stage = 0; // saw ↓, then saw → (without ↓)
+  for (let i = Math.max(0, buf.length - 14); i < buf.length; i++) {
+    const b = buf[i];
+    if (stage === 0 && b & BIT.down) stage = 1;
+    else if (stage === 1 && b & fwdBit && !(b & BIT.down)) return true;
+  }
+  return false;
 }
 
 function holdingBack(f: FighterState, i: InputFrame): boolean {
@@ -155,14 +185,33 @@ function ownsLiveProjectile(s: GameState, slot: 0 | 1): boolean {
 
 // ---------- per-fighter update ----------
 
-function pickAttack(s: GameState, slot: 0 | 1, def: CharacterDef, i: InputFrame): string | null {
-  if (i.special && def.moves.special) {
+// heavier buttons win when several land on the same tick
+const BUTTON_PRIORITY = ['hp', 'hk', 'mp', 'mk', 'lp', 'lk'] as const;
+
+function pickAttack(
+  s: GameState,
+  slot: 0 | 1,
+  def: CharacterDef,
+  i: InputFrame,
+  stance: 'stand' | 'crouch',
+): string | null {
+  const f = s.fighters[slot];
+  // special: quarter-circle-forward + fresh punch press
+  if (def.moves.special && hasQCF(f) && freshPress(f, PUNCH_BITS)) {
     const m = def.moves.special;
     if (!(m.projectile && ownsLiveProjectile(s, slot))) return 'special';
   }
-  if (i.heavy && i.down && def.moves.sweep) return 'sweep';
-  if (i.heavy && def.moves.heavy) return 'heavy';
-  if (i.light && def.moves.light) return 'light';
+  const prefix = stance === 'crouch' ? 'c' : '';
+  for (const b of BUTTON_PRIORITY) {
+    if (i[b] && def.moves[prefix + b]) return prefix + b;
+  }
+  return null;
+}
+
+function pickAirAttack(f: FighterState, def: CharacterDef, i: InputFrame): string | null {
+  for (const b of BUTTON_PRIORITY) {
+    if (i[b] && def.moves[`j${b}`] && freshPress(f, BIT[b])) return `j${b}`;
+  }
   return null;
 }
 
@@ -224,6 +273,26 @@ function updateFighter(
         f.vx = 0;
         f.action =
           a.kind === 'airHit' ? { kind: 'knockdown', frame: 0 } : { kind: 'idle', frame: 0 };
+      } else if (a.kind === 'air') {
+        const id = pickAirAttack(f, def, input);
+        if (id) f.action = { kind: 'airAttack', frame: 0, moveId: id, hasHit: false };
+      }
+      break;
+    }
+    case 'airAttack': {
+      const m = def.moves[a.moveId!];
+      a.frame++;
+      f.vy += def.gravity;
+      f.y += f.vy;
+      f.x += f.vx;
+      if (f.y >= FLOOR_Y) {
+        // landing cancels the air normal
+        f.y = FLOOR_Y;
+        f.vy = 0;
+        f.vx = 0;
+        f.action = { kind: 'idle', frame: 0 };
+      } else if (a.frame >= m.startup + m.active + m.recovery) {
+        f.action = { kind: 'air', frame: 0 };
       }
       break;
     }
@@ -258,7 +327,8 @@ function updateFighter(
     }
     default: {
       // idle / walkF / walkB / crouch — fully actionable
-      const attack = pickAttack(s, slot, def, input);
+      const stance = input.down ? 'crouch' : 'stand';
+      const attack = pickAttack(s, slot, def, input, stance);
       if (attack) {
         f.action = { kind: 'attack', frame: 0, moveId: attack, hasHit: false };
       } else if (input.up) {
@@ -283,7 +353,7 @@ function updateFighter(
 
   // knockback slide + friction for anyone on the ground (walk speed above is
   // positional, vx is purely impulse from hits/blocks)
-  if (grounded(f) && a.kind !== 'air' && a.kind !== 'airHit') {
+  if (grounded(f) && a.kind !== 'air' && a.kind !== 'airHit' && a.kind !== 'airAttack') {
     f.x += f.vx;
     f.vx *= GROUND_FRICTION;
     if (Math.abs(f.vx) < 0.05) f.vx = 0;
@@ -293,17 +363,20 @@ function updateFighter(
 // ---------- combat resolution ----------
 
 function defenderHurtRect(f: FighterState, def: CharacterDef): Rect {
-  const box = f.action.kind === 'crouch' ? def.hurtCrouch : def.hurtStand;
-  return worldBox(f, box);
+  const a = f.action;
+  const crouched = a.kind === 'crouch' || (a.kind === 'attack' && a.moveId?.startsWith('c'));
+  return worldBox(f, crouched ? def.hurtCrouch : def.hurtStand);
 }
 
-function isBlocking(f: FighterState, i: InputFrame, height: 'mid' | 'low'): boolean {
+function isBlocking(f: FighterState, i: InputFrame, height: 'mid' | 'low' | 'high'): boolean {
   if (!grounded(f)) return false;
   const k = f.action.kind;
   const guardReady =
     k === 'idle' || k === 'walkF' || k === 'walkB' || k === 'crouch' || k === 'blockstun';
   if (!guardReady || !holdingBack(f, i)) return false;
-  if (height === 'low' && !(i.down || k === 'crouch')) return false; // lows need crouch-block
+  const crouchGuard = i.down || k === 'crouch';
+  if (height === 'low' && !crouchGuard) return false; // lows need crouch-block
+  if (height === 'high' && crouchGuard) return false; // overheads beat crouch-block
   return true;
 }
 
@@ -312,11 +385,14 @@ interface HitPayload {
   hitstun: number;
   blockstun: number;
   knockback: number;
-  height: 'mid' | 'low';
+  height: 'mid' | 'low' | 'high';
   knockdown: boolean;
   /** damage dealt through block (heavies/specials); can never KO */
   chip: number;
 }
+
+/** lights are chipless; everything meatier shaves 10% through block */
+const CHIPLESS = new Set(['lp', 'lk', 'clp', 'clk', 'jlp', 'jlk']);
 
 /** Apply a connected hit or block. attackerFacing pushes the defender. */
 function applyHit(
@@ -362,7 +438,7 @@ function resolveAttacks(s: GameState, defs: Defs, inputs: [InputFrame, InputFram
   for (const slot of [0, 1] as const) {
     const f = s.fighters[slot];
     const a = f.action;
-    if (a.kind !== 'attack' || a.hasHit) continue;
+    if ((a.kind !== 'attack' && a.kind !== 'airAttack') || a.hasHit) continue;
     const m = defs[f.charId].moves[a.moveId!];
     if (!m.hitbox) continue;
     if (a.frame < m.startup || a.frame >= m.startup + m.active) continue;
@@ -380,8 +456,7 @@ function resolveAttacks(s: GameState, defs: Defs, inputs: [InputFrame, InputFram
         knockback: m.knockback,
         height: m.height,
         knockdown: !!m.knockdown,
-        // lights are chipless; everything meatier shaves 10% through block
-        chip: a.moveId === 'light' ? 0 : Math.floor(m.damage * 0.1),
+        chip: CHIPLESS.has(a.moveId!) ? 0 : Math.floor(m.damage * 0.1),
       }, inputs[defSlot]);
     }
   }

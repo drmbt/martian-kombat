@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readdirSync, writeFileSync, existsSync, rmSync } from 'node:fs';
 import { ROOT } from './lib.mjs';
-import { CELL_W, CELL_H, COLS, ROWS, CHARACTERS } from './frames-manifest.mjs';
+import { CELL_W, CELL_H, CHARACTERS, buildJobs, gridFor } from './frames-manifest.mjs';
 
 // chromakey (YUV) at low similarity, NO despill: despill bleaches the whole
 // sprite (green bandanas, dark hair), and 0.2+ similarity eats wardrobe greens
@@ -26,11 +26,14 @@ function pack(charId) {
   mkdirSync(tmp, { recursive: true });
   mkdirSync(outDir, { recursive: true });
 
+  const spec = CHARACTERS[charId];
+  const { cols: COLS, rows: ROWS } = gridFor(spec);
   const frames = readdirSync(inDir)
     .filter((f) => /^\d\d-.*\.png$/.test(f))
     .sort();
-  if (frames.length !== COLS * ROWS - 1 && frames.length !== COLS * ROWS) {
-    console.warn(`[${charId}] expected ${COLS * ROWS - 1} frames, found ${frames.length}`);
+  const expected = buildJobs(spec).length;
+  if (frames.length !== expected) {
+    console.warn(`[${charId}] expected ${expected} frames, found ${frames.length}`);
   }
 
   frames.forEach((f, i) => {
@@ -65,7 +68,8 @@ function pack(charId) {
 
   const proj = join(inDir, 'projectile.png');
   if (existsSync(proj)) {
-    ff(['-i', proj, '-vf', `${KEY},scale=96:96`, '-frames:v', '1', join(outDir, 'projectile.png')]);
+    const projKey = CHARACTERS[charId]?.extra?.projectileKey ?? '0x00B140';
+    ff(['-i', proj, '-vf', `chromakey=${projKey}:0.15:0.06,scale=96:96`, '-frames:v', '1', join(outDir, 'projectile.png')]);
   }
 
   rmSync(tmp, { recursive: true });

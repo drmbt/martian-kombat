@@ -25,19 +25,29 @@ function closeRange(s: GameState): void {
   s.fighters[1].x = 520;
 }
 
+/** P1 quarter-circle-forward + punch (P1 faces right in every test setup) */
+function fireSpecial(s: GameState, p2: InputFrame = inp()): void {
+  step(s, [inp({ down: true }), p2], characters);
+  step(s, [inp({ down: true }), p2], characters);
+  step(s, [inp({ right: true }), p2], characters);
+  step(s, [inp({ right: true, lp: true }), p2], characters);
+}
+
 describe('determinism', () => {
-  // scripted input as a pure function of tick — walk, jab, jump, sweep, fireball
+  // scripted input as a pure function of tick — includes stray QCF shapes
   const script = (t: number): [InputFrame, InputFrame] => [
     inp({
       right: t % 90 < 45,
-      light: t % 37 === 0,
+      down: t % 88 < 8,
+      lp: t % 37 === 0,
+      hk: t % 61 === 0,
       up: t % 173 === 0,
-      special: t % 101 === 0,
     }),
     inp({
       left: t % 70 < 30,
       down: t % 50 < 10,
-      heavy: t % 43 === 0,
+      hp: t % 43 === 0,
+      mk: t % 29 === 0,
     }),
   ];
 
@@ -59,17 +69,24 @@ describe('determinism', () => {
 });
 
 describe('strikes', () => {
-  it('jab connects at close range and causes hitstun + damage', () => {
+  it('jab (LP) connects at close range and causes damage', () => {
     const s = fresh();
     closeRange(s);
-    step(s, [inp({ light: true }), inp()], characters);
+    step(s, [inp({ lp: true }), inp()], characters);
     run(s, 10);
-    expect(s.fighters[1].health).toBe(characters[P2].health - characters[P1].moves.light.damage);
+    expect(s.fighters[1].health).toBe(characters[P2].health - characters[P1].moves.lp.damage);
+  });
+
+  it('heavier button wins when two are pressed together', () => {
+    const s = fresh();
+    closeRange(s);
+    step(s, [inp({ lp: true, hp: true }), inp()], characters);
+    expect(s.fighters[0].action.moveId).toBe('hp');
   });
 
   it('jab whiffs at full-screen range', () => {
     const s = fresh();
-    step(s, [inp({ light: true }), inp()], characters);
+    step(s, [inp({ lp: true }), inp()], characters);
     run(s, 10);
     expect(s.fighters[1].health).toBe(characters[P2].health);
   });
@@ -78,18 +95,18 @@ describe('strikes', () => {
     const s = fresh();
     closeRange(s);
     const guard = inp({ right: true }); // P2 faces left, so back = right
-    step(s, [inp({ light: true }), guard], characters);
+    step(s, [inp({ lp: true }), guard], characters);
     run(s, 10, inp(), guard);
     expect(s.fighters[1].health).toBe(characters[P2].health);
-    // blockstun was applied at some point — fighter ended up pushed back
     expect(s.fighters[1].x).toBeGreaterThan(520);
   });
 
-  it('sweep hits a standing blocker (lows must be crouch-blocked)', () => {
+  it('crouching HK sweep hits a standing blocker (lows must be crouch-blocked)', () => {
     const s = fresh();
     closeRange(s);
     const guard = inp({ right: true });
-    step(s, [inp({ down: true, heavy: true }), guard], characters);
+    step(s, [inp({ down: true, hk: true }), guard], characters);
+    expect(s.fighters[0].action.moveId).toBe('chk');
     run(s, 15, inp(), guard);
     expect(s.fighters[1].health).toBeLessThan(characters[P2].health);
   });
@@ -98,32 +115,78 @@ describe('strikes', () => {
     const s = fresh();
     closeRange(s);
     const guard = inp({ right: true, down: true });
-    step(s, [inp({ down: true, heavy: true }), guard], characters);
+    step(s, [inp({ down: true, hk: true }), guard], characters);
     run(s, 15, inp(), guard);
-    const chip = Math.floor(characters[P1].moves.sweep.damage * 0.1);
+    const chip = Math.floor(characters[P1].moves.chk.damage * 0.1);
     expect(s.fighters[1].health).toBe(characters[P2].health - chip);
   });
 
   it('sweep knocks down: defender becomes invulnerable while down', () => {
     const s = fresh();
     closeRange(s);
-    step(s, [inp({ down: true, heavy: true }), inp()], characters);
+    step(s, [inp({ down: true, hk: true }), inp()], characters);
     run(s, 30);
     expect(['airHit', 'knockdown']).toContain(s.fighters[1].action.kind);
     const hpAfterKnockdown = s.fighters[1].health;
-    // try to jab them while down — must not connect
-    step(s, [inp({ light: true }), inp()], characters);
+    step(s, [inp({ lp: true }), inp()], characters);
     run(s, 10);
     expect(s.fighters[1].health).toBe(hpAfterKnockdown);
   });
+
+  it('crouching LP comes out while holding down and connects', () => {
+    const s = fresh();
+    closeRange(s);
+    step(s, [inp({ down: true, lp: true }), inp()], characters);
+    expect(s.fighters[0].action.moveId).toBe('clp');
+    run(s, 10);
+    expect(s.fighters[1].health).toBe(characters[P2].health - characters[P1].moves.clp.damage);
+  });
 });
 
-describe('projectiles', () => {
-  it('fireball travels and hits at range', () => {
+describe('air attacks', () => {
+  function jumpAndHk(guard: InputFrame): GameState {
+    const s = fresh();
+    // defender near the corner so holding back can't walk them out of range
+    s.fighters[0].x = 800;
+    s.fighters[1].x = 880;
+    step(s, [inp({ up: true }), guard], characters);
+    run(s, 25, inp(), guard); // past the apex, falling toward the defender
+    step(s, [inp({ hk: true }), guard], characters); // fresh press mid-air
+    expect(s.fighters[0].action.kind).toBe('airAttack');
+    expect(s.fighters[0].action.moveId).toBe('jhk');
+    run(s, 15, inp(), guard);
+    return s;
+  }
+
+  it('air HK is an overhead: crouch-block does NOT stop it', () => {
+    const s = jumpAndHk(inp({ right: true, down: true }));
+    expect(s.fighters[1].health).toBeLessThan(characters[P2].health - 20);
+  });
+
+  it('air HK is blocked standing (chip only)', () => {
+    const s = jumpAndHk(inp({ right: true }));
+    const chip = Math.floor(characters[P1].moves.jhk.damage * 0.1);
+    expect(s.fighters[1].health).toBe(characters[P2].health - chip);
+  });
+
+  it('landing cancels an air attack back to idle', () => {
+    const s = fresh();
+    step(s, [inp({ up: true }), inp()], characters);
+    run(s, 13);
+    step(s, [inp({ lk: true }), inp()], characters);
+    run(s, 120);
+    expect(s.fighters[0].y).toBe(FLOOR_Y);
+    expect(['idle', 'walkF', 'walkB']).toContain(s.fighters[0].action.kind);
+  });
+});
+
+describe('specials (quarter-circle-forward + punch)', () => {
+  it('QCF+P fires the projectile', () => {
     const s = fresh();
     s.fighters[0].x = 300;
     s.fighters[1].x = 700;
-    step(s, [inp({ special: true }), inp()], characters);
+    fireSpecial(s);
+    expect(s.fighters[0].action.moveId).toBe('special');
     run(s, 90);
     expect(s.fighters[1].health).toBe(
       characters[P2].health - characters[P1].moves.special.projectile!.damage,
@@ -131,12 +194,20 @@ describe('projectiles', () => {
     expect(s.projectiles).toHaveLength(0);
   });
 
+  it('punch without the motion does NOT fire the special', () => {
+    const s = fresh();
+    s.fighters[0].x = 300;
+    s.fighters[1].x = 700;
+    step(s, [inp({ lp: true }), inp()], characters);
+    expect(s.fighters[0].action.moveId).toBe('lp');
+    expect(s.projectiles).toHaveLength(0);
+  });
+
   it('only one projectile alive per owner (fireball rule)', () => {
     const s = fresh();
     s.fighters[0].x = 100;
     s.fighters[1].x = 860;
-    const mash = inp({ special: true });
-    run(s, 40, mash, inp());
+    for (let cycle = 0; cycle < 10; cycle++) fireSpecial(s);
     expect(s.projectiles.filter((p) => p.owner === 0).length).toBeLessThanOrEqual(1);
   });
 });
@@ -146,38 +217,38 @@ describe('sprint 4 mechanics', () => {
     const s = fresh();
     closeRange(s);
     const guard = inp({ right: true });
-    step(s, [inp({ heavy: true }), guard], characters);
+    step(s, [inp({ hp: true }), guard], characters);
     run(s, 20, inp(), guard);
-    const expectedChip = Math.floor(characters[P1].moves.heavy.damage * 0.1);
+    const expectedChip = Math.floor(characters[P1].moves.hp.damage * 0.1);
     expect(s.fighters[1].health).toBe(characters[P2].health - expectedChip);
 
-    run(s, 40, inp(), guard); // let the first heavy fully recover
-    closeRange(s); // the blocker walked backward out of range meanwhile
+    run(s, 40, inp(), guard);
+    closeRange(s);
     s.fighters[1].health = 2;
-    step(s, [inp({ heavy: true }), guard], characters);
+    step(s, [inp({ hp: true }), guard], characters);
     run(s, 20, inp(), guard);
     expect(s.fighters[1].health).toBe(1); // floored, no chip KO
     expect(s.phase).toBe('fight');
   });
 
   it("catherine's Jazzper hits low: standing block loses, crouch block holds", () => {
-    const stand = initialState('catherine', P2, characters);
-    stand.phase = 'fight';
-    stand.fighters[0].x = 300;
-    stand.fighters[1].x = 620;
+    const setup = () => {
+      const s = initialState('catherine', P2, characters);
+      s.phase = 'fight';
+      s.fighters[0].x = 300;
+      s.fighters[1].x = 620;
+      return s;
+    };
+    const stand = setup();
     const standGuard = inp({ right: true });
-    step(stand, [inp({ special: true }), standGuard], characters);
+    fireSpecial(stand, standGuard);
     for (let i = 0; i < 80; i++) step(stand, [inp(), standGuard], characters);
     expect(stand.fighters[1].health).toBeLessThan(characters[P2].health - 10);
 
-    const crouch = initialState('catherine', P2, characters);
-    crouch.phase = 'fight';
-    crouch.fighters[0].x = 300;
-    crouch.fighters[1].x = 620;
+    const crouch = setup();
     const crouchGuard = inp({ right: true, down: true });
-    step(crouch, [inp({ special: true }), crouchGuard], characters);
+    fireSpecial(crouch, crouchGuard);
     for (let i = 0; i < 80; i++) step(crouch, [inp(), crouchGuard], characters);
-    // crouch-blocked: only chip damage
     expect(crouch.fighters[1].health).toBe(
       characters[P2].health - Math.floor(characters.catherine.moves.special.projectile!.damage * 0.1),
     );
@@ -188,15 +259,15 @@ describe('sprint 4 mechanics', () => {
     s.phase = 'fight';
     s.fighters[0].x = 150;
     s.fighters[1].x = 800;
-    step(s, [inp({ special: true }), inp()], characters);
+    fireSpecial(s);
     let maxProjectiles = 0;
     for (let i = 0; i < 60; i++) {
       step(s, [inp(), inp()], characters);
       maxProjectiles = Math.max(maxProjectiles, s.projectiles.length);
     }
-    expect(maxProjectiles).toBe(1); // it existed...
-    expect(s.projectiles).toHaveLength(0); // ...and died mid-screen
-    expect(s.fighters[1].health).toBe(characters[P2].health); // never reached
+    expect(maxProjectiles).toBe(1);
+    expect(s.projectiles).toHaveLength(0);
+    expect(s.fighters[1].health).toBe(characters[P2].health);
   });
 });
 
@@ -205,7 +276,7 @@ describe('round flow', () => {
     const s = fresh();
     closeRange(s);
     s.fighters[1].health = 10;
-    step(s, [inp({ light: true }), inp()], characters);
+    step(s, [inp({ lp: true }), inp()], characters);
     run(s, 10);
     expect(s.phase).toBe('roundEnd');
     expect(s.wins[0]).toBe(1);
@@ -217,8 +288,8 @@ describe('round flow', () => {
     const s = fresh();
     closeRange(s);
     s.fighters[1].health = 10;
-    step(s, [inp({ light: true }), inp()], characters);
-    run(s, 200); // roundEnd (150 ticks) + partway into the next intro (90)
+    step(s, [inp({ lp: true }), inp()], characters);
+    run(s, 200);
     expect(s.phase).toBe('intro');
     expect(s.roundNumber).toBe(2);
     expect(s.fighters[1].health).toBe(characters[P2].health);
@@ -230,7 +301,7 @@ describe('round flow', () => {
     s.wins = [1, 0];
     closeRange(s);
     s.fighters[1].health = 10;
-    step(s, [inp({ light: true }), inp()], characters);
+    step(s, [inp({ lp: true }), inp()], characters);
     run(s, 400);
     expect(s.phase).toBe('matchEnd');
     expect(s.wins[0]).toBe(2);
@@ -275,7 +346,6 @@ describe('movement', () => {
     run(walk, 30, inp({ right: true }), inp());
 
     const dash = fresh();
-    // tap, release, tap-and-hold
     run(dash, 2, inp({ right: true }), inp());
     run(dash, 2, inp(), inp());
     run(dash, 26, inp({ right: true }), inp());

@@ -12,14 +12,21 @@ export interface Box {
   h: number;
 }
 
+/** Six-button layout: light/medium/heavy punch + light/medium/heavy kick. */
+export const BUTTONS = ['lp', 'mp', 'hp', 'lk', 'mk', 'hk'] as const;
+export type Button = (typeof BUTTONS)[number];
+
 export interface InputFrame {
   left: boolean;
   right: boolean;
   up: boolean;
   down: boolean;
-  light: boolean;
-  heavy: boolean;
-  special: boolean;
+  lp: boolean;
+  mp: boolean;
+  hp: boolean;
+  lk: boolean;
+  mk: boolean;
+  hk: boolean;
 }
 
 export const EMPTY_INPUT: InputFrame = {
@@ -27,12 +34,17 @@ export const EMPTY_INPUT: InputFrame = {
   right: false,
   up: false,
   down: false,
-  light: false,
-  heavy: false,
-  special: false,
+  lp: false,
+  mp: false,
+  hp: false,
+  lk: false,
+  mk: false,
+  hk: false,
 };
 
-export type MoveHeight = 'mid' | 'low';
+/** 'high' = overhead (air attacks): must be blocked STANDING.
+ *  'low' = must be blocked CROUCHING. 'mid' = blocked either way. */
+export type MoveHeight = 'mid' | 'low' | 'high';
 
 export interface ProjectileDef {
   vx: number;
@@ -71,6 +83,8 @@ export interface CharacterDef {
   name: string;
   /** render hint only — engine never reads it */
   color: string;
+  /** shown on the pause/move-list screen */
+  specialName?: string;
   health: number;
   walkSpeed: number;
   backSpeed: number;
@@ -80,6 +94,8 @@ export interface CharacterDef {
   bodyBox: Box;
   hurtStand: Box;
   hurtCrouch: Box;
+  /** flat move dict: 'lp'..'hk' standing, 'clp'..'chk' crouching,
+   *  'jlp'..'jhk' air, plus 'special' (fired with quarter-circle-fwd+punch) */
   moves: Record<string, MoveDef>;
 }
 
@@ -91,6 +107,7 @@ export type ActionKind =
   | 'prejump'
   | 'air'
   | 'attack'
+  | 'airAttack'
   | 'hitstun'
   | 'blockstun'
   | 'airHit'

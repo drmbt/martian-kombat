@@ -33,6 +33,7 @@ export class BootScene extends Phaser.Scene {
         frameWidth: CELL_W,
         frameHeight: CELL_H,
       });
+      this.load.json(`meta-${id}`, `assets/sprites/${id}/meta.json`);
       this.load.image(`proj-${id}`, `assets/sprites/${id}/projectile.png`);
       this.load.image(`portrait-${id}`, `assets/portraits/${id}.png`);
     }

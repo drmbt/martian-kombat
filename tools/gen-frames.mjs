@@ -7,7 +7,7 @@
 import { join } from 'node:path';
 import { readFileSync, existsSync } from 'node:fs';
 import { ROOT, loadEnv, geminiImage, saveAsset, skip } from './lib.mjs';
-import { CELLS, MOVES, CHARACTERS } from './frames-manifest.mjs';
+import { CHARACTERS, buildJobs } from './frames-manifest.mjs';
 
 const env = loadEnv();
 const force = process.argv.includes('--force');
@@ -27,13 +27,8 @@ async function genChar(charId) {
   if (!existsSync(canonical)) throw new Error(`missing canonical sheet ${canonical}`);
   const outDir = join(ROOT, 'assets/raw/frames', charId);
 
-  // shared cells 0-10, then move phases 11-22 in manifest order
-  const jobs = CELLS.map((c) => ({ id: c.id, pose: c.pose }));
-  for (const move of MOVES) {
-    for (const phase of ['startup', 'active', 'recovery']) {
-      jobs.push({ id: `${move}-${phase}`, pose: spec.moves[move][phase] });
-    }
-  }
+  // manifest order (legacy 23-cell or v2 six-button layout)
+  const jobs = buildJobs(spec);
 
   for (let i = 0; i < jobs.length; i++) {
     const { id, pose } = jobs[i];

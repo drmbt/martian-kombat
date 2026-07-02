@@ -61,11 +61,14 @@ The pipeline turns a photo of a real person into a game-ready sprite sheet:
    prompt (`tools/style.md`, approved 2026-07-01: painted cel) → stylized
    full-body fighter on chroma green. Approved canon lives in
    `assets/raw/style-tests/char-*-b-painted.png`.
-2. **Pose keyframes** — `tools/gen-frames.mjs` (`gemini-3.1-flash-image`):
-   canonical sheet + per-move pose prompts from `tools/frames-manifest.mjs` →
-   23 keyframes per character (idle/walk/jump/block/hit/down + 3 phases per
-   move, matching the engine's startup/active/recovery). The cell order is a
-   CONTRACT with `FightScene.actionToCell` — append, never reorder.
+2. **Pose keyframes** — `tools/gen-frames.mjs` (`gemini-3-pro-image`, never
+   flash): canonical sheet + pose prompts from `tools/frames-manifest.mjs`.
+   Legacy chars: 23 cells; v2 chars (`layout:'v2'`, `moves6`): 50 cells for
+   the six-button layout. Cells are resolved BY NAME from meta.json in
+   `FightScene` (with legacy fallbacks) — add cells freely, never rename.
+   GOTCHA: for crouch/lying poses the model copies the standing canonical's
+   height regardless of prompt text — pass a second low-pose reference image
+   and instruct "copy the body height of the second reference".
    (Veo motion clips + still sampling is the post-MVP smoothness upgrade.)
 3. **Key + pack** — `tools/pack-sheet.mjs`: ffmpeg colorkey/despill, scale to
    288×384 cells, tile into `public/assets/sprites/<name>/sheet.png` + meta.json.

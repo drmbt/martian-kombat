@@ -99,6 +99,25 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
       made the repo public; gh-pages branch, force-push dist per handoff
       recipe) — **MVP SHIPPED 2026-07-02**
 
+### Sprint 5 — Art QA + six-button combat (user-directed)
+- [x] Yulia frame QA: 8 flagged frames regenerated. Crouch poses REQUIRE the
+      low-reference anchor trick (see handoff gotchas) — prompt text alone
+      never beat the standing canonical reference
+- [x] Six-button layout: LP/MP/HP/LK/MK/HK × stand/crouch/air (19 moves/char),
+      QCF+P specials via the input buffer, overheads ('high') beat crouch
+      block, air normals cancel on landing — 27 engine tests green
+- [x] Yulia rebuilt on the v2 50-cell sheet (8×7 grid); other 3 fighters play
+      six-button through legacy-art fallbacks (renderer resolves cell names
+      from meta.json, newest naming first)
+- [x] Vincent's invisible projectile fixed: teal-on-green was unkeyable —
+      regenerated blue-violet on a MAGENTA screen w/ per-projectile key color
+- [x] Face icons for all 8 from `assets/character-inspo/face/` via
+      `gen-icons.mjs` (Vincent + sunglasses; Kirby face + sprite outfit)
+- [x] ESC pause overlay: both fighters' move lists (dmg/startup/KD), controls,
+      special names; F1 hitbox debug confirmed working and documented in-game
+- [ ] Remaining roster frame QA (user does per-character passes like Yulia's)
+- [ ] v2 sheets + native art for Vincent, Catherine, Kirby
+
 ### Icebox (post-MVP, do not start)
 Remaining roster (Flo, Freeman, Gene, Marzipan) · new characters · single-player
 arcade mode + CPU opponent · super meter/EX moves · stage variety + interactables ·
@@ -110,6 +129,13 @@ rollback netplay (engine determinism already paid for) · training mode · fatal
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-02 · engine+assets+ui · Sprint 5: six-button combat + art QA** —
+  six buttons × stand/crouch/air with QCF+P specials (motion inputs live);
+  Yulia on v2 50-cell sheet incl. her 8 QA'd regens; magenta-screen projectile
+  fix; face-shot icons ×8; ESC move-list pause; meta.json name-driven cell
+  lookup with legacy fallback. 27 tests green; verified in browser (rune
+  visible mid-flight, pause overlay, debug boxes, crouch art). *(Claude)*
 
 - **2026-07-01 · roster+engine · Sprint 4 (all but deploy/playtest)** —
   Catherine & Kirby playable (frames gen'd via pipeline, 2 Catherine pose
@@ -166,7 +192,21 @@ rollback netplay (engine determinism already paid for) · training mode · fatal
 
 *(overwrite this section each handoff — what's mid-flight, gotchas, next action)*
 
-**State:** MVP SHIPPED — live at https://drmbt.github.io/martian-kombat/
+**State:** Sprint 5 shipped (six-button combat). **NEW GOTCHAS:** (1) crouch /
+low poses: the model copies the standing canonical's height no matter what the
+text says — pass a SECOND reference image with the desired low pose (e.g. the
+character's own chk-active frame) and say "copy the body height of the second
+reference"; scratchpad one-off did this for Yulia's 04/07 (bake into
+gen-frames when doing the next character). (2) Projectile art must not sit
+near the key color — Vincent's teal rune died on green screen; use
+`extra.projectileKey` + a magenta screen for cool-colored projectiles.
+(3) Renderer resolves cells BY NAME from meta.json with fallback chains
+(FightScene.attackCells) — new sheets can add cells freely; never rename old
+ones. Legacy-art fallback means new buttons LOOK samey on vincent/catherine/
+kirby until their v2 sheets are generated (frames-manifest `layout:'v2'` +
+`moves6` is the pattern — Yulia is the template).
+
+MVP live at https://drmbt.github.io/martian-kombat/
 (repo now public per user; NOTE: `assets/character-inspo/` photos of real
 people are therefore public too — flag to the user if that ever needs
 revisiting). Only unchecked box: human playtest. Redeploy recipe: `npm run
