@@ -8,7 +8,10 @@ import {
   FighterState,
   GameState,
   InputFrame,
+  Motion,
+  MoveDef,
   Projectile,
+  Strength,
 } from './types';
 import {
   FATALITY_RANGE,
@@ -124,27 +127,78 @@ function freshPress(f: FighterState, mask: number): boolean {
   return cur !== 0 && prev === 0;
 }
 
-/** Two-stage motion matcher over the input buffer, facing-aware.
- *  qcf: ↓ then → · qcb: ↓ then ← · bf: ← then → */
-function motionDone(f: FighterState, motion: 'qcf' | 'qcb' | 'bf'): boolean {
+/** Staged motion matcher over the input buffer, facing-aware.
+ *  Each stage is {need, not?}: a buffered frame advances the stage when it has
+ *  every `need` bit and no `not` bit. The (simplified) 360 instead requires
+ *  down + back + forward all seen inside the window ("270 rule" — pressing up
+ *  would start a jump, exactly like real players buffer SPDs). */
+function motionDone(f: FighterState, motion: Motion): boolean {
   const buf = f.inputBuffer;
+  const from = Math.max(0, buf.length - 18);
   const fwd = f.facing === 1 ? BIT.right : BIT.left;
   const back = f.facing === 1 ? BIT.left : BIT.right;
-  const [first, then, thenNot] =
-    motion === 'qcf' ? [BIT.down, fwd, BIT.down]
-    : motion === 'qcb' ? [BIT.down, back, BIT.down]
-    : [back, fwd, back];
+
+  if (motion === '360') {
+    let seen = 0;
+    for (let i = from; i < buf.length; i++) {
+      if (buf[i] & BIT.down) seen |= 1;
+      if (buf[i] & back) seen |= 2;
+      if (buf[i] & fwd) seen |= 4;
+    }
+    return seen === 7;
+  }
+
+  const STAGES: Record<Exclude<Motion, '360'>, { need: number; not?: number }[]> = {
+    qcf: [{ need: BIT.down }, { need: fwd, not: BIT.down }],
+    qcb: [{ need: BIT.down }, { need: back, not: BIT.down }],
+    bf: [{ need: back }, { need: fwd, not: back }],
+    dp: [{ need: fwd, not: BIT.down }, { need: BIT.down }, { need: fwd }],
+    hcb: [{ need: fwd }, { need: BIT.down }, { need: back }],
+    hcf: [{ need: back }, { need: BIT.down }, { need: fwd }],
+  };
+  const stages = STAGES[motion];
   let stage = 0;
-  for (let i = Math.max(0, buf.length - 18); i < buf.length; i++) {
-    const b = buf[i];
-    if (stage === 0 && b & first) stage = 1;
-    else if (stage === 1 && b & then && !(b & thenNot)) return true;
+  for (let i = from; i < buf.length; i++) {
+    const s = stages[stage];
+    if ((buf[i] & s.need) === s.need && !(buf[i] & (s.not ?? 0))) {
+      stage++;
+      if (stage === stages.length) return true;
+    }
   }
   return false;
 }
 
-function buttonBits(button: 'punch' | 'kick'): number {
-  return button === 'punch' ? PUNCH_BITS : KICK_BITS;
+const STRENGTH_BITS: Record<'punch' | 'kick', [number, number, number]> = {
+  punch: [BIT.lp, BIT.mp, BIT.hp],
+  kick: [BIT.lk, BIT.mk, BIT.hk],
+};
+
+/** Which strength of the class was FRESHLY pressed this tick (h wins ties). */
+function freshStrength(f: FighterState, cls: 'punch' | 'kick'): Strength | null {
+  const [l, m, h] = STRENGTH_BITS[cls];
+  if (freshPress(f, h)) return 'h';
+  if (freshPress(f, m)) return 'm';
+  if (freshPress(f, l)) return 'l';
+  return null;
+}
+
+/** 2+ fresh presses of the class on the same tick (practical 3P/3K). */
+function comboPress(f: FighterState, cls: 'punch' | 'kick'): boolean {
+  const fresh = STRENGTH_BITS[cls].filter((bit) => freshPress(f, bit)).length;
+  return fresh >= 2;
+}
+
+/** Effective move for an action: base numbers + the strength's variant patch.
+ *  Exported — the renderer uses the same timings for animation phases. */
+export function resolveMove(base: MoveDef, strength?: Strength): MoveDef {
+  const patch = strength ? base.variants?.[strength] : undefined;
+  if (!patch) return base;
+  const { projectile: projPatch, ...rest } = patch;
+  const merged: MoveDef = { ...base, ...rest, variants: base.variants };
+  if (projPatch && base.projectile) {
+    merged.projectile = { ...base.projectile, ...projPatch };
+  }
+  return merged;
 }
 
 function holdingBack(f: FighterState, i: InputFrame): boolean {
@@ -185,7 +239,9 @@ function canAct(f: FighterState): boolean {
 }
 
 function isInvulnerable(f: FighterState): boolean {
-  const k = f.action.kind;
+  const a = f.action;
+  if (a.kind === 'attack' && (a.invuln ?? 0) > a.frame) return true; // reversal i-frames
+  const k = a.kind;
   return k === 'knockdown' || k === 'getup' || k === 'ko' || k === 'dazed';
 }
 
@@ -203,25 +259,34 @@ function ownsLiveProjectile(s: GameState, slot: 0 | 1): boolean {
 // heavier buttons win when several land on the same tick
 const BUTTON_PRIORITY = ['hp', 'hk', 'mp', 'mk', 'lp', 'lk'] as const;
 
+interface AttackPick {
+  id: string;
+  strength?: Strength;
+}
+
 function pickAttack(
   s: GameState,
   slot: 0 | 1,
   def: CharacterDef,
   i: InputFrame,
   stance: 'stand' | 'crouch',
-): string | null {
+): AttackPick | null {
   const f = s.fighters[slot];
-  // named specials: each declares its own motion + button class
+  // named specials: each declares its own motion + button class; the button's
+  // strength (L/M/H) selects the variant
   for (const [id, m] of Object.entries(def.moves)) {
     if (!m.input) continue;
-    if (motionDone(f, m.input.motion) && freshPress(f, buttonBits(m.input.button))) {
-      if (m.projectile && ownsLiveProjectile(s, slot)) continue;
-      return id;
-    }
+    const cls = m.input.button === 'PPP' ? 'punch' : m.input.button === 'KKK' ? 'kick' : m.input.button;
+    const combo = m.input.button === 'PPP' || m.input.button === 'KKK';
+    const strength = combo ? (comboPress(f, cls) ? 'm' : null) : freshStrength(f, cls);
+    if (!strength) continue;
+    if (m.input.motion && !motionDone(f, m.input.motion)) continue;
+    if (m.projectile && ownsLiveProjectile(s, slot)) continue;
+    return { id, strength };
   }
   const prefix = stance === 'crouch' ? 'c' : '';
   for (const b of BUTTON_PRIORITY) {
-    if (i[b] && def.moves[prefix + b]) return prefix + b;
+    if (i[b] && def.moves[prefix + b]) return { id: prefix + b };
   }
   return null;
 }
@@ -244,28 +309,38 @@ function updateFighter(
 
   switch (a.kind) {
     case 'attack': {
-      const m = def.moves[a.moveId!];
+      const m = resolveMove(def.moves[a.moveId!], a.strength);
       a.frame++;
       if (m.forwardVel && a.frame <= m.startup + m.active) {
         f.x += f.facing * m.forwardVel;
       }
-      // projectile spawns on the first active frame
+      // vaults launch airborne at the first active frame (Staff Vault)
+      if (m.vault && a.frame === m.startup) {
+        f.vy = -m.vault.vy;
+        f.vx = f.facing * m.vault.vx;
+        f.y -= 1;
+        f.action = { kind: 'air', frame: 0 };
+        break;
+      }
+      // projectiles spawn on the first active frame (fans spawn several)
       if (m.projectile && a.frame === m.startup) {
         const p = m.projectile;
-        s.projectiles.push({
-          owner: slot,
-          moveId: a.moveId!,
-          x: f.x + f.facing * p.spawnX,
-          y: f.y + p.spawnY,
-          vx: f.facing * p.vx,
-          box: p.box,
-          damage: p.damage,
-          hitstun: p.hitstun,
-          blockstun: p.blockstun,
-          knockback: p.knockback,
-          height: p.height ?? 'mid',
-          ttl: p.ttl ?? -1,
-        });
+        for (let n = 0; n < (p.count ?? 1); n++) {
+          s.projectiles.push({
+            owner: slot,
+            moveId: a.moveId!,
+            x: f.x + f.facing * p.spawnX,
+            y: f.y + p.spawnY + n * (p.spreadY ?? 0),
+            vx: f.facing * (p.vx + n * (p.spreadVX ?? 0)),
+            box: p.box,
+            damage: p.damage,
+            hitstun: p.hitstun,
+            blockstun: p.blockstun,
+            knockback: p.knockback,
+            height: p.height ?? 'mid',
+            ttl: p.ttl ?? -1,
+          });
+        }
       }
       if (a.frame >= m.startup + m.active + m.recovery) {
         f.action = { kind: 'idle', frame: 0 };
@@ -353,7 +428,15 @@ function updateFighter(
       const stance = input.down ? 'crouch' : 'stand';
       const attack = pickAttack(s, slot, def, input, stance);
       if (attack) {
-        f.action = { kind: 'attack', frame: 0, moveId: attack, hasHit: false };
+        const resolved = resolveMove(def.moves[attack.id], attack.strength);
+        f.action = {
+          kind: 'attack',
+          frame: 0,
+          moveId: attack.id,
+          strength: attack.strength,
+          hasHit: false,
+          invuln: resolved.invuln ?? 0,
+        };
       } else if (input.up) {
         f.action = { kind: 'prejump', frame: 0 };
       } else if (input.down) {
@@ -412,6 +495,8 @@ interface HitPayload {
   knockdown: boolean;
   /** damage dealt through block (heavies/specials); can never KO */
   chip: number;
+  /** command grabs ignore blocking entirely */
+  unblockable?: boolean;
 }
 
 /** lights are chipless; everything meatier shaves 10% through block */
@@ -428,7 +513,7 @@ function applyHit(
   const d = s.fighters[defSlot];
   const atkSlot = defSlot === 0 ? 1 : 0;
 
-  if (isBlocking(d, defInput, hit.height)) {
+  if (!hit.unblockable && isBlocking(d, defInput, hit.height)) {
     const guard = d.action.kind === 'crouch' || defInput.down ? 'crouch' : 'stand';
     d.action = { kind: 'blockstun', frame: hit.blockstun, guard };
     d.vx = attackerFacing * hit.knockback * 0.8;
@@ -462,14 +547,33 @@ function resolveAttacks(s: GameState, defs: Defs, inputs: [InputFrame, InputFram
     const f = s.fighters[slot];
     const a = f.action;
     if ((a.kind !== 'attack' && a.kind !== 'airAttack') || a.hasHit) continue;
-    const m = defs[f.charId].moves[a.moveId!];
-    if (!m.hitbox) continue;
+    const m = resolveMove(defs[f.charId].moves[a.moveId!], a.strength);
     if (a.frame < m.startup || a.frame >= m.startup + m.active) continue;
 
     const defSlot = slot === 0 ? 1 : 0;
     const d = s.fighters[defSlot];
     if (isInvulnerable(d)) continue;
 
+    // command grabs: unblockable, range-based, grounded targets only
+    if (m.grab) {
+      if (grounded(d) && Math.abs(f.x - d.x) <= m.grab.range) {
+        a.hasHit = true;
+        applyHit(s, defSlot, f.facing, {
+          damage: m.damage,
+          hitstun: m.hitstun,
+          blockstun: m.blockstun,
+          knockback: m.knockback,
+          height: m.height,
+          knockdown: true,
+          chip: 0,
+          unblockable: true,
+        }, inputs[defSlot]);
+        if (m.grabRecoil) f.vx = -f.facing * m.grabRecoil; // 86'd bounce-away
+      }
+      continue;
+    }
+
+    if (!m.hitbox) continue;
     if (overlaps(worldBox(f, m.hitbox), defenderHurtRect(d, defs[d.charId]))) {
       a.hasHit = true;
       applyHit(s, defSlot, f.facing, {
@@ -516,6 +620,18 @@ function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputF
     const d = s.fighters[defSlot];
     if (isInvulnerable(d)) continue;
     const pr = { l: p.x + p.box.x, t: p.y + p.box.y, r: p.x + p.box.x + p.box.w, b: p.y + p.box.y + p.box.h };
+    // reflectors bounce it back at the sender; lariats phase through it
+    const da = d.action;
+    if (da.kind === 'attack') {
+      const dm = resolveMove(defs[d.charId].moves[da.moveId!], da.strength);
+      const inWindow = da.frame < dm.startup + dm.active;
+      if (dm.reflect && inWindow && overlaps(pr, defenderHurtRect(d, defs[d.charId]))) {
+        p.owner = defSlot;
+        p.vx = -p.vx;
+        continue;
+      }
+      if (dm.projImmune && inWindow) continue;
+    }
     if (overlaps(pr, defenderHurtRect(d, defs[d.charId]))) {
       applyHit(s, defSlot, (p.vx > 0 ? 1 : -1) as 1 | -1, {
         damage: p.damage,
@@ -638,10 +754,17 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
     }
 
     const fat = winnerDef.fatality;
+    const fatCls =
+      fat?.input.button === 'PPP' ? 'punch' : fat?.input.button === 'KKK' ? 'kick' : fat?.input.button;
+    const fatPressed =
+      fat &&
+      (fat.input.button === 'PPP' || fat.input.button === 'KKK'
+        ? comboPress(winner, fatCls as 'punch' | 'kick')
+        : freshStrength(winner, fatCls as 'punch' | 'kick') !== null);
     if (
       fat &&
-      motionDone(winner, fat.input.motion) &&
-      freshPress(winner, buttonBits(fat.input.button)) &&
+      fatPressed &&
+      (!fat.input.motion || motionDone(winner, fat.input.motion)) &&
       Math.abs(winner.x - s.fighters[loser].x) <= (fat.range ?? FATALITY_RANGE)
     ) {
       s.phase = 'fatality';

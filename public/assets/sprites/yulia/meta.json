@@ -2,7 +2,7 @@
   "cellW": 288,
   "cellH": 384,
   "cols": 8,
-  "rows": 7,
+  "rows": 8,
   "frames": [
     "idle-a",
     "idle-b",
@@ -56,6 +56,12 @@
     "cossack-spiral-recovery",
     "backbend-guillotine-startup",
     "backbend-guillotine-active",
-    "backbend-guillotine-recovery"
+    "backbend-guillotine-recovery",
+    "volga-piledriver-startup",
+    "volga-piledriver-active",
+    "volga-piledriver-recovery",
+    "braid-lariat-startup",
+    "braid-lariat-active",
+    "braid-lariat-recovery"
   ]
 }

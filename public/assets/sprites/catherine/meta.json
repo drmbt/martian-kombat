@@ -2,7 +2,7 @@
   "cellW": 288,
   "cellH": 384,
   "cols": 8,
-  "rows": 7,
+  "rows": 8,
   "frames": [
     "idle-a",
     "idle-b",
@@ -56,6 +56,12 @@
     "mise-en-place-recovery",
     "order-up-startup",
     "order-up-active",
-    "order-up-recovery"
+    "order-up-recovery",
+    "staff-vault-startup",
+    "staff-vault-active",
+    "staff-vault-recovery",
+    "eighty-sixed-startup",
+    "eighty-sixed-active",
+    "eighty-sixed-recovery"
   ]
 }

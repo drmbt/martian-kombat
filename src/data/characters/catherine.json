@@ -220,7 +220,8 @@
         "h": 36
       },
       "height": "low",
-      "knockdown": true
+      "knockdown": true,
+      "forwardVel": 6
     },
     "jlp": {
       "startup": 5,
@@ -346,7 +347,26 @@
         "damage": 65,
         "hitstun": 16,
         "blockstun": 11,
-        "knockback": 7
+        "knockback": 7,
+        "count": 2,
+        "spreadVX": 1.5,
+        "spreadY": -26
+      },
+      "variants": {
+        "l": {
+          "startup": 9,
+          "projectile": {
+            "count": 1,
+            "vx": 13
+          }
+        },
+        "h": {
+          "startup": 13,
+          "projectile": {
+            "count": 3,
+            "vx": 9
+          }
+        }
       }
     },
     "order-up": {
@@ -378,8 +398,98 @@
         "hitstun": 20,
         "blockstun": 14,
         "knockback": 7,
-        "height": "low"
+        "height": "low",
+        "ttl": 56
+      },
+      "variants": {
+        "l": {
+          "projectile": {
+            "ttl": 28
+          }
+        },
+        "h": {
+          "projectile": {
+            "ttl": -1
+          }
+        }
+      }
+    },
+    "staff-vault": {
+      "name": "Staff Vault",
+      "input": {
+        "motion": "dp",
+        "button": "kick"
+      },
+      "startup": 6,
+      "active": 2,
+      "recovery": 8,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "vault": {
+        "vx": 7,
+        "vy": 15
+      },
+      "variants": {
+        "l": {
+          "vault": {
+            "vx": 1,
+            "vy": 14
+          }
+        },
+        "h": {
+          "vault": {
+            "vx": 11,
+            "vy": 16
+          }
+        }
+      }
+    },
+    "eighty-sixed": {
+      "name": "86'd",
+      "input": {
+        "motion": "hcb",
+        "button": "kick"
+      },
+      "startup": 8,
+      "active": 4,
+      "recovery": 26,
+      "damage": 120,
+      "hitstun": 26,
+      "blockstun": 0,
+      "knockback": 10,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 130
+      },
+      "grabRecoil": 12,
+      "variants": {
+        "l": {
+          "damage": 105,
+          "startup": 7
+        },
+        "h": {
+          "damage": 135,
+          "startup": 10,
+          "grab": {
+            "range": 150
+          }
+        }
       }
     }
+  },
+  "fatality": {
+    "id": "dinner-service",
+    "name": "Dinner Service",
+    "input": {
+      "motion": "qcb",
+      "button": "punch"
+    },
+    "panels": 4
   }
 }

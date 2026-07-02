@@ -162,6 +162,28 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
       texture per special — characters can own any number of projectiles
 - [x] 35 tests green; both specials verified live in-browser
 
+### Sprint 8 — SFII Turbo move system (docs/MOVES.md, user-directed)
+- [x] `docs/MOVES.md` is now the living spec with implementation checkboxes
+- [x] L/M/H button variants (`variants` patch per special; strength captured
+      from the triggering button) — Cossack Spiral travel/damage axis exact
+- [x] New motions: dp (→↓↘), hcb/hcf, simplified 360 (↓+←+→ "270 rule"),
+      3P/3K (2+ class buttons together); staged buffer matcher generalized
+- [x] Reversal i-frames (`invuln`), command grabs (`grab`, unblockable,
+      + `grabRecoil`), projectile reflect (`reflect`), projectile immunity
+      (`projImmune`), vault mobility (`vault`), multi-projectile fans
+      (`count`/`spreadVX`/`spreadY`)
+- [x] Vincent: Rising Glyph (dp+P, i-frames) + Redirect (qcb+P reflector);
+      Cloud Hands moved to qcb+K per the doc; Blue Screen fatality
+- [x] Yulia: Volga Piledriver (360+P grab) + Braid Lariat (3P, projectile
+      immune); ENOUGH. deferred (rage meter)
+- [x] Catherine: Staff Vault (dp+K) + 86'd (hcb+K grab w/ bounce-away);
+      knife-count variants; Jazzper distance variants; crouch-HK slide;
+      Dinner Service fatality
+- [x] 41 tests green (variants, dp i-frames vs meaty, unblockable grab vs
+      block, reflect, knife counts, vault airborne)
+- [ ] Deferred: rage meter + ENOUGH., armored/vault dashes, backdash
+      i-frames, charge + mash motions (first users: Freeman, Flo, Kirby)
+
 ### Icebox (post-MVP, do not start)
 Remaining roster (Flo, Freeman, Gene, Marzipan) · new characters · single-player
 arcade mode + CPU opponent · super meter/EX moves · stage variety + interactables ·
@@ -243,7 +265,7 @@ rollback netplay (engine determinism already paid for) · training mode · fatal
 
 *(overwrite this section each handoff — what's mid-flight, gotchas, next action)*
 
-**State:** Sprint 7 shipped. **DEPLOY RECIPE CHANGED:** just push to main —
+**State:** Sprint 8 shipped — docs/MOVES.md is the living move spec (checkboxes = implementation state); edit it and re-run the buildout. Three QA-ready characters: vincent, yulia, catherine. **DEPLOY RECIPE CHANGED:** just push to main —
 the `deploy` workflow builds and publishes (do NOT force-push gh-pages
 anymore; that pipeline is retired and was the wedge source). If a deploy run
 fails with `deployment_queued` timeouts, check for a phantom via

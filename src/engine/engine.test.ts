@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EMPTY_INPUT, FLOOR_Y, GameState, InputFrame, ROUND_TICKS, initialState, step } from './index';
+import { EMPTY_INPUT, FLOOR_Y, GameState, InputFrame, ROUND_TICKS, initialState, resolveMove, step } from './index';
 import { characters } from '../data/characters';
 
 const P1 = 'vincent';
@@ -194,14 +194,135 @@ describe('named specials with per-move motions', () => {
     expect(s.projectiles).toHaveLength(0);
   });
 
-  it("QCB+P triggers vincent's Cloud Hands (second special)", () => {
+  it("QCB+K triggers vincent's Cloud Hands; QCB+P his Redirect", () => {
     const s = fresh();
     closeRange(s);
     step(s, [inp({ down: true }), inp()], characters);
     step(s, [inp({ down: true }), inp()], characters);
     step(s, [inp({ left: true }), inp()], characters); // P1 faces right: back = left
-    step(s, [inp({ left: true, mp: true }), inp()], characters);
+    step(s, [inp({ left: true, mk: true }), inp()], characters);
     expect(s.fighters[0].action.moveId).toBe('cloud-hands');
+
+    const s2 = fresh();
+    closeRange(s2);
+    step(s2, [inp({ down: true }), inp()], characters);
+    step(s2, [inp({ down: true }), inp()], characters);
+    step(s2, [inp({ left: true }), inp()], characters);
+    step(s2, [inp({ left: true, mp: true }), inp()], characters);
+    expect(s2.fighters[0].action.moveId).toBe('redirect');
+  });
+
+  it('L and H Cossack Spiral trade travel for damage (SFII variants)', () => {
+    const runSpiral = (btn: 'lk' | 'hk') => {
+      const s = fresh();
+      s.fighters[0].x = 800; // park P1 away; watch P2's spiral
+      s.fighters[1].x = 400;
+      const e = inp();
+      // P2 (at 400) faces RIGHT toward P1 (parked at 800): back = left, fwd = right
+      step(s, [e, inp({ left: true })], characters);
+      step(s, [e, inp({ left: true })], characters);
+      step(s, [e, inp({ right: true })], characters);
+      step(s, [e, inp({ right: true, [btn]: true })], characters);
+      expect(s.fighters[1].action.moveId).toBe('cossack-spiral');
+      const m = resolveMove(characters[P2].moves['cossack-spiral'], s.fighters[1].action.strength);
+      const x0 = s.fighters[1].x;
+      run(s, 40);
+      return { travel: s.fighters[1].x - x0, damage: m.damage };
+    };
+    const light = runSpiral('lk');
+    const heavy = runSpiral('hk');
+    expect(light.travel).toBeGreaterThan(heavy.travel + 50);
+    expect(heavy.damage).toBeGreaterThan(light.damage);
+  });
+
+  it('dp+P fires Rising Glyph and its i-frames beat a meaty jab', () => {
+    const s = fresh();
+    closeRange(s);
+    // P2 starts a jab that will be active while P1 reverses
+    step(s, [inp(), inp({ lp: true })], characters);
+    // P1: dp = forward, down, forward+punch
+    step(s, [inp({ right: true }), inp()], characters);
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ right: true, down: true, hp: true }), inp()], characters);
+    expect(s.fighters[0].action.moveId).toBe('rising-glyph');
+    run(s, 6);
+    expect(s.fighters[0].health).toBe(characters[P1].health); // i-frames held
+  });
+
+  it('360+P Volga Piledriver grabs even a blocking opponent', () => {
+    const s = fresh();
+    s.fighters[0].x = 500;
+    s.fighters[1].x = 580;
+    const guard = inp({ left: true }); // P1 blocks (back = left... P1 faces right, so back is left)
+    // P2 faces left: 360 simplified = down + back(right) + fwd(left) seen
+    step(s, [guard, inp({ down: true })], characters);
+    step(s, [guard, inp({ right: true })], characters);
+    step(s, [guard, inp({ left: true })], characters);
+    step(s, [guard, inp({ mp: true })], characters);
+    expect(s.fighters[1].action.moveId).toBe('volga-piledriver');
+    run(s, 12, guard, inp());
+    expect(s.fighters[0].health).toBeLessThan(characters[P1].health - 100); // unblockable
+  });
+
+  it("Redirect reflects a projectile back at its owner", () => {
+    const s = fresh();
+    s.fighters[0].x = 300;
+    s.fighters[1].x = 700;
+    // P2 (yulia) has no projectile; use catherine vs vincent instead
+    const s2 = initialState('catherine', 'vincent', characters);
+    s2.phase = 'fight';
+    s2.fighters[0].x = 300;
+    s2.fighters[1].x = 700;
+    // catherine throws H knives (3, full speed toward vincent)
+    step(s2, [inp({ down: true }), inp()], characters);
+    step(s2, [inp({ down: true }), inp()], characters);
+    step(s2, [inp({ right: true }), inp()], characters);
+    step(s2, [inp({ right: true, hp: true }), inp()], characters);
+    for (let i = 0; i < 16; i++) step(s2, [inp(), inp()], characters); // ride out H startup
+    expect(s2.projectiles.length).toBe(3);
+    // vincent holds Redirect (H = long stance) as they arrive; qcb for P2 = down then back(right)
+    for (let i = 0; i < 8; i++) step(s2, [inp(), inp()], characters);
+    step(s2, [inp(), inp({ down: true })], characters);
+    step(s2, [inp(), inp({ down: true })], characters);
+    step(s2, [inp(), inp({ right: true })], characters);
+    step(s2, [inp(), inp({ right: true, hp: true })], characters);
+    expect(s2.fighters[1].action.moveId).toBe('redirect');
+    let reflected = false;
+    for (let i = 0; i < 60; i++) {
+      step(s2, [inp(), inp()], characters);
+      if (s2.projectiles.some((p) => p.owner === 1)) reflected = true;
+    }
+    expect(reflected).toBe(true);
+  });
+
+  it('Mise en Place knife count follows the button: L=1, H=3', () => {
+    const throwKnives = (btn: 'lp' | 'hp') => {
+      const s = initialState('catherine', P2, characters);
+      s.phase = 'fight';
+      s.fighters[0].x = 200;
+      s.fighters[1].x = 860;
+      step(s, [inp({ down: true }), inp()], characters);
+      step(s, [inp({ down: true }), inp()], characters);
+      step(s, [inp({ right: true }), inp()], characters);
+      step(s, [inp({ right: true, [btn]: true }), inp()], characters);
+      run(s, 15);
+      return s.projectiles.length;
+    };
+    expect(throwKnives('lp')).toBe(1);
+    expect(throwKnives('hp')).toBe(3);
+  });
+
+  it('Staff Vault launches Catherine airborne', () => {
+    const s = initialState('catherine', P2, characters);
+    s.phase = 'fight';
+    // dp+K: forward, down, forward+kick
+    step(s, [inp({ right: true }), inp()], characters);
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ right: true, down: true, mk: true }), inp()], characters);
+    expect(s.fighters[0].action.moveId).toBe('staff-vault');
+    run(s, 10);
+    expect(s.fighters[0].y).toBeLessThan(FLOOR_Y);
+    expect(s.fighters[0].action.kind).toBe('air');
   });
 
   it("back-forward + K triggers yulia's Cossack Spiral", () => {
@@ -291,8 +412,9 @@ describe('fatality flow', () => {
     expect(s.fatality).toBeNull();
   });
 
-  it('vincent (no fatality defined) KOs straight to the normal round end', () => {
-    const s = fresh();
+  it('kirby (no fatality defined) KOs straight to the normal round end', () => {
+    const s = initialState('kirby', P2, characters);
+    s.phase = 'fight';
     s.wins = [1, 0];
     closeRange(s);
     s.fighters[1].health = 10;
@@ -334,7 +456,7 @@ describe('sprint 4 mechanics', () => {
       step(s, [inp({ down: true }), guard], characters);
       step(s, [inp({ down: true }), guard], characters);
       step(s, [inp({ left: true }), guard], characters);
-      step(s, [inp({ left: true, lp: true }), guard], characters);
+      step(s, [inp({ left: true, hp: true }), guard], characters);
       expect(s.fighters[0].action.moveId).toBe('order-up');
     };
     const stand = setup();
@@ -413,7 +535,7 @@ describe('round flow', () => {
     closeRange(s);
     s.fighters[1].health = 10;
     step(s, [inp({ lp: true }), inp()], characters);
-    run(s, 400);
+    run(s, 620); // finisher window (360) + collapse roundEnd (150) + margin
     expect(s.phase).toBe('matchEnd');
     expect(s.wins[0]).toBe(2);
   });

@@ -12,6 +12,7 @@ import {
   TICK_MS,
   FighterState,
   initialState,
+  resolveMove,
   step,
   worldBox,
 } from '../engine';
@@ -298,7 +299,7 @@ export class FightScene extends Phaser.Scene {
       case 'air': return this.cellFor(slot, ['jump']);
       case 'attack':
       case 'airAttack': {
-        const m = characters[f.charId].moves[a.moveId!];
+        const m = resolveMove(characters[f.charId].moves[a.moveId!], a.strength);
         const phase = a.frame < m.startup ? 0 : a.frame < m.startup + m.active ? 1 : 2;
         return this.cellFor(slot, this.attackCells(f.charId, a.moveId!, phase as 0 | 1 | 2));
       }
@@ -460,7 +461,7 @@ export class FightScene extends Phaser.Scene {
     g.fillCircle(f.x + f.facing * 6, f.y - h - 20, 24);
     const a = f.action;
     if (a.kind === 'attack' || a.kind === 'airAttack') {
-      const m = def.moves[a.moveId!];
+      const m = resolveMove(def.moves[a.moveId!], a.strength);
       if (m.hitbox && a.frame >= m.startup && a.frame < m.startup + m.active) {
         const hb = worldBox(f, m.hitbox);
         g.fillStyle(0xffe08a, 1).fillRoundedRect(hb.l, hb.t, hb.r - hb.l, hb.b - hb.t, 6);
@@ -482,7 +483,7 @@ export class FightScene extends Phaser.Scene {
       g.lineStyle(1, 0x4488ff, 1).strokeRect(br.l, br.t, br.r - br.l, br.b - br.t);
       const a = f.action;
       if (a.kind === 'attack' || a.kind === 'airAttack') {
-        const m = def.moves[a.moveId!];
+        const m = resolveMove(def.moves[a.moveId!], a.strength);
         if (m.hitbox) {
           const phase = a.frame < m.startup ? 0xffff44 : a.frame < m.startup + m.active ? 0xff4444 : 0x999999;
           const hb = worldBox(f, m.hitbox);
@@ -552,9 +553,12 @@ export class FightScene extends Phaser.Scene {
       const kd = mv.knockdown ? ' KD' : '';
       return `${mv.damage}dmg ${mv.startup}f${kd}`.padEnd(14);
     };
-    const notate = (input: { motion: string; button: string }) => {
-      const motion = input.motion === 'qcf' ? '↓↘→' : input.motion === 'qcb' ? '↓↙←' : '← →';
-      return `${motion}+${input.button === 'punch' ? 'P' : 'K'}`;
+    const notate = (input: { motion?: string; button: string }) => {
+      const M: Record<string, string> = {
+        qcf: '↓↘→', qcb: '↓↙←', bf: '← →', dp: '→↓↘', hcb: '→↓←', hcf: '←↓→', '360': '360°',
+      };
+      const btn = input.button === 'punch' ? 'P' : input.button === 'kick' ? 'K' : input.button;
+      return `${input.motion ? M[input.motion] + '+' : ''}${btn}`;
     };
     const specials = Object.values(m)
       .filter((mv) => mv.input)

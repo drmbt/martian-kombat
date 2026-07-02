@@ -2,7 +2,7 @@
   "cellW": 288,
   "cellH": 384,
   "cols": 8,
-  "rows": 7,
+  "rows": 8,
   "frames": [
     "idle-a",
     "idle-b",
@@ -56,6 +56,12 @@
     "sigil-bolt-recovery",
     "cloud-hands-startup",
     "cloud-hands-active",
-    "cloud-hands-recovery"
+    "cloud-hands-recovery",
+    "rising-glyph-startup",
+    "rising-glyph-active",
+    "rising-glyph-recovery",
+    "redirect-startup",
+    "redirect-active",
+    "redirect-recovery"
   ]
 }

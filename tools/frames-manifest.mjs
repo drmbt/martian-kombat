@@ -159,6 +159,16 @@ export const CHARACTERS = {
           active: 'advancing forward as his palms flow in circles, a blurred triple palm strike, teal light trailing each palm',
           recovery: 'the flowing motion settling, palms returning to center, teal light fading',
         },
+        'rising-glyph': {
+          startup: 'coiling low, one palm charging with a blazing teal glyph, knees deeply bent ready to spring',
+          active: 'a rising glyph uppercut — leaping upward, palm driving a blazing teal sigil skyward, cloak trailing below, both feet off the ground',
+          recovery: 'descending from the rise, cloak settling around him, the glyph light fading',
+        },
+        redirect: {
+          startup: 'settling into a push-hands stance, palms circling, a faint teal ward beginning to shimmer in front of him',
+          active: 'palms extended in a deflecting circle, a shimmering translucent teal ward-plane hovering in front of his hands',
+          recovery: 'the ward dissolving, hands drawing back to guard',
+        },
       },
     },
     extra: {
@@ -256,6 +266,16 @@ export const CHARACTERS = {
           startup: 'kneeling on one knee, pointing forward commandingly like sending a dog on an attack run, bo staff planted upright in her other hand, her small scruffy dog crouched beside her ready to sprint',
           active: 'arm fully extended pointing forward, the dog absent (already launched off-screen), bo staff planted upright in her other hand',
           recovery: 'standing back up mid-whistle, one hand near her mouth, the other holding the staff',
+        },
+        'staff-vault': {
+          startup: 'the bo staff planted firmly in the ground, her body coiling low against it, ready to vault',
+          active: 'mid-air pole vault — swinging up and over the planted staff, both hands on it, legs tucked high, apron flying',
+          recovery: 'landing lightly on both feet, pulling the staff up out of the ground back into her hands',
+        },
+        'eighty-sixed': {
+          startup: 'lunging forward with one arm reaching out to grab, the bo staff braced under her other arm, fierce focus',
+          active: 'a vault-kick — braced one-handed on the planted staff, both feet driving forward together in a dropkick at chest height',
+          recovery: 'flipping backward off the kick, landing in a ready guard well away, staff back in both hands',
         },
       },
     },
@@ -385,6 +405,16 @@ export const CHARACTERS = {
           startup: 'leaning impossibly far backwards in a matrix-style limbo, palms hovering near the ground behind her, one leg beginning to rise',
           active: 'snapping up out of the backbend, her RIGHT leg (clearly attached at the hip) whipping over in a huge overhead arc, heel dropping like a guillotine, red aura crescent — exactly one foot on the ground',
           recovery: 'the heel planted after the guillotine drop, rising back to stance, hair settling',
+        },
+        'volga-piledriver': {
+          startup: 'lunging forward low with both arms spread wide open for a grapple, fingers splayed, red rage aura flaring',
+          active: 'mid-leap spinning piledriver — airborne, body corkscrewed, arms locked in a grappling hold, red aura spiraling around her',
+          recovery: 'landing in a deep crouch from the slam, one fist on the ground, dust and embers rising',
+        },
+        'braid-lariat': {
+          startup: 'arms rising out to her sides, beginning to spin, her braid lifting with the rotation',
+          active: 'a full spinning lariat — both arms out horizontal mid-spin, braid whipping in a circle, a red aura ring around her upper body',
+          recovery: 'the spin slowing, arms lowering, braid settling back over her shoulder',
         },
       },
     },

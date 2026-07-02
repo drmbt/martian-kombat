@@ -17,6 +17,26 @@ const PANEL_STYLE = `Full-bleed anime fight-scene cutscene panel, painted cel-sh
 const HUSK = `a completely charred, burnt-black featureless husk silhouette of a defeated fighter — smoldering, cracked with ember-orange seams, no recognizable face or clothing (a generic burnt figure, NOT a specific person)`;
 
 const FATALITIES = {
+  vincent: {
+    id: 'blue-screen',
+    canonical: 'assets/raw/style-tests/char-vincent-b-painted.png',
+    panels: [
+      `The man from the reference image (long dark hair, round dark sunglasses, long black cloak) tracing an enormous glowing teal arcane sigil circle in the air with one finger, while ${HUSK} stands frozen before him. Low dramatic angle.`,
+      `The completed teal sigil circle FLASHING between them — ${HUSK} beginning to disintegrate, the top of its head and shoulders dissolving into rising teal wireframe mesh and code fragments. Side angle.`,
+      `${HUSK} half-gone — dissolving row by row from the top into cascading teal wireframe lattice and glyph characters streaming upward, the man's palm extended calmly. Close angle on the dissolution.`,
+      `The man turning away, cloak sweeping, sunglasses catching teal light, as the last few rows of the husk's legs rain upward into scattered teal pixels behind him. He does not look back.`,
+    ],
+  },
+  catherine: {
+    id: 'dinner-service',
+    canonical: 'assets/raw/canonical/catherine.png',
+    panels: [
+      `The woman from the reference image (blonde ponytail, glasses, white apron, knife bandolier, bo staff) flinging a fan of gleaming kitchen knives that pin ${HUSK} in place mid-flight. Dynamic side angle, knives trailing streaks.`,
+      `Extreme close-up of her hands in professional chef mode, tweezers delicately placing a sprig of garnish, plating with total concentration, knife bandolier visible, warm kitchen-pass lighting.`,
+      `A beautiful fine-dining plate presented to camera: a tiny charred-husk arrangement plated like a tasting-menu course, sauce swoosh, micro-greens, elegant and absurd. She stands behind it with quiet pride, staff in hand.`,
+      `A small scruffy terrier dog proudly dragging the entire plate off-screen by the rim, she wipes her hands on her apron looking satisfied, a single knife still quivering in the ground.`,
+    ],
+  },
   yulia: {
     id: 'heart-breaker',
     canonical: 'assets/raw/style-tests/char-yulia-b-painted.png',

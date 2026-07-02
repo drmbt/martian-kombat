@@ -15,9 +15,9 @@ Every special can be performed with **Light, Medium, or Heavy** (of its punch
 or kick class), and the button changes the move — speed, range, damage,
 travel, recovery. The classic trade: **L = fast/safe/short, H = slow/strong/
 far (or the reverse for mobility moves: H = less travel, more damage)**.
-Each special below defines its own L→H axis in one line. ⚙ NEW: engine
-currently fires one fixed version per special; needs per-button parameter
-overrides.
+Each special below defines its own L→H axis in one line.
+**Status: ✅ implemented** (`variants: {l,m,h}` per special; the triggering
+button's strength selects the patch).
 
 ### 1.2 Universal basics (every character)
 - 6 buttons: LP/MP/HP + LK/MK/HK, each with stand / crouch (↓+button) / air
@@ -38,11 +38,11 @@ overrides.
 | qcf | ↓ ↘ → + button | exists |
 | qcb | ↓ ↙ ← + button | exists |
 | b,f | ← then → (dash motion) | exists |
-| dp | → ↓ ↘ (dragon punch) | ⚙ NEW |
-| hcb / hcf | half circle | ⚙ NEW |
+| dp | → ↓ ↘ (dragon punch) | ✅ exists |
+| hcb / hcf | half circle | ✅ exists |
 | charge b,f / charge d,u | hold 2s, then opposite + button | ⚙ NEW |
-| 360 | full circle + button | ⚙ NEW |
-| 3P / 3K | all three punches / kicks together | ⚙ NEW |
+| 360 | full circle + button | ✅ exists (simplified: ↓+←+→ inside the window — the practical "270") |
+| 3P / 3K | all three punches / kicks together | ✅ exists (2+ of the class pressed together) |
 | mash P/K | repeated presses sustain the move | ⚙ NEW |
 
 ### 1.4 Move role taxonomy (cover these per character)
@@ -68,48 +68,49 @@ victim so any opponent works). Panel prompts live in `tools/gen-fatality.mjs`.
 ### VINCENT — "The Cloakwright" · Shoto (Ryu)
 The measuring stick. Honest tools at every range.
 - **Basics:** standard everything; crisp walk speed.
-- **Sigil Bolt** — qcf+P · projectile *(exists)*. L: slow drifting orb ·
+- [x] **Sigil Bolt** — qcf+P · projectile *(exists)*. L: slow drifting orb ·
   M: standard · H: fast bolt. One on screen.
-- **Rising Glyph** — dp+P · anti-air ⚙ NEW (dp motion, i-frames). Teal glyph
+- [x] **Rising Glyph** — dp+P · anti-air ⚙ NEW (dp motion, i-frames). Teal glyph
   uppercut. L: short & safe · H: full launch, more damage, more whiff risk.
-- **Cloud Hands** — qcb+K · mobility strike (rework of current qcb+P
+- [x] **Cloud Hands** — qcb+K · mobility strike (rework of current qcb+P
   version). Advancing triple-palm flow that glides over lows (hurricane-kick
   analog). L: one palm, short · H: three hits, ~half screen.
-- **Redirect** — qcb+P · defensive reflector. Push-hands parry stance;
+- [x] **Redirect** — qcb+P · defensive reflector. Push-hands parry stance;
   reflects projectiles back as wireframes; L/M/H = stance duration.
-- **Fatality — "Blue Screen":** he traces a full sigil circle; the opponent
+- [x] **Fatality — "Blue Screen":** he traces a full sigil circle; the opponent
   disintegrates row-by-row into cascading wireframe/code.
 
 ### YULIA — "Volga Fury" · Grappler (Zangief)
 Slow, terrifying, wants to be inside your guard.
-- **Basics:** slowest walk, highest jump; no slide; forward dash has light
-  armor (⚙ NEW armor).
-- **Cossack Spiral** — b,f+K · mobility strike *(exists)*. **L: fast, most
+- **Basics:** slowest walk, highest jump; no slide. [ ] forward dash armor
+  (⚙ NEW armor — deferred with the rage meter).
+- [x] **Cossack Spiral** — b,f+K · mobility strike *(exists)*. **L: fast, most
   travel, least damage · M: balanced · H: barely moves, hits like a truck,
   hard knockdown** (the user's canonical example — implement exactly this).
-- **Volga Piledriver** — 360+P · command grab ⚙ NEW. Unblockable, huge
+- [x] **Volga Piledriver** — 360+P · command grab ⚙ NEW. Unblockable, huge
   damage. L: short range · H: more range & damage, slower.
-- **ENOUGH.** — hcb+K · running command grab ⚙ NEW. Dashes in and slams;
+- [ ] **ENOUGH.** — hcb+K · running command grab ⚙ NEW. Dashes in and slams;
   requires rage ≥ 50% (rage meter from CHARACTERS.md, ⚙ NEW).
-- **Backbend Guillotine** — qcb+K · overhead *(exists)*. L: faster, less
+- [x] **Backbend Guillotine** — qcb+K · overhead *(exists)*. L: faster, less
   damage · H: slower, bigger arc, knockdown.
-- **Braid Lariat** — 3P · defensive spin ⚙ NEW. Upper-body projectile
+- [x] **Braid Lariat** — 3P · defensive spin ⚙ NEW. Upper-body projectile
   immunity while active (Zangief lariat).
-- **Fatality — "Heart Breaker"** *(shipped)*.
+- [x] **Fatality — "Heart Breaker"** *(shipped)*.
 
 ### CATHERINE — "The Chef de Guerre" · Weapon mid-range (Rolento / Chun hybrid)
 Longest pokes in the game; the staff is never not in her hands.
-- **Basics:** unique forward dash = **staff-vault hop** (goes over lows);
-  slide on crouch HK stays a staff sweep.
-- **Mise en Place** — qcf+P · projectile *(exists)*. **L: 1 knife, fast ·
+- **Basics:** [ ] unique forward dash = **staff-vault hop** (deferred; Staff
+  Vault the special covers the role). [x] slide on crouch HK (staff sweep now
+  travels forward).
+- [x] **Mise en Place** — qcf+P · projectile *(exists)*. **L: 1 knife, fast ·
   M: 2 knives · H: 3-knife fan, slow, spread** (button = knife count).
-- **Order Up! (Jazzper)** — qcb+P · low projectile *(exists)*. L: Jazzper
+- [x] **Order Up! (Jazzper)** — qcb+P · low projectile *(exists)*. L: Jazzper
   stops ⅓ screen · M: ⅔ · H: full screen. Must be crouch-blocked.
-- **Staff Vault** — dp+K · mobility ⚙ NEW. Pole-vault arc; L: hop in place
+- [x] **Staff Vault** — dp+K · mobility ⚙ NEW. Pole-vault arc; L: hop in place
   (evade lows) · M: over mid-range · H: full cross-up over the opponent.
-- **86'd** — hcb+K · command grab ⚙ NEW. Staff-vault kick off their chest;
+- [x] **86'd** — hcb+K · command grab ⚙ NEW. Staff-vault kick off their chest;
   she bounces away to safety after.
-- **Fatality — "Dinner Service":** knives pin the opponent; she plates the
+- [x] **Fatality — "Dinner Service":** knives pin the opponent; she plates the
   result with a sprig of garnish; Jazzper drags it off-screen.
 
 ### FLO — "Kernel Panic" · Trap zoner (Dhalsim's patience, Blanka's menace)

@@ -50,16 +50,24 @@ export class CpuDriver {
       if (s.roundWinner === this.slot && def.fatality) {
         const range = (def.fatality.range ?? 280) - 60;
         if (dist > range) return { [toward]: true };
-        if (s.phaseFrame > 30) this.enqueueMotion(def.fatality.input.motion, def.fatality.input.button, f.facing);
+        if (s.phaseFrame > 30 && def.fatality.input.motion && def.fatality.input.button !== 'PPP' && def.fatality.input.button !== 'KKK') {
+          this.enqueueMotion(def.fatality.input.motion, def.fatality.input.button, f.facing);
+        }
       }
       return {};
     }
     if (s.phase !== 'fight') return {};
 
-    const specials = Object.entries(def.moves).filter(([, m]) => m.input);
+    // only motions the queue knows how to perform (dp/hcb/360/PPP later)
+    const specials = Object.entries(def.moves).filter(
+      ([, m]) =>
+        m.input &&
+        (m.input.motion === 'qcf' || m.input.motion === 'qcb' || m.input.motion === 'bf') &&
+        (m.input.button === 'punch' || m.input.button === 'kick'),
+    );
     const pickSpecial = () => {
       const [, m] = specials[(s.tick >> 4) % specials.length];
-      this.enqueueMotion(m.input!.motion, m.input!.button, f.facing);
+      this.enqueueMotion(m.input!.motion as 'qcf' | 'qcb' | 'bf', m.input!.button as 'punch' | 'kick', f.facing);
     };
 
     if ((o.action.kind === 'attack' || o.action.kind === 'airAttack') && r < 0.45) {

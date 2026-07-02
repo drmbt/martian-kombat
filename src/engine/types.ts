@@ -59,16 +59,43 @@ export interface ProjectileDef {
   height?: MoveHeight;
   /** lifetime in ticks for short-range projectiles (fire breath); default unlimited */
   ttl?: number;
+  /** spawn several at once (knife fans); default 1 */
+  count?: number;
+  /** per-extra-projectile velocity/height offsets for fans */
+  spreadVX?: number;
+  spreadY?: number;
 }
 
-/** Fighting-game convention motions: quarter-circle-forward (↓↘→),
- *  quarter-circle-back (↓↙←), back-then-forward (←→). */
-export type Motion = 'qcf' | 'qcb' | 'bf';
+/** Fighting-game convention motions: quarter-circles, back-forward,
+ *  dragon punch (→↓↘), half-circles, and a (simplified) 360. */
+export type Motion = 'qcf' | 'qcb' | 'bf' | 'dp' | 'hcb' | 'hcf' | '360';
 
 export interface SpecialInput {
-  motion: Motion;
-  /** which button class finishes the motion */
-  button: 'punch' | 'kick';
+  /** omitted for pure button-combo moves (3P lariats etc.) */
+  motion?: Motion;
+  /** button class that finishes the motion; PPP/KKK = 2+ of the class
+   *  pressed together (practical keyboard-friendly "all buttons") */
+  button: 'punch' | 'kick' | 'PPP' | 'KKK';
+}
+
+/** L/M/H strength of the button that triggered a special. */
+export type Strength = 'l' | 'm' | 'h';
+
+/** Per-strength overrides applied on top of a special's base numbers. */
+export interface VariantPatch {
+  startup?: number;
+  active?: number;
+  recovery?: number;
+  damage?: number;
+  hitstun?: number;
+  blockstun?: number;
+  knockback?: number;
+  forwardVel?: number;
+  hitbox?: Box | null;
+  invuln?: number;
+  grab?: { range: number };
+  vault?: { vx: number; vy: number };
+  projectile?: Partial<ProjectileDef>;
 }
 
 export interface MoveDef {
@@ -91,6 +118,20 @@ export interface MoveDef {
   /** presence marks the move as a SPECIAL, fired by motion+button instead of
    *  a raw button press; a character may define any number of these */
   input?: SpecialInput;
+  /** invulnerable for the first N ticks (reversal anti-airs) */
+  invuln?: number;
+  /** command grab: unblockable, connects within range against grounded foes */
+  grab?: { range: number };
+  /** backward hop applied to the ATTACKER when a grab connects (86'd) */
+  grabRecoil?: number;
+  /** reflects enemy projectiles during startup+active (Redirect) */
+  reflect?: boolean;
+  /** immune to projectiles during startup+active (lariats) */
+  projImmune?: boolean;
+  /** at first active frame, launch into the air with this velocity (vaults) */
+  vault?: { vx: number; vy: number };
+  /** SFII Turbo L/M/H button variants, merged over the base numbers */
+  variants?: { l?: VariantPatch; m?: VariantPatch; h?: VariantPatch };
 }
 
 export interface FatalityDef {
@@ -149,6 +190,10 @@ export interface Action {
   moveId?: string;
   hasHit?: boolean;
   guard?: 'stand' | 'crouch';
+  /** which button strength triggered a special (selects the variant) */
+  strength?: Strength;
+  /** cached i-frame count for the current attack */
+  invuln?: number;
 }
 
 export interface FighterState {
