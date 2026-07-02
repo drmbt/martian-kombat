@@ -46,6 +46,18 @@ export const EMPTY_INPUT: InputFrame = {
  *  'low' = must be blocked CROUCHING. 'mid' = blocked either way. */
 export type MoveHeight = 'mid' | 'low' | 'high';
 
+/** What an armed projectile turns into when its fuse runs out (Fork Bomb). */
+export interface DetonationDef {
+  box: Box;
+  damage: number;
+  hitstun: number;
+  blockstun: number;
+  knockback: number;
+  /** blast lifetime in ticks */
+  ttl: number;
+  height?: MoveHeight;
+}
+
 export interface ProjectileDef {
   vx: number;
   spawnX: number;
@@ -64,11 +76,25 @@ export interface ProjectileDef {
   /** per-extra-projectile velocity/height offsets for fans */
   spreadVX?: number;
   spreadY?: number;
+  /** initial vertical velocity (negative = up) for lobbed arcs */
+  vy?: number;
+  /** per-tick gravity for lobbed arcs; the projectile stops on landing */
+  gravity?: number;
+  /** ticks after landing before it detonates; dormant (no collision) until then */
+  fuse?: number;
+  /** the blast the fused projectile morphs into (moveId gains '-burst') */
+  detonate?: DetonationDef;
+  /** launches the victim (pops up / knocks down) instead of plain hitstun */
+  knockdown?: boolean;
+  /** visual field (smoke): never collides, never clashes, and does not count
+   *  against the one-projectile-per-owner rule */
+  field?: boolean;
 }
 
 /** Fighting-game convention motions: quarter-circles, back-forward,
- *  dragon punch (→↓↘), half-circles, and a (simplified) 360. */
-export type Motion = 'qcf' | 'qcb' | 'bf' | 'dp' | 'hcb' | 'hcf' | '360';
+ *  dragon punch (→↓↘), half-circles, a (simplified) 360, and charge
+ *  down-up ('du': hold ↓ for CHARGE_TICKS, then ↑ + button). */
+export type Motion = 'qcf' | 'qcb' | 'bf' | 'dp' | 'hcb' | 'hcf' | '360' | 'du';
 
 export interface SpecialInput {
   /** omitted for pure button-combo moves (3P lariats etc.) */
@@ -210,6 +236,9 @@ export interface FighterState {
   action: Action;
   /** rolling window of packed InputFrames, newest last (motion inputs later) */
   inputBuffer: number[];
+  /** consecutive-ish ticks holding down (decays fast on release) — fuels
+   *  charge motions ('du') without stretching the input buffer */
+  charge: number;
 }
 
 export interface Projectile {
@@ -227,6 +256,14 @@ export interface Projectile {
   height: MoveHeight;
   /** ticks remaining; negative = unlimited */
   ttl: number;
+  vy: number;
+  /** >0 while airborne on a lobbed arc; zeroed on landing */
+  gravity: number;
+  /** >0 = armed & dormant (counts down once grounded); -1 = live */
+  fuse: number;
+  knockdown: boolean;
+  field: boolean;
+  detonate?: DetonationDef;
 }
 
 export type Phase = 'intro' | 'fight' | 'roundEnd' | 'finisher' | 'fatality' | 'matchEnd';

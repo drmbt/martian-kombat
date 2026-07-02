@@ -10,7 +10,7 @@ export const ROSTER: RosterEntry[] = [
   { id: 'vincent', name: 'VINCENT', playable: true },
   { id: 'yulia', name: 'YULIA', playable: true },
   { id: 'catherine', name: 'CATHERINE', playable: true },
-  { id: 'flo', name: 'FLO', playable: false },
+  { id: 'flo', name: 'FLO', playable: true },
   { id: 'freeman', name: 'FREEMAN', playable: false },
   { id: 'gene', name: 'GENE', playable: false },
   { id: 'kirby', name: 'KIRBY', playable: true },

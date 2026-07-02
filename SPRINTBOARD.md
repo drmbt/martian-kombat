@@ -220,6 +220,39 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
 - [x] 41 tests green; select→dialog→fight verified live in-browser on CHIBA
       (parallax confirmed: mid 480→872 slid bg.x 480→357), RANDOM path drawn
 
+### Sprint 11 — Flo assets (user-directed)
+- [x] Flo canonical regenerated (`assets/raw/` had been wiped; `gen-canonical.mjs`
+      grew `--char` + a guard for missing style-test sources). Glyph color moved
+      green → AMBER in the flavor prompt — green-on-green dies in the chroma key
+      (Vincent teal-rune lesson, now baked into the prompt)
+- [x] Flo v2 59-cell manifest entry: four specials per docs/MOVES.md —
+      Fork Bomb (laptop lob), Smokescreen (spliff wall), Root Access (floor
+      cable trap), sudo kill (terminal flame cone) — plus 5 projectile art
+      pieces (incl. fork-bomb-burst detonation, art ready before engine)
+- [x] 59 frames generated + QA'd; 13 regens (11 unanchored lows + 2 rerolls);
+      block-crouch needed a one-off with the geometric bottom-half rule ON TOP
+      of the low anchor (3 anchored rolls still came back standing)
+- [x] Packed: `public/assets/sprites/flo/` sheet.png (8×8) + meta.json +
+      5 keyed projectiles; keying verified over grey
+- [x] Grunts: flo-kiai "Verdammt!" / flo-hurt "Ah! Scheiße!" (Daniel voice,
+      stability 0.25 / style 1.0 — gen-audio now takes per-grunt overrides)
+- [x] Engine: lobbed-arc projectiles (`vy`/`gravity`), landing fuse +
+      `detonate` morph (moveId gains `-burst`, renderer swaps art), `field`
+      projectiles (no collide/clash, exempt from the one-fireball rule),
+      `knockdown` projectiles, charge `du` motion (banked `FighterState.charge`,
+      fast decay on release — buffer untouched)
+- [x] `flo.json` (19 normals + Fork Bomb/Smokescreen/Root Access/sudo kill
+      with L/M/H variants) + roster unlock + BootScene burst-art load +
+      FightScene per-special sizes/tumble/smoke-alpha. GOTCHA: sudo kill (hcf)
+      is declared BEFORE Fork Bomb (qcf) in the JSON — every hcf contains a
+      qcf tail and declaration order is the tiebreaker (test locks it in)
+- [x] Fatality **rm -rf /** (qcb+P): 4 panels via gen-fatality.mjs — husk
+      dissolves into cascading amber directory listings; shares qcb+P with
+      Smokescreen safely (fatality check overrides in finisher; tested)
+- [x] 49 engine tests green; production build clean
+- [ ] In-browser TRAINING-mode verification (blocked: Chrome extension not
+      connected in this session)
+
 ### Icebox (post-MVP, do not start)
 Remaining roster (Flo, Freeman, Gene, Marzipan) · new characters · single-player
 arcade mode + CPU opponent · super meter/EX moves · stage interactables ·
@@ -231,6 +264,25 @@ rollback netplay (engine determinism already paid for) · training mode · fatal
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-02 · engine+data+assets · Sprint 11b: Flo PLAYABLE + fatality** —
+  engine grew lobbed/fused/detonating projectiles, `field` smoke, projectile
+  `knockdown`, and the charge `du` motion (banked charge counter, not a longer
+  input buffer); flo.json + roster unlock; rm -rf / fatality panels. 49 tests
+  green, build clean. In-browser verify still owed (Chrome extension was
+  disconnected). Roster now 5/8 playable. *(Claude)*
+
+- **2026-07-02 · assets+tools · Sprint 11: Flo asset set complete** — canonical
+  (amber glyphs, chroma-safe), 59-cell v2 sheet packed + meta.json, 5 keyed
+  projectiles, grunts. `gen-canonical.mjs`: `--char` filter + missing-source
+  guard (assets/raw was wiped — regen from inspo works). `gen-audio.mjs`:
+  per-grunt style/stability overrides. AGENTS.md symlinked to CLAUDE.md.
+  NOT YET PLAYABLE: no flo.json — his kit needs engine work (delayed-detonation
+  projectile, smoke occlusion, floor trap, charge motion). GOTCHA: block-crouch
+  resisted the low anchor 3× — the one-off fix was adding the geometric
+  "figure occupies ONLY the BOTTOM HALF of the frame" rule to the pose text
+  (scratchpad regen-flo-block-crouch.mjs); consider baking that rule into the
+  shared CELLS block-crouch/crouch prompts. *(Claude)*
 
 - **2026-07-02 · assets+scenes · Sprint 10: 10 stages + stage select +
   parallax** — gen-stage.mjs turns each stage-inspo folder into a 21:9
@@ -311,7 +363,7 @@ rollback netplay (engine determinism already paid for) · training mode · fatal
 
 *(overwrite this section each handoff — what's mid-flight, gotchas, next action)*
 
-**State:** Sprint 8 shipped — docs/MOVES.md is the living move spec (checkboxes = implementation state); edit it and re-run the buildout. Three QA-ready characters: vincent, yulia, catherine. **DEPLOY RECIPE CHANGED:** just push to main —
+**State:** Sprint 11 — Flo is PLAYABLE (assets + engine plumbing + flo.json + rm -rf / fatality; roster 5/8). Next action: in-browser TRAINING verification of Flo (was blocked on the Chrome extension), then Freeman/Gene/Marzipan via the same recipe (their kits need: Freeman charge b,f — trivial 'bf' exists — plus counter-stance + hit-absorb armor; Gene teleport + slow-field). NOTE: `assets/raw/` was wiped and partially regenerated — only flo's canonical exists; regen others via `node tools/gen-canonical.mjs --char <id>` before any frame work on them. docs/MOVES.md is the living move spec (checkboxes = implementation state); edit it and re-run the buildout. Three QA-ready characters: vincent, yulia, catherine. **DEPLOY RECIPE CHANGED:** just push to main —
 the `deploy` workflow builds and publishes (do NOT force-push gh-pages
 anymore; that pipeline is retired and was the wedge source). If a deploy run
 fails with `deployment_queued` timeouts, check for a phantom via

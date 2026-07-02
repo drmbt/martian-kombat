@@ -30,6 +30,15 @@ import { play } from './BootScene';
 const CELL_W = 288;
 const CELL_H = 384;
 const PHASE_NAME = ['startup', 'active', 'recovery'] as const;
+// per-special projectile draw size (square px); default 72
+const PROJ_SIZE: Record<string, number> = {
+  'order-up': 96, // Jazzper is a whole dog
+  'fork-bomb': 64,
+  'fork-bomb-burst': 150,
+  smokescreen: 260,
+  'root-access': 120,
+  'sudo-kill': 90,
+};
 const LEGACY_BUTTON: Record<string, string> = {
   lp: 'light', mp: 'light', hp: 'heavy', lk: 'light', mk: 'heavy', hk: 'heavy',
 };
@@ -542,10 +551,13 @@ export class FightScene extends Phaser.Scene {
         : `proj-${ownerChar}`;
       if (this.textures.exists(key)) {
         if (img.texture.key !== key) img.setTexture(key);
-        const size = p.moveId === 'order-up' ? 96 : 72; // Jazzper is a whole dog
+        const size = PROJ_SIZE[p.moveId] ?? 72;
         img.setVisible(true).setPosition(p.x, p.y).setDisplaySize(size, size);
+        img.setAlpha(p.moveId === 'smokescreen' ? 0.92 : 1);
         if (p.moveId === 'sigil-bolt') {
           img.setRotation(s.tick * 0.15 * (p.vx > 0 ? 1 : -1)); // runes spin
+        } else if (p.moveId === 'fork-bomb' && (p.vx !== 0 || p.vy !== 0)) {
+          img.setRotation(s.tick * 0.12 * (p.vx > 0 ? 1 : -1)); // laptop tumbles until it lands
         } else {
           img.setRotation(0).setFlipX(p.vx < 0); // dogs, fire, knives face forward
         }

@@ -37,6 +37,16 @@ const FATALITIES = {
       `A small scruffy terrier dog proudly dragging the entire plate off-screen by the rim, she wipes her hands on her apron looking satisfied, a single knife still quivering in the ground.`,
     ],
   },
+  flo: {
+    id: 'rm-rf',
+    canonical: 'assets/raw/canonical/flo.png',
+    panels: [
+      `The man from the reference image (very tall and lanky, long blond hair, reddish beard, thin spliff in the corner of his mouth, black t-shirt, brown cargo pants) conjuring an ENORMOUS translucent amber holographic terminal window in the air with one raised hand, while ${HUSK} stands frozen before him. Low dramatic angle, amber glow washing over everything.`,
+      `Extreme close-up of the man's hands typing FURIOUSLY on the floating amber holographic terminal, grey spliff smoke curling through the amber light, glowing glyphs reflected in his narrowed scowling eyes, the terminal cursor blazing at the end of a typed line of unreadable glyphs.`,
+      `${HUSK} dissolving from the feet UPWARD into cascading waterfalls of amber directory-listing text — dense unreadable file-tree lines streaming down and scrolling away — while the man's finger hovers over one final glowing key. Side angle, high contrast.`,
+      `The man turning away exhaling a long stream of spliff smoke, casually flicking the amber terminal window closed behind him with two fingers, as the very last scrolling amber text lines of the husk fade to nothing. He does not look back.`,
+    ],
+  },
   yulia: {
     id: 'heart-breaker',
     canonical: 'assets/raw/style-tests/char-yulia-b-painted.png',

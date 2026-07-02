@@ -25,3 +25,4 @@ export const FATALITY_RANGE = 280; // default max distance to the dazed loser
 
 export const GROUND_FRICTION = 0.85; // knockback slide decay per tick
 export const INPUT_BUFFER_LEN = 15;
+export const CHARGE_TICKS = 35; // hold ↓ this long to bank a charge motion

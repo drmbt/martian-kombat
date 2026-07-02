@@ -15,7 +15,7 @@ dist/
 
 # Asset pipeline intermediates (raw gen output is regenerable and huge;
 # only packed, game-ready assets under public/assets/ get committed)
-assets/raw/
+#assets/raw/
 assets/veo-clips/
 assets/frame-dumps/
 *.mp4.tmp
@@ -24,3 +24,4 @@ assets/frame-dumps/
 .vscode/
 .idea/
 *.swp
+.lh/

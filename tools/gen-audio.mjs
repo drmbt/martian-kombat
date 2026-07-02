@@ -14,15 +14,16 @@ const VOICE_M = 'SOYHLrjzK2X1ezoPC6cr'; // Harry — fierce warrior (Vincent)
 const VOICE_F = 'EXAVITQu4vr4xnSDxMaL'; // Sarah — mature confident (Yulia)
 const VOICE_CATH = 'cgSgspJ2msm6clMCkdW9'; // Jessica — playful bright (Catherine)
 const VOICE_KIRBY = 'FGY2WhTYpPnrIDTdsKH5'; // Laura — sassy (Kirby)
+const VOICE_FLO = 'onwK4e9ZLuTAKqWW03F9'; // Daniel — deep gruff (Flo)
 
-async function tts(voiceId, text, style = 0.7) {
+async function tts(voiceId, text, style = 0.7, stability = 0.4) {
   const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
     method: 'POST',
     headers: { 'xi-api-key': KEY, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       text,
       model_id: 'eleven_multilingual_v2',
-      voice_settings: { stability: 0.4, similarity_boost: 0.75, style },
+      voice_settings: { stability, similarity_boost: 0.75, style },
     }),
   });
   if (!res.ok) throw new Error(`tts ${res.status}: ${(await res.text()).slice(0, 300)}`);
@@ -72,6 +73,9 @@ const grunts = [
   ['catherine-hurt', VOICE_CATH, 'Agh!'],
   ['kirby-kiai', VOICE_KIRBY, 'Hyah!'],
   ['kirby-hurt', VOICE_KIRBY, 'Oof!'],
+  // Flo speaks German; low stability + max style = angry, not read-aloud
+  ['flo-kiai', VOICE_FLO, 'Verdammt!', 1.0, 0.25],
+  ['flo-hurt', VOICE_FLO, 'Ah! Scheiße!', 1.0, 0.25],
 ];
 
 const sounds = [
@@ -89,11 +93,11 @@ for (const [id, text] of Object.entries(announcerLines)) {
   console.log(`announcer ${id} ...`);
   saveAsset(out, await tts(ANNOUNCER, text, 0.9), text);
 }
-for (const [id, voice, text] of grunts) {
+for (const [id, voice, text, style, stability] of grunts) {
   const out = join(AUDIO, 'voice', `${id}.mp3`);
   if (skip(out, force)) continue;
   console.log(`grunt ${id} ...`);
-  saveAsset(out, await tts(voice, text, 0.9), text);
+  saveAsset(out, await tts(voice, text, style ?? 0.9, stability), text);
 }
 for (const [id, text, secs] of sounds) {
   const out = join(AUDIO, 'sfx', `${id}.mp3`);

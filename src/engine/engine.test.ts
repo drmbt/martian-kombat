@@ -604,3 +604,119 @@ describe('movement', () => {
     expect(s.fighters[0].x).toBeLessThan(s.fighters[1].x);
   });
 });
+
+describe('flo: kernel panic kit (traps, fields, charge)', () => {
+  function freshFlo(): GameState {
+    const s = initialState('flo', 'yulia', characters);
+    s.phase = 'fight';
+    return s;
+  }
+
+  /** P1 half-circle-forward + punch (back, down, forward+LP) */
+  function fireHcfPunch(s: GameState): void {
+    step(s, [inp({ left: true }), inp()], characters);
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ right: true }), inp()], characters);
+    step(s, [inp({ right: true, lp: true }), inp()], characters);
+  }
+
+  /** P1 quarter-circle-back + punch (down, back, back+LP) */
+  function fireQcbPunch(s: GameState): void {
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ left: true }), inp()], characters);
+    step(s, [inp({ left: true, lp: true }), inp()], characters);
+  }
+
+  it('hcf+P fires sudo kill, not Fork Bomb (longer motion wins by declaration order)', () => {
+    const s = freshFlo();
+    fireHcfPunch(s);
+    expect(s.fighters[0].action.moveId).toBe('sudo-kill');
+  });
+
+  it('Fork Bomb arcs, lies dormant, then detonates into a damaging burst', () => {
+    const s = freshFlo();
+    fireSpecial(s); // qcf+LP
+    expect(s.fighters[0].action.moveId).toBe('fork-bomb');
+    run(s, 15); // past startup: the laptop is out
+    const p = s.projectiles[0];
+    expect(p.moveId).toBe('fork-bomb');
+    expect(p.gravity).toBeGreaterThan(0);
+
+    run(s, 30); // still in flight / armed on the ground
+    expect(s.fighters[1].health).toBe(characters.yulia.health); // dormant: no contact damage
+
+    run(s, 120); // landing + fuse + burst
+    expect(s.fighters[1].health).toBe(characters.yulia.health - 90);
+  });
+
+  it('Smokescreen is a harmless field and does not block Fork Bomb (one-projectile rule exemption)', () => {
+    const s = freshFlo();
+    fireQcbPunch(s);
+    expect(s.fighters[0].action.moveId).toBe('smokescreen');
+    run(s, 20); // past startup
+    expect(s.projectiles).toHaveLength(1);
+    expect(s.projectiles[0].field).toBe(true);
+    expect(s.projectiles[0].damage).toBe(0);
+
+    run(s, 25); // recover, then throw the bomb through the smoke
+    fireSpecial(s);
+    run(s, 15);
+    expect(s.projectiles).toHaveLength(2); // smoke + laptop coexist
+    expect(s.fighters[1].health).toBe(characters.yulia.health); // smoke never hit anyone
+  });
+
+  it('Root Access needs a banked down-charge, then pops the opponent up', () => {
+    const s = freshFlo();
+    run(s, 50, inp({ down: true }), inp()); // bank the charge
+    step(s, [inp({ up: true, lk: true }), inp()], characters);
+    expect(s.fighters[0].action.moveId).toBe('root-access');
+
+    run(s, 15); // past startup: the cable trap is out (L version: 140 in front)
+    const trap = s.projectiles[0];
+    expect(trap.moveId).toBe('root-access');
+    expect(trap.vx).toBe(0);
+
+    // the opponent walks into the snare and gets launched
+    run(s, 60, inp(), inp({ left: true }));
+    expect(s.fighters[1].health).toBe(characters.yulia.health - 70);
+    const kind = s.fighters[1].action.kind;
+    expect(['airHit', 'knockdown', 'getup'].includes(kind)).toBe(true);
+  });
+
+  it('down-up without enough charge is just a kick', () => {
+    const s = freshFlo();
+    run(s, 5, inp({ down: true }), inp()); // nowhere near CHARGE_TICKS
+    step(s, [inp({ up: true, lk: true }), inp()], characters);
+    expect(s.fighters[0].action.moveId).toBe('lk');
+  });
+
+  it('the charge bleeds away after releasing down', () => {
+    const s = freshFlo();
+    run(s, 50, inp({ down: true }), inp());
+    run(s, 10, inp(), inp()); // idle: charge decays fast
+    step(s, [inp({ up: true, lk: true }), inp()], characters);
+    expect(s.fighters[0].action.moveId).not.toBe('root-access');
+  });
+});
+
+describe('flo fatality: rm -rf /', () => {
+  it('qcb+P in the finisher fires the fatality even though Smokescreen shares the input', () => {
+    const s = initialState('flo', 'yulia', characters);
+    s.phase = 'fight';
+    s.wins = [1, 0];
+    s.fighters[0].x = 450;
+    s.fighters[1].x = 520;
+    s.fighters[1].health = 10;
+    step(s, [inp({ lp: true }), inp()], characters);
+    run(s, 8);
+    expect(s.phase).toBe('finisher');
+
+    // flo faces right: qcb = down, left; punch finishes it
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ left: true }), inp()], characters);
+    step(s, [inp({ left: true, hp: true }), inp()], characters);
+    expect(s.phase).toBe('fatality');
+    expect(s.fatality).toEqual({ owner: 0, id: 'rm-rf' });
+  });
+});
