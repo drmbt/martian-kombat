@@ -1,0 +1,6 @@
+Transform the person in the reference photo into a full-body 2D fighting game character.
+CRITICAL: preserve their real facial features, hairstyle, skin tone, body type and the outfit they are wearing in the photo — it must be recognizably the same person.
+Pose: dynamic side-on martial-arts fighting stance facing right, knees bent, hands up ready to fight, full body visible head to toe with a small margin, centered.
+Background: solid flat chroma-key green (#00B140), completely uniform, no shadows cast on the background, no floor, no text, no watermark, no border.
+Art style: hand-painted cel-shaded 2D anime fighter (modern Capcom / Arc System Works aesthetic). Bold clean line art, painterly cel shading, confident silhouette, slightly heroic proportions while keeping the person recognizable.
+Character flavor: "The Still Point" — a serene warrior yogi. Loose comfortable clothes, mala beads around the neck or wrist, barefoot, calm centered half-smile, weight perfectly balanced in a meditative fighting stance.

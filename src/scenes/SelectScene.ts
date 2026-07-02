@@ -130,6 +130,19 @@ export class SelectScene extends Phaser.Scene {
       kb.on('keydown-DOWN', () => !this.stageMode && move(1, COLS));
       kb.on('keydown-K', () => !this.stageMode && this.confirm(1));
     }
+    // ESC backs out: stage dialog -> character pick, character pick -> main menu
+    kb.on('keydown-ESC', () => {
+      if (this.starting) return;
+      play(this, 's-blip', 0.5);
+      if (this.stageMode) this.scene.restart({ cpu: this.cpu, training: this.training });
+      else this.scene.start('Menu');
+    });
+
+    this.add
+      .text(STAGE_W / 2, STAGE_H - 20, 'ESC · back', {
+        fontFamily: 'monospace', fontSize: '13px', color: '#9a8fa8', stroke: '#000', strokeThickness: 3,
+      })
+      .setOrigin(0.5);
 
     this.redraw();
   }

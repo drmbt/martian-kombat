@@ -21,7 +21,6 @@ import {
 } from '../engine';
 import { characters } from '../data/characters';
 import { KeyboardSource } from '../input/keyboard';
-import { TouchControls } from '../input/touch';
 import { CpuDriver } from '../ai/bot';
 import { play } from './BootScene';
 
@@ -81,8 +80,6 @@ export class FightScene extends Phaser.Scene {
   private cpu = false;
   private training = false;
   private bot: CpuDriver | null = null;
-  private touch: TouchControls | null = null;
-  private touchWanted = true;
   private fatalityPanel: Phaser.GameObjects.Image | null = null;
   private moveLogOn = false;
   private moveLog: string[] = [];
@@ -106,6 +103,9 @@ export class FightScene extends Phaser.Scene {
     this.moveLogOn = this.training; // sandbox shows the move log by default
     this.moveLog = [];
     this.lastDamageTick = [0, 0];
+    // scene instances are reused across matches — reset transient UI state so a
+    // match entered from a *paused* one doesn't start frozen
+    this.paused = false;
   }
 
   create(): void {
@@ -174,8 +174,8 @@ export class FightScene extends Phaser.Scene {
       .setOrigin(1, 0)
       .setDepth(6);
     this.add
-      .text(STAGE_W / 2, STAGE_H - 14, 'WASD/RTY/FGH · ARROWS/UIO/JKL · mouse/touch on-screen · ESC menu · F2 log · F3 hide pad', {
-        ...font, fontSize: '11px', color: '#e8dcc8', stroke: '#000', strokeThickness: 3,
+      .text(STAGE_W / 2, STAGE_H - 14, 'P1: WASD + RTY punches FGH kicks   P2: ARROWS + UIO punches JKL kicks   ESC menu · F2 move log', {
+        ...font, fontSize: '12px', color: '#e8dcc8', stroke: '#000', strokeThickness: 3,
       })
       .setOrigin(0.5)
       .setDepth(6);
@@ -209,13 +209,7 @@ export class FightScene extends Phaser.Scene {
         .setDepth(6);
     }
 
-    // on-screen controls drive P1 (browser mouse/touch play); F3 hides them
-    this.touch = new TouchControls(this, STAGE_W, STAGE_H);
     this.buildPauseOverlay();
-    this.input.keyboard!.on('keydown-F3', () => {
-      this.touchWanted = !this.touchWanted;
-      this.touch?.setVisible(this.touchWanted && !this.paused);
-    });
     this.input.keyboard!.on('keydown-F2', () => {
       this.moveLogOn = !this.moveLogOn;
       if (!this.moveLogOn) {
@@ -241,7 +235,6 @@ export class FightScene extends Phaser.Scene {
   private togglePause(): void {
     this.paused = !this.paused;
     this.pauseOverlay.setVisible(this.paused);
-    this.touch?.setVisible(!this.paused && this.touchWanted);
   }
 
   private restartMatch(): void {
@@ -266,10 +259,6 @@ export class FightScene extends Phaser.Scene {
     while (this.accumulator >= TICK_MS) {
       const snap = this.snapshot();
       const p1 = this.inputs.poll(0);
-      if (this.touch) {
-        const t = this.touch.poll(); // OR-merge on-screen controls into P1
-        for (const k of Object.keys(t) as (keyof InputFrame)[]) if (t[k]) p1[k] = true;
-      }
       const p2 = this.bot ? this.bot.poll(this.state) : this.inputs.poll(1);
       step(this.state, [p1, p2], characters);
       if (this.training) this.trainingUpkeep();
@@ -507,9 +496,6 @@ export class FightScene extends Phaser.Scene {
     const gU = this.gfxUnder;
     gU.clear();
     this.gfxHud.clear();
-
-    // hide on-screen controls during the cutscene and any non-fight phase
-    this.touch?.setVisible(this.touchWanted && !this.paused && s.phase === 'fight');
 
     if (s.phase === 'fatality' && s.fatality) {
       this.drawFatality();
@@ -862,7 +848,7 @@ export class FightScene extends Phaser.Scene {
 
     items.push(
       this.add
-        .text(STAGE_W / 2, py + PH - 20, 'ESC resume · F1 hitboxes · F2 move log · F3 on-screen controls', {
+        .text(STAGE_W / 2, py + PH - 20, 'ESC resume · F1 hitboxes · F2 move log · click a button above', {
           ...font, fontSize: '11px', color: '#9a8fa8',
         })
         .setOrigin(0.5),

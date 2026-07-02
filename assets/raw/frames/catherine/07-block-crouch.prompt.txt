@@ -1,0 +1,4 @@
+Art style: hand-painted cel-shaded 2D anime fighter (modern Capcom / Arc System Works aesthetic). Bold clean line art, painterly cel shading.
+Same character as BOTH reference images — identical face, hair, outfit, colors and art style. EXACTLY ONE person in the image, exactly TWO arms and TWO legs. Facing right. She is ALWAYS holding her long wooden bo staff. Background: solid flat chroma-key green (#00B140), completely uniform, no shadows, no text.
+Pose: crouching block — squatting VERY low, curled compact and braced for impact, the bo staff held horizontally in front of her as a shield.
+CRITICAL: copy the BODY HEIGHT of the SECOND reference image (the low kick pose) — head at that same low height, the top half of the frame empty green.
