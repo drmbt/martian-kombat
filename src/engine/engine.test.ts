@@ -352,6 +352,17 @@ describe('named specials with per-move motions', () => {
     expect(s.fighters[0].health).toBeLessThan(characters[P1].health - 20);
   });
 
+  it('Braid Lariat (PPP) triggers with two punches a few ticks apart', () => {
+    const s = fresh();
+    closeRange(s);
+    // human-realistic chord: mp lands 3 ticks after lp, both held
+    step(s, [inp(), inp({ lp: true })], characters);
+    step(s, [inp(), inp({ lp: true })], characters);
+    step(s, [inp(), inp({ lp: true })], characters);
+    step(s, [inp(), inp({ lp: true, mp: true })], characters);
+    expect(s.fighters[1].action.moveId).toBe('braid-lariat');
+  });
+
   it('punch without the motion does NOT fire a special', () => {
     const s = fresh();
     s.fighters[0].x = 300;

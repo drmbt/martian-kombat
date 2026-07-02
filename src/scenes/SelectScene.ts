@@ -166,7 +166,7 @@ export class SelectScene extends Phaser.Scene {
     this.stageIdx = 0; // RANDOM is the default
     const picked = [ROSTER[this.idx[0]].id, ROSTER[this.idx[1]].id];
 
-    this.add.rectangle(STAGE_W / 2, STAGE_H / 2, STAGE_W, STAGE_H, 0x0c0910, 0.98).setDepth(10);
+    this.add.rectangle(STAGE_W / 2, STAGE_H / 2, STAGE_W, STAGE_H, 0x0c0910, 1).setDepth(10);
     this.add
       .text(STAGE_W / 2, 52, 'CHOOSE STAGE', {
         fontFamily: 'monospace', fontSize: '30px', fontStyle: 'bold', color: '#ffb347',

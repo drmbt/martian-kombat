@@ -182,10 +182,25 @@ function freshStrength(f: FighterState, cls: 'punch' | 'kick'): Strength | null 
   return null;
 }
 
-/** 2+ fresh presses of the class on the same tick (practical 3P/3K). */
+/** 2+ presses of the class landing within a ~5-tick window (practical 3P/3K —
+ *  humans can't hit two keys on the same 60hz tick; SFII buffers this too).
+ *  A button counts if it's held NOW and was released at some point inside the
+ *  window (i.e. it's a recent press, not an ancient hold). */
 function comboPress(f: FighterState, cls: 'punch' | 'kick'): boolean {
-  const fresh = STRENGTH_BITS[cls].filter((bit) => freshPress(f, bit)).length;
-  return fresh >= 2;
+  const buf = f.inputBuffer;
+  const cur = buf[buf.length - 1] ?? 0;
+  let recent = 0;
+  for (const bit of STRENGTH_BITS[cls]) {
+    if (!(cur & bit)) continue;
+    for (let i = buf.length - 6; i < buf.length - 1; i++) {
+      // frames before the buffer began count as released
+      if (i < 0 || !(buf[i] & bit)) {
+        recent++;
+        break;
+      }
+    }
+  }
+  return recent >= 2;
 }
 
 /** Effective move for an action: base numbers + the strength's variant patch.
@@ -309,13 +324,27 @@ function updateFighter(
 
   switch (a.kind) {
     case 'attack': {
-      const m = resolveMove(def.moves[a.moveId!], a.strength);
-      a.frame++;
-      if (m.forwardVel && a.frame <= m.startup + m.active) {
+      // early chord upgrade: a lone punch that becomes a 2-punch chord within
+      // the first few frames kara-cancels into the PPP/KKK special (nobody
+      // can hit two keys on the same 60hz tick)
+      if (!def.moves[a.moveId!].input && a.frame < 4) {
+        for (const [id, mv] of Object.entries(def.moves)) {
+          if (!mv.input || (mv.input.button !== 'PPP' && mv.input.button !== 'KKK')) continue;
+          if (comboPress(f, mv.input.button === 'PPP' ? 'punch' : 'kick')) {
+            const up = resolveMove(mv, 'm');
+            f.action = { kind: 'attack', frame: 0, moveId: id, strength: 'm', hasHit: false, invuln: up.invuln ?? 0 };
+            break;
+          }
+        }
+      }
+      const act = f.action;
+      const m = resolveMove(def.moves[act.moveId!], act.strength);
+      act.frame++;
+      if (m.forwardVel && act.frame <= m.startup + m.active) {
         f.x += f.facing * m.forwardVel;
       }
       // vaults launch airborne at the first active frame (Staff Vault)
-      if (m.vault && a.frame === m.startup) {
+      if (m.vault && act.frame === m.startup) {
         f.vy = -m.vault.vy;
         f.vx = f.facing * m.vault.vx;
         f.y -= 1;
@@ -323,12 +352,12 @@ function updateFighter(
         break;
       }
       // projectiles spawn on the first active frame (fans spawn several)
-      if (m.projectile && a.frame === m.startup) {
+      if (m.projectile && act.frame === m.startup) {
         const p = m.projectile;
         for (let n = 0; n < (p.count ?? 1); n++) {
           s.projectiles.push({
             owner: slot,
-            moveId: a.moveId!,
+            moveId: act.moveId!,
             x: f.x + f.facing * p.spawnX,
             y: f.y + p.spawnY + n * (p.spreadY ?? 0),
             vx: f.facing * (p.vx + n * (p.spreadVX ?? 0)),
@@ -342,7 +371,7 @@ function updateFighter(
           });
         }
       }
-      if (a.frame >= m.startup + m.active + m.recovery) {
+      if (act.frame >= m.startup + m.active + m.recovery) {
         f.action = { kind: 'idle', frame: 0 };
       }
       break;

@@ -3,8 +3,10 @@
 // the deterministic core in src/engine/ stays pure and silent.
 import Phaser from 'phaser';
 import {
+  EMPTY_INPUT,
   FATALITY_TICKS,
   FLOOR_Y,
+  InputFrame,
   ROUND_TICKS,
   GameState,
   INTRO_TICKS,
@@ -81,6 +83,9 @@ export class FightScene extends Phaser.Scene {
   private moveLogOn = false;
   private moveLog: string[] = [];
   private moveLogText!: Phaser.GameObjects.Text;
+  private inputHist: [string[], string[]] = [[], []];
+  private inputHistTexts: Phaser.GameObjects.Text[] = [];
+  private prevInputs: [InputFrame, InputFrame] = [{ ...EMPTY_INPUT }, { ...EMPTY_INPUT }];
   private lastDamageTick: [number, number] = [0, 0];
 
   constructor() {
@@ -178,6 +183,17 @@ export class FightScene extends Phaser.Scene {
       })
       .setOrigin(0, 1)
       .setDepth(6);
+    this.inputHist = [[], []];
+    this.inputHistTexts = [0, 1].map((slot) =>
+      this.add
+        .text(STAGE_W - 16, STAGE_H - 60 + slot * 20, '', {
+          fontFamily: 'monospace', fontSize: '15px',
+          color: slot === 0 ? '#58e6d9' : '#ff8a7a',
+          stroke: '#000', strokeThickness: 3,
+        })
+        .setOrigin(1, 1)
+        .setDepth(6),
+    );
 
     if (this.training) {
       this.add
@@ -191,7 +207,10 @@ export class FightScene extends Phaser.Scene {
     this.buildPauseOverlay();
     this.input.keyboard!.on('keydown-F2', () => {
       this.moveLogOn = !this.moveLogOn;
-      if (!this.moveLogOn) this.moveLogText.setText('');
+      if (!this.moveLogOn) {
+        this.moveLogText.setText('');
+        for (const t of this.inputHistTexts) t.setText('');
+      }
     });
     this.input.keyboard!.on('keydown-ESC', () => {
       this.paused = !this.paused;
@@ -218,9 +237,11 @@ export class FightScene extends Phaser.Scene {
     this.accumulator += Math.min(deltaMs, 100);
     while (this.accumulator >= TICK_MS) {
       const snap = this.snapshot();
+      const p1 = this.inputs.poll(0);
       const p2 = this.bot ? this.bot.poll(this.state) : this.inputs.poll(1);
-      step(this.state, [this.inputs.poll(0), p2], characters);
+      step(this.state, [p1, p2], characters);
       if (this.training) this.trainingUpkeep();
+      this.logInputs([p1, p2]);
       this.accumulator -= TICK_MS;
       this.presentTick(snap);
     }
@@ -314,6 +335,31 @@ export class FightScene extends Phaser.Scene {
     if (this.comboTicks > 0 && --this.comboTicks === 0) this.comboHits = 0;
   }
 
+  /** Raw-input ticker: arrows for held direction + freshly pressed buttons,
+   *  one line per player — shows what the engine actually registered. */
+  private logInputs(frames: [InputFrame, InputFrame]): void {
+    for (const slot of [0, 1] as const) {
+      const i = frames[slot];
+      const prev = this.prevInputs[slot];
+      const dir =
+        i.up && i.left ? '↖' : i.up && i.right ? '↗'
+        : i.down && i.left ? '↙' : i.down && i.right ? '↘'
+        : i.up ? '↑' : i.down ? '↓' : i.left ? '←' : i.right ? '→' : '';
+      const btns = (['lp', 'mp', 'hp', 'lk', 'mk', 'hk'] as const)
+        .filter((b) => i[b] && !prev[b])
+        .map((b) => b.toUpperCase())
+        .join('+');
+      this.prevInputs[slot] = { ...i };
+      const token = btns ? `${dir}${dir ? '+' : ''}${btns}` : dir;
+      const hist = this.inputHist[slot];
+      if (token && token !== hist[hist.length - 1]) {
+        hist.push(token);
+        if (hist.length > 10) hist.shift();
+        if (this.moveLogOn) this.inputHistTexts[slot].setText(`P${slot + 1} ▸ ${hist.join(' ')}`);
+      }
+    }
+  }
+
   /** FIFO overlay of triggered moves: "P1 Rising Glyph (H)" / "P2 cr.MK". */
   private logMove(slot: 0 | 1): void {
     const f = this.state.fighters[slot];
@@ -322,7 +368,12 @@ export class FightScene extends Phaser.Scene {
     let label: string;
     if (def?.input) {
       const str = f.action.strength ? ` (${f.action.strength.toUpperCase()})` : '';
-      label = `${def.name ?? id}${str}`;
+      const M: Record<string, string> = {
+        qcf: '↓↘→', qcb: '↓↙←', bf: '←→', dp: '→↓↘', hcb: '→↓←', hcf: '←↓→', '360': '360°',
+      };
+      const inp = def.input.motion ? M[def.input.motion] : '';
+      const btn = def.input.button === 'punch' ? 'P' : def.input.button === 'kick' ? 'K' : def.input.button;
+      label = `${def.name ?? id}${str} · ${inp}${inp ? '+' : ''}${btn}`;
     } else if (id.startsWith('c')) label = `cr.${id.slice(1).toUpperCase()}`;
     else if (id.startsWith('j')) label = `j.${id.slice(1).toUpperCase()}`;
     else label = id.toUpperCase();
@@ -515,6 +566,7 @@ export class FightScene extends Phaser.Scene {
 
     if (this.debugBoxes) this.drawDebug();
     this.moveLogText.setVisible(this.moveLogOn);
+    for (const t of this.inputHistTexts) t.setVisible(this.moveLogOn);
     this.drawHud();
   }
 

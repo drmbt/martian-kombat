@@ -196,9 +196,33 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
       special at L and H, ending with each fatality (Blue Screen, Heart
       Breaker, Dinner Service) executing in-game
 
+### Sprint 10 — Stage variety + stage select (user-directed)
+- [x] `tools/gen-stage.mjs` (`npm run gen:stages`): one ultra-wide 21:9 stage
+      per `assets/stage-inspo/<FOLDER>/` via gemini-3-pro-image, ALL folder
+      photos passed as references (composite prompt per stage, SCENES map in
+      the script). Raw → `assets/raw/stages/`; packed 1680×720 jpg →
+      `public/assets/backgrounds/stages/<id>.jpg`. Idempotent / `--force` /
+      `--stage <id>`
+- [x] 10 stages generated + QA'd: BBAC, CHIBA, DRIVE IN, ESTATES, INSTITUTE,
+      MARS, NEPTUNE, SATURN, SHIPWRECK, THE RANGE (shipwreck needed one regen:
+      "clean ground plane" came back as a flat color band — prompt now demands
+      textured ground, keep that clause)
+- [x] Stage registry `src/data/stages.ts` (11 entries incl. legacy salton);
+      optional `stage` field on CharacterDef (UI hint only) — home stages:
+      vincent→chiba, yulia→saturn, catherine→bbac, kirby→institute
+- [x] Stage-select dialog after both fighters lock in: thumbnail grid,
+      RANDOM tile is the default, home stages badged "CHIBA · VINCENT" in the
+      owner's color, either player's keys drive it (WASD/arrows + F/K)
+- [x] SF2 parallax in FightScene: stage art drawn at native aspect ×
+      screen height; the extra width slides opposite the fighters' midpoint
+      (±150 px on 21:9 art). 16:9 art (salton) degrades to static. Rematch
+      keeps the stage
+- [x] 41 tests green; select→dialog→fight verified live in-browser on CHIBA
+      (parallax confirmed: mid 480→872 slid bg.x 480→357), RANDOM path drawn
+
 ### Icebox (post-MVP, do not start)
 Remaining roster (Flo, Freeman, Gene, Marzipan) · new characters · single-player
-arcade mode + CPU opponent · super meter/EX moves · stage variety + interactables ·
+arcade mode + CPU opponent · super meter/EX moves · stage interactables ·
 rollback netplay (engine determinism already paid for) · training mode · fatalities
 ("Kombat" earns it) · music generation · mobile/touch.
 
@@ -207,6 +231,16 @@ rollback netplay (engine determinism already paid for) · training mode · fatal
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-02 · assets+scenes · Sprint 10: 10 stages + stage select +
+  parallax** — gen-stage.mjs turns each stage-inspo folder into a 21:9
+  painted stage (all photos as refs); stages.ts registry; `stage` home-stage
+  field in character JSONs; stage-select dialog (RANDOM default, home
+  badges); FightScene parallax slides the extra 300px of 21:9 art opposite
+  the fighters' midpoint; rematch keeps the stage. 41 tests green; verified
+  in-browser. NEW GOTCHA: in the preview browser the Boot loader stalls on
+  the audio tail (list N / inflight 0) — `game.sound.context.resume()` then
+  `bootScene.load.checkLoadQueue()` and pump the loop. *(Claude)*
 
 - **2026-07-02 · engine+assets+ai · Sprint 6** — named multi-specials w/
   conventional motions; fatality pipeline (finisher→cutscene→matchEnd) with
