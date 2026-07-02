@@ -196,15 +196,15 @@ export const CHARACTERS = {
           recovery: 'swinging the leg back down into stance',
         },
         hk: {
-          startup: 'lifting one long leg impossibly high overhead, flexible axe-kick chamber',
-          active: 'axe kick slamming down, heel at the bottom of its arc, red aura streaking behind the leg',
-          recovery: 'leg returning to the ground, settling back into stance',
+          startup: 'balancing on her left leg only, her RIGHT leg (clearly attached at the hip) raised straight up in a flexible axe-kick chamber, knee near her chest, heel above head height',
+          active: 'balancing on her left leg only, her RIGHT leg fully extended finishing a downward axe kick at chest height, red aura streaking behind the heel — exactly ONE foot on the ground',
+          recovery: 'the kicking leg returning to the ground, settling back into stance, both feet planted',
         },
       },
       crouch: {
         lp: {
           active: 'short straight jab snapped out at waist height from the squat',
-          recovery: 'jab arm retracted, still coiled in the squat',
+          recovery: 'jab arm pulled back to her chin, both feet planted flat in the squat',
         },
         mp: {
           active: 'rising uppercut punched diagonally upward out of the squat',
@@ -215,12 +215,12 @@ export const CHARACTERS = {
           recovery: 'arms lowering from overhead, settling back into the squat',
         },
         lk: {
-          active: 'quick kick darting out at ankle height, leg low along the ground',
-          recovery: 'kicking leg pulled back under the body',
+          active: 'squatting on her left leg while her RIGHT leg (clearly attached at the hip) snaps a quick kick forward at ankle height',
+          recovery: 'the kicking leg pulled back beneath her, both feet planted in the squat',
         },
         mk: {
-          active: 'long side kick fully extended at knee height, leg stretched along the ground',
-          recovery: 'extended leg sliding back beneath the body',
+          active: 'squatting on her bent left leg while her RIGHT leg (clearly attached at the hip) is fully extended forward along the ground in a long low side kick',
+          recovery: 'sliding the extended right leg back beneath her body, returning to a compact squat, both feet planted',
         },
         hk: {
           active: 'low spinning slide sweep, both legs extended along the ground mid-rotation',
@@ -233,7 +233,7 @@ export const CHARACTERS = {
         hp: 'double-fist overhead hammer blow swung downward, red aura trailing',
         lk: 'sharp knee strike raised toward the opponent',
         mk: 'side kick extended at a downward angle, body tilted',
-        hk: 'powerful flying roundhouse, long leg fully extended, red aura trail',
+        hk: 'body tilted delivering a powerful flying roundhouse — RIGHT leg fully extended with a red aura trail, LEFT leg tucked beneath her, both legs clearly attached',
       },
       special: {
         startup: 'coiled low in a cossack-squat wind-up, fists clenched, red rage aura igniting',

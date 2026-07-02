@@ -18,7 +18,7 @@ const MODEL = 'gemini-3-pro-image';
 
 const STYLE_BASE = `Art style: hand-painted cel-shaded 2D anime fighter (modern Capcom / Arc System Works aesthetic). Bold clean line art, painterly cel shading, confident silhouette, slightly heroic proportions while keeping the person recognizable.`;
 
-const FRAME_RULES = `Same character as the reference image — identical face, hair, outfit, colors, proportions and art style. EXACTLY ONE person in the image: a single figure, drawn once, in the pose described — never a second copy of the character, never an opponent. Full body visible, same scale and camera distance as the reference image, character centered, facing right. The background MUST be EXACTLY the same solid flat bright chroma-key green (#00B140) as the reference image background — completely uniform green, no other background color is acceptable, no cast shadows, no floor, no text, no watermark, no border.`;
+const FRAME_RULES = `Same character as the reference image — identical face, hair, outfit, colors, proportions and art style. EXACTLY ONE person in the image: a single figure, drawn once, in the pose described — never a second copy of the character, never an opponent. Correct anatomy is CRITICAL: the character has exactly TWO arms and TWO legs, every limb clearly attached to the body — no extra limbs, no floating or disembodied body parts, no duplicated legs or feet. Full body visible, same scale and camera distance as the reference image, character centered, facing right. The background MUST be EXACTLY the same solid flat bright chroma-key green (#00B140) as the reference image background — completely uniform green, no other background color is acceptable, no cast shadows, no floor, no text, no watermark, no border.`;
 
 async function genChar(charId) {
   const spec = CHARACTERS[charId];
@@ -30,18 +30,33 @@ async function genChar(charId) {
   // manifest order (legacy 23-cell or v2 six-button layout)
   const jobs = buildJobs(spec);
 
+  // Low-pose height anchor: the model copies the standing canonical's height
+  // for crouch cells no matter what the text says. Passing an existing LOW
+  // frame of the same character as a second reference fixes it. (Fresh
+  // characters: run the script twice — the sweep/chk cell generates on pass
+  // one and anchors the crouch family on pass two.)
+  const lowAnchorName = jobs
+    .map((j, i) => ({ ...j, i }))
+    .find((j) => /(^|-)(chk|sweep)-active$/.test(j.id));
+  const lowRefPath = lowAnchorName
+    ? join(outDir, `${String(lowAnchorName.i).padStart(2, '0')}-${lowAnchorName.id}.png`)
+    : null;
+  const LOW_ANCHOR = ` CRITICAL: copy the BODY HEIGHT of the SECOND reference image (the low pose) — the top of the head at that same low height, empty green above.`;
+  const isLowCell = (id) => id === 'crouch' || id === 'block-crouch' || /^c[lmh][pk]-/.test(id);
+
   for (let i = 0; i < jobs.length; i++) {
     const { id, pose } = jobs[i];
     const out = join(outDir, `${String(i).padStart(2, '0')}-${id}.png`);
     if (skip(out, force)) continue;
-    const prompt = `${STYLE_BASE}\n${FRAME_RULES}\nPose: ${pose}.`;
-    console.log(`[${charId}] ${i + 1}/${jobs.length} ${id} ...`);
+    const useAnchor = isLowCell(id) && lowRefPath && existsSync(lowRefPath);
+    const prompt = `${STYLE_BASE}\n${FRAME_RULES}\nPose: ${pose}.${useAnchor ? LOW_ANCHOR : ''}`;
+    console.log(`[${charId}] ${i + 1}/${jobs.length} ${id}${useAnchor ? ' (low-anchored)' : ''} ...`);
     try {
       const buf = await geminiImage({
         apiKey: env.GEMINI_API_KEY,
         model: MODEL,
         prompt,
-        referencePaths: [canonical],
+        referencePaths: useAnchor ? [canonical, lowRefPath] : [canonical],
         aspectRatio: '3:4',
       });
       saveAsset(out, buf, prompt);
