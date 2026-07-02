@@ -24,18 +24,34 @@ export class MenuScene extends Phaser.Scene {
         fontFamily: 'monospace', fontSize: '16px', color: '#e8dcc8', stroke: '#000', strokeThickness: 3,
       })
       .setOrigin(0.5);
-    const prompt = this.add
-      .text(STAGE_W / 2, 392, '1 · VS CPU\n\n2 · TWO PLAYERS\n\n3 · TRAINING', {
-        fontFamily: 'monospace', fontSize: '26px', fontStyle: 'bold', color: '#f5ead9',
-        stroke: '#000', strokeThickness: 6, align: 'center',
-      })
-      .setOrigin(0.5);
-    this.tweens.add({ targets: prompt, alpha: 0.4, duration: 600, yoyo: true, repeat: -1 });
-
     const go = (cpu: boolean, training = false) => {
       play(this, 's-blip');
       this.scene.start('Select', { cpu, training });
     };
+
+    // clickable menu buttons (mouse) — also 1/2/3 hotkeys + ENTER
+    const opts: { label: string; act: () => void }[] = [
+      { label: '1 · VS CPU', act: () => go(true) },
+      { label: '2 · TWO PLAYERS', act: () => go(false) },
+      { label: '3 · TRAINING', act: () => go(false, true) },
+    ];
+    opts.forEach((o, i) => {
+      const y = 370 + i * 56;
+      const bg = this.add
+        .rectangle(STAGE_W / 2, y, 340, 46, 0x241b2e, 0.85)
+        .setStrokeStyle(2, 0x7a6a86)
+        .setInteractive({ useHandCursor: true });
+      const label = this.add
+        .text(STAGE_W / 2, y, o.label, {
+          fontFamily: 'monospace', fontSize: '24px', fontStyle: 'bold', color: '#f5ead9',
+          stroke: '#000', strokeThickness: 5,
+        })
+        .setOrigin(0.5);
+      bg.on('pointerover', () => { bg.setFillStyle(0x3a2b40, 0.95).setStrokeStyle(2, 0xffb347); label.setColor('#ffd24a'); });
+      bg.on('pointerout', () => { bg.setFillStyle(0x241b2e, 0.85).setStrokeStyle(2, 0x7a6a86); label.setColor('#f5ead9'); });
+      bg.on('pointerdown', o.act);
+    });
+
     this.input.keyboard!.on('keydown-ONE', () => go(true));
     this.input.keyboard!.on('keydown-TWO', () => go(false));
     this.input.keyboard!.on('keydown-THREE', () => go(false, true));

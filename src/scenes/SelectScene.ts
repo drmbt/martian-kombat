@@ -62,7 +62,7 @@ export class SelectScene extends Phaser.Scene {
 
     ROSTER.forEach((entry, i) => {
       const { x, y } = this.cellXY(i);
-      this.add.rectangle(x, y, CELL - 8, CELL - 8, 0x14101a, 0.85).setStrokeStyle(2, 0x594566);
+      const cellBg = this.add.rectangle(x, y, CELL - 8, CELL - 8, 0x14101a, 0.85).setStrokeStyle(2, 0x594566);
       if (this.textures.exists(`portrait-${entry.id}`)) {
         const img = this.add.image(x, y, `portrait-${entry.id}`).setDisplaySize(CELL - 14, CELL - 14);
         if (!entry.playable) img.setAlpha(0.3).setTint(0x777799);
@@ -73,6 +73,20 @@ export class SelectScene extends Phaser.Scene {
           stroke: '#000', strokeThickness: 3,
         })
         .setOrigin(0.5);
+      // mouse: hovering moves the active cursor here; clicking confirms it
+      cellBg.setInteractive({ useHandCursor: entry.playable });
+      cellBg.on('pointerover', () => {
+        if (this.stageMode) return;
+        const p = this.cpu || this.training ? (this.confirmed[0] ? 1 : 0) : 0;
+        if (!this.confirmed[p] && !this.starting) this.idx[p] = i;
+      });
+      cellBg.on('pointerdown', () => {
+        if (this.stageMode) return;
+        const p = this.cpu || this.training ? (this.confirmed[0] ? 1 : 0) : 0;
+        if (this.confirmed[p] || this.starting) return;
+        this.idx[p] = i;
+        this.confirm(p);
+      });
     });
 
     this.cursors = this.add.graphics();
@@ -178,7 +192,10 @@ export class SelectScene extends Phaser.Scene {
     const font = { fontFamily: 'monospace', stroke: '#000', strokeThickness: 3 };
     this.stageOptions().forEach((opt, i) => {
       const { x, y } = this.stageCellXY(i);
-      this.add.rectangle(x, y - 8, THUMB_W, THUMB_H, 0x14101a, 1).setStrokeStyle(1, 0x594566).setDepth(11);
+      const tile = this.add.rectangle(x, y - 8, THUMB_W, THUMB_H, 0x14101a, 1).setStrokeStyle(1, 0x594566).setDepth(11);
+      tile.setInteractive({ useHandCursor: true });
+      tile.on('pointerover', () => { this.stageIdx = i; });
+      tile.on('pointerdown', () => { this.stageIdx = i; this.confirmStage(); });
       if (opt.id === 'random') {
         this.add.text(x, y - 8, '?', { ...font, fontSize: '44px', fontStyle: 'bold', color: '#ffd24a' })
           .setOrigin(0.5).setDepth(12);
@@ -238,7 +255,8 @@ export class SelectScene extends Phaser.Scene {
   }
 
   update(): void {
-    this.redraw();
+    if (this.stageMode) this.redrawStage();
+    else this.redraw();
   }
 
   private redraw(): void {

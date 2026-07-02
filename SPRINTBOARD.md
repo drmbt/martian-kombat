@@ -220,6 +220,22 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
 - [x] 41 tests green; select→dialog→fight verified live in-browser on CHIBA
       (parallax confirmed: mid 480→872 slid bg.x 480→357), RANDOM path drawn
 
+### Sprint 10 — UI polish: pause menu, mouse/touch, scrollable moves (user-directed)
+- [x] On-screen controls (`src/input/touch.ts`): translucent d-pad + 6 attack
+      buttons for P1, multi-touch (hold direction + press button at once),
+      OR-merged into P1 input. F3 hides; auto-hidden while paused / non-fight.
+      `activePointers: 4` enabled in main.ts.
+- [x] ESC pause is now a real menu: RESUME / RESTART / CHARACTER SELECT /
+      MAIN MENU — clickable (mouse) + keyboard; verified via Phaser hitTest.
+- [x] Move list no longer overflows: two word-wrapped columns clipped by a
+      geometry mask, mouse-wheel scroll when a kit grows past the panel.
+- [x] Menu + Select scenes clickable with the mouse (hover-highlight + click);
+      character portraits and stage tiles are pick targets. Keyboard still works.
+- [x] Debug overlays (move log / input ticker) moved to the upper corners so
+      the bottom on-screen pad stays clear. 43 tests green; prod build clean.
+- Note: dev server serves index.html for unbuilt-character asset requests,
+  which can hang Phaser's loader in `npm run dev` (prod 404s load fine).
+
 ### Icebox (post-MVP, do not start)
 Remaining roster (Flo, Freeman, Gene, Marzipan) · new characters · single-player
 arcade mode + CPU opponent · super meter/EX moves · stage interactables ·

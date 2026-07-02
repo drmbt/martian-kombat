@@ -11,7 +11,8 @@ const game = new Phaser.Game({
   width: STAGE_W,
   height: STAGE_H,
   backgroundColor: '#0c0910',
-  input: { gamepad: true },
+  // activePointers: 4 so a touch d-pad + attack button can be held at once
+  input: { gamepad: true, activePointers: 4, mouse: { preventDefaultWheel: false } },
   scene: [BootScene, MenuScene, SelectScene, FightScene],
   scale: {
     mode: Phaser.Scale.FIT,

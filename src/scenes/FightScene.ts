@@ -21,6 +21,7 @@ import {
 } from '../engine';
 import { characters } from '../data/characters';
 import { KeyboardSource } from '../input/keyboard';
+import { TouchControls } from '../input/touch';
 import { CpuDriver } from '../ai/bot';
 import { play } from './BootScene';
 
@@ -76,9 +77,12 @@ export class FightScene extends Phaser.Scene {
   private cellMaps: [Map<string, number>, Map<string, number>] = [new Map(), new Map()];
   private paused = false;
   private pauseOverlay!: Phaser.GameObjects.Container;
+  private pauseScroll: { txt: Phaser.GameObjects.Text; top: number; maxScroll: number; scroll: number }[] = [];
   private cpu = false;
   private training = false;
   private bot: CpuDriver | null = null;
+  private touch: TouchControls | null = null;
+  private touchWanted = true;
   private fatalityPanel: Phaser.GameObjects.Image | null = null;
   private moveLogOn = false;
   private moveLog: string[] = [];
@@ -170,28 +174,29 @@ export class FightScene extends Phaser.Scene {
       .setOrigin(1, 0)
       .setDepth(6);
     this.add
-      .text(STAGE_W / 2, STAGE_H - 14, 'P1: WASD + RTY punches FGH kicks   P2: ARROWS + UIO punches JKL kicks   ESC move list · F2 move log', {
-        ...font, fontSize: '12px', color: '#e8dcc8', stroke: '#000', strokeThickness: 3,
+      .text(STAGE_W / 2, STAGE_H - 14, 'WASD/RTY/FGH · ARROWS/UIO/JKL · mouse/touch on-screen · ESC menu · F2 log · F3 hide pad', {
+        ...font, fontSize: '11px', color: '#e8dcc8', stroke: '#000', strokeThickness: 3,
       })
       .setOrigin(0.5)
       .setDepth(6);
 
+    // overlays live in the upper corners so the bottom on-screen pad is clear
     this.moveLogText = this.add
-      .text(16, STAGE_H - 40, '', {
+      .text(16, 96, '', {
         fontFamily: 'monospace', fontSize: '13px', color: '#9ef7a0',
         stroke: '#000', strokeThickness: 3, lineSpacing: 3,
       })
-      .setOrigin(0, 1)
+      .setOrigin(0, 0)
       .setDepth(6);
     this.inputHist = [[], []];
     this.inputHistTexts = [0, 1].map((slot) =>
       this.add
-        .text(STAGE_W - 16, STAGE_H - 60 + slot * 20, '', {
+        .text(STAGE_W - 16, 96 + slot * 22, '', {
           fontFamily: 'monospace', fontSize: '15px',
           color: slot === 0 ? '#58e6d9' : '#ff8a7a',
           stroke: '#000', strokeThickness: 3,
         })
-        .setOrigin(1, 1)
+        .setOrigin(1, 0)
         .setDepth(6),
     );
 
@@ -204,7 +209,13 @@ export class FightScene extends Phaser.Scene {
         .setDepth(6);
     }
 
+    // on-screen controls drive P1 (browser mouse/touch play); F3 hides them
+    this.touch = new TouchControls(this, STAGE_W, STAGE_H);
     this.buildPauseOverlay();
+    this.input.keyboard!.on('keydown-F3', () => {
+      this.touchWanted = !this.touchWanted;
+      this.touch?.setVisible(this.touchWanted && !this.paused);
+    });
     this.input.keyboard!.on('keydown-F2', () => {
       this.moveLogOn = !this.moveLogOn;
       if (!this.moveLogOn) {
@@ -212,20 +223,37 @@ export class FightScene extends Phaser.Scene {
         for (const t of this.inputHistTexts) t.setText('');
       }
     });
-    this.input.keyboard!.on('keydown-ESC', () => {
-      this.paused = !this.paused;
-      this.pauseOverlay.setVisible(this.paused);
-    });
+    this.input.keyboard!.on('keydown-ESC', () => this.togglePause());
     this.input.keyboard!.on('keydown-F1', () => (this.debugBoxes = !this.debugBoxes));
     this.input.keyboard!.on('keydown-R', () => {
-      if (this.state.phase === 'matchEnd') this.scene.restart({ p1: this.chars[0], p2: this.chars[1], cpu: this.cpu, stage: this.stageId });
+      if (this.state.phase === 'matchEnd') this.restartMatch();
     });
     this.input.keyboard!.on('keydown-ENTER', () => {
-      if (this.training) this.scene.start('Select', { training: true });
-      else if (this.state.phase === 'matchEnd') this.scene.start('Select', { cpu: this.cpu });
+      if (this.training) this.toCharacterSelect();
+      else if (this.state.phase === 'matchEnd') this.toCharacterSelect();
     });
 
     play(this, 'ann-round-1');
+  }
+
+  // ---------- pause / navigation ----------
+
+  private togglePause(): void {
+    this.paused = !this.paused;
+    this.pauseOverlay.setVisible(this.paused);
+    this.touch?.setVisible(!this.paused && this.touchWanted);
+  }
+
+  private restartMatch(): void {
+    this.scene.restart({ p1: this.chars[0], p2: this.chars[1], cpu: this.cpu, training: this.training, stage: this.stageId });
+  }
+
+  private toCharacterSelect(): void {
+    this.scene.start('Select', { cpu: this.cpu, training: this.training });
+  }
+
+  private toMainMenu(): void {
+    this.scene.start('Menu');
   }
 
   update(_time: number, deltaMs: number): void {
@@ -238,6 +266,10 @@ export class FightScene extends Phaser.Scene {
     while (this.accumulator >= TICK_MS) {
       const snap = this.snapshot();
       const p1 = this.inputs.poll(0);
+      if (this.touch) {
+        const t = this.touch.poll(); // OR-merge on-screen controls into P1
+        for (const k of Object.keys(t) as (keyof InputFrame)[]) if (t[k]) p1[k] = true;
+      }
       const p2 = this.bot ? this.bot.poll(this.state) : this.inputs.poll(1);
       step(this.state, [p1, p2], characters);
       if (this.training) this.trainingUpkeep();
@@ -475,6 +507,9 @@ export class FightScene extends Phaser.Scene {
     const gU = this.gfxUnder;
     gU.clear();
     this.gfxHud.clear();
+
+    // hide on-screen controls during the cutscene and any non-fight phase
+    this.touch?.setVisible(this.touchWanted && !this.paused && s.phase === 'fight');
 
     if (s.phase === 'fatality' && s.fatality) {
       this.drawFatality();
@@ -750,31 +785,89 @@ export class FightScene extends Phaser.Scene {
 
   private buildPauseOverlay(): void {
     const font = { fontFamily: 'monospace', color: '#f5ead9' };
-    const panel = this.add
-      .rectangle(STAGE_W / 2, STAGE_H / 2, STAGE_W - 70, STAGE_H - 60, 0x0c0910, 0.94)
-      .setStrokeStyle(2, 0x594566);
-    const title = this.add
-      .text(STAGE_W / 2, 62, 'PAUSED — MOVE LIST', { ...font, fontSize: '26px', fontStyle: 'bold' })
-      .setOrigin(0.5);
-    const colL = this.add.text(80, 100, this.moveListText(0), { ...font, fontSize: '13px', lineSpacing: 5 });
-    const colR = this.add.text(STAGE_W / 2 + 40, 100, this.moveListText(1), { ...font, fontSize: '13px', lineSpacing: 5 });
-    const controls = this.add
-      .text(
-        STAGE_W / 2,
-        STAGE_H - 92,
-        'P1  WASD move · R/T/Y punches · F/G/H kicks        P2  ARROWS move · U/I/O punches · J/K/L kicks\n' +
-          'special: ↓ ↘ → + any punch      pads: X/Y/RB punches · A/B/RT kicks',
-        { ...font, fontSize: '13px', color: '#e8dcc8', align: 'center', lineSpacing: 6 },
-      )
-      .setOrigin(0.5);
-    const foot = this.add
-      .text(STAGE_W / 2, STAGE_H - 48, 'ESC resume · F1 hitbox debug (yellow startup / red active / grey recovery)', {
-        ...font, fontSize: '12px', color: '#9a8fa8',
-      })
-      .setOrigin(0.5);
-    this.pauseOverlay = this.add
-      .container(0, 0, [panel, title, colL, colR, controls, foot])
-      .setDepth(10)
-      .setVisible(false);
+    const PW = STAGE_W - 70;
+    const PH = STAGE_H - 60;
+    const px = 35; // panel left
+    const py = 30; // panel top
+    const items: Phaser.GameObjects.GameObject[] = [];
+
+    items.push(
+      this.add.rectangle(STAGE_W / 2, STAGE_H / 2, PW, PH, 0x0c0910, 0.95).setStrokeStyle(2, 0x594566),
+    );
+    items.push(
+      this.add.text(STAGE_W / 2, py + 26, 'PAUSED', { ...font, fontSize: '26px', fontStyle: 'bold' }).setOrigin(0.5),
+    );
+
+    // --- menu buttons row (clickable + keyboard) ---
+    const menu: { label: string; act: () => void }[] = [
+      { label: 'RESUME', act: () => this.togglePause() },
+      { label: 'RESTART', act: () => this.restartMatch() },
+      { label: 'CHARACTER SELECT', act: () => this.toCharacterSelect() },
+      { label: 'MAIN MENU', act: () => this.toMainMenu() },
+    ];
+    const btnY = py + 66;
+    const gap = 14;
+    const btnW = (PW - 40 - gap * (menu.length - 1)) / menu.length;
+    menu.forEach((mi, i) => {
+      const bx = px + 20 + i * (btnW + gap) + btnW / 2;
+      const bg = this.add
+        .rectangle(bx, btnY, btnW, 40, 0x241b2e, 1)
+        .setStrokeStyle(2, 0x7a6a86)
+        .setInteractive({ useHandCursor: true });
+      const label = this.add
+        .text(bx, btnY, mi.label, { ...font, fontSize: '14px', fontStyle: 'bold' })
+        .setOrigin(0.5);
+      bg.on('pointerover', () => bg.setFillStyle(0x3a2b40).setStrokeStyle(2, 0xffb347));
+      bg.on('pointerout', () => bg.setFillStyle(0x241b2e).setStrokeStyle(2, 0x7a6a86));
+      bg.on('pointerdown', () => { play(this, 's-blip', 0.5); mi.act(); });
+      items.push(bg, label);
+    });
+
+    // --- move-list columns, contained + wheel-scrollable ---
+    const listTop = py + 100;
+    const listBottom = py + PH - 44;
+    const listH = listBottom - listTop;
+    const colW = (PW - 60) / 2;
+    const colX = [px + 20, px + 20 + colW + 20];
+    this.pauseScroll = [];
+    for (const slot of [0, 1] as const) {
+      const x = colX[slot];
+      const txt = this.add.text(x, listTop, this.moveListText(slot), {
+        ...font, fontSize: '13px', lineSpacing: 5, wordWrap: { width: colW - 8 },
+      });
+      const mask = this.add
+        .rectangle(x + colW / 2, listTop + listH / 2, colW, listH, 0x000000, 0)
+        .setVisible(false);
+      txt.setMask(mask.createGeometryMask());
+      const state = { txt, top: listTop, maxScroll: Math.max(0, txt.height - listH), scroll: 0 };
+      this.pauseScroll.push(state);
+      // wheel over this column scrolls it
+      mask.setInteractive(
+        new Phaser.Geom.Rectangle(x, listTop, colW, listH),
+        Phaser.Geom.Rectangle.Contains,
+      );
+      mask.on('wheel', (_p: unknown, _dx: number, dy: number) => {
+        state.scroll = Phaser.Math.Clamp(state.scroll + dy * 0.5, 0, state.maxScroll);
+        txt.setY(listTop - state.scroll);
+      });
+      if (state.maxScroll > 0) {
+        items.push(
+          this.add.text(x + colW - 4, listBottom + 2, '▼ scroll', {
+            ...font, fontSize: '10px', color: '#9a8fa8',
+          }).setOrigin(1, 0),
+        );
+      }
+      items.push(txt, mask);
+    }
+
+    items.push(
+      this.add
+        .text(STAGE_W / 2, py + PH - 20, 'ESC resume · F1 hitboxes · F2 move log · F3 on-screen controls', {
+          ...font, fontSize: '11px', color: '#9a8fa8',
+        })
+        .setOrigin(0.5),
+    );
+
+    this.pauseOverlay = this.add.container(0, 0, items).setDepth(10).setVisible(false);
   }
 }
