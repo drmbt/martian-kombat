@@ -15,6 +15,16 @@ const force = process.argv.includes('--force');
 // inter-cell dependency; legacy sheets need the low-pose anchor generated
 // first (handled below), so the pool only ever covers already-safe cells.
 const CONCURRENCY = concurrencyArg(6);
+// Targeted QA re-rolls: `--cells lk-startup,27-hk-active,...` regenerates ONLY
+// those cells (accepts the bare cell id or the `NN-id` filename stem, with or
+// without `.png`) and force-overwrites them, leaving every other cell untouched.
+const CELLS = (() => {
+  const i = process.argv.indexOf('--cells');
+  if (i < 0) return null;
+  return new Set(
+    process.argv[i + 1].split(',').map((s) => s.trim().replace(/\.png$/, '').replace(/^\d\d-/, '')),
+  );
+})();
 // pro, not flash: flash drifts the background color toward the character's
 // palette (Vincent's all-black kit came back on navy) and fumbles non-standing
 // poses; pro respected both in the style tests
@@ -50,8 +60,9 @@ async function genChar(charId) {
 
   const genCell = async (i) => {
     const { id, pose } = jobs[i];
+    if (CELLS && !CELLS.has(id)) return; // targeted re-roll: only the named cells
     const out = join(outDir, `${String(i).padStart(2, '0')}-${id}.png`);
-    if (skip(out, force)) return;
+    if (skip(out, force || CELLS !== null)) return; // named cells always regen
     const useAnchor = isLowCell(id) && lowRefPath && existsSync(lowRefPath);
     // per-character invariant (e.g. Catherine's bo staff in EVERY frame)
     const always = spec.always ? ` ${spec.always}` : '';
@@ -79,7 +90,8 @@ async function genChar(charId) {
   await pool(rest, CONCURRENCY, genCell);
 
   // one art file per projectile-throwing special: projectile-<move-id>.png
-  const projJobs = Object.entries(spec.extra?.projectiles ?? {});
+  // (skipped entirely during a targeted --cells re-roll)
+  const projJobs = CELLS ? [] : Object.entries(spec.extra?.projectiles ?? {});
   await pool(projJobs, CONCURRENCY, async ([pid, proj]) => {
     const out = join(outDir, `projectile-${pid}.png`);
     if (skip(out, force)) return;

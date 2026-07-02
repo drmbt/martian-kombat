@@ -338,6 +338,14 @@ rollback netplay (engine determinism already paid for) · training mode · fatal
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-02 · tools+assets · Freeman frame QA re-rolls** — added a `--cells`
+  targeted-regen flag to `gen-frames.mjs` (regenerates ONLY the named cells —
+  bare id or `NN-id` stem — force-overwriting, anchor-first still honored,
+  projectiles skipped). Re-rolled 5 Freeman cells flagged for extra-limb /
+  double-body artifacts (lk-startup, hk-active, clp-recovery, cmp-recovery,
+  clk-active), user-QA'd, repacked the 8×7 sheet (alpha verified). Restored an
+  unvetted `45-jmk.png` to the committed version first. *(Claude)*
+
 - **2026-07-02 · tools+assets+data · Sprint 13: pipeline concurrency + Freeman** —
   Parallelized the gen pipeline: `lib.mjs` `pool()`/`concurrencyArg()`,
   `gen-frames.mjs` fans cells out (anchor-first, default conc 6), `gen-audio.mjs`
