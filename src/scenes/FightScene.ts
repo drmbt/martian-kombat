@@ -1,6 +1,6 @@
-// Renders engine state. Uses generated sprite sheets + stage art when the
-// assets exist, and falls back to placeholder capsules for characters whose
-// sheets haven't been generated yet. The scene owns NO game logic.
+// Renders engine state and plays presentation (sprites, HUD, audio). All
+// audio/vfx are derived by diffing engine state before/after each tick —
+// the deterministic core in src/engine/ stays pure and silent.
 import Phaser from 'phaser';
 import {
   FLOOR_Y,
@@ -16,9 +16,7 @@ import {
 } from '../engine';
 import { characters } from '../data/characters';
 import { KeyboardSource } from '../input/keyboard';
-
-const P1_CHAR = 'vincent';
-const P2_CHAR = 'yulia';
+import { play } from './BootScene';
 
 // Cell layout is a contract with tools/frames-manifest.mjs — never reorder.
 const CELL_W = 288;
@@ -29,6 +27,9 @@ const CELL = {
 } as const;
 const MOVE_BASE: Record<string, number> = { light: 11, heavy: 14, sweep: 17, special: 20 };
 
+const BAR_W = 320;
+const BAR_X1 = 100;
+
 interface Spark {
   x: number;
   y: number;
@@ -36,40 +37,48 @@ interface Spark {
   color: number;
 }
 
+interface TickSnapshot {
+  phase: GameState['phase'];
+  kinds: [string, string];
+  healths: [number, number];
+  projectiles: number;
+}
+
 export class FightScene extends Phaser.Scene {
+  private chars: [string, string] = ['vincent', 'yulia'];
   private state!: GameState;
   private inputs!: KeyboardSource;
-  private gfxUnder!: Phaser.GameObjects.Graphics; // shadows, capsule fallback
-  private gfxHud!: Phaser.GameObjects.Graphics; // bars, sparks, debug boxes
+  private gfxUnder!: Phaser.GameObjects.Graphics;
+  private gfxHud!: Phaser.GameObjects.Graphics;
   private fighterSprites: (Phaser.GameObjects.Sprite | null)[] = [null, null];
   private projSprites: Phaser.GameObjects.Image[] = [];
   private msgText!: Phaser.GameObjects.Text;
   private timerText!: Phaser.GameObjects.Text;
+  private comboText!: Phaser.GameObjects.Text;
   private hasBg = false;
   private accumulator = 0;
   private debugBoxes = false;
   private sparks: Spark[] = [];
-  private prevHealth: [number, number] = [0, 0];
+  private comboHits = 0;
+  private comboTicks = 0;
 
   constructor() {
     super('Fight');
   }
 
-  preload(): void {
-    this.load.image('bg-salton', 'assets/backgrounds/salton-shoreline.jpg');
-    for (const id of [P1_CHAR, P2_CHAR]) {
-      this.load.spritesheet(`sheet-${id}`, `assets/sprites/${id}/sheet.png`, {
-        frameWidth: CELL_W,
-        frameHeight: CELL_H,
-      });
-      this.load.image(`proj-${id}`, `assets/sprites/${id}/projectile.png`);
-    }
+  init(data: { p1?: string; p2?: string }): void {
+    this.chars = [data.p1 ?? 'vincent', data.p2 ?? 'yulia'];
   }
 
   create(): void {
-    this.state = initialState(P1_CHAR, P2_CHAR, characters);
-    this.prevHealth = [this.state.fighters[0].health, this.state.fighters[1].health];
+    this.state = initialState(this.chars[0], this.chars[1], characters);
     this.inputs = new KeyboardSource(this);
+    this.fighterSprites = [null, null];
+    this.projSprites = [];
+    this.sparks = [];
+    this.accumulator = 0;
+    this.comboHits = 0;
+    this.comboTicks = 0;
 
     this.hasBg = this.textures.exists('bg-salton');
     if (this.hasBg) {
@@ -79,11 +88,19 @@ export class FightScene extends Phaser.Scene {
     this.gfxHud = this.add.graphics().setDepth(5);
 
     for (const slot of [0, 1] as const) {
-      const id = this.state.fighters[slot].charId;
+      const id = this.chars[slot];
       if (this.textures.exists(`sheet-${id}`)) {
         this.fighterSprites[slot] = this.add.sprite(0, 0, `sheet-${id}`, 0).setOrigin(0.5, 0.95).setDepth(2);
       }
+      // HUD portrait
+      if (this.textures.exists(`portrait-${id}`)) {
+        const px = slot === 0 ? 68 : STAGE_W - 68;
+        this.add.image(px, 46, `portrait-${id}`).setDisplaySize(48, 48).setDepth(6).setFlipX(slot === 1);
+        this.gfxHud; // portraits framed in drawHud
+      }
     }
+    // mirror-match: tint P2 so the twins are tellable-apart
+    if (this.chars[0] === this.chars[1]) this.fighterSprites[1]?.setTint(0xffb0a0);
 
     const font = { fontFamily: 'monospace', color: '#f5ead9' };
     this.msgText = this.add
@@ -95,13 +112,19 @@ export class FightScene extends Phaser.Scene {
       .text(STAGE_W / 2, 38, '99', { ...font, fontSize: '36px', fontStyle: 'bold', stroke: '#000', strokeThickness: 5 })
       .setOrigin(0.5)
       .setDepth(6);
-    this.add.text(40, 58, characters[P1_CHAR].name, { ...font, fontSize: '14px', stroke: '#000', strokeThickness: 3 }).setDepth(6);
+    this.comboText = this.add
+      .text(0, 130, '', { ...font, fontSize: '30px', fontStyle: 'bold', color: '#ffd24a', stroke: '#000', strokeThickness: 6 })
+      .setOrigin(0.5)
+      .setDepth(6);
     this.add
-      .text(STAGE_W - 40, 58, characters[P2_CHAR].name, { ...font, fontSize: '14px', stroke: '#000', strokeThickness: 3 })
+      .text(120, 58, characters[this.chars[0]].name, { ...font, fontSize: '14px', stroke: '#000', strokeThickness: 3 })
+      .setDepth(6);
+    this.add
+      .text(STAGE_W - 120, 58, characters[this.chars[1]].name, { ...font, fontSize: '14px', stroke: '#000', strokeThickness: 3 })
       .setOrigin(1, 0)
       .setDepth(6);
     this.add
-      .text(STAGE_W / 2, STAGE_H - 14, 'P1: WASD+F/G/H   P2: ARROWS+K/L/;   S+G sweep   F1 hitboxes   R rematch', {
+      .text(STAGE_W / 2, STAGE_H - 14, 'P1: WASD+F/G/H   P2: ARROWS+K/L/;   R rematch   ENTER character select', {
         ...font, fontSize: '12px', color: '#e8dcc8', stroke: '#000', strokeThickness: 3,
       })
       .setOrigin(0.5)
@@ -109,34 +132,94 @@ export class FightScene extends Phaser.Scene {
 
     this.input.keyboard!.on('keydown-F1', () => (this.debugBoxes = !this.debugBoxes));
     this.input.keyboard!.on('keydown-R', () => {
-      if (this.state.phase === 'matchEnd') {
-        this.state = initialState(P1_CHAR, P2_CHAR, characters);
-        this.prevHealth = [this.state.fighters[0].health, this.state.fighters[1].health];
-        this.sparks = [];
-      }
+      if (this.state.phase === 'matchEnd') this.scene.restart({ p1: this.chars[0], p2: this.chars[1] });
     });
+    this.input.keyboard!.on('keydown-ENTER', () => {
+      if (this.state.phase === 'matchEnd') this.scene.start('Select');
+    });
+
+    play(this, 'ann-round-1');
   }
 
   update(_time: number, deltaMs: number): void {
     // fixed timestep: rendering fps may vary, simulation never does
     this.accumulator += Math.min(deltaMs, 100);
     while (this.accumulator >= TICK_MS) {
+      const snap = this.snapshot();
       step(this.state, [this.inputs.poll(0), this.inputs.poll(1)], characters);
       this.accumulator -= TICK_MS;
-      this.detectHits();
+      this.presentTick(snap);
     }
     this.draw();
   }
 
-  private detectHits(): void {
+  private snapshot(): TickSnapshot {
+    const [a, b] = this.state.fighters;
+    return {
+      phase: this.state.phase,
+      kinds: [a.action.kind, b.action.kind],
+      healths: [a.health, b.health],
+      projectiles: this.state.projectiles.length,
+    };
+  }
+
+  /** Diff pre/post tick state into sounds, sparks, and combo bookkeeping. */
+  private presentTick(prev: TickSnapshot): void {
+    const s = this.state;
+
+    // announcer cues
+    if (s.phase === 'intro' && s.phaseFrame === 1 && s.tick > 1) {
+      play(this, s.roundNumber === 2 ? 'ann-round-2' : 'ann-final-round');
+    }
+    if (s.phase === 'intro' && s.phaseFrame === Math.floor(INTRO_TICKS * 0.6)) {
+      play(this, 'ann-fight', 1);
+    }
+    if (prev.phase === 'fight' && s.phase === 'roundEnd') {
+      if (s.timer <= 0) play(this, 'ann-time-up');
+      else if (s.roundWinner === null) play(this, 'ann-double-ko');
+      else {
+        play(this, 'ann-ko', 1);
+        const w = s.fighters[s.roundWinner];
+        if (w.health === characters[w.charId].health) {
+          this.time.delayedCall(800, () => play(this, 'ann-perfect'));
+        }
+      }
+    }
+    if (prev.phase === 'roundEnd' && s.phase === 'matchEnd' && s.roundWinner !== null) {
+      play(this, `ann-${s.fighters[s.roundWinner].charId}`, 1);
+      this.time.delayedCall(900, () => play(this, 'ann-victory', 1));
+    }
+
+    // per-fighter transitions
     for (const slot of [0, 1] as const) {
-      const f = this.state.fighters[slot];
-      if (f.health < this.prevHealth[slot]) {
+      const f = s.fighters[slot];
+      const kind = f.action.kind;
+      const was = prev.kinds[slot];
+      const other = slot === 0 ? 1 : 0;
+
+      if (f.health < prev.healths[slot]) {
+        play(this, 's-hit');
+        play(this, `v-${f.charId}-hurt`, 0.7);
         this.sparks.push({ x: f.x + f.facing * -20, y: f.y - 150, life: 12, color: 0xfff06e });
         this.cameras.main.shake(60, 0.004);
+        // combo: consecutive hits while the defender never left stun
+        this.comboHits = was === 'hitstun' || was === 'airHit' ? this.comboHits + 1 : 1;
+        this.comboTicks = 90;
+        if (this.comboHits >= 2) {
+          this.comboText.setX(s.fighters[other].x).setText(`${this.comboHits} HITS`);
+        }
       }
-      this.prevHealth[slot] = f.health;
+      if (kind === 'blockstun' && was !== 'blockstun') play(this, 's-block', 0.6);
+      if (kind === 'attack' && was !== 'attack') {
+        play(this, 's-whoosh', 0.4);
+        if (f.action.moveId === 'special') play(this, `v-${f.charId}-kiai`, 0.8);
+      }
+      if (kind === 'air' && was === 'prejump') play(this, 's-jump', 0.35);
     }
+
+    if (s.projectiles.length > prev.projectiles) play(this, 's-projectile', 0.6);
+
+    if (this.comboTicks > 0 && --this.comboTicks === 0) this.comboHits = 0;
   }
 
   /** engine action -> sheet cell (contract with tools/frames-manifest.mjs) */
@@ -168,9 +251,8 @@ export class FightScene extends Phaser.Scene {
   private draw(): void {
     const s = this.state;
     const gU = this.gfxUnder;
-    const gH = this.gfxHud;
     gU.clear();
-    gH.clear();
+    this.gfxHud.clear();
 
     if (!this.hasBg) {
       gU.fillStyle(0x241b2e, 1).fillRect(0, 0, STAGE_W, STAGE_H);
@@ -191,16 +273,17 @@ export class FightScene extends Phaser.Scene {
         sprite.setFlipX(f.facing === -1);
         sprite.setFrame(this.actionToCell(f));
         const k = f.action.kind;
+        const mirrorTint = this.chars[0] === this.chars[1] && slot === 1 ? 0xffb0a0 : undefined;
         if (k === 'hitstun' || (k === 'airHit' && f.action.frame < 6)) sprite.setTintFill(0xffffff);
         else if (k === 'blockstun') sprite.setTint(0xaaaaff);
         else if (k === 'ko' || k === 'knockdown') sprite.setTint(0x9a9a9a);
+        else if (mirrorTint) sprite.setTint(mirrorTint);
         else sprite.clearTint();
       } else {
         this.drawCapsule(slot);
       }
     }
 
-    // projectiles
     while (this.projSprites.length < s.projectiles.length) {
       this.projSprites.push(this.add.image(0, 0, '__DEFAULT').setDepth(2));
     }
@@ -222,11 +305,13 @@ export class FightScene extends Phaser.Scene {
       }
     });
 
-    // sparks
     this.sparks = this.sparks.filter((sp) => --sp.life > 0);
     for (const sp of this.sparks) {
-      gH.fillStyle(sp.color, sp.life / 12).fillCircle(sp.x, sp.y, 26 - sp.life);
+      this.gfxHud.fillStyle(sp.color, sp.life / 12).fillCircle(sp.x, sp.y, 26 - sp.life);
     }
+
+    this.comboText.setVisible(this.comboHits >= 2 && this.comboTicks > 0);
+    this.comboText.setAlpha(Math.min(1, this.comboTicks / 30));
 
     if (this.debugBoxes) this.drawDebug();
     this.drawHud();
@@ -291,20 +376,22 @@ export class FightScene extends Phaser.Scene {
   private drawHud(): void {
     const g = this.gfxHud;
     const s = this.state;
-    const barW = 380;
     for (const slot of [0, 1] as const) {
       const f = s.fighters[slot];
       const def = characters[f.charId];
       const ratio = Math.max(0, f.health / def.health);
-      const x = slot === 0 ? 40 : STAGE_W - 40 - barW;
-      g.fillStyle(0x14101a, 0.9).fillRect(x - 2, 26, barW + 4, 22);
-      const fillW = barW * ratio;
+      const x = slot === 0 ? BAR_X1 : STAGE_W - BAR_X1 - BAR_W;
+      // portrait frame
+      const px = slot === 0 ? 68 : STAGE_W - 68;
+      g.lineStyle(2, 0x594566, 1).strokeRect(px - 25, 21, 50, 50);
+      g.fillStyle(0x14101a, 0.9).fillRect(x - 2, 26, BAR_W + 4, 22);
+      const fillW = BAR_W * ratio;
       const color = ratio > 0.5 ? 0x7ee06e : ratio > 0.25 ? 0xffd24a : 0xff5a48;
-      g.fillStyle(color, 1).fillRect(slot === 0 ? x + barW - fillW : x, 28, fillW, 18);
+      g.fillStyle(color, 1).fillRect(slot === 0 ? x + BAR_W - fillW : x, 28, fillW, 18);
       for (let w = 0; w < 2; w++) {
-        const px = slot === 0 ? x + barW - 14 - w * 20 : x + 14 + w * 20;
-        if (s.wins[slot] > w) g.fillStyle(0xffd24a, 1).fillCircle(px, 62, 6);
-        else g.lineStyle(1, 0xd8cbb8, 1).strokeCircle(px, 62, 6);
+        const wx = slot === 0 ? x + BAR_W - 14 - w * 20 : x + 14 + w * 20;
+        if (s.wins[slot] > w) g.fillStyle(0xffd24a, 1).fillCircle(wx, 62, 6);
+        else g.lineStyle(1, 0xd8cbb8, 1).strokeCircle(wx, 62, 6);
       }
     }
 
@@ -322,7 +409,7 @@ export class FightScene extends Phaser.Scene {
         return s.timer <= 0 ? 'TIME UP' : 'K.O.';
       case 'matchEnd': {
         const name = characters[s.fighters[s.roundWinner ?? 0].charId].name;
-        return `${name} WINS\nPRESS R`;
+        return `${name} WINS\nR rematch · ENTER select`;
       }
       default:
         return '';

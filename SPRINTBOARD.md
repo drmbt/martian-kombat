@@ -6,7 +6,7 @@
 > Unchecked boxes in the active sprint = the backlog. Do not silently add scope;
 > new ideas go to the Icebox.
 
-**Current sprint: 3** · MVP target: two humans on one keyboard, character select
+**Current sprint: 4** · MVP target: two humans on one keyboard, character select
 (≥2 fully-built fighters), best-of-3 rounds, health bars + timer, basic + special
 moves, AI-generated sprites/stage/audio.
 
@@ -61,15 +61,26 @@ Goal: `npm run gen:*` turns an inspo photo into a game-ready animated fighter.
 - [x] Verified in browser: sprites render on stage, Sigil Bolt fired, hit
       flash + damage confirmed (via `window.__game` manual loop stepping)
 
-### Sprint 3 — Real characters, sound, presentation
+### Sprint 3 — Real characters, sound, presentation ✅
 Goal: it looks and sounds like a real (janky, charming) fighting game.
-- [ ] Vincent + Yulia fully tuned: frame data pass, specials with motion inputs
-      (quarter-circle etc.) via the input buffer
-- [ ] ElevenLabs: announcer pack (character names, "ROUND ONE", "FIGHT!", "K.O.")
-- [ ] ElevenLabs/SFX: hit, block, whiff, jump sounds; per-character grunt + taunt
-- [ ] Character select screen (portraits from GPT Image; all 8 shown, 2 playable)
-- [ ] Main menu + results screen; full game loop menu→select→fight→results→menu
-- [ ] HUD polish: portraits on health bars, round pips, combo counter
+- [x] ElevenLabs announcer pack (`tools/gen-audio.mjs`, voice: Maverick): all 8
+      names, ROUND 1/2/FINAL, FIGHT, K.O., TIME UP, DOUBLE K.O., PERFECT,
+      MARTIAN VICTORY
+- [x] ElevenLabs SFX (sound-generation): hit, block, whoosh, jump, projectile,
+      menu blip; per-character kiai + hurt grunts for Vincent & Yulia
+- [x] Audio wired via state-diffing in FightScene (`presentTick`) — engine
+      stays pure/silent; missing audio degrades to silence via `play()` guard
+- [x] Character select: all 8 Martians (canonical painted-cel art generated
+      for the remaining 6 via `tools/gen-canonical.mjs`; chroma-keyed
+      head crops in `public/assets/portraits/`), 2 playable, locked = SOON;
+      simultaneous P1/P2 cursors, announcer says the name on confirm
+- [x] Main menu + results; full loop menu→select→fight→results→(R rematch /
+      ENTER reselect); BootScene preloads everything w/ progress bar
+- [x] HUD polish: portraits on health bars, round pips, combo counter
+      ("N HITS", renderer-side)
+- [~] Motion inputs (quarter-circle) **deferred to Sprint 4 balance pass** —
+      one-button specials play better for the party-game MVP; input buffer is
+      already in engine state when we want them
 
 ### Sprint 4 — MVP ship
 Goal: itch.io-able build; roster pipeline proven repeatable.
@@ -91,6 +102,16 @@ rollback netplay (engine determinism already paid for) · training mode · fatal
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-01 · audio+scenes · Sprint 3 complete** — ElevenLabs announcer
+  (17 lines) + 6 SFX + 4 grunts via `gen-audio.mjs`; canonical painted-cel art
+  for the remaining 6 Martians + keyed portraits via `gen-canonical.mjs`;
+  Boot/Menu/Select scenes; FightScene: init(data) char pairing, audio via
+  state-diff `presentTick`, combo counter, HUD portraits, mirror-match tint,
+  matchEnd→rematch/reselect. Fixed `lib.mjs` sidecar regex (`[a-z]+` missed
+  ".mp3" → prompts overwrote every audio file; now `[a-z0-9]+`). Verified
+  in-browser: menu→select→fight flow, 16/16 audio keys cached, portraits
+  keyed. 18 tests green. *(Claude)*
 
 - **2026-07-01 · assets+scene · Sprint 2 complete** — user locked painted-cel
   style + salton-shoreline stage; built keyframe pipeline (gen-frames /
@@ -129,10 +150,12 @@ rollback netplay (engine determinism already paid for) · training mode · fatal
 
 *(overwrite this section each handoff — what's mid-flight, gotchas, next action)*
 
-**State:** Sprints 0–2 done, nothing mid-flight. Game is playable with real
-sprites on the Salton Sea stage: `npm run dev`, P1 WASD+F/G/H, P2 arrows+K/L/;,
-F1 hitboxes, R rematch. **Next action:** Sprint 3 — ElevenLabs announcer pack +
-SFX, then character select. **Gotchas:** `.env` in repo root (gitignored), all
+**State:** Sprints 0–3 done, nothing mid-flight. Full game loop with menus,
+select screen (8 shown / 2 playable), announcer + SFX, sprites on the Salton
+Sea stage. **Next action:** Sprint 4 — third + fourth fighters (Catherine w/
+Jazzper assist puppet plumbing, Kirby fire install): canonical art already in
+`assets/raw/canonical/`; needs frames-manifest flavor entries, frame data
+JSONs, roster `playable: true`, grunts. Then gamepad + balance. **Gotchas:** `.env` in repo root (gitignored), all
 four keys live. Frame-gen: ALWAYS `gemini-3-pro-image`; keying: `chromakey`
 ~0.15, never despill (bleaches Yulia's bandana/hair); transparent sheet PNGs
 look navy in previews — composite over grey before judging keying. Cell order

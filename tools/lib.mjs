@@ -30,7 +30,7 @@ export function imagePart(path) {
 export function saveAsset(outPath, buffer, prompt) {
   mkdirSync(dirname(outPath), { recursive: true });
   writeFileSync(outPath, buffer);
-  writeFileSync(outPath.replace(/\.[a-z]+$/, '.prompt.txt'), prompt);
+  writeFileSync(outPath.replace(/\.[a-z0-9]+$/, '.prompt.txt'), prompt);
   console.log(`  wrote ${outPath} (${(buffer.length / 1024).toFixed(0)}kb)`);
 }
 

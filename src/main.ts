@@ -1,5 +1,8 @@
 import Phaser from 'phaser';
 import { STAGE_H, STAGE_W } from './engine';
+import { BootScene } from './scenes/BootScene';
+import { MenuScene } from './scenes/MenuScene';
+import { SelectScene } from './scenes/SelectScene';
 import { FightScene } from './scenes/FightScene';
 
 const game = new Phaser.Game({
@@ -8,7 +11,7 @@ const game = new Phaser.Game({
   width: STAGE_W,
   height: STAGE_H,
   backgroundColor: '#0c0910',
-  scene: [FightScene],
+  scene: [BootScene, MenuScene, SelectScene, FightScene],
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
