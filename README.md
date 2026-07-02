@@ -1,5 +1,7 @@
 # 🛸 MARTIAN KOMBAT
 
+**▶ PLAY NOW: [drmbt.github.io/martian-kombat](https://drmbt.github.io/martian-kombat/)**
+
 A Street Fighter / Mortal Kombat–style 2D versus fighting game starring the
 residents of **Mars College** — a popup art residency and off-grid community in
 the desert outside Bombay Beach, CA, on the shores of the Salton Sea.
@@ -26,8 +28,10 @@ More Martians join the roster after MVP. Full move-set designs:
 
 ## Status
 
-Pre-alpha — Sprint 1 (fight core) in progress. Roadmap, task state, and
-changelog live in [SPRINTBOARD.md](SPRINTBOARD.md).
+**MVP shipped** — 4 of 8 Martians playable (Vincent, Yulia, Catherine +
+Jazzper, Kirby), best-of-3 fights on the Salton Sea shoreline, announcer +
+SFX, keyboard or gamepads. Roadmap, task state, and changelog live in
+[SPRINTBOARD.md](SPRINTBOARD.md).
 
 ## Stack
 

@@ -95,8 +95,9 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
       but lights, floored at 1 HP — chip can't KO). Throws remain deferred
       (Icebox) — 21 engine tests green incl. chip/low-projectile/ttl specs
 - [ ] Playtest with 2+ humans, fix top-5 feel complaints ← **needs humans**
-- [ ] Deploy to GitHub Pages — **blocked on explicit user approval for a
-      public deploy** (build passes; `dist/` ready; see handoff)
+- [x] Deployed: **https://drmbt.github.io/martian-kombat/** (user approved,
+      made the repo public; gh-pages branch, force-push dist per handoff
+      recipe) — **MVP SHIPPED 2026-07-02**
 
 ### Icebox (post-MVP, do not start)
 Remaining roster (Flo, Freeman, Gene, Marzipan) · new characters · single-player
@@ -165,15 +166,17 @@ rollback netplay (engine determinism already paid for) · training mode · fatal
 
 *(overwrite this section each handoff — what's mid-flight, gotchas, next action)*
 
-**State:** Sprint 4 done except two boxes: (1) human playtest — needs the
-user; (2) GitHub Pages deploy — the built `dist/` is ready but publishing
-publicly requires explicit user approval (auto-mode classifier correctly
-blocked it). Deploy recipe: `npm run build && cd dist && git init -q && git
-checkout -qb gh-pages && git add -A && git commit -qm deploy && git push -f
+**State:** MVP SHIPPED — live at https://drmbt.github.io/martian-kombat/
+(repo now public per user; NOTE: `assets/character-inspo/` photos of real
+people are therefore public too — flag to the user if that ever needs
+revisiting). Only unchecked box: human playtest. Redeploy recipe: `npm run
+build && cd dist && git init -q && git checkout -qb gh-pages && git add -A &&
+git commit -qm deploy && git push -f
 https://github.com/drmbt/martian-kombat.git gh-pages:gh-pages && cd .. && rm
--rf dist/.git`, then enable Pages on the gh-pages branch. **Next after ship:**
-remaining roster (Flo/Freeman/Gene/Marzipan — canonical art already exists),
-motion inputs, throws, CPU opponent. **Gotchas:** `.env` in repo root (gitignored), all
+-rf dist/.git`. **Next (post-MVP, pick from Icebox):** remaining roster
+(Flo/Freeman/Gene/Marzipan — canonical art already exists, just needs
+manifest flavors + JSONs + grunts), motion inputs, throws, CPU opponent.
+**Gotchas:** `.env` in repo root (gitignored), all
 four keys live. Frame-gen: ALWAYS `gemini-3-pro-image`; keying: `chromakey`
 ~0.15, never despill (bleaches Yulia's bandana/hair); transparent sheet PNGs
 look navy in previews — composite over grey before judging keying. Cell order
