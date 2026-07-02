@@ -151,10 +151,10 @@ export class FightScene extends Phaser.Scene {
     });
     this.input.keyboard!.on('keydown-F1', () => (this.debugBoxes = !this.debugBoxes));
     this.input.keyboard!.on('keydown-R', () => {
-      if (this.state.phase === 'matchEnd') this.scene.restart({ p1: this.chars[0], p2: this.chars[1] });
+      if (this.state.phase === 'matchEnd') this.scene.restart({ p1: this.chars[0], p2: this.chars[1], cpu: this.cpu });
     });
     this.input.keyboard!.on('keydown-ENTER', () => {
-      if (this.state.phase === 'matchEnd') this.scene.start('Select');
+      if (this.state.phase === 'matchEnd') this.scene.start('Select', { cpu: this.cpu });
     });
 
     play(this, 'ann-round-1');
