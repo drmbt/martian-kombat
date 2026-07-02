@@ -40,6 +40,8 @@ export class BootScene extends Phaser.Scene {
       this.load.json(`meta-${id}`, `assets/sprites/${id}/meta.json`);
       this.load.image(`proj-${id}`, `assets/sprites/${id}/projectile.png`);
       this.load.image(`portrait-${id}`, `assets/portraits/${id}.png`);
+      // beaten-and-bloodied portrait for the post-match win-quote screen
+      this.load.image(`portrait-ko-${id}`, `assets/portraits/${id}-ko.png`);
     }
     // fatality cutscene panels + per-special projectile art
     for (const [id, def] of Object.entries(characters)) {

@@ -1,7 +1,9 @@
 // Generate canonical painted-cel character sheets (locked style, tools/style.md)
 // for the whole roster into assets/raw/canonical/, then crop head-and-shoulders
-// portraits into public/assets/portraits/. Vincent & Yulia reuse their approved
-// style-test canon. Requires ffmpeg.  node tools/gen-canonical.mjs [--force]
+// portraits into public/assets/portraits/. Also generates a beaten-and-bloodied
+// "defeated" bust per character (public/assets/portraits/<id>-ko.png) for the
+// post-match win-quote screen. Vincent & Yulia reuse their approved style-test
+// canon. Requires ffmpeg.  node tools/gen-canonical.mjs [--char <id>] [--force]
 
 import { join } from 'node:path';
 import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
@@ -23,6 +25,10 @@ Pose: dynamic side-on martial-arts fighting stance facing right, knees bent, han
 Background: solid flat chroma-key green (#00B140), completely uniform, no shadows cast on the background, no floor, no text, no watermark, no border.`;
 
 const STYLE = `Art style: hand-painted cel-shaded 2D anime fighter (modern Capcom / Arc System Works aesthetic). Bold clean line art, painterly cel shading, confident silhouette, slightly heroic proportions while keeping the person recognizable.`;
+
+// Defeated bust for the post-match win-quote screen (SFII-style loser portrait).
+const DEFEAT = `Head-and-shoulders BUST portrait of the same person as the reference (preserve their real face, hairstyle, skin tone and outfit), but they have just LOST a brutal fight: face bruised and swollen, blackened puffy eye, split bleeding lip, a trickle of blood down the cheek, sweat-matted hair, dirt smudges, dazed and downcast defeated expression with the head tilted slightly down. Head and shoulders only, centered, filling the frame.
+Background: solid flat chroma-key green (#00B140), completely uniform, no shadows on the background, no floor, no text, no watermark, no border.`;
 
 const FLAVOR = {
   catherine: `Character flavor: "The Chef de Guerre" — a warrior chef. She holds a wooden bo staff in a ready grip and wears a chef's apron over her outfit with a bandolier of kitchen knives across the chest. Her small scruffy dog Jazzper stands alert at her feet, also facing right.`,
@@ -77,5 +83,39 @@ for (const id of [...Object.keys(REUSE), ...Object.keys(FLAVOR)]) {
     '-frames:v', '1', out,
   ]);
   console.log(`  portrait ${id}`);
+}
+
+// beaten-and-bloodied defeated busts -> public/assets/portraits/<id>-ko.png
+const KORAW = join(CANON, 'ko'); // raw busts (gitignored with the rest of assets/raw)
+mkdirSync(KORAW, { recursive: true });
+for (const id of [...Object.keys(REUSE), ...Object.keys(FLAVOR)]) {
+  if (only && id !== only) continue;
+  const canonical = join(CANON, `${id}.png`);
+  const inspo = join(ROOT, `assets/character-inspo/${id}.jpg`);
+  if (!existsSync(canonical)) continue; // need the canon as the identity/style anchor
+  const raw = join(KORAW, `${id}.png`);
+  if (!skip(raw, force)) {
+    console.log(`ko-portrait ${id} ...`);
+    const prompt = `${DEFEAT}\n${STYLE}`;
+    const refs = [canonical, ...(existsSync(inspo) ? [inspo] : [])];
+    const buf = await geminiImage({
+      apiKey: env.GEMINI_API_KEY,
+      model: MODEL,
+      prompt,
+      referencePaths: refs,
+      aspectRatio: '1:1',
+    });
+    saveAsset(raw, buf, prompt);
+  }
+  const out = join(PORTRAITS, `${id}-ko.png`);
+  if (existsSync(raw) && !skip(out, force)) {
+    // bust is already square-ish and centered — just key the green and scale
+    execFileSync('ffmpeg', [
+      '-y', '-loglevel', 'error', '-i', raw,
+      '-vf', 'chromakey=0x00B140:0.15:0.06,scale=160:160',
+      '-frames:v', '1', out,
+    ]);
+    console.log(`  ko-portrait ${id}`);
+  }
 }
 console.log('done.');

@@ -72,14 +72,44 @@ The pipeline turns a photo of a real person into a game-ready sprite sheet:
    (Veo motion clips + still sampling is the post-MVP smoothness upgrade.)
 3. **Key + pack** — `tools/pack-sheet.mjs`: ffmpeg colorkey/despill, scale to
    288×384 cells, tile into `public/assets/sprites/<name>/sheet.png` + meta.json.
-4. **Stills** — GPT Image (`gpt-image-2`) for stage backgrounds, UI, portraits.
-5. **Audio** — ElevenLabs for announcer VO ("ROUND ONE… FIGHT!"), per-character
+4. **Portraits** — `tools/gen-canonical.mjs` crops a head-and-shoulders portrait
+   (`public/assets/portraits/<name>.png`) from the canonical, AND generates a
+   beaten-and-bloodied *defeated* bust (`<name>-ko.png`, chroma-keyed) that the
+   post-match win-quote screen shows for the loser. Both are idempotent/`--force`.
+5. **Stills** — GPT Image (`gpt-image-2`) for stage backgrounds, UI, portraits.
+6. **Audio** — ElevenLabs for announcer VO ("ROUND ONE… FIGHT!"), per-character
    grunts/taunts, and hit SFX.
+7. **Fatality panels** — `tools/gen-fatality.mjs` (`gemini-3-pro-image`, 16:9):
+   4 full-bleed cutscene panels per character from the canonical + a generic
+   burnt-husk victim, scaled to 1280×720 into
+   `public/assets/fatalities/<name>/<fatality-id>-<n>.jpg` (committed). Panel
+   prompts live in the script's `FATALITIES` dict; the matching `fatality` block
+   in the character JSON (`id`, `name`, `input`, `panels`) wires the FINISH THEM
+   trigger. **A full asset-generation run for a new character is all seven steps**
+   — a fighter isn't "done" until their fatality panels exist too.
+
+Every character needs, alongside frame data: a `winQuotes: string[]` array in
+their JSON (SFII-style victory taunts — the win screen picks one at random), a
+`<name>-ko.png` defeated portrait (produced by `gen-canonical.mjs`), and a
+`fatality` block + generated panels (step 7). Missing any degrades gracefully
+(generic "..." quote; greyed normal portrait; no fatality offered).
 
 Pipeline rules: scripts must be idempotent and resumable (skip files that exist,
 `--force` to regen). Raw output goes to `assets/raw/` (gitignored); only packed,
 game-ready files land in `public/assets/` (committed). Log prompts used into a
 sidecar `.prompt.txt` next to each generated asset so results are reproducible.
+
+Concurrency: `gen-frames.mjs`, `gen-audio.mjs`, and `gen-fatality.mjs` fan their
+API calls out through `pool()` in `tools/lib.mjs` (`--concurrency N`; default
+6 frames / 4 audio / 4 fatality panels). A
+v2 character's ~50–60 cells are independent, so this is ~5× faster than serial
+(measured: Freeman 56 frames in ~220s vs ~20 min). `gen-frames` still generates
+the low-pose anchor cell (`chk/sweep-active`) FIRST, then pools the rest, so
+legacy anchored crouch cells stay correct — keep that two-phase order if you
+touch it. Failures log-and-skip (resumable), they never abort the batch. The
+real ceiling is the provider's image rate limit, not the code: if you push
+`--concurrency` up and start seeing 429s, add retry/backoff before going wider
+(no backoff today). ffmpeg packing stays serial (local, cheap).
 
 ## Commands
 
@@ -88,12 +118,15 @@ npm run dev        # Vite dev server
 npm run build      # production build
 npm run test       # vitest — engine unit tests (determinism, hitboxes, frame data)
 npm run gen:styletest              # style candidates + stage tests
-npm run gen:frames -- --char vincent   # pose keyframes from canonical sheet
+npm run gen:frames -- --char vincent   # pose keyframes (add --concurrency N)
 npm run gen:pack -- --char vincent     # key + pack -> sheet.png + meta.json
+npm run gen:audio                      # announcer + grunts + sfx (--concurrency N)
+npm run gen:fatality -- --char vincent # 4 cutscene panels (--concurrency N)
 ```
 
 All gen scripts are idempotent (skip existing files; `--force` regens,
-`--all` for every character).
+`--all` for every character). `gen:frames` and `gen-audio` run concurrently
+(`--concurrency N`, default 6 / 4).
 
 ## The roster
 

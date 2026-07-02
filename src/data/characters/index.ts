@@ -8,6 +8,7 @@ import yulia from './yulia.json';
 import catherine from './catherine.json';
 import kirby from './kirby.json';
 import flo from './flo.json';
+import freeman from './freeman.json';
 
 export const characters: Defs = {
   vincent: vincent as unknown as CharacterDef,
@@ -15,4 +16,5 @@ export const characters: Defs = {
   catherine: catherine as unknown as CharacterDef,
   kirby: kirby as unknown as CharacterDef,
   flo: flo as unknown as CharacterDef,
+  freeman: freeman as unknown as CharacterDef,
 };

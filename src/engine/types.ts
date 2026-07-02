@@ -181,6 +181,9 @@ export interface CharacterDef {
   color: string;
   /** home-stage id (src/data/stages.ts) — UI hint only, engine never reads it */
   stage?: string;
+  /** SFII-style victory taunts; the win screen picks one at random. Presentation
+   *  only, engine never reads it. */
+  winQuotes?: string[];
   fatality?: FatalityDef;
   health: number;
   walkSpeed: number;

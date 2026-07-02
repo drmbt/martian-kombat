@@ -12,7 +12,9 @@
     "gen:styletest": "node tools/gen-style-test.mjs",
     "gen:frames": "node tools/gen-frames.mjs",
     "gen:pack": "node tools/pack-sheet.mjs",
-    "gen:stages": "node tools/gen-stage.mjs"
+    "gen:stages": "node tools/gen-stage.mjs",
+    "gen:audio": "node tools/gen-audio.mjs",
+    "gen:fatality": "node tools/gen-fatality.mjs"
   },
   "dependencies": {
     "phaser": "^3.87.0"

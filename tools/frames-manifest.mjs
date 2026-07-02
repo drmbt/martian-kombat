@@ -538,4 +538,102 @@ export const CHARACTERS = {
     },
     extra: {},
   },
+
+  freeman: {
+    canonical: 'assets/raw/canonical/freeman.png',
+    layout: 'v2',
+    // "The Still Point": serene counter/turtle yogi. Palm strikes over fists,
+    // flowing yoga forms, soft white-gold chi (never green, never crimson).
+    always:
+      'He always wears mala prayer beads on one wrist, loose linen clothes, and is barefoot, with a calm serene half-smile even mid-combat. Any energy or aura he channels is soft warm WHITE-GOLD light, never green.',
+    moves6: {
+      stand: {
+        lp: {
+          startup: 'chambering a relaxed open-palm jab near the cheek, weight centered, calm',
+          active: 'quick open-palm jab fully extended at head height, fingers together, heel of the palm leading',
+          recovery: 'drawing the palm back into a soft centered guard',
+        },
+        mp: {
+          startup: 'sinking the hips and winding one open palm back at the waist, a faint white-gold glow gathering in the palm',
+          active: 'straight open-palm chi strike fully extended at chest height, a soft white-gold pulse blooming from the palm heel',
+          recovery: 'retracting the palm, breathing out, settling back to stance',
+        },
+        hp: {
+          startup: 'both palms drawn back to one hip, stacked, white-gold light gathering between them',
+          active: 'double-palm thrust driven forward at chest height, arms fully extended, a bright white-gold burst off both palm heels',
+          recovery: 'lowering both arms slowly, the glow fading, recentering',
+        },
+        lk: {
+          startup: 'front knee lifting for a short quick front kick, hands kept in a calm guard',
+          active: 'quick snapping front kick at shin height, one leg extended, exactly ONE foot on the ground',
+          recovery: 'the foot returning softly to stance',
+        },
+        mk: {
+          startup: 'lead knee chambered high across the body, arms floating for balance',
+          active: 'long controlled front push-kick fully extended at waist height, one leg at full reach, exactly ONE foot on the ground',
+          recovery: 'the leg folding smoothly back down into stance',
+        },
+        hk: {
+          startup: 'balancing on his LEFT leg only, RIGHT knee chambered high, arms spread for balance',
+          active: 'a tall flowing crescent kick, his RIGHT leg (clearly attached at the hip) sweeping up and over at head height in a graceful arc, exactly ONE foot on the ground',
+          recovery: 'the leg descending slowly, returning to a centered stance',
+        },
+      },
+      crouch: {
+        lp: {
+          active: 'a short open-palm jab pushed out at waist height from the low squat',
+          recovery: 'the palm drawn back in, staying compact in the squat',
+        },
+        mp: {
+          active: 'a rising open-palm strike lifting diagonally upward out of the squat, faint white-gold trail',
+          recovery: 'the palm lowering, weight sinking back into the squat',
+        },
+        hp: {
+          active: 'both palms thrust straight upward out of the squat, a soft white-gold burst above them (anti-air)',
+          recovery: 'arms lowering from overhead, settling back into the squat',
+        },
+        lk: {
+          active: 'squatting on his LEFT leg while his RIGHT leg (clearly attached at the hip) snaps a quick low kick forward at ankle height',
+          recovery: 'the kicking leg drawn back beneath him, both feet planted in the squat',
+        },
+        mk: {
+          active: 'squatting low on his bent LEFT leg while his RIGHT leg (clearly attached at the hip) extends forward along the ground in a long low kick',
+          recovery: 'sliding the long leg back beneath his body into a compact squat',
+        },
+        hk: {
+          active: 'a low flowing leg sweep fully extended along the ground, one leg carving a wide arc',
+          recovery: 'rising smoothly from the sweep back toward stance',
+        },
+      },
+      air: {
+        lp: 'throwing a quick short downward open-palm jab',
+        mp: 'a straight open-palm strike driven at a 45-degree downward angle, faint white-gold trail',
+        hp: 'a double-palm downward press swung with both arms fully extended',
+        lk: 'a sharp knee strike raised toward the opponent',
+        mk: 'a side kick extended at a downward angle, one leg at full reach',
+        hk: 'a flowing airborne crescent kick — RIGHT leg fully extended with a soft white-gold trail, LEFT leg tucked beneath him, both legs clearly attached',
+      },
+      specials: {
+        // Presence: meditation counter-stance that teleports behind the attacker
+        presence: {
+          startup: 'settling into a serene meditative counter-stance, eyes closed, both palms pressed together at the chest, a faint white-gold halo forming around him',
+          active: 'blurring into a streak of soft white-gold light and reappearing mid-step driving a single open-palm strike forward, motion trails behind him',
+          recovery: 'lowering the striking palm, eyes reopening calm, settling back to a centered stance',
+        },
+        // Breathwork: charges "inner peace" armor that absorbs a hit
+        breathwork: {
+          startup: 'drawing a deep slow breath, both hands sweeping inward to gather energy at his center, faint white-gold motes converging',
+          active: 'holding the breath, standing perfectly still with a glowing translucent white-gold aura shell wrapped around his whole body',
+          recovery: 'exhaling slowly, the aura shell sinking calmly into his skin, arms lowering',
+        },
+        // Sun Salutation: flowing yoga sequence, a 3-hit combo ending in crow pose
+        'sun-salutation': {
+          startup: 'sweeping both arms up overhead into an upward salute, spine arched, rising onto the balls of his feet, white-gold light tracing his arms',
+          active: 'flowing forward through a sweeping yoga sequence of open-palm strikes, both arms carving bright white-gold arcs across the space in front of him',
+          recovery: 'folding down into crow pose — balanced on both hands with knees resting on the elbows and both feet lifted off the ground, serene and steady',
+        },
+      },
+    },
+    extra: {},
+  },
 };

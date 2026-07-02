@@ -3,6 +3,11 @@
   "name": "KIRBY",
   "color": "#ff8a3d",
   "stage": "institute",
+  "winQuotes": [
+    "Oh, we are absolutely telling everyone about this.",
+    "You fold better than a lawn chair, darling.",
+    "The tea? Still full. You? Not so much."
+  ],
   "health": 950,
   "walkSpeed": 5.2,
   "backSpeed": 3.9,

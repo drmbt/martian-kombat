@@ -3,6 +3,11 @@
   "name": "YULIA",
   "color": "#ff5a48",
   "stage": "saturn",
+  "winQuotes": [
+    "Was that your rage? I did not feel it.",
+    "Stand up. Or don't. It changes nothing.",
+    "I have already forgotten your name."
+  ],
   "fatality": {
     "id": "heart-breaker",
     "name": "Heart Breaker",

@@ -90,6 +90,8 @@ export class FightScene extends Phaser.Scene {
   private training = false;
   private bot: CpuDriver | null = null;
   private fatalityPanel: Phaser.GameObjects.Image | null = null;
+  /** SFII-style post-match taunt: winner portrait, beaten loser portrait, quote */
+  private winScreen: Phaser.GameObjects.Container | null = null;
   private moveLogOn = false;
   private moveLog: string[] = [];
   private moveLogText!: Phaser.GameObjects.Text;
@@ -122,6 +124,7 @@ export class FightScene extends Phaser.Scene {
     this.inputs = new KeyboardSource(this);
     this.fighterSprites = [null, null];
     this.projSprites = [];
+    this.winScreen = null; // rebuilt lazily on matchEnd (scene.restart destroys it)
     this.sparks = [];
     this.accumulator = 0;
     this.comboHits = 0;
@@ -514,6 +517,14 @@ export class FightScene extends Phaser.Scene {
       this.fatalityPanel.setVisible(false);
     }
 
+    // Post-match win-quote screen: after the K.O./victory beat lands, the winner
+    // portrait taunts the beaten loser portrait with a quote (SFII win screen).
+    if (s.phase === 'matchEnd' && s.roundWinner !== null && s.phaseFrame > 72) {
+      this.showWinScreen(s.roundWinner);
+      return;
+    }
+    if (this.winScreen) this.winScreen.setVisible(false);
+
     if (!this.hasBg) {
       gU.fillStyle(0x241b2e, 1).fillRect(0, 0, STAGE_W, STAGE_H);
       gU.fillStyle(0x3a2b40, 1).fillRect(0, FLOOR_Y, STAGE_W, STAGE_H - FLOOR_Y);
@@ -634,6 +645,66 @@ export class FightScene extends Phaser.Scene {
     }
     this.msgText.setText('');
     this.timerText.setText('');
+  }
+
+  /** Build (once) and reveal the SFII-style post-match taunt screen: winner
+   *  portrait on the left, beaten-and-bloodied loser portrait on the right, and
+   *  one of the winner's random win quotes printed at the bottom. */
+  private showWinScreen(winner: 0 | 1): void {
+    if (this.winScreen) {
+      this.winScreen.setVisible(true);
+      return;
+    }
+    const loser: 0 | 1 = winner === 0 ? 1 : 0;
+    const winId = this.chars[winner];
+    const loseId = this.chars[loser];
+    const winDef = characters[winId];
+    const quotes = winDef.winQuotes ?? [];
+    const quote = quotes.length ? Phaser.Utils.Array.GetRandom(quotes) : '...';
+    const font = { fontFamily: 'monospace', color: '#f5ead9' };
+
+    const c = this.add.container(0, 0).setDepth(20);
+
+    c.add(this.add.rectangle(0, 0, STAGE_W, STAGE_H, 0x05030a, 1).setOrigin(0, 0));
+
+    // winner portrait (faces right, toward the loser)
+    const winKey = this.textures.exists(`portrait-${winId}`) ? `portrait-${winId}` : null;
+    if (winKey) c.add(this.add.image(288, 232, winKey).setDisplaySize(300, 300));
+    // loser portrait: beaten-and-bloodied variant if it exists, else greyed normal
+    const koKey = this.textures.exists(`portrait-ko-${loseId}`)
+      ? `portrait-ko-${loseId}`
+      : this.textures.exists(`portrait-${loseId}`) ? `portrait-${loseId}` : null;
+    if (koKey) {
+      const l = this.add.image(672, 232, koKey).setDisplaySize(300, 300).setFlipX(true);
+      if (koKey === `portrait-${loseId}`) l.setTint(0x777277); // no KO art: grey them out
+      c.add(l);
+    }
+
+    c.add(
+      this.add
+        .text(STAGE_W / 2, 64, `${winDef.name} WINS`, {
+          ...font, fontSize: '44px', fontStyle: 'bold', color: winDef.color,
+          stroke: '#000', strokeThickness: 8,
+        })
+        .setOrigin(0.5),
+    );
+    c.add(
+      this.add
+        .text(STAGE_W / 2, 452, quote, {
+          ...font, fontSize: '26px', fontStyle: 'bold', color: '#ffd24a', align: 'center',
+          stroke: '#000', strokeThickness: 6, wordWrap: { width: STAGE_W - 120 },
+        })
+        .setOrigin(0.5),
+    );
+    c.add(
+      this.add
+        .text(STAGE_W / 2, STAGE_H - 26, 'R  REMATCH        ENTER  SELECT', {
+          ...font, fontSize: '15px', color: '#e8dcc8', stroke: '#000', strokeThickness: 3,
+        })
+        .setOrigin(0.5),
+    );
+
+    this.winScreen = c;
   }
 
   private drawCapsule(slot: 0 | 1): void {

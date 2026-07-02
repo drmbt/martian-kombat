@@ -6,11 +6,13 @@
 import { join } from 'node:path';
 import { mkdirSync, existsSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { ROOT, loadEnv, geminiImage, saveAsset, skip } from './lib.mjs';
+import { ROOT, loadEnv, geminiImage, saveAsset, skip, pool, concurrencyArg } from './lib.mjs';
 
 const env = loadEnv();
 const force = process.argv.includes('--force');
 const only = process.argv.includes('--char') ? process.argv[process.argv.indexOf('--char') + 1] : null;
+// panels are independent (own prompt + ref), so fan them out
+const CONCURRENCY = concurrencyArg(4);
 
 const PANEL_STYLE = `Full-bleed anime fight-scene cutscene panel, painted cel-shaded style (modern Arc System Works cinematic super-move aesthetic). Extreme dynamic angle, dramatic anime speed lines and radial motion streaks OBSCURING any background — no scenery visible, just motion-line energy. High contrast, saturated rim light. No text, no watermark, no speech bubbles, no panel borders.`;
 
@@ -57,16 +59,22 @@ const FATALITIES = {
       `The boot of the woman from the reference image STOMPING down on the burning heart on cracked desert ground, a burst of embers and red shockwave from the impact, her standing victorious above it, arms flexed. Dramatic dutch angle from ground level.`,
     ],
   },
+  freeman: {
+    id: 'ego-death',
+    canonical: 'assets/raw/canonical/freeman.png',
+    panels: [
+      `The man from the reference image (bearded, shoulder-length brown hair, cream linen t-shirt, mala prayer beads, barefoot) settling into a serene cross-legged lotus meditation pose, eyes closed, both open palms pressed together at his chest, a blinding WHITE-GOLD halo of chi light swelling around his whole body, while ${HUSK} stands frozen before him. Low dramatic angle, warm white-gold light washing over everything.`,
+      `Extreme close-up of the man's eyes SNAPPING open glowing pure white-gold, both open palms thrust forward pressed together, an overwhelming radial bloom of white-gold chi light erupting outward toward the viewer, his expression utterly serene. Maximum contrast, radial white-gold light streaks.`,
+      `${HUSK} coming apart from within into a rising storm of luminous WHITE-GOLD lotus petals and drifting motes of light — the charred figure dissolving upward into golden petals streaming into the air — while the man sits calmly with palms open, perfectly still. Side angle, high contrast.`,
+      `Only a faint glowing white-gold OUTLINE of the defeated figure remains, frozen seated in a cross-legged lotus pose, as the very last white-gold petals drift away into darkness around it. The man from the reference image sits beside it in serene meditation, eyes closed, a peaceful half-smile. Calm, quiet, final.`,
+    ],
+  },
 };
 
-async function gen(charId) {
-  const spec = FATALITIES[charId];
-  if (!spec) return;
-  const outDir = join(ROOT, 'public/assets/fatalities', charId);
-  mkdirSync(outDir, { recursive: true });
-  for (let i = 0; i < spec.panels.length; i++) {
-    const raw = join(ROOT, 'assets/raw/fatalities', charId, `${spec.id}-${i + 1}.png`);
-    const final = join(outDir, `${spec.id}-${i + 1}.jpg`);
+async function genPanel(charId, spec, i) {
+  const raw = join(ROOT, 'assets/raw/fatalities', charId, `${spec.id}-${i + 1}.png`);
+  const final = join(ROOT, 'public/assets/fatalities', charId, `${spec.id}-${i + 1}.jpg`);
+  try {
     if (!skip(raw, force)) {
       const prompt = `${PANEL_STYLE}\n${spec.panels[i]}`;
       console.log(`[${charId}] ${spec.id} panel ${i + 1}/${spec.panels.length} ...`);
@@ -81,8 +89,18 @@ async function gen(charId) {
     }
     execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', raw, '-vf', 'scale=1280:720', '-q:v', '3', final]);
     console.log(`  -> ${final}`);
+  } catch (e) {
+    console.error(`  FAILED ${charId} ${spec.id} panel ${i + 1}: ${e.message}`);
   }
 }
 
-for (const id of only ? [only] : Object.keys(FATALITIES)) await gen(id);
+// flatten every panel of every requested fatality into one pooled job list
+const jobs = [];
+for (const charId of only ? [only] : Object.keys(FATALITIES)) {
+  const spec = FATALITIES[charId];
+  if (!spec) continue;
+  mkdirSync(join(ROOT, 'public/assets/fatalities', charId), { recursive: true });
+  for (let i = 0; i < spec.panels.length; i++) jobs.push({ charId, spec, i });
+}
+await pool(jobs, CONCURRENCY, ({ charId, spec, i }) => genPanel(charId, spec, i));
 console.log('done.');

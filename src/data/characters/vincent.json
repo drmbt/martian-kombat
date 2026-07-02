@@ -3,6 +3,11 @@
   "name": "VINCENT",
   "color": "#58e6d9",
   "stage": "chiba",
+  "winQuotes": [
+    "The cursor blinks. Your session has ended.",
+    "Water does not strike. It arrives where you are not.",
+    "I redirected everything you had. It was never much."
+  ],
   "health": 1000,
   "walkSpeed": 5.0,
   "backSpeed": 3.7,

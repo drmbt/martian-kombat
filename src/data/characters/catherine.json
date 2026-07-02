@@ -3,6 +3,11 @@
   "name": "CATHERINE",
   "color": "#ffd24a",
   "stage": "bbac",
+  "winQuotes": [
+    "You came to my kitchen underseasoned.",
+    "Order up. One knockout, plated hot.",
+    "Jazzper had you. I just watched."
+  ],
   "health": 1000,
   "walkSpeed": 4.7,
   "backSpeed": 3.5,

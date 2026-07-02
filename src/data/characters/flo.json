@@ -3,6 +3,11 @@
   "name": "FLO",
   "color": "#ffb020",
   "stage": "estates",
+  "winQuotes": [
+    "Works on my machine. Not on your face.",
+    "Segmentation fault. That was you.",
+    "I have logged this loss. Read the trace yourself."
+  ],
   "fatality": {
     "id": "rm-rf",
     "name": "rm -rf /",

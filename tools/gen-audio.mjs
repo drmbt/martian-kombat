@@ -3,11 +3,13 @@
 // Idempotent; --force regens.  node tools/gen-audio.mjs [--force]
 
 import { join } from 'node:path';
-import { ROOT, loadEnv, saveAsset, skip } from './lib.mjs';
+import { ROOT, loadEnv, saveAsset, skip, pool, concurrencyArg } from './lib.mjs';
 
 const env = loadEnv();
 const force = process.argv.includes('--force');
 const KEY = env.ELEVENLABS_API_KEY;
+// ElevenLabs caps concurrent requests by plan tier; keep this modest.
+const CONCURRENCY = concurrencyArg(4);
 
 const ANNOUNCER = 'V33LkP9pVLdcjeB2y5Na'; // Maverick — epic heroic legend
 const VOICE_M = 'SOYHLrjzK2X1ezoPC6cr'; // Harry — fierce warrior (Vincent)
@@ -76,6 +78,9 @@ const grunts = [
   // Flo speaks German; low stability + max style = angry, not read-aloud
   ['flo-kiai', VOICE_FLO, 'Verdammt!', 1.0, 0.25],
   ['flo-hurt', VOICE_FLO, 'Ah! Scheiße!', 1.0, 0.25],
+  // Freeman is a serene warrior yogi; high stability + low style = calm/centered
+  ['freeman-kiai', VOICE_M, 'Hmm... hah!', 0.3, 0.7],
+  ['freeman-hurt', VOICE_M, 'Hmph!', 0.3, 0.65],
 ];
 
 const sounds = [
@@ -87,22 +92,36 @@ const sounds = [
   ['blip', 'a single retro arcade menu selection blip, clean and short', 0.7],
 ];
 
-for (const [id, text] of Object.entries(announcerLines)) {
-  const out = join(AUDIO, 'announcer', `${id}.mp3`);
-  if (skip(out, force)) continue;
-  console.log(`announcer ${id} ...`);
-  saveAsset(out, await tts(ANNOUNCER, text, 0.9), text);
-}
-for (const [id, voice, text, style, stability] of grunts) {
-  const out = join(AUDIO, 'voice', `${id}.mp3`);
-  if (skip(out, force)) continue;
-  console.log(`grunt ${id} ...`);
-  saveAsset(out, await tts(voice, text, style ?? 0.9, stability), text);
-}
-for (const [id, text, secs] of sounds) {
-  const out = join(AUDIO, 'sfx', `${id}.mp3`);
-  if (skip(out, force)) continue;
-  console.log(`sfx ${id} ...`);
-  saveAsset(out, await sfx(text, secs), text);
-}
+// Flatten every clip into one task list so announcer/voice/sfx generate
+// concurrently instead of three serial passes.
+const tasks = [
+  ...Object.entries(announcerLines).map(([id, text]) => ({
+    out: join(AUDIO, 'announcer', `${id}.mp3`),
+    label: `announcer ${id}`,
+    prompt: text,
+    run: () => tts(ANNOUNCER, text, 0.9),
+  })),
+  ...grunts.map(([id, voice, text, style, stability]) => ({
+    out: join(AUDIO, 'voice', `${id}.mp3`),
+    label: `grunt ${id}`,
+    prompt: text,
+    run: () => tts(voice, text, style ?? 0.9, stability),
+  })),
+  ...sounds.map(([id, text, secs]) => ({
+    out: join(AUDIO, 'sfx', `${id}.mp3`),
+    label: `sfx ${id}`,
+    prompt: text,
+    run: () => sfx(text, secs),
+  })),
+];
+
+const pending = tasks.filter((t) => !skip(t.out, force));
+await pool(pending, CONCURRENCY, async (t) => {
+  console.log(`${t.label} ...`);
+  try {
+    saveAsset(t.out, await t.run(), t.prompt);
+  } catch (e) {
+    console.error(`  FAILED ${t.label}: ${e.message}`);
+  }
+});
 console.log('done.');

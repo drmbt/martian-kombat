@@ -269,8 +269,65 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
 - [ ] In-browser TRAINING-mode verification (blocked: Chrome extension not
       connected in this session)
 
+### Sprint 12 — Post-match win-quote screen (user-directed)
+- [x] SFII-style victory taunt phase: after the K.O./victory beat (matchEnd
+      phaseFrame > 72), a full-bleed screen shows the winner portrait taunting
+      the beaten loser portrait with a random win quote. Pure presentation in
+      `FightScene.showWinScreen` (engine untouched — determinism intact); R/ENTER
+      still rematch/reselect from it. Lazy-built container, reset on scene restart
+- [x] `winQuotes: string[]` on `CharacterDef` (optional, render-only) + quotes
+      authored for all 5 playable fighters' JSONs; docs/CHARACTERS.md carries
+      quotes for all 8 (bible drives the unbuilt three)
+- [x] Beaten-and-bloodied **defeated portraits**: `gen-canonical.mjs` now
+      generates a bruised/bloodied bust per character (canonical+inspo refs,
+      chroma-keyed) → `public/assets/portraits/<id>-ko.png`; all 8 generated + QA'd
+- [x] BootScene loads `portrait-ko-<id>`; win screen falls back to a greyed
+      normal portrait if the KO art is missing (graceful degrade)
+- [x] CLAUDE.md pipeline rules updated (winQuotes + KO portrait now per-character
+      invariants). 50 tests green, build clean, both win directions verified
+      in-browser (Vincent-wins + Yulia-wins)
+
+### Sprint 13 — Pipeline concurrency + Freeman assets (user-directed)
+- [x] **Gen pipeline parallelized.** `tools/lib.mjs` gained a reusable
+      `pool(items, size, worker)` + `concurrencyArg()` (opt-in `--concurrency N`).
+      `gen-frames.mjs` now fans cells out through the pool (default 6) — anchor
+      cell (`chk/sweep-active`) still generated FIRST, then the rest concurrently,
+      so legacy low-anchored sheets stay correct. `gen-audio.mjs` flattens
+      announcer/voice/sfx into one pooled task list (default 4). Failures log +
+      skip-resume, never abort the batch.
+- [x] Measured: Freeman's 56 frames in **219s @ conc 6** (~3.9s/img) vs a
+      ~20 min serial baseline (~21s/img) → ~5.5×. Ceiling is Gemini's image
+      rate limit, not the code (add 429 backoff before pushing concurrency up).
+- [x] Freeman v2 56-cell manifest entry (`frames-manifest.mjs`): serene
+      counter/turtle yogi, palm strikes, soft WHITE-GOLD chi (never green/crimson),
+      `always` invariant (mala beads + linen + barefoot + serene half-smile).
+      Three specials → cells: Presence, Breathwork, Sun Salutation. No projectiles.
+- [x] 56 frames generated (0 failures, no regens needed) + packed to
+      `public/assets/sprites/freeman/` sheet.png (8×7) + meta.json; chroma key
+      verified (corner alpha 0x00, matches vincent). Grunts freeman-kiai/-hurt
+      (Harry voice, calm settings: style 0.3 / stability 0.7).
+- [x] `freeman.json` (19 normals cloned from flo pending a balance pass + three
+      engine-valid specials): **Presence** (qcb+K — invuln counter-palm,
+      forwardVel reposition), **Breathwork** (dp+P — invuln rising anti-air via
+      `leap`), **Sun Salutation** (qcf+P — advancing combo via `forwardVel`), all
+      with L/M/H variants. Registered in `index.ts`; roster flipped playable.
+      Engine untouched (all three map onto existing primitives).
+- [x] Verified in-browser TRAINING: Freeman selectable (cell lit), renders
+      chroma-keyed, home stage INSTITUTE resolves, HUD portrait/name, HP normal +
+      all three specials fire with correct motion/strength/animation (move-log
+      confirmed). 50 engine tests green, typecheck clean.
+- [x] **Fatality "Ego Death"** (hcb+P): 4 panels via `gen-fatality.mjs` (now
+      pooled, + freeman `FATALITIES` entry) — Freeman meditates, the husk
+      dissolves into rising white-gold lotus petals, leaving an outline in lotus.
+      `fatality` block added to `freeman.json`; BootScene loads it generically.
+      `gen-fatality` also made concurrent; added `gen:audio`/`gen:fatality` npm
+      scripts. CLAUDE.md now lists fatality as step 7 — a full asset run is all 7.
+- [ ] Balance pass on Freeman's normals (currently flo's numbers) + counter/armor
+      mechanics (Presence teleport-behind, Breathwork hit-absorb) if the engine
+      grows buff/counter support — approximated with invuln for MVP.
+
 ### Icebox (post-MVP, do not start)
-Remaining roster (Flo, Freeman, Gene, Marzipan) · new characters · single-player
+Remaining roster (Gene, Marzipan) · new characters · single-player
 arcade mode + CPU opponent · super meter/EX moves · stage interactables ·
 rollback netplay (engine determinism already paid for) · training mode · fatalities
 ("Kombat" earns it) · music generation · mobile/touch.
@@ -280,6 +337,30 @@ rollback netplay (engine determinism already paid for) · training mode · fatal
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-02 · tools+assets+data · Sprint 13: pipeline concurrency + Freeman** —
+  Parallelized the gen pipeline: `lib.mjs` `pool()`/`concurrencyArg()`,
+  `gen-frames.mjs` fans cells out (anchor-first, default conc 6), `gen-audio.mjs`
+  pools announcer/voice/sfx (default 4). Freeman built end-to-end: 56-cell v2
+  manifest entry (counter/turtle yogi, white-gold chi, specials Presence/
+  Breathwork/Sun Salutation), 56 frames @ 219s (~5.5× vs serial, 0 failures),
+  packed 8×7 sheet, freeman-kiai/-hurt grunts, `freeman.json` (flo-derived
+  normals + three engine-valid specials, invuln/leap/forwardVel), registered +
+  roster-unlocked. In-browser TRAINING verified: selectable, renders, INSTITUTE
+  stage, all three specials fire (move-log confirmed). Fatality **Ego Death**
+  (hcb+P): freeman `FATALITIES` entry + 4 generated panels (husk → white-gold
+  lotus petals) + `fatality` block in JSON. `gen-fatality` also pooled;
+  `gen:audio`/`gen:fatality` npm scripts added; CLAUDE.md documents fatality as
+  pipeline step 7. Engine untouched; 50 tests green, typecheck clean. *(Claude)*
+
+- **2026-07-02 · scenes+assets+data · Sprint 12: win-quote screen** — SFII-style
+  post-match taunt: winner portrait vs beaten-and-bloodied loser portrait +
+  random win quote, built in `FightScene.showWinScreen` on the matchEnd phase
+  (engine stays pure). Added `winQuotes[]` to CharacterDef + all 5 playable
+  JSONs; `gen-canonical.mjs` now emits `<id>-ko.png` defeated busts (all 8
+  generated); BootScene loads them with a greyed-portrait fallback. CLAUDE.md +
+  CHARACTERS.md rules updated. 50 tests green, build clean, both win directions
+  verified in-browser. *(Claude)*
 
 - **2026-07-02 · merge · flo-char → main** — merged the collaborator's Flo
   feature branch into main. Engine files (step.ts, types.ts, FightScene.ts)
@@ -386,7 +467,13 @@ rollback netplay (engine determinism already paid for) · training mode · fatal
 
 *(overwrite this section each handoff — what's mid-flight, gotchas, next action)*
 
-**State:** Sprint 11 — Flo is PLAYABLE (assets + engine plumbing + flo.json + rm -rf / fatality; roster 5/8). Next action: in-browser TRAINING verification of Flo (was blocked on the Chrome extension), then Freeman/Gene/Marzipan via the same recipe (their kits need: Freeman charge b,f — trivial 'bf' exists — plus counter-stance + hit-absorb armor; Gene teleport + slow-field). NOTE: `assets/raw/` was wiped and partially regenerated — only flo's canonical exists; regen others via `node tools/gen-canonical.mjs --char <id>` before any frame work on them. docs/MOVES.md is the living move spec (checkboxes = implementation state); edit it and re-run the buildout. Three QA-ready characters: vincent, yulia, catherine. **DEPLOY RECIPE CHANGED:** just push to main —
+**State:** Sprint 12 — post-match win-quote screen shipped (winner taunts a
+beaten loser portrait + random win quote; `FightScene.showWinScreen`, engine
+untouched). `winQuotes[]` on all 5 playable JSONs; `<id>-ko.png` defeated busts
+generated for all 8 via `gen-canonical.mjs`. When building Freeman/Gene/Marzipan,
+their `winQuotes` are already authored in docs/CHARACTERS.md (copy into the JSON)
+and their KO portraits already exist. Sprint 11 — Flo is PLAYABLE (assets +
+engine plumbing + flo.json + rm -rf / fatality; roster 5/8). Next action: in-browser TRAINING verification of Flo (was blocked on the Chrome extension), then Freeman/Gene/Marzipan via the same recipe (their kits need: Freeman charge b,f — trivial 'bf' exists — plus counter-stance + hit-absorb armor; Gene teleport + slow-field). NOTE: `assets/raw/` was wiped and partially regenerated — only flo's canonical exists; regen others via `node tools/gen-canonical.mjs --char <id>` before any frame work on them. docs/MOVES.md is the living move spec (checkboxes = implementation state); edit it and re-run the buildout. Three QA-ready characters: vincent, yulia, catherine. **DEPLOY RECIPE CHANGED:** just push to main —
 the `deploy` workflow builds and publishes (do NOT force-push gh-pages
 anymore; that pipeline is retired and was the wedge source). If a deploy run
 fails with `deployment_queued` timeouts, check for a phantom via

@@ -42,6 +42,33 @@ export function skip(outPath, force) {
   return false;
 }
 
+/**
+ * Run `worker(item, i)` over `items` with at most `size` in flight at once.
+ * Preserves result order; a rejecting worker rejects the whole pool, so
+ * workers that should be resilient must catch their own errors.
+ */
+export async function pool(items, size, worker) {
+  const results = new Array(items.length);
+  let next = 0;
+  const run = async () => {
+    while (next < items.length) {
+      const i = next++;
+      results[i] = await worker(items[i], i);
+    }
+  };
+  const lanes = Math.max(1, Math.min(size, items.length));
+  await Promise.all(Array.from({ length: lanes }, run));
+  return results;
+}
+
+/** Parse `--concurrency N` from argv, falling back to `dflt`. */
+export function concurrencyArg(dflt) {
+  const i = process.argv.indexOf('--concurrency');
+  if (i < 0) return dflt;
+  const n = parseInt(process.argv[i + 1], 10);
+  return Number.isFinite(n) && n > 0 ? n : dflt;
+}
+
 /** Gemini image generation (nano-banana). referencePaths are optional input images. */
 export async function geminiImage({ apiKey, model, prompt, referencePaths = [], aspectRatio }) {
   const parts = [{ text: prompt }, ...referencePaths.map(imagePart)];

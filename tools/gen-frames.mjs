@@ -6,11 +6,15 @@
 
 import { join } from 'node:path';
 import { readFileSync, existsSync } from 'node:fs';
-import { ROOT, loadEnv, geminiImage, saveAsset, skip } from './lib.mjs';
+import { ROOT, loadEnv, geminiImage, saveAsset, skip, pool, concurrencyArg } from './lib.mjs';
 import { CHARACTERS, buildJobs } from './frames-manifest.mjs';
 
 const env = loadEnv();
 const force = process.argv.includes('--force');
+// Cells are independent API calls, so we fan them out. v2 sheets have no
+// inter-cell dependency; legacy sheets need the low-pose anchor generated
+// first (handled below), so the pool only ever covers already-safe cells.
+const CONCURRENCY = concurrencyArg(6);
 // pro, not flash: flash drifts the background color toward the character's
 // palette (Vincent's all-black kit came back on navy) and fumbles non-standing
 // poses; pro respected both in the style tests
@@ -44,10 +48,10 @@ async function genChar(charId) {
   const LOW_ANCHOR = ` CRITICAL: copy the BODY HEIGHT of the SECOND reference image (the low pose) — the top of the head at that same low height, empty green above.`;
   const isLowCell = (id) => id === 'crouch' || id === 'block-crouch' || /^c[lmh][pk]-/.test(id);
 
-  for (let i = 0; i < jobs.length; i++) {
+  const genCell = async (i) => {
     const { id, pose } = jobs[i];
     const out = join(outDir, `${String(i).padStart(2, '0')}-${id}.png`);
-    if (skip(out, force)) continue;
+    if (skip(out, force)) return;
     const useAnchor = isLowCell(id) && lowRefPath && existsSync(lowRefPath);
     // per-character invariant (e.g. Catherine's bo staff in EVERY frame)
     const always = spec.always ? ` ${spec.always}` : '';
@@ -65,21 +69,33 @@ async function genChar(charId) {
     } catch (e) {
       console.error(`  FAILED ${id}: ${e.message}`);
     }
-  }
+  };
+
+  // The low anchor (legacy sheets) must exist before the crouch family runs,
+  // so generate it first, then fan out the remaining cells concurrently.
+  const anchorIdx = lowAnchorName?.i ?? -1;
+  if (anchorIdx >= 0) await genCell(anchorIdx);
+  const rest = jobs.map((_, i) => i).filter((i) => i !== anchorIdx);
+  await pool(rest, CONCURRENCY, genCell);
 
   // one art file per projectile-throwing special: projectile-<move-id>.png
-  for (const [pid, proj] of Object.entries(spec.extra?.projectiles ?? {})) {
+  const projJobs = Object.entries(spec.extra?.projectiles ?? {});
+  await pool(projJobs, CONCURRENCY, async ([pid, proj]) => {
     const out = join(outDir, `projectile-${pid}.png`);
-    if (skip(out, force)) continue;
+    if (skip(out, force)) return;
     console.log(`[${charId}] projectile ${pid} ...`);
-    const buf = await geminiImage({
-      apiKey: env.GEMINI_API_KEY,
-      model: MODEL,
-      prompt: proj.prompt,
-      aspectRatio: '1:1',
-    });
-    saveAsset(out, buf, proj.prompt);
-  }
+    try {
+      const buf = await geminiImage({
+        apiKey: env.GEMINI_API_KEY,
+        model: MODEL,
+        prompt: proj.prompt,
+        aspectRatio: '1:1',
+      });
+      saveAsset(out, buf, proj.prompt);
+    } catch (e) {
+      console.error(`  FAILED projectile ${pid}: ${e.message}`);
+    }
+  });
 }
 
 const chars = process.argv.includes('--all')
