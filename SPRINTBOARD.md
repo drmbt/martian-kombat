@@ -41,7 +41,11 @@ Goal: two rectangles can fight each other and it already *feels* like a fighter.
 
 ### Sprint 2 — Asset pipeline (photos → sprite sheets)
 Goal: `npm run gen:*` turns an inspo photo into a game-ready animated fighter.
-- [ ] `tools/style.md`: one shared art-style prompt (test on 2 characters, lock it)
+- [x] Style test samples generated (`tools/gen-style-test.mjs`): 3 art styles ×
+      Vincent/Yulia (gemini-3-pro-image) + 4 stage tests (2 from user's
+      `assets/stage-inspo/` refs; salton-shoreline via gpt-image-2) —
+      **awaiting user style approval before pipeline build-out**
+- [ ] `tools/style.md`: lock the approved art-style prompt
 - [ ] `gen-character-sheet.mjs`: inspo photo → stylized turnaround (nano-banana)
 - [ ] `gen-motion.mjs`: character sheet + move prompt → Veo clip (FAL fallback)
 - [ ] `clip-to-sheet.mjs`: ffmpeg frame extraction → bg removal → trim → packed
@@ -81,6 +85,13 @@ rollback netplay (engine determinism already paid for) · training mode · fatal
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-01 · tools · Sprint 2 style tests** — `tools/lib.mjs` (env loader,
+  gemini/openai image helpers w/ prompt sidecars + skip/--force) and
+  `tools/gen-style-test.mjs`; generated 6 character style candidates
+  (digitized / painted-cel / pixel) + 4 Salton Sea stages into
+  `assets/raw/style-tests/` (gitignored). Models verified live:
+  gemini-3-pro-image, gemini-3.1-flash-image, veo-3.1, gpt-image-2. *(Claude)*
 
 - **2026-07-01 · engine · Sprint 1 complete** — Vite+Phaser+TS+vitest scaffold;
   deterministic 60hz fight core in `src/engine/` (zero Phaser imports); walk /
