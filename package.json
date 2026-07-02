@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "gen:styletest": "node tools/gen-style-test.mjs",
     "gen:frames": "node tools/gen-frames.mjs",
-    "gen:pack": "node tools/pack-sheet.mjs"
+    "gen:pack": "node tools/pack-sheet.mjs",
+    "gen:stages": "node tools/gen-stage.mjs"
   },
   "dependencies": {
     "phaser": "^3.87.0"

@@ -2,6 +2,7 @@
   "id": "catherine",
   "name": "CATHERINE",
   "color": "#ffd24a",
+  "stage": "bbac",
   "health": 1000,
   "walkSpeed": 4.7,
   "backSpeed": 3.5,

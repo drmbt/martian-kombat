@@ -4,6 +4,7 @@ import Phaser from 'phaser';
 import { STAGE_H, STAGE_W } from '../engine';
 import { ROSTER } from '../data/roster';
 import { characters } from '../data/characters';
+import { STAGES } from '../data/stages';
 
 const CELL_W = 288;
 const CELL_H = 384;
@@ -30,6 +31,7 @@ export class BootScene extends Phaser.Scene {
     });
 
     this.load.image('bg-salton', 'assets/backgrounds/salton-shoreline.jpg');
+    for (const st of STAGES) this.load.image(`bg-stage-${st.id}`, st.file);
     for (const { id } of ROSTER) {
       this.load.spritesheet(`sheet-${id}`, `assets/sprites/${id}/sheet.png`, {
         frameWidth: CELL_W,

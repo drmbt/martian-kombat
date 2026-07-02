@@ -1,13 +1,24 @@
 // Character select: both players pick simultaneously from the 8-Martian grid.
 // P1 WASD + F, P2 arrows + K. Locked characters (no sheet yet) can't be picked.
+// Once both lock in, a stage-select dialog opens (RANDOM is the default);
+// either player's keys drive it.
 import Phaser from 'phaser';
 import { STAGE_H, STAGE_W } from '../engine';
 import { ROSTER } from '../data/roster';
+import { characters } from '../data/characters';
+import { STAGES, stageOwner } from '../data/stages';
 import { play } from './BootScene';
 
 const COLS = 4;
 const CELL = 150;
 const GAP = 24;
+
+// stage dialog grid: RANDOM tile + every stage
+const SCOLS = 4;
+const SCELL_W = 214;
+const SCELL_H = 122;
+const THUMB_W = 190;
+const THUMB_H = 81; // 21:9
 
 export class SelectScene extends Phaser.Scene {
   private idx: [number, number] = [0, 1];
@@ -16,19 +27,27 @@ export class SelectScene extends Phaser.Scene {
   private nameTexts: Phaser.GameObjects.Text[] = [];
   private starting = false;
   private cpu = false;
+  private training = false;
+  private stageMode = false;
+  private stageIdx = 0;
+  private stageCursor: Phaser.GameObjects.Graphics | null = null;
 
   constructor() {
     super('Select');
   }
 
-  init(data: { cpu?: boolean }): void {
+  init(data: { cpu?: boolean; training?: boolean }): void {
     this.cpu = !!data.cpu;
+    this.training = !!data.training;
   }
 
   create(): void {
     this.idx = [0, 1];
     this.confirmed = [false, false];
     this.starting = false;
+    this.stageMode = false;
+    this.stageIdx = 0;
+    this.stageCursor = null;
 
     if (this.textures.exists('bg-salton')) {
       this.add.image(STAGE_W / 2, STAGE_H / 2, 'bg-salton').setDisplaySize(STAGE_W, STAGE_H).setAlpha(0.35);
@@ -62,9 +81,9 @@ export class SelectScene extends Phaser.Scene {
       this.add.text(STAGE_W - 40, STAGE_H - 46, '', { fontFamily: 'monospace', fontSize: '22px', color: '#ff5a48', stroke: '#000', strokeThickness: 4 }).setOrigin(1, 0),
     ];
 
-    if (this.cpu) {
+    if (this.cpu || this.training) {
       this.add
-        .text(STAGE_W / 2, 84, 'VS CPU — pick your fighter, then your opponent', {
+        .text(STAGE_W / 2, 84, this.training ? 'TRAINING — pick your fighter, then the dummy' : 'VS CPU — pick your fighter, then your opponent', {
           fontFamily: 'monospace', fontSize: '15px', color: '#e8dcc8', stroke: '#000', strokeThickness: 3,
         })
         .setOrigin(0.5);
@@ -72,24 +91,30 @@ export class SelectScene extends Phaser.Scene {
 
     const kb = this.input.keyboard!;
     // in CPU mode, P1's keys drive the P2 cursor after P1 has locked in
-    const slotForP1 = (): 0 | 1 => (this.cpu && this.confirmed[0] ? 1 : 0);
+    const slotForP1 = (): 0 | 1 => ((this.cpu || this.training) && this.confirmed[0] ? 1 : 0);
     const move = (p: 0 | 1, d: number) => {
       if (this.confirmed[p] || this.starting) return;
       const n = ROSTER.length;
       this.idx[p] = ((this.idx[p] + d) % n + n) % n;
       play(this, 's-blip', 0.5);
     };
-    kb.on('keydown-A', () => move(slotForP1(), -1));
-    kb.on('keydown-D', () => move(slotForP1(), 1));
-    kb.on('keydown-W', () => move(slotForP1(), -COLS));
-    kb.on('keydown-S', () => move(slotForP1(), COLS));
-    kb.on('keydown-F', () => this.confirm(slotForP1()));
-    if (!this.cpu) {
-      kb.on('keydown-LEFT', () => move(1, -1));
-      kb.on('keydown-RIGHT', () => move(1, 1));
-      kb.on('keydown-UP', () => move(1, -COLS));
-      kb.on('keydown-DOWN', () => move(1, COLS));
-      kb.on('keydown-K', () => this.confirm(1));
+    kb.on('keydown-A', () => (this.stageMode ? this.stageMove(-1) : move(slotForP1(), -1)));
+    kb.on('keydown-D', () => (this.stageMode ? this.stageMove(1) : move(slotForP1(), 1)));
+    kb.on('keydown-W', () => (this.stageMode ? this.stageMove(-SCOLS) : move(slotForP1(), -COLS)));
+    kb.on('keydown-S', () => (this.stageMode ? this.stageMove(SCOLS) : move(slotForP1(), COLS)));
+    kb.on('keydown-F', () => (this.stageMode ? this.confirmStage() : this.confirm(slotForP1())));
+    // arrows/K always work in the stage dialog — it's a shared pick
+    kb.on('keydown-LEFT', () => this.stageMode && this.stageMove(-1));
+    kb.on('keydown-RIGHT', () => this.stageMode && this.stageMove(1));
+    kb.on('keydown-UP', () => this.stageMode && this.stageMove(-SCOLS));
+    kb.on('keydown-DOWN', () => this.stageMode && this.stageMove(SCOLS));
+    kb.on('keydown-K', () => this.stageMode && this.confirmStage());
+    if (!this.cpu && !this.training) {
+      kb.on('keydown-LEFT', () => !this.stageMode && move(1, -1));
+      kb.on('keydown-RIGHT', () => !this.stageMode && move(1, 1));
+      kb.on('keydown-UP', () => !this.stageMode && move(1, -COLS));
+      kb.on('keydown-DOWN', () => !this.stageMode && move(1, COLS));
+      kb.on('keydown-K', () => !this.stageMode && this.confirm(1));
     }
 
     this.redraw();
@@ -116,11 +141,100 @@ export class SelectScene extends Phaser.Scene {
     play(this, `ann-${entry.id}`, 1);
     this.redraw();
     if (this.confirmed[0] && this.confirmed[1]) {
-      this.starting = true;
-      this.time.delayedCall(1100, () => {
-        this.scene.start('Fight', { p1: ROSTER[this.idx[0]].id, p2: ROSTER[this.idx[1]].id, cpu: this.cpu });
-      });
+      this.time.delayedCall(1100, () => this.openStagePick());
     }
+  }
+
+  /** RANDOM tile first, then every stage — index space of the dialog. */
+  private stageOptions(): { id: string; name: string }[] {
+    return [{ id: 'random', name: 'RANDOM' }, ...STAGES];
+  }
+
+  private stageCellXY(i: number): { x: number; y: number } {
+    const col = i % SCOLS;
+    const row = Math.floor(i / SCOLS);
+    const gridW = SCOLS * SCELL_W;
+    return {
+      x: STAGE_W / 2 - gridW / 2 + SCELL_W / 2 + col * SCELL_W,
+      y: 128 + row * SCELL_H,
+    };
+  }
+
+  private openStagePick(): void {
+    if (this.stageMode || this.starting) return;
+    this.stageMode = true;
+    this.stageIdx = 0; // RANDOM is the default
+    const picked = [ROSTER[this.idx[0]].id, ROSTER[this.idx[1]].id];
+
+    this.add.rectangle(STAGE_W / 2, STAGE_H / 2, STAGE_W, STAGE_H, 0x0c0910, 0.98).setDepth(10);
+    this.add
+      .text(STAGE_W / 2, 52, 'CHOOSE STAGE', {
+        fontFamily: 'monospace', fontSize: '30px', fontStyle: 'bold', color: '#ffb347',
+        stroke: '#2a0a0a', strokeThickness: 8,
+      })
+      .setOrigin(0.5)
+      .setDepth(11);
+
+    const font = { fontFamily: 'monospace', stroke: '#000', strokeThickness: 3 };
+    this.stageOptions().forEach((opt, i) => {
+      const { x, y } = this.stageCellXY(i);
+      this.add.rectangle(x, y - 8, THUMB_W, THUMB_H, 0x14101a, 1).setStrokeStyle(1, 0x594566).setDepth(11);
+      if (opt.id === 'random') {
+        this.add.text(x, y - 8, '?', { ...font, fontSize: '44px', fontStyle: 'bold', color: '#ffd24a' })
+          .setOrigin(0.5).setDepth(12);
+      } else if (this.textures.exists(`bg-stage-${opt.id}`)) {
+        this.add.image(x, y - 8, `bg-stage-${opt.id}`).setDisplaySize(THUMB_W, THUMB_H).setDepth(12);
+      }
+      const owner = opt.id === 'random' ? null : stageOwner(opt.id, picked, characters);
+      const label = owner ? `${opt.name} · ${characters[owner].name}` : opt.name;
+      this.add
+        .text(x, y + THUMB_H / 2 - 2, label, {
+          ...font, fontSize: '12px', color: owner ? characters[owner].color : '#f5ead9',
+        })
+        .setOrigin(0.5, 0)
+        .setDepth(12);
+    });
+    this.add
+      .text(STAGE_W / 2, STAGE_H - 18, 'MOVE: WASD / ARROWS · CONFIRM: F / K', {
+        ...font, fontSize: '12px', color: '#e8dcc8',
+      })
+      .setOrigin(0.5)
+      .setDepth(12);
+    this.stageCursor = this.add.graphics().setDepth(13);
+    this.redrawStage();
+  }
+
+  private stageMove(d: number): void {
+    if (this.starting) return;
+    const n = this.stageOptions().length;
+    this.stageIdx = ((this.stageIdx + d) % n + n) % n;
+    play(this, 's-blip', 0.5);
+    this.redrawStage();
+  }
+
+  private confirmStage(): void {
+    if (this.starting) return;
+    this.starting = true;
+    const pick = this.stageOptions()[this.stageIdx];
+    const stage = pick.id === 'random'
+      ? STAGES[Math.floor(Math.random() * STAGES.length)].id
+      : pick.id;
+    play(this, 's-blip', 0.8);
+    this.redrawStage();
+    this.time.delayedCall(500, () => {
+      this.scene.start('Fight', {
+        p1: ROSTER[this.idx[0]].id, p2: ROSTER[this.idx[1]].id, cpu: this.cpu, training: this.training, stage,
+      });
+    });
+  }
+
+  private redrawStage(): void {
+    const g = this.stageCursor;
+    if (!g) return;
+    const { x, y } = this.stageCellXY(this.stageIdx);
+    g.clear();
+    g.lineStyle(this.starting ? 5 : 3, 0x58e6d9, 1);
+    g.strokeRect(x - THUMB_W / 2 - 4, y - 8 - THUMB_H / 2 - 4, THUMB_W + 8, THUMB_H + 8);
   }
 
   update(): void {

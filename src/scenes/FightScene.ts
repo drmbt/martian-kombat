@@ -5,6 +5,7 @@ import Phaser from 'phaser';
 import {
   FATALITY_TICKS,
   FLOOR_Y,
+  ROUND_TICKS,
   GameState,
   INTRO_TICKS,
   STAGE_W,
@@ -44,6 +45,7 @@ interface Spark {
 interface TickSnapshot {
   phase: GameState['phase'];
   kinds: [string, string];
+  moveIds: [string | undefined, string | undefined];
   healths: [number, number];
   projectiles: number;
 }
@@ -60,6 +62,10 @@ export class FightScene extends Phaser.Scene {
   private timerText!: Phaser.GameObjects.Text;
   private comboText!: Phaser.GameObjects.Text;
   private hasBg = false;
+  private stageId = 'salton';
+  private bg: Phaser.GameObjects.Image | null = null;
+  /** px of background hidden past each screen edge — the parallax travel */
+  private bgOverhang = 0;
   private accumulator = 0;
   private debugBoxes = false;
   private sparks: Spark[] = [];
@@ -69,18 +75,28 @@ export class FightScene extends Phaser.Scene {
   private paused = false;
   private pauseOverlay!: Phaser.GameObjects.Container;
   private cpu = false;
+  private training = false;
   private bot: CpuDriver | null = null;
   private fatalityPanel: Phaser.GameObjects.Image | null = null;
+  private moveLogOn = false;
+  private moveLog: string[] = [];
+  private moveLogText!: Phaser.GameObjects.Text;
+  private lastDamageTick: [number, number] = [0, 0];
 
   constructor() {
     super('Fight');
   }
 
-  init(data: { p1?: string; p2?: string; cpu?: boolean }): void {
+  init(data: { p1?: string; p2?: string; cpu?: boolean; training?: boolean; stage?: string }): void {
     this.chars = [data.p1 ?? 'vincent', data.p2 ?? 'yulia'];
+    this.stageId = data.stage ?? 'salton';
     this.cpu = !!data.cpu;
+    this.training = !!data.training;
     this.bot = this.cpu ? new CpuDriver(1) : null;
     this.fatalityPanel = null;
+    this.moveLogOn = this.training; // sandbox shows the move log by default
+    this.moveLog = [];
+    this.lastDamageTick = [0, 0];
   }
 
   create(): void {
@@ -93,9 +109,19 @@ export class FightScene extends Phaser.Scene {
     this.comboHits = 0;
     this.comboTicks = 0;
 
-    this.hasBg = this.textures.exists('bg-salton');
-    if (this.hasBg) {
-      this.add.image(STAGE_W / 2, STAGE_H / 2, 'bg-salton').setDisplaySize(STAGE_W, STAGE_H).setDepth(0);
+    // Stage art keeps its native aspect at full screen height; anything wider
+    // than the screen (ultra-wide 21:9 stages) becomes parallax travel.
+    const bgKey = this.textures.exists(`bg-stage-${this.stageId}`)
+      ? `bg-stage-${this.stageId}`
+      : this.textures.exists('bg-salton') ? 'bg-salton' : null;
+    this.hasBg = bgKey !== null;
+    this.bg = null;
+    this.bgOverhang = 0;
+    if (bgKey) {
+      const src = this.textures.get(bgKey).getSourceImage();
+      const bgW = Math.max(STAGE_W, (STAGE_H * src.width) / src.height);
+      this.bg = this.add.image(STAGE_W / 2, STAGE_H / 2, bgKey).setDisplaySize(bgW, STAGE_H).setDepth(0);
+      this.bgOverhang = (bgW - STAGE_W) / 2;
     }
     this.gfxUnder = this.add.graphics().setDepth(1);
     this.gfxHud = this.add.graphics().setDepth(5);
@@ -139,23 +165,45 @@ export class FightScene extends Phaser.Scene {
       .setOrigin(1, 0)
       .setDepth(6);
     this.add
-      .text(STAGE_W / 2, STAGE_H - 14, 'P1: WASD + RTY punches FGH kicks   P2: ARROWS + UIO punches JKL kicks   ESC move list', {
+      .text(STAGE_W / 2, STAGE_H - 14, 'P1: WASD + RTY punches FGH kicks   P2: ARROWS + UIO punches JKL kicks   ESC move list · F2 move log', {
         ...font, fontSize: '12px', color: '#e8dcc8', stroke: '#000', strokeThickness: 3,
       })
       .setOrigin(0.5)
       .setDepth(6);
 
+    this.moveLogText = this.add
+      .text(16, STAGE_H - 40, '', {
+        fontFamily: 'monospace', fontSize: '13px', color: '#9ef7a0',
+        stroke: '#000', strokeThickness: 3, lineSpacing: 3,
+      })
+      .setOrigin(0, 1)
+      .setDepth(6);
+
+    if (this.training) {
+      this.add
+        .text(STAGE_W / 2, 84, 'TRAINING — dummy never fights back · health refills · ENTER to leave', {
+          fontFamily: 'monospace', fontSize: '13px', color: '#ffd24a', stroke: '#000', strokeThickness: 3,
+        })
+        .setOrigin(0.5)
+        .setDepth(6);
+    }
+
     this.buildPauseOverlay();
+    this.input.keyboard!.on('keydown-F2', () => {
+      this.moveLogOn = !this.moveLogOn;
+      if (!this.moveLogOn) this.moveLogText.setText('');
+    });
     this.input.keyboard!.on('keydown-ESC', () => {
       this.paused = !this.paused;
       this.pauseOverlay.setVisible(this.paused);
     });
     this.input.keyboard!.on('keydown-F1', () => (this.debugBoxes = !this.debugBoxes));
     this.input.keyboard!.on('keydown-R', () => {
-      if (this.state.phase === 'matchEnd') this.scene.restart({ p1: this.chars[0], p2: this.chars[1], cpu: this.cpu });
+      if (this.state.phase === 'matchEnd') this.scene.restart({ p1: this.chars[0], p2: this.chars[1], cpu: this.cpu, stage: this.stageId });
     });
     this.input.keyboard!.on('keydown-ENTER', () => {
-      if (this.state.phase === 'matchEnd') this.scene.start('Select', { cpu: this.cpu });
+      if (this.training) this.scene.start('Select', { training: true });
+      else if (this.state.phase === 'matchEnd') this.scene.start('Select', { cpu: this.cpu });
     });
 
     play(this, 'ann-round-1');
@@ -172,6 +220,7 @@ export class FightScene extends Phaser.Scene {
       const snap = this.snapshot();
       const p2 = this.bot ? this.bot.poll(this.state) : this.inputs.poll(1);
       step(this.state, [this.inputs.poll(0), p2], characters);
+      if (this.training) this.trainingUpkeep();
       this.accumulator -= TICK_MS;
       this.presentTick(snap);
     }
@@ -183,6 +232,7 @@ export class FightScene extends Phaser.Scene {
     return {
       phase: this.state.phase,
       kinds: [a.action.kind, b.action.kind],
+      moveIds: [a.action.moveId, b.action.moveId],
       healths: [a.health, b.health],
       projectiles: this.state.projectiles.length,
     };
@@ -248,9 +298,13 @@ export class FightScene extends Phaser.Scene {
         }
       }
       if (kind === 'blockstun' && was !== 'blockstun') play(this, 's-block', 0.6);
-      if ((kind === 'attack' || kind === 'airAttack') && was !== kind) {
+      if (
+        (kind === 'attack' || kind === 'airAttack') &&
+        (was !== kind || prev.moveIds[slot] !== f.action.moveId)
+      ) {
         play(this, 's-whoosh', 0.4);
         if (characters[f.charId].moves[f.action.moveId!]?.input) play(this, `v-${f.charId}-kiai`, 0.8);
+        this.logMove(slot);
       }
       if (kind === 'air' && was === 'prejump') play(this, 's-jump', 0.35);
     }
@@ -258,6 +312,57 @@ export class FightScene extends Phaser.Scene {
     if (s.projectiles.length > prev.projectiles) play(this, 's-projectile', 0.6);
 
     if (this.comboTicks > 0 && --this.comboTicks === 0) this.comboHits = 0;
+  }
+
+  /** FIFO overlay of triggered moves: "P1 Rising Glyph (H)" / "P2 cr.MK". */
+  private logMove(slot: 0 | 1): void {
+    const f = this.state.fighters[slot];
+    const id = f.action.moveId!;
+    const def = characters[f.charId].moves[id];
+    let label: string;
+    if (def?.input) {
+      const str = f.action.strength ? ` (${f.action.strength.toUpperCase()})` : '';
+      label = `${def.name ?? id}${str}`;
+    } else if (id.startsWith('c')) label = `cr.${id.slice(1).toUpperCase()}`;
+    else if (id.startsWith('j')) label = `j.${id.slice(1).toUpperCase()}`;
+    else label = id.toUpperCase();
+    this.moveLog.push(`P${slot + 1}  ${label}`);
+    if (this.moveLog.length > 8) this.moveLog.shift();
+    if (this.moveLogOn) this.moveLogText.setText(this.moveLog.join('\n'));
+  }
+
+  /** Sandbox rules: frozen clock, refilling health, rounds never end. */
+  private trainingUpkeep(): void {
+    const s = this.state;
+    s.timer = ROUND_TICKS;
+    for (const slot of [0, 1] as const) {
+      const f = s.fighters[slot];
+      const full = characters[f.charId].health;
+      if (f.health < full) {
+        if (this.lastDamageTick[slot] === 0) this.lastDamageTick[slot] = s.tick;
+        if (s.tick - this.lastDamageTick[slot] > 120) {
+          f.health = full;
+          this.lastDamageTick[slot] = 0;
+        }
+      }
+    }
+    // a KO/finisher in the sandbox just resets the room
+    if (s.phase !== 'fight' && s.phase !== 'intro') {
+      s.phase = 'fight';
+      s.phaseFrame = 0;
+      s.roundWinner = null;
+      s.fatality = null;
+      s.wins = [0, 0];
+      s.projectiles = [];
+      for (const f of s.fighters) {
+        f.health = characters[f.charId].health;
+        f.action = { kind: 'idle', frame: 0 };
+        f.vx = 0;
+        f.vy = 0;
+        f.y = FLOOR_Y;
+      }
+      this.lastDamageTick = [0, 0];
+    }
   }
 
   /** First cell name present in this fighter's sheet meta wins. */
@@ -334,6 +439,13 @@ export class FightScene extends Phaser.Scene {
       gU.lineStyle(2, 0x594566, 1).lineBetween(0, FLOOR_Y, STAGE_W, FLOOR_Y);
     }
 
+    // SF2-style parallax: the background slides opposite the fighters' midpoint
+    if (this.bg && this.bgOverhang > 0) {
+      const mid = (s.fighters[0].x + s.fighters[1].x) / 2;
+      const t = Phaser.Math.Clamp((mid - STAGE_W / 2) / (STAGE_W / 2), -1, 1);
+      this.bg.setX(STAGE_W / 2 - t * this.bgOverhang);
+    }
+
     for (const slot of [0, 1] as const) {
       const f = s.fighters[slot];
       const def = characters[f.charId];
@@ -402,6 +514,7 @@ export class FightScene extends Phaser.Scene {
     this.comboText.setAlpha(Math.min(1, this.comboTicks / 30));
 
     if (this.debugBoxes) this.drawDebug();
+    this.moveLogText.setVisible(this.moveLogOn);
     this.drawHud();
   }
 

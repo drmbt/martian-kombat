@@ -184,6 +184,18 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
 - [ ] Deferred: rage meter + ENOUGH., armored/vault dashes, backdash
       i-frames, charge + mash motions (first users: Freeman, Flo, Kirby)
 
+### Sprint 9 — Move-log overlay + training sandbox (user-directed)
+- [x] Move-log overlay: scrolling FIFO (last 8) of triggered moves —
+      "P1 Rising Glyph (H)" / "P1 cr.MK" — toggled with F2, rendered
+      bottom-left, driven by state-diffing in presentTick
+- [x] TRAINING mode (menu option 3): pick fighter + dummy, dummy never acts,
+      health refills 2s after last hit, KO/finisher soft-resets the room,
+      clock frozen, ENTER exits, move log ON by default
+- [x] Move-verification recordings for all three working characters
+      (moves-{vincent,yulia,catherine}.mp4, untracked): every normal, every
+      special at L and H, ending with each fatality (Blue Screen, Heart
+      Breaker, Dinner Service) executing in-game
+
 ### Icebox (post-MVP, do not start)
 Remaining roster (Flo, Freeman, Gene, Marzipan) · new characters · single-player
 arcade mode + CPU opponent · super meter/EX moves · stage variety + interactables ·

@@ -2,6 +2,7 @@
   "id": "kirby",
   "name": "KIRBY",
   "color": "#ff8a3d",
+  "stage": "institute",
   "health": 950,
   "walkSpeed": 5.2,
   "backSpeed": 3.9,

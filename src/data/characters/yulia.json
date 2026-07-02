@@ -2,6 +2,7 @@
   "id": "yulia",
   "name": "YULIA",
   "color": "#ff5a48",
+  "stage": "saturn",
   "fatality": {
     "id": "heart-breaker",
     "name": "Heart Breaker",

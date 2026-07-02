@@ -149,6 +149,8 @@ export interface CharacterDef {
   name: string;
   /** render hint only — engine never reads it */
   color: string;
+  /** home-stage id (src/data/stages.ts) — UI hint only, engine never reads it */
+  stage?: string;
   fatality?: FatalityDef;
   health: number;
   walkSpeed: number;

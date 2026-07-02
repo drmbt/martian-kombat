@@ -2,6 +2,7 @@
   "id": "vincent",
   "name": "VINCENT",
   "color": "#58e6d9",
+  "stage": "chiba",
   "health": 1000,
   "walkSpeed": 5.0,
   "backSpeed": 3.7,
