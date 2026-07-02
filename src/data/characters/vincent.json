@@ -46,7 +46,7 @@
       "startup": 9, "active": 10, "recovery": 18,
       "damage": 80, "hitstun": 22, "blockstun": 14, "knockback": 9,
       "hitbox": { "x": 20, "y": -204, "w": 112, "h": 84 }, "height": "mid",
-      "forwardVel": 6
+      "forwardVel": 12
     }
   }
 }

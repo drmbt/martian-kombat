@@ -35,7 +35,7 @@
     "jlk": { "startup": 4, "active": 6, "recovery": 8, "damage": 45, "hitstun": 14, "blockstun": 10, "knockback": 6, "hitbox": { "x": 28, "y": -120, "w": 86, "h": 50 }, "height": "high" },
     "jmk": { "startup": 6, "active": 7, "recovery": 10, "damage": 75, "hitstun": 19, "blockstun": 12, "knockback": 9, "hitbox": { "x": 30, "y": -130, "w": 98, "h": 58 }, "height": "high" },
     "jhk": { "startup": 9, "active": 7, "recovery": 12, "damage": 100, "hitstun": 23, "blockstun": 14, "knockback": 12, "hitbox": { "x": 32, "y": -140, "w": 112, "h": 62 }, "height": "high" },
-    "cossack-spiral": { "name": "Cossack Spiral", "input": { "motion": "bf", "button": "kick" }, "startup": 10, "active": 8, "recovery": 20, "damage": 85, "hitstun": 24, "blockstun": 14, "knockback": 10, "hitbox": { "x": 16, "y": -84, "w": 116, "h": 84 }, "height": "mid", "knockdown": true, "forwardVel": 8 },
+    "cossack-spiral": { "name": "Cossack Spiral", "input": { "motion": "bf", "button": "kick" }, "startup": 10, "active": 8, "recovery": 20, "damage": 85, "hitstun": 24, "blockstun": 14, "knockback": 10, "hitbox": { "x": 16, "y": -84, "w": 116, "h": 84 }, "height": "mid", "knockdown": true, "forwardVel": 16 },
     "backbend-guillotine": { "name": "Backbend Guillotine", "input": { "motion": "qcb", "button": "kick" }, "startup": 14, "active": 5, "recovery": 22, "damage": 95, "hitstun": 24, "blockstun": 15, "knockback": 9, "hitbox": { "x": 30, "y": -252, "w": 112, "h": 130 }, "height": "high", "knockdown": true }
   }
 }
