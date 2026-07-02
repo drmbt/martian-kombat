@@ -47,6 +47,16 @@ const FATALITIES = {
       `The man turning away exhaling a long stream of spliff smoke, casually flicking the amber terminal window closed behind him with two fingers, as the very last scrolling amber text lines of the husk fade to nothing. He does not look back.`,
     ],
   },
+  marzipan: {
+    id: 'compost',
+    canonical: 'assets/raw/canonical/marzipan.png',
+    panels: [
+      `The person from the reference image (grey dreadlocks under a red beanie, grey beard, glasses, plaid jacket over a tie-dye shirt, dark olive vines with yellow leaves around both forearms) raising both arms slowly like a conductor, as thick dark olive-brown woody vines erupt from the cracked ground and coil around the legs of ${HUSK}. Low dramatic angle.`,
+      `The vines GENTLY drawing ${HUSK} down into soft dark tilled soil — the husk half-sunk, sinking peacefully, pink petals drifting through the air — while the person from the reference image watches with calm folded hands. Side angle, warm light.`,
+      `The closed earth: a smooth fresh mound of dark soil where the husk once stood, and a single delicate desert flower sprouting from its center in a shaft of warm light, the person from the reference image kneeling beside it tenderly. Close angle.`,
+      `The person from the reference image standing over the mound, watering the little desert flower with a small tin watering can, soft sparkling droplets falling onto the petals. THIS FINAL PANEL IS CALM: soft warm radial light rays instead of aggressive speed lines, NO creatures, NO monsters, NO vines in the air, NO fighting — just the person, the watering can, and the flower. Total serenity. Peaceful wide angle.`,
+    ],
+  },
   yulia: {
     id: 'heart-breaker',
     canonical: 'assets/raw/style-tests/char-yulia-b-painted.png',

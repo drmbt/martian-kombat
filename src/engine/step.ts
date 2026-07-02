@@ -383,6 +383,8 @@ function updateFighter(
             knockdown: p.knockdown ?? false,
             field: p.field ?? false,
             detonate: p.detonate,
+            rehit: p.rehit ?? 0,
+            hitCooldown: 0,
           });
         }
       }
@@ -613,6 +615,8 @@ function resolveAttacks(s: GameState, defs: Defs, inputs: [InputFrame, InputFram
           unblockable: true,
         }, inputs[defSlot]);
         if (m.grabRecoil) f.vx = -f.facing * m.grabRecoil; // 86'd bounce-away
+        // kudzu drain: the grab feeds the attacker (Symbiosis)
+        if (m.heal) f.health = Math.min(defs[f.charId].health, f.health + m.heal);
       }
       continue;
     }
@@ -653,6 +657,7 @@ function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputF
       }
     }
     if (p.fuse > 0 && p.gravity === 0) p.fuse--;
+    if (p.hitCooldown > 0) p.hitCooldown--;
     if (p.fuse === 0 && p.detonate) {
       const d = p.detonate;
       p.box = d.box;
@@ -694,6 +699,7 @@ function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputF
       continue;
     }
     if (p.field || isDormant(p)) continue; // smoke / armed bombs never hit
+    if (p.hitCooldown > 0) continue; // tick-damage cloud between hits
     const defSlot = p.owner === 0 ? 1 : 0;
     const d = s.fighters[defSlot];
     if (isInvulnerable(d)) continue;
@@ -720,7 +726,9 @@ function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputF
         knockdown: p.knockdown,
         chip: Math.floor(p.damage * 0.1),
       }, inputs[defSlot]);
-      dead.add(p);
+      // lingering clouds survive their hits and re-hit on a cooldown
+      if (p.rehit > 0) p.hitCooldown = p.rehit;
+      else dead.add(p);
     }
   }
 

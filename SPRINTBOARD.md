@@ -253,6 +253,29 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
 - [ ] In-browser TRAINING-mode verification (blocked: Chrome extension not
       connected in this session)
 
+### Sprint 12 — Marzipan + parallel gen pipeline (user-directed)
+- [x] gen-frames parallelized: 4-wide worker pool, two waves — non-lows +
+      the chk/sweep anchor cell first, then anchored lows. ~4× faster.
+      BUG FOUND + FIXED: the anchor cell is itself a low cell — first split
+      raced it against its dependents and the whole crouch family came back
+      standing. Anchor now explicitly rides wave 1
+- [x] Geometric low rules baked into shared CELLS prompts (crouch/
+      block-crouch/down) + stride language for walk-a/b (were coming back
+      as static stances)
+- [x] Marzipan complete: canonical (DARK OLIVE vines — chroma rule),
+      56-cell v2 sheet, 3 projectile art pieces, Compost fatality (panel 4
+      needed a "THIS PANEL IS CALM" override — PANEL_STYLE's speed-lines
+      demand hallucinated vine dragons), grunts (Bill voice — George was
+      too close to Flo's Daniel), 16 QA regens total incl. one gemini 503
+      (idempotent rerun fills gaps)
+- [x] Engine: `rehit` tick-damage projectiles (cloud survives hits,
+      re-hits on cooldown) + `heal` on grab connect (Symbiosis drain),
+      both data-driven. marzipan.json (float jump, kudzu slide chk,
+      Overgrowth = fuse+detonate reuse, hcb declared before qcb!)
+- [x] 53 engine tests green; build clean. Roster 6/8 — Freeman + Gene left
+- [ ] In-browser TRAINING verification for flo + marzipan (Chrome
+      extension still disconnected)
+
 ### Icebox (post-MVP, do not start)
 Remaining roster (Flo, Freeman, Gene, Marzipan) · new characters · single-player
 arcade mode + CPU opponent · super meter/EX moves · stage interactables ·
@@ -264,6 +287,12 @@ rollback netplay (engine determinism already paid for) · training mode · fatal
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-03 · engine+data+assets+tools · Sprint 12: Marzipan playable,
+  gen pipeline parallel** — 4-wide two-wave pool in gen-frames (anchor cell
+  must ride wave 1!); geometric low + stride rules in shared CELLS; Marzipan
+  full build (olive vines, Compost fatality, Bill voice); engine `rehit` +
+  grab `heal`; 53 tests green. Roster 6/8. *(Claude)*
 
 - **2026-07-02 · engine+data+assets · Sprint 11b: Flo PLAYABLE + fatality** —
   engine grew lobbed/fused/detonating projectiles, `field` smoke, projectile

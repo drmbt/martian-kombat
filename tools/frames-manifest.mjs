@@ -12,15 +12,15 @@ export const ROWS = 4;
 export const CELLS = [
   { id: 'idle-a', pose: 'relaxed fighting stance, hands up in guard, weight on back foot' },
   { id: 'idle-b', pose: 'same fighting stance, chest slightly risen mid-breath, hands drifted a few centimeters' },
-  { id: 'walk-a', pose: 'walking forward mid-stride, front foot planted, guard up' },
-  { id: 'walk-b', pose: 'walking forward opposite stride, back foot planted, guard up' },
-  { id: 'crouch', pose: 'crouching down VERY low on deeply bent knees, buttocks near the heels, body compact, guard tight to the chin — NOT standing' },
+  { id: 'walk-a', pose: 'walking forward CLEARLY MID-STEP: left foot planted forward, right heel lifted off the ground behind, legs visibly scissored apart, guard up — NOT a static stance' },
+  { id: 'walk-b', pose: 'walking forward CLEARLY MID-STEP on the opposite stride: right foot planted forward, left heel lifted off the ground behind, legs visibly scissored apart, guard up — NOT a static stance' },
+  { id: 'crouch', pose: 'crouching down VERY low on deeply bent knees, buttocks near the heels, body compact, guard tight to the chin — NOT standing. GEOMETRIC RULE: the ENTIRE figure occupies ONLY the BOTTOM HALF of the frame, nothing but empty green in the top half' },
   { id: 'jump', pose: 'airborne mid-jump, knees tucked up, arms balanced' },
   { id: 'block', pose: 'standing block, forearms crossed high in front of the face, braced backward' },
-  { id: 'block-crouch', pose: 'blocking while crouched VERY low on deeply bent knees, buttocks near the heels, forearms shielding the face, curled compact — NOT standing' },
+  { id: 'block-crouch', pose: 'blocking while crouched VERY low on deeply bent knees, buttocks near the heels, forearms shielding the face, curled compact — NOT standing, NOT lunging. GEOMETRIC RULE: the ENTIRE figure occupies ONLY the BOTTOM HALF of the frame, nothing but empty green in the top half' },
   { id: 'hit', pose: 'reeling from a hit, head snapped back, torso twisted off balance, grimace' },
   { id: 'fall', pose: 'launched backwards through the air, body horizontal, limbs flailing' },
-  { id: 'down', pose: 'knocked out COLD, lying FLAT on their back on the ground, body fully horizontal stretched along the bottom edge of the frame, head to one side, limbs sprawled — NOT standing, NOT sitting' },
+  { id: 'down', pose: 'knocked out COLD, lying FLAT on their back on the ground, body fully horizontal stretched along the bottom edge of the frame, head to one side, limbs sprawled — NOT standing, NOT sitting, drawn EXACTLY ONCE. GEOMETRIC RULE: the entire figure is a HORIZONTAL shape inside the BOTTOM QUARTER of the frame, nothing but empty green above' },
 ];
 
 export const MOVES = ['light', 'heavy', 'sweep', 'special'];
@@ -409,6 +409,113 @@ export const CHARACTERS = {
         'sudo-kill': {
           prompt:
             'A billowing cone-shaped burst of amber-orange fire mixed with fragments of glowing abstract unreadable code glyphs, pointing to the right, painted cel-shaded anime style, on solid flat chroma-key green background #00B140, no character, no readable words, no watermark.',
+        },
+      },
+    },
+  },
+  marzipan: {
+    canonical: 'assets/raw/canonical/marzipan.png',
+    layout: 'v2',
+    always:
+      'Thin DARK OLIVE-BROWN woody vines with tiny warm-yellow leaves and small pink blossoms ALWAYS curl around both of his forearms — visible in every frame, never bright green vines. He fights with calm, rooted, flowing druid movements.',
+    moves6: {
+      stand: {
+        lp: {
+          startup: 'one open palm drawing back gently, weight sinking into a rooted stance',
+          active: 'soft open-palm strike extended at chest height, vine leaves fluttering off the forearm',
+          recovery: 'the palm floating back into a calm guard',
+        },
+        mp: {
+          startup: 'both hands circling like parting tall grass, one palm chambering',
+          active: 'firm double-palm push extended at chest height, yellow leaves scattering from the impact',
+          recovery: 'hands settling back into a slow flowing guard',
+        },
+        hp: {
+          startup: 'both arms rising overhead like growing branches, vines tightening',
+          active: 'heavy double-fist branch slam driven down at head height, leaves and petals bursting from the vines',
+          recovery: 'arms swaying back down like settling boughs',
+        },
+        lk: {
+          startup: 'front knee lifting softly, arms balanced like a crane',
+          active: 'quick snapping front kick at shin height, trouser cuff flaring',
+          recovery: 'the foot placed back down deliberately, rooted again',
+        },
+        mk: {
+          startup: 'hips turning, one leg chambering across the body',
+          active: 'roundhouse kick extended at chest height, dreadlocks swinging with the turn — exactly ONE foot planted firmly on the ground, NOT jumping',
+          recovery: 'the leg folding back down into the rooted stance',
+        },
+        hk: {
+          startup: 'balancing on his left leg only, RIGHT knee chambered high, arms spread like branches',
+          active: 'tall side kick fully extended at head height, his RIGHT leg (clearly attached at the hip) driven out, petals trailing off the vines — exactly ONE foot on the ground',
+          recovery: 'the kicking leg lowering slowly with total control, both feet planted',
+        },
+      },
+      crouch: {
+        lp: {
+          active: 'short open-palm jab snapped out at waist height from the squat',
+          recovery: 'the palm drawn back in, still compact in the squat',
+        },
+        mp: {
+          active: 'rising double-palm push angled upward out of the squat, leaves swirling',
+          recovery: 'hands lowering, weight sinking back into the squat',
+        },
+        hp: {
+          active: 'both arms thrust powerfully straight upward out of the squat like a sapling shooting up, petals bursting (anti-air)',
+          recovery: 'arms lowering from overhead, settling back into the squat',
+        },
+        lk: {
+          active: 'squatting on his left leg while his RIGHT leg (clearly attached at the hip) snaps a quick kick forward at ankle height',
+          recovery: 'the kicking leg pulled back beneath him, both feet planted in the squat',
+        },
+        mk: {
+          active: 'squatting on his bent left leg while his RIGHT leg (clearly attached at the hip) is fully extended forward along the ground in a long low kick',
+          recovery: 'sliding the extended leg back beneath him into a compact squat',
+        },
+        hk: {
+          active: 'a sliding low sweep — leaning forward on both hands, RIGHT leg extended along the ground, body low like creeping kudzu',
+          recovery: 'gathering the leg back beneath him, rising halfway from the slide',
+        },
+      },
+      air: {
+        lp: 'throwing a quick downward-angled palm strike, dreads floating',
+        mp: 'a double-palm push angled 45 degrees downward, leaves trailing',
+        hp: 'an overhead double-fist branch slam swung downward, vines streaming above',
+        lk: 'a sharp knee strike raised toward the opponent, arms balanced wide',
+        mk: 'a side kick extended at a downward angle, patchwork jacket flaring',
+        hk: 'a flying kick — RIGHT leg fully extended with a trail of petals, LEFT leg tucked beneath him, both legs clearly attached',
+      },
+      specials: {
+        overgrowth: {
+          startup: 'kneeling on one knee, pressing a single glowing seed into the ground with two fingers, focused and gentle',
+          active: 'crouched low with one palm (clearly attached to his arm) pressed flat on the ground, pale glowing roots rippling outward across the soil from under his hand',
+          recovery: 'rising back to standing, brushing soil from his fingers',
+        },
+        'spore-bloom': {
+          startup: 'pulling a handful of purple mushroom spores from the seed pouch, cupping them in both hands',
+          active: 'blowing the spores gently off his open palms — a drifting cloud of purple-pink spore motes floating away in front of him',
+          recovery: 'lowering his hands, a few last spore motes sparkling around them',
+        },
+        symbiosis: {
+          startup: 'lunging forward with both arms open wide, the forearm vines uncoiling and reaching out hungrily',
+          active: 'both arms wrapped forward in a bear-hug grapple, the vines coiling tight around empty space in front of his chest, small flowers blooming along them',
+          recovery: 'stepping back with arms opening, the vines settling back around his forearms, looking faintly apologetic',
+        },
+      },
+    },
+    extra: {
+      projectiles: {
+        overgrowth: {
+          prompt:
+            'A single small glowing seed pod half-buried in a little mound of dark soil, faint warm light pulsing from the crack in the pod, painted cel-shaded anime style, small, centered, on solid flat chroma-key green background #00B140, no character, no text, no watermark.',
+        },
+        'overgrowth-burst': {
+          prompt:
+            'A thick dark olive-brown woody vine column ERUPTING vertically upward from a burst of soil, coiling tendrils with warm-yellow leaves and pink blossoms whipping out to the sides, tall and violent, painted cel-shaded anime style, centered, on solid flat chroma-key green background #00B140, no character, never bright green, no text, no watermark.',
+        },
+        'spore-bloom': {
+          prompt:
+            'A soft drifting cloud of purple and pink mushroom spores, dozens of tiny glowing motes inside a hazy lavender puff, dreamy and toxic, painted cel-shaded anime style, centered, on solid flat chroma-key green background #00B140, no character, no text, no watermark.',
         },
       },
     },

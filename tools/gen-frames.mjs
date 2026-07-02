@@ -15,6 +15,16 @@ const force = process.argv.includes('--force');
 // palette (Vincent's all-black kit came back on navy) and fumbles non-standing
 // poses; pro respected both in the style tests
 const MODEL = 'gemini-3-pro-image';
+const CONCURRENCY = 4; // parallel gemini calls; modest to stay under rate limits
+
+/** Run fn over items with at most n in flight. Failures log, don't abort. */
+async function pool(items, n, fn) {
+  const queue = [...items];
+  const workers = Array.from({ length: Math.min(n, queue.length) }, async () => {
+    while (queue.length) await fn(queue.shift());
+  });
+  await Promise.all(workers);
+}
 
 const STYLE_BASE = `Art style: hand-painted cel-shaded 2D anime fighter (modern Capcom / Arc System Works aesthetic). Bold clean line art, painterly cel shading, confident silhouette, slightly heroic proportions while keeping the person recognizable.`;
 
@@ -44,10 +54,9 @@ async function genChar(charId) {
   const LOW_ANCHOR = ` CRITICAL: copy the BODY HEIGHT of the SECOND reference image (the low pose) — the top of the head at that same low height, empty green above.`;
   const isLowCell = (id) => id === 'crouch' || id === 'block-crouch' || /^c[lmh][pk]-/.test(id);
 
-  for (let i = 0; i < jobs.length; i++) {
-    const { id, pose } = jobs[i];
+  const genCell = async ({ id, pose, i }) => {
     const out = join(outDir, `${String(i).padStart(2, '0')}-${id}.png`);
-    if (skip(out, force)) continue;
+    if (skip(out, force)) return;
     const useAnchor = isLowCell(id) && lowRefPath && existsSync(lowRefPath);
     // per-character invariant (e.g. Catherine's bo staff in EVERY frame)
     const always = spec.always ? ` ${spec.always}` : '';
@@ -65,21 +74,34 @@ async function genChar(charId) {
     } catch (e) {
       console.error(`  FAILED ${id}: ${e.message}`);
     }
-  }
+  };
+
+  // Two parallel waves: wave 1 is everything that isn't a low cell PLUS the
+  // chk/sweep active cell itself (it anchors the crouch family, so it must
+  // exist before wave 2 starts — it can't ride along with its dependents),
+  // then wave 2 is the remaining low cells with the anchor available.
+  const indexed = jobs.map((j, i) => ({ ...j, i }));
+  const isAnchor = (j) => j.i === lowAnchorName?.i;
+  await pool(indexed.filter((j) => !isLowCell(j.id) || isAnchor(j)), CONCURRENCY, genCell);
+  await pool(indexed.filter((j) => isLowCell(j.id) && !isAnchor(j)), CONCURRENCY, genCell);
 
   // one art file per projectile-throwing special: projectile-<move-id>.png
-  for (const [pid, proj] of Object.entries(spec.extra?.projectiles ?? {})) {
+  await pool(Object.entries(spec.extra?.projectiles ?? {}), CONCURRENCY, async ([pid, proj]) => {
     const out = join(outDir, `projectile-${pid}.png`);
-    if (skip(out, force)) continue;
+    if (skip(out, force)) return;
     console.log(`[${charId}] projectile ${pid} ...`);
-    const buf = await geminiImage({
-      apiKey: env.GEMINI_API_KEY,
-      model: MODEL,
-      prompt: proj.prompt,
-      aspectRatio: '1:1',
-    });
-    saveAsset(out, buf, proj.prompt);
-  }
+    try {
+      const buf = await geminiImage({
+        apiKey: env.GEMINI_API_KEY,
+        model: MODEL,
+        prompt: proj.prompt,
+        aspectRatio: '1:1',
+      });
+      saveAsset(out, buf, proj.prompt);
+    } catch (e) {
+      console.error(`  FAILED projectile ${pid}: ${e.message}`);
+    }
+  });
 }
 
 const chars = process.argv.includes('--all')

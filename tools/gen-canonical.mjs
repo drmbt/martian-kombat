@@ -32,7 +32,9 @@ const FLAVOR = {
   freeman: `Character flavor: "The Still Point" — a serene warrior yogi. Loose comfortable clothes, mala beads around the neck or wrist, barefoot, calm centered half-smile, weight perfectly balanced in a meditative fighting stance.`,
   gene: `Character flavor: "Prompt Injection" — an AI-startup hacker. Keep his outfit from the photo; add subtle AR glasses with a faint HUD glow and glitchy digital pixel artifacts trailing from one open hand.`,
   kirby: `Character flavor: "Spill the Tea" — a flexible fire-breathing yogi gossip. One hand balances a steaming teacup effortlessly; a faint ember glow flickers at the lips. Relaxed, smug, dangerous.`,
-  marzipan: `Character flavor: "Photosynthesizer" — a dreadlocked vegan biologist druid. Keep the long dreads; earth-tone clothes, barefoot, a small seed pouch on the belt, and thin green vines with tiny leaves curling around both forearms.`,
+  // vines must be DARK OLIVE, never bright green — green-on-green dies in the
+  // chroma key (same lesson as Vincent's rune and Flo's glyphs)
+  marzipan: `Character flavor: "Photosynthesizer" — a dreadlocked vegan biologist druid. Keep the long dreads; earth-tone clothes, barefoot, a small seed pouch on the belt, and thin DARK OLIVE-BROWN woody vines with tiny warm-yellow leaves and small pink blossoms curling around both forearms (never bright green vines).`,
 };
 
 // approved style-test canon doubles as canonical for the first two fighters

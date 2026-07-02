@@ -56,11 +56,16 @@ docs/            # design docs, CHARACTERS.md roster bible
 
 The pipeline turns a photo of a real person into a game-ready sprite sheet:
 
-1. **Canonical character sheet** — `tools/gen-style-test.mjs` (nano-banana,
-   `gemini-3-pro-image`): `assets/character-inspo/<name>.jpg` + the locked style
-   prompt (`tools/style.md`, approved 2026-07-01: painted cel) → stylized
-   full-body fighter on chroma green. Approved canon lives in
-   `assets/raw/style-tests/char-*-b-painted.png`.
+1. **Canonical character sheet** — `tools/gen-canonical.mjs --char <name>`
+   (`gemini-3-pro-image`): `assets/character-inspo/<name>.jpg` + the locked
+   style prompt (`tools/style.md`, approved 2026-07-01: painted cel) + the
+   character's FLAVOR entry → stylized full-body fighter on chroma green in
+   `assets/raw/canonical/<name>.png`. (Vincent/Yulia originally reused
+   style-test canon from `gen-style-test.mjs`.) `assets/raw/` is gitignored —
+   canonicals may be gone on a fresh checkout; regen before any frame work.
+   CHROMA RULE: character effects/props must never be green or teal (they die
+   in the key) — use amber/orange/red/violet; cool-colored projectile art goes
+   on a magenta screen with `extra.projectiles.<id>.key = '0xFF00FF'`.
 2. **Pose keyframes** — `tools/gen-frames.mjs` (`gemini-3-pro-image`, never
    flash): canonical sheet + pose prompts from `tools/frames-manifest.mjs`.
    Legacy chars: 23 cells; v2 chars (`layout:'v2'`, `moves6`): 50 cells for
@@ -81,6 +86,25 @@ Pipeline rules: scripts must be idempotent and resumable (skip files that exist,
 game-ready files land in `public/assets/` (committed). Log prompts used into a
 sidecar `.prompt.txt` next to each generated asset so results are reproducible.
 
+### New-fighter checklist (proven on Flo, 2026-07-02)
+
+1. `npm run gen:canonical -- --char <id>` → QA the image (chroma rule above)
+2. Add the character to `tools/frames-manifest.mjs` (`layout:'v2'`, `moves6`,
+   per-character `always` invariant, `extra.projectiles` prompts)
+3. `npm run gen:frames -- --char <id>` → QA via contact sheet → delete bad
+   cells → rerun (pass 2 low-anchors the crouch family to `chk-active`).
+   Stubborn low cells: add the geometric rule "the ENTIRE figure occupies
+   ONLY the BOTTOM HALF of the frame" — anatomy adjectives alone lose
+4. `npm run gen:pack -- --char <id>` → composite sheet over grey to QA keying
+5. Grunts in `tools/gen-audio.mjs` (pick a voice; per-grunt style/stability
+   overrides supported), fatality panels in `tools/gen-fatality.mjs`
+6. `src/data/characters/<id>.json` + register in `characters/index.ts` +
+   flip `playable` in `data/roster.ts`. GOTCHA: declare longer-motion
+   specials BEFORE shorter ones sharing a button class (every hcf input
+   contains a valid qcf tail; declaration order is the tiebreaker)
+7. New kit mechanics go in the engine as data-driven flags on
+   MoveDef/ProjectileDef (never hardcode a character) + a vitest each
+
 ## Commands
 
 ```
@@ -88,8 +112,12 @@ npm run dev        # Vite dev server
 npm run build      # production build
 npm run test       # vitest — engine unit tests (determinism, hitboxes, frame data)
 npm run gen:styletest              # style candidates + stage tests
+npm run gen:canonical -- --char flo    # inspo photo -> canonical sheet + portrait
 npm run gen:frames -- --char vincent   # pose keyframes from canonical sheet
 npm run gen:pack -- --char vincent     # key + pack -> sheet.png + meta.json
+npm run gen:audio                  # announcer/grunts/sfx (additive, skips existing)
+npm run gen:fatality -- --char flo     # 16:9 fatality cutscene panels
+npm run gen:stages                 # stage-inspo folders -> 21:9 stage art
 ```
 
 All gen scripts are idempotent (skip existing files; `--force` regens,

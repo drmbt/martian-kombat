@@ -720,3 +720,71 @@ describe('flo fatality: rm -rf /', () => {
     expect(s.fatality).toEqual({ owner: 0, id: 'rm-rf' });
   });
 });
+
+describe('marzipan: photosynthesizer kit (delayed traps, tick clouds, drain grab)', () => {
+  function freshMarz(): GameState {
+    const s = initialState('marzipan', 'yulia', characters);
+    s.phase = 'fight';
+    return s;
+  }
+
+  it('Overgrowth plants a dormant seed that erupts into a vine column and pops the opponent', () => {
+    const s = freshMarz();
+    // qcf + HP: the H seed lands at 360 in front — right on P2's spawn (660)
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ right: true }), inp()], characters);
+    step(s, [inp({ right: true, hp: true }), inp()], characters);
+    expect(s.fighters[0].action.moveId).toBe('overgrowth');
+
+    run(s, 16); // past startup: seed planted, fuse ticking
+    expect(s.projectiles[0].moveId).toBe('overgrowth');
+    run(s, 10); // fuse (30) not yet done
+    expect(s.fighters[1].health).toBe(characters.yulia.health); // dormant seed is harmless
+
+    run(s, 40); // fuse expires -> vine column burst
+    expect(s.fighters[1].health).toBe(characters.yulia.health - 85);
+    expect(['airHit', 'knockdown', 'getup']).toContain(s.fighters[1].action.kind);
+  });
+
+  it('Spore Bloom lingers and ticks damage more than once', () => {
+    const s = freshMarz();
+    closeRange(s);
+    // qcb + LP (no forward input, so the hcb grab cannot steal it)
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ left: true }), inp()], characters);
+    step(s, [inp({ left: true, lp: true }), inp()], characters);
+    expect(s.fighters[0].action.moveId).toBe('spore-bloom');
+
+    run(s, 130);
+    // at least two ticks of 18 landed and the cloud survived its hits
+    expect(s.fighters[1].health).toBeLessThanOrEqual(characters.yulia.health - 36);
+  });
+
+  it('Symbiosis grab drains the victim and heals marzipan', () => {
+    const s = freshMarz();
+    closeRange(s);
+    s.fighters[0].health = 500;
+    // hcb + HP: forward, down, back, punch
+    step(s, [inp({ right: true }), inp()], characters);
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ left: true }), inp()], characters);
+    step(s, [inp({ left: true, hp: true }), inp()], characters);
+    expect(s.fighters[0].action.moveId).toBe('symbiosis');
+
+    run(s, 15);
+    expect(s.fighters[1].health).toBe(characters.yulia.health - 140); // H variant
+    expect(s.fighters[0].health).toBe(560); // +60 kudzu drain
+  });
+
+  it('the heal never overfills max health', () => {
+    const s = freshMarz();
+    closeRange(s);
+    step(s, [inp({ right: true }), inp()], characters);
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ left: true }), inp()], characters);
+    step(s, [inp({ left: true, lp: true }), inp()], characters);
+    run(s, 15);
+    expect(s.fighters[0].health).toBe(characters.marzipan.health); // was already full
+  });
+});

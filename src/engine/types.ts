@@ -89,6 +89,9 @@ export interface ProjectileDef {
   /** visual field (smoke): never collides, never clashes, and does not count
    *  against the one-projectile-per-owner rule */
   field?: boolean;
+  /** ticks between hits for lingering tick-damage clouds; the projectile
+   *  survives its hits instead of dying on contact (Spore Bloom) */
+  rehit?: number;
 }
 
 /** Fighting-game convention motions: quarter-circles, back-forward,
@@ -150,6 +153,9 @@ export interface MoveDef {
   grab?: { range: number };
   /** backward hop applied to the ATTACKER when a grab connects (86'd) */
   grabRecoil?: number;
+  /** health restored to the ATTACKER when a grab connects, capped at max
+   *  (Symbiosis kudzu drain) */
+  heal?: number;
   /** reflects enemy projectiles during startup+active (Redirect) */
   reflect?: boolean;
   /** immune to projectiles during startup+active (lariats) */
@@ -264,6 +270,10 @@ export interface Projectile {
   knockdown: boolean;
   field: boolean;
   detonate?: DetonationDef;
+  /** ticks between hits (0 = dies on first hit like a normal projectile) */
+  rehit: number;
+  /** ticks until this lingering projectile may hit again */
+  hitCooldown: number;
 }
 
 export type Phase = 'intro' | 'fight' | 'roundEnd' | 'finisher' | 'fatality' | 'matchEnd';

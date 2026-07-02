@@ -38,6 +38,9 @@ const PROJ_SIZE: Record<string, number> = {
   smokescreen: 260,
   'root-access': 120,
   'sudo-kill': 90,
+  overgrowth: 48,
+  'overgrowth-burst': 200,
+  'spore-bloom': 130,
 };
 const LEGACY_BUTTON: Record<string, string> = {
   lp: 'light', mp: 'light', hp: 'heavy', lk: 'light', mk: 'heavy', hk: 'heavy',

@@ -15,6 +15,7 @@ const VOICE_F = 'EXAVITQu4vr4xnSDxMaL'; // Sarah — mature confident (Yulia)
 const VOICE_CATH = 'cgSgspJ2msm6clMCkdW9'; // Jessica — playful bright (Catherine)
 const VOICE_KIRBY = 'FGY2WhTYpPnrIDTdsKH5'; // Laura — sassy (Kirby)
 const VOICE_FLO = 'onwK4e9ZLuTAKqWW03F9'; // Daniel — deep gruff (Flo)
+const VOICE_MARZ = 'pqHfZKP75CvOlQylNhV4'; // Bill — weathered old-timer (Marzipan)
 
 async function tts(voiceId, text, style = 0.7, stability = 0.4) {
   const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
@@ -76,6 +77,8 @@ const grunts = [
   // Flo speaks German; low stability + max style = angry, not read-aloud
   ['flo-kiai', VOICE_FLO, 'Verdammt!', 1.0, 0.25],
   ['flo-hurt', VOICE_FLO, 'Ah! Scheiße!', 1.0, 0.25],
+  ['marzipan-kiai', VOICE_MARZ, 'Grow!', 0.9, 0.35],
+  ['marzipan-hurt', VOICE_MARZ, 'Oh!', 0.9, 0.35],
 ];
 
 const sounds = [
