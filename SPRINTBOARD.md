@@ -118,6 +118,32 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
 - [ ] Remaining roster frame QA (user does per-character passes like Yulia's)
 - [ ] v2 sheets + native art for Vincent, Catherine, Kirby
 
+### Sprint 6 — Named specials, fatality, CPU (user-directed)
+- [x] Vincent on the v2 53-cell sheet: full six-button art, his old
+      sweep-startup promoted to the crouch cell (user call — it read as one),
+      block-crouch regenerated low-anchored; no limb dupes found in QA
+- [x] Multi-special system: any number of named specials per character, each
+      with fighting-game-convention input (`input: {motion: qcf/qcb/bf,
+      button: punch/kick}`); cells named `<special-id>-<phase>` — no numbered
+      schema. Vincent: Sigil Bolt (QCF+P) + NEW Cloud Hands (QCB+P). Yulia:
+      Cossack Spiral remapped to ←→+K (kick move!), NEW Backbend Guillotine
+      (QCB+K, overhead)
+- [x] Fatality scaffolding: match-deciding KO by a fatality-holder → 'finisher'
+      phase (FINISH THEM!, loser dazed, winner walks free) → motion input in
+      range → 'fatality' cutscene phase (engine ticks the timeline, scene
+      plays full-bleed panels) → matchEnd. Generic: `fatality` def in
+      character JSON + panels in `public/assets/fatalities/<char>/`
+- [x] Yulia's **Heart Breaker** (QCB+P): 4 gorgeous anime panels via
+      `gen-fatality.mjs` (burnt-husk opponent = generic, reusable for any
+      loser); FINISH THEM! / FATALITY! announcer lines
+- [x] CPU opponent: `src/ai/bot.ts` CpuDriver (tick-hash decisions, input-queue
+      motion specials, executes its own fatality); Menu: 1·VS CPU / 2·TWO
+      PLAYERS; Select: P1 picks both fighters in CPU mode
+- [x] 34 engine tests green (motions, multi-specials, overhead guillotine,
+      full fatality flow, mercy timeout)
+- [x] New gameplay-demo.mp4: CPU vincent vs CPU yulia — yulia wins 2-0 and
+      lands Heart Breaker on camera
+
 ### Icebox (post-MVP, do not start)
 Remaining roster (Flo, Freeman, Gene, Marzipan) · new characters · single-player
 arcade mode + CPU opponent · super meter/EX moves · stage variety + interactables ·
@@ -129,6 +155,13 @@ rollback netplay (engine determinism already paid for) · training mode · fatal
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-02 · engine+assets+ai · Sprint 6** — named multi-specials w/
+  conventional motions; fatality pipeline (finisher→cutscene→matchEnd) with
+  Yulia's Heart Breaker; Vincent v2 53-cell sheet; CPU mode; 34 tests green;
+  demo re-recorded with CPU-executed fatality. Gotcha: preview-tab rAF now
+  free-runs — call `game.loop.stop()` before manual-stepping captures.
+  *(Claude)*
 
 - **2026-07-02 · engine+assets+ui · Sprint 5: six-button combat + art QA** —
   six buttons × stand/crouch/air with QCF+P specials (motion inputs live);

@@ -18,5 +18,10 @@ export const WINS_NEEDED = 2;
 export const KNOCKDOWN_TICKS = 45;
 export const GETUP_TICKS = 20;
 
+// fatality flow
+export const FINISHER_TICKS = 360; // 6s window to input the fatality
+export const FATALITY_TICKS = 460; // cutscene length before matchEnd
+export const FATALITY_RANGE = 280; // default max distance to the dazed loser
+
 export const GROUND_FRICTION = 0.85; // knockback slide decay per tick
 export const INPUT_BUFFER_LEN = 15;

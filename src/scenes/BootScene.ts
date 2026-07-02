@@ -3,13 +3,15 @@
 import Phaser from 'phaser';
 import { STAGE_H, STAGE_W } from '../engine';
 import { ROSTER } from '../data/roster';
+import { characters } from '../data/characters';
 
 const CELL_W = 288;
 const CELL_H = 384;
 
 const ANNOUNCER = [
   'round-1', 'round-2', 'final-round', 'fight', 'ko', 'time-up',
-  'double-ko', 'perfect', 'victory', ...ROSTER.map((r) => r.id),
+  'double-ko', 'perfect', 'victory', 'finish-them', 'fatality',
+  ...ROSTER.map((r) => r.id),
 ];
 // kiai+hurt for every playable fighter (missing files 404 harmlessly)
 const VOICES = ROSTER.filter((r) => r.playable).flatMap((r) => [`${r.id}-kiai`, `${r.id}-hurt`]);
@@ -36,6 +38,13 @@ export class BootScene extends Phaser.Scene {
       this.load.json(`meta-${id}`, `assets/sprites/${id}/meta.json`);
       this.load.image(`proj-${id}`, `assets/sprites/${id}/projectile.png`);
       this.load.image(`portrait-${id}`, `assets/portraits/${id}.png`);
+    }
+    // fatality cutscene panels for any character that defines one
+    for (const [id, def] of Object.entries(characters)) {
+      if (!def.fatality) continue;
+      for (let n = 1; n <= def.fatality.panels; n++) {
+        this.load.image(`fat-${id}-${def.fatality.id}-${n}`, `assets/fatalities/${id}/${def.fatality.id}-${n}.jpg`);
+      }
     }
     for (const a of ANNOUNCER) this.load.audio(`ann-${a}`, `assets/audio/announcer/${a}.mp3`);
     for (const v of VOICES) this.load.audio(`v-${v}`, `assets/audio/voice/${v}.mp3`);

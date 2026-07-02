@@ -15,9 +15,14 @@ export class SelectScene extends Phaser.Scene {
   private cursors!: Phaser.GameObjects.Graphics;
   private nameTexts: Phaser.GameObjects.Text[] = [];
   private starting = false;
+  private cpu = false;
 
   constructor() {
     super('Select');
+  }
+
+  init(data: { cpu?: boolean }): void {
+    this.cpu = !!data.cpu;
   }
 
   create(): void {
@@ -57,23 +62,35 @@ export class SelectScene extends Phaser.Scene {
       this.add.text(STAGE_W - 40, STAGE_H - 46, '', { fontFamily: 'monospace', fontSize: '22px', color: '#ff5a48', stroke: '#000', strokeThickness: 4 }).setOrigin(1, 0),
     ];
 
+    if (this.cpu) {
+      this.add
+        .text(STAGE_W / 2, 84, 'VS CPU — pick your fighter, then your opponent', {
+          fontFamily: 'monospace', fontSize: '15px', color: '#e8dcc8', stroke: '#000', strokeThickness: 3,
+        })
+        .setOrigin(0.5);
+    }
+
     const kb = this.input.keyboard!;
+    // in CPU mode, P1's keys drive the P2 cursor after P1 has locked in
+    const slotForP1 = (): 0 | 1 => (this.cpu && this.confirmed[0] ? 1 : 0);
     const move = (p: 0 | 1, d: number) => {
       if (this.confirmed[p] || this.starting) return;
       const n = ROSTER.length;
       this.idx[p] = ((this.idx[p] + d) % n + n) % n;
       play(this, 's-blip', 0.5);
     };
-    kb.on('keydown-A', () => move(0, -1));
-    kb.on('keydown-D', () => move(0, 1));
-    kb.on('keydown-W', () => move(0, -COLS));
-    kb.on('keydown-S', () => move(0, COLS));
-    kb.on('keydown-LEFT', () => move(1, -1));
-    kb.on('keydown-RIGHT', () => move(1, 1));
-    kb.on('keydown-UP', () => move(1, -COLS));
-    kb.on('keydown-DOWN', () => move(1, COLS));
-    kb.on('keydown-F', () => this.confirm(0));
-    kb.on('keydown-K', () => this.confirm(1));
+    kb.on('keydown-A', () => move(slotForP1(), -1));
+    kb.on('keydown-D', () => move(slotForP1(), 1));
+    kb.on('keydown-W', () => move(slotForP1(), -COLS));
+    kb.on('keydown-S', () => move(slotForP1(), COLS));
+    kb.on('keydown-F', () => this.confirm(slotForP1()));
+    if (!this.cpu) {
+      kb.on('keydown-LEFT', () => move(1, -1));
+      kb.on('keydown-RIGHT', () => move(1, 1));
+      kb.on('keydown-UP', () => move(1, -COLS));
+      kb.on('keydown-DOWN', () => move(1, COLS));
+      kb.on('keydown-K', () => this.confirm(1));
+    }
 
     this.redraw();
   }
@@ -101,7 +118,7 @@ export class SelectScene extends Phaser.Scene {
     if (this.confirmed[0] && this.confirmed[1]) {
       this.starting = true;
       this.time.delayedCall(1100, () => {
-        this.scene.start('Fight', { p1: ROSTER[this.idx[0]].id, p2: ROSTER[this.idx[1]].id });
+        this.scene.start('Fight', { p1: ROSTER[this.idx[0]].id, p2: ROSTER[this.idx[1]].id, cpu: this.cpu });
       });
     }
   }

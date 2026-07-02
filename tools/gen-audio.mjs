@@ -59,6 +59,8 @@ const announcerLines = {
   gene: 'GENE!',
   kirby: 'KIRBY!',
   marzipan: 'MARZIPAN!',
+  'finish-them': 'FINISH THEM!',
+  fatality: 'FATALITY!',
 };
 
 const grunts = [

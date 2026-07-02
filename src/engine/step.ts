@@ -11,6 +11,9 @@ import {
   Projectile,
 } from './types';
 import {
+  FATALITY_RANGE,
+  FATALITY_TICKS,
+  FINISHER_TICKS,
   FLOOR_Y,
   GETUP_TICKS,
   GROUND_FRICTION,
@@ -55,6 +58,7 @@ export function initialState(charA: string, charB: string, defs: Defs): GameStat
     projectiles: [],
     wins: [0, 0],
     roundWinner: null,
+    fatality: null,
   };
 }
 
@@ -95,6 +99,7 @@ export const BIT = {
   lp: 16, mp: 32, hp: 64, lk: 128, mk: 256, hk: 512,
 } as const;
 const PUNCH_BITS = BIT.lp | BIT.mp | BIT.hp;
+const KICK_BITS = BIT.lk | BIT.mk | BIT.hk;
 
 export function packInput(i: InputFrame): number {
   return (
@@ -119,17 +124,27 @@ function freshPress(f: FighterState, mask: number): boolean {
   return cur !== 0 && prev === 0;
 }
 
-/** Quarter-circle-forward (↓ ↘ →) inside the buffer window, facing-aware. */
-function hasQCF(f: FighterState): boolean {
+/** Two-stage motion matcher over the input buffer, facing-aware.
+ *  qcf: ↓ then → · qcb: ↓ then ← · bf: ← then → */
+function motionDone(f: FighterState, motion: 'qcf' | 'qcb' | 'bf'): boolean {
   const buf = f.inputBuffer;
-  const fwdBit = f.facing === 1 ? BIT.right : BIT.left;
-  let stage = 0; // saw ↓, then saw → (without ↓)
-  for (let i = Math.max(0, buf.length - 14); i < buf.length; i++) {
+  const fwd = f.facing === 1 ? BIT.right : BIT.left;
+  const back = f.facing === 1 ? BIT.left : BIT.right;
+  const [first, then, thenNot] =
+    motion === 'qcf' ? [BIT.down, fwd, BIT.down]
+    : motion === 'qcb' ? [BIT.down, back, BIT.down]
+    : [back, fwd, back];
+  let stage = 0;
+  for (let i = Math.max(0, buf.length - 18); i < buf.length; i++) {
     const b = buf[i];
-    if (stage === 0 && b & BIT.down) stage = 1;
-    else if (stage === 1 && b & fwdBit && !(b & BIT.down)) return true;
+    if (stage === 0 && b & first) stage = 1;
+    else if (stage === 1 && b & then && !(b & thenNot)) return true;
   }
   return false;
+}
+
+function buttonBits(button: 'punch' | 'kick'): number {
+  return button === 'punch' ? PUNCH_BITS : KICK_BITS;
 }
 
 function holdingBack(f: FighterState, i: InputFrame): boolean {
@@ -171,7 +186,7 @@ function canAct(f: FighterState): boolean {
 
 function isInvulnerable(f: FighterState): boolean {
   const k = f.action.kind;
-  return k === 'knockdown' || k === 'getup' || k === 'ko';
+  return k === 'knockdown' || k === 'getup' || k === 'ko' || k === 'dazed';
 }
 
 function grounded(f: FighterState): boolean {
@@ -196,10 +211,13 @@ function pickAttack(
   stance: 'stand' | 'crouch',
 ): string | null {
   const f = s.fighters[slot];
-  // special: quarter-circle-forward + fresh punch press
-  if (def.moves.special && hasQCF(f) && freshPress(f, PUNCH_BITS)) {
-    const m = def.moves.special;
-    if (!(m.projectile && ownsLiveProjectile(s, slot))) return 'special';
+  // named specials: each declares its own motion + button class
+  for (const [id, m] of Object.entries(def.moves)) {
+    if (!m.input) continue;
+    if (motionDone(f, m.input.motion) && freshPress(f, buttonBits(m.input.button))) {
+      if (m.projectile && ownsLiveProjectile(s, slot)) continue;
+      return id;
+    }
   }
   const prefix = stance === 'crouch' ? 'c' : '';
   for (const b of BUTTON_PRIORITY) {
@@ -310,6 +328,10 @@ function updateFighter(
     case 'getup': {
       a.frame++;
       if (a.frame >= GETUP_TICKS) f.action = { kind: 'idle', frame: 0 };
+      break;
+    }
+    case 'dazed': {
+      // standing defeated, swaying, waiting for the finisher window to resolve
       break;
     }
     case 'ko': {
@@ -512,11 +534,27 @@ function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputF
 
 // ---------- round flow ----------
 
-function endRound(s: GameState, winner: 0 | 1 | null): void {
-  s.phase = 'roundEnd';
-  s.phaseFrame = 0;
+function endRound(s: GameState, winner: 0 | 1 | null, defs: Defs): void {
   s.roundWinner = winner;
   if (winner !== null) s.wins[winner]++;
+
+  // match-deciding KO by a fighter with a fatality: open the finisher window
+  // instead of the normal KO — the loser stands dazed, awaiting their fate
+  if (winner !== null && s.wins[winner] >= WINS_NEEDED) {
+    const loser = winner === 0 ? 1 : 0;
+    const winnerDef = defs[s.fighters[winner].charId];
+    if (winnerDef.fatality && s.fighters[loser].health <= 0) {
+      s.phase = 'finisher';
+      s.phaseFrame = 0;
+      s.projectiles = [];
+      s.fighters[loser].action = { kind: 'dazed', frame: 0 };
+      s.fighters[loser].vx = 0;
+      return;
+    }
+  }
+
+  s.phase = 'roundEnd';
+  s.phaseFrame = 0;
   for (const slot of [0, 1] as const) {
     const f = s.fighters[slot];
     if (f.health <= 0) {
@@ -582,6 +620,58 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
     return s;
   }
 
+  if (s.phase === 'finisher') {
+    s.phaseFrame++;
+    const w = s.roundWinner as 0 | 1;
+    const loser = w === 0 ? 1 : 0;
+    const winner = s.fighters[w];
+    const winnerDef = defs[winner.charId];
+
+    // winner stays controllable (walk into range, style on them); nothing
+    // can deal damage anymore
+    updateFighter(s, w, winnerDef, inputs[w]);
+    s.projectiles = [];
+    winner.x = Math.min(STAGE_MAX_X, Math.max(STAGE_MIN_X, winner.x));
+    if (canAct(winner) && grounded(winner)) {
+      winner.facing = s.fighters[loser].x >= winner.x ? 1 : -1;
+    }
+
+    const fat = winnerDef.fatality;
+    if (
+      fat &&
+      motionDone(winner, fat.input.motion) &&
+      freshPress(winner, buttonBits(fat.input.button)) &&
+      Math.abs(winner.x - s.fighters[loser].x) <= (fat.range ?? FATALITY_RANGE)
+    ) {
+      s.phase = 'fatality';
+      s.phaseFrame = 0;
+      s.fatality = { owner: w, id: fat.id };
+      winner.action = { kind: 'idle', frame: 0 };
+      return s;
+    }
+
+    if (s.phaseFrame >= FINISHER_TICKS) {
+      // mercy: no fatality input — the loser just collapses
+      const l = s.fighters[loser];
+      l.action = { kind: 'ko', frame: 0 };
+      l.vy = -6;
+      l.vx = -l.facing * 3.5;
+      l.y -= 1;
+      s.phase = 'roundEnd';
+      s.phaseFrame = 0;
+    }
+    return s;
+  }
+
+  if (s.phase === 'fatality') {
+    s.phaseFrame++;
+    if (s.phaseFrame >= FATALITY_TICKS) {
+      s.phase = 'matchEnd';
+      s.phaseFrame = 0;
+    }
+    return s;
+  }
+
   if (s.phase === 'matchEnd') {
     s.phaseFrame++;
     return s;
@@ -629,9 +719,9 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
   const ko1 = f1.health <= 0;
   const ko2 = f2.health <= 0;
   if (ko1 || ko2) {
-    endRound(s, ko1 && ko2 ? null : ko1 ? 1 : 0);
+    endRound(s, ko1 && ko2 ? null : ko1 ? 1 : 0, defs);
   } else if (s.timer <= 0) {
-    endRound(s, f1.health > f2.health ? 0 : f2.health > f1.health ? 1 : null);
+    endRound(s, f1.health > f2.health ? 0 : f2.health > f1.health ? 1 : null, defs);
   }
 
   return s;

@@ -55,8 +55,11 @@ export function buildJobs(spec) {
     for (const b of V2_BUTTONS) {
       jobs.push({ id: `j${b}`, pose: `airborne mid-jump, ${spec.moves6.air[b]}` });
     }
-    for (const phase of ['startup', 'active', 'recovery']) {
-      jobs.push({ id: `special-${phase}`, pose: spec.moves6.special[phase] });
+    // named specials, in declaration order (cells: <special-id>-<phase>)
+    for (const [sid, phases] of Object.entries(spec.moves6.specials)) {
+      for (const phase of ['startup', 'active', 'recovery']) {
+        jobs.push({ id: `${sid}-${phase}`, pose: phases[phase] });
+      }
     }
   } else {
     for (const move of MOVES) {
@@ -77,26 +80,85 @@ export function gridFor(spec) {
 export const CHARACTERS = {
   vincent: {
     canonical: 'assets/raw/style-tests/char-vincent-b-painted.png',
-    moves: {
-      light: {
-        startup: 'coiling a quick straight palm strike, rear palm chambered at the hip',
-        active: 'straight palm strike fully extended at chest height, cloak snapping forward',
-        recovery: 'retracting the palm, weight settling back into stance',
+    layout: 'v2',
+    moves6: {
+      stand: {
+        lp: {
+          startup: 'coiling a quick straight palm strike, rear palm chambered at the hip',
+          active: 'straight palm strike fully extended at chest height, cloak snapping forward',
+          recovery: 'retracting the palm, weight settling back into stance',
+        },
+        mp: {
+          startup: 'chambering a short double-palm push, palms stacked at his side',
+          active: 'short double-palm push thrust forward at chest height, faint teal shimmer at the palms',
+          recovery: 'palms drawing back into a tai chi guard',
+        },
+        hp: {
+          startup: 'winding into a spinning double-palm push, cloak wrapping around the body',
+          active: 'double-palm push fully extended, cloak flared wide, burst of teal energy at the palms',
+          recovery: 'completing the spin, cloak settling, arms lowering',
+        },
+        lk: {
+          startup: 'weight shifting back, front foot lifting for a quick low toe kick',
+          active: 'quick snapping toe kick at shin height, cloak swaying',
+          recovery: 'the foot returning softly to stance',
+        },
+        mk: {
+          startup: 'arms flowing as one leg chambers across his body for a crescent kick',
+          active: 'crescent kick sweeping at chest height, cloak arcing with the motion — exactly one foot on the ground',
+          recovery: 'the kicking leg landing back into a settled tai chi stance',
+        },
+        hk: {
+          startup: 'coiling into a spin, cloak wrapping tight, one leg chambered high',
+          active: 'spinning high crescent kick fully extended at head height, cloak flared in a full circle, teal energy trail — exactly one foot on the ground',
+          recovery: 'the spin completing, cloak settling around him, both feet planted',
+        },
       },
-      heavy: {
-        startup: 'winding into a spinning double-palm push, cloak wrapping around the body',
-        active: 'double-palm push fully extended, cloak flared wide, burst of teal energy at the palms',
-        recovery: 'completing the spin, cloak settling, arms lowering',
+      crouch: {
+        lp: {
+          active: 'short palm strike snapped out at waist height from the squat',
+          recovery: 'palm pulled back to guard, still coiled in the squat',
+        },
+        mp: {
+          active: 'rising palm thrust angled upward out of the squat, teal shimmer trailing',
+          recovery: 'the arm settling down, weight sinking back into the squat',
+        },
+        hp: {
+          active: 'both palms thrust powerfully straight upward out of the squat, cloak rising, teal energy burst (anti-air)',
+          recovery: 'arms lowering from overhead, settling back into the squat',
+        },
+        lk: {
+          active: 'squatting on his left leg, his RIGHT leg snapping a quick kick forward at ankle height',
+          recovery: 'the kicking leg pulled back beneath him, both feet planted in the squat',
+        },
+        mk: {
+          active: 'squatting on his bent left leg while his RIGHT leg is fully extended forward along the ground in a long low kick, cloak pooled around him',
+          recovery: 'sliding the extended leg back beneath his body into a compact squat',
+        },
+        hk: {
+          active: 'low circular leg sweep fully extended along the ground, cloak fanned out',
+          recovery: 'rising from the sweep back toward stance',
+        },
       },
-      sweep: {
-        startup: 'dropping low, one hand planted on the ground, leg chambered',
-        active: 'low circular leg sweep fully extended along the ground, cloak fanned out',
-        recovery: 'rising from the sweep back toward stance',
+      air: {
+        lp: 'throwing a quick downward-angled palm strike',
+        mp: 'a double-palm thrust angled 45 degrees downward, teal shimmer',
+        hp: 'an overhead double-fist hammer blow swung downward, cloak billowing above him',
+        lk: 'a sharp knee strike raised toward the opponent',
+        mk: 'a side kick extended at a downward angle, cloak trailing',
+        hk: 'a flying spinning crescent kick — RIGHT leg fully extended with a teal energy trail, LEFT leg tucked beneath him, both legs clearly attached',
       },
-      special: {
-        startup: 'tracing a glowing teal arcane glyph in the air with one finger, eyes focused',
-        active: 'palm thrust forward launching a bright teal glowing rune projectile, cloak blown back',
-        recovery: 'follow-through with palm open, glyph light fading from the fingertips',
+      specials: {
+        'sigil-bolt': {
+          startup: 'tracing a glowing teal arcane glyph in the air with one finger, eyes focused',
+          active: 'palm thrust forward launching a bright teal glowing rune projectile, cloak blown back',
+          recovery: 'follow-through with palm open, glyph light fading from the fingertips',
+        },
+        'cloud-hands': {
+          startup: 'both palms beginning a flowing circular cloud-hands motion, teal light gathering between them',
+          active: 'advancing forward as his palms flow in circles, a blurred triple palm strike, teal light trailing each palm',
+          recovery: 'the flowing motion settling, palms returning to center, teal light fading',
+        },
       },
     },
     extra: {
@@ -235,10 +297,17 @@ export const CHARACTERS = {
         mk: 'side kick extended at a downward angle, body tilted',
         hk: 'body tilted delivering a powerful flying roundhouse — RIGHT leg fully extended with a red aura trail, LEFT leg tucked beneath her, both legs clearly attached',
       },
-      special: {
-        startup: 'coiled low in a cossack-squat wind-up, fists clenched, red rage aura igniting',
-        active: 'mid-spin advancing strike, leg extended in a rising spiral, fierce red rage aura flaring',
-        recovery: 'landing from the spiral, exhaling, embers of red aura fading',
+      specials: {
+        'cossack-spiral': {
+          startup: 'coiled low in a cossack-squat wind-up, fists clenched, red rage aura igniting',
+          active: 'mid-spin advancing strike, leg extended in a rising spiral, fierce red rage aura flaring',
+          recovery: 'landing from the spiral, exhaling, embers of red aura fading',
+        },
+        'backbend-guillotine': {
+          startup: 'leaning impossibly far backwards in a matrix-style limbo, palms hovering near the ground behind her, one leg beginning to rise',
+          active: 'snapping up out of the backbend, her RIGHT leg (clearly attached at the hip) whipping over in a huge overhead arc, heel dropping like a guillotine, red aura crescent — exactly one foot on the ground',
+          recovery: 'the heel planted after the guillotine drop, rising back to stance, hair settling',
+        },
       },
     },
     extra: {},

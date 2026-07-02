@@ -25,16 +25,19 @@ export class MenuScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
     const prompt = this.add
-      .text(STAGE_W / 2, 400, 'PRESS ENTER', {
-        fontFamily: 'monospace', fontSize: '28px', fontStyle: 'bold', color: '#f5ead9',
-        stroke: '#000', strokeThickness: 6,
+      .text(STAGE_W / 2, 392, '1 · VS CPU\n\n2 · TWO PLAYERS', {
+        fontFamily: 'monospace', fontSize: '26px', fontStyle: 'bold', color: '#f5ead9',
+        stroke: '#000', strokeThickness: 6, align: 'center',
       })
       .setOrigin(0.5);
-    this.tweens.add({ targets: prompt, alpha: 0.25, duration: 600, yoyo: true, repeat: -1 });
+    this.tweens.add({ targets: prompt, alpha: 0.4, duration: 600, yoyo: true, repeat: -1 });
 
-    this.input.keyboard!.on('keydown-ENTER', () => {
+    const go = (cpu: boolean) => {
       play(this, 's-blip');
-      this.scene.start('Select');
-    });
+      this.scene.start('Select', { cpu });
+    };
+    this.input.keyboard!.on('keydown-ONE', () => go(true));
+    this.input.keyboard!.on('keydown-TWO', () => go(false));
+    this.input.keyboard!.on('keydown-ENTER', () => go(false));
   }
 }

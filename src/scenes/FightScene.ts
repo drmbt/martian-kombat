@@ -3,6 +3,7 @@
 // the deterministic core in src/engine/ stays pure and silent.
 import Phaser from 'phaser';
 import {
+  FATALITY_TICKS,
   FLOOR_Y,
   GameState,
   INTRO_TICKS,
@@ -16,6 +17,7 @@ import {
 } from '../engine';
 import { characters } from '../data/characters';
 import { KeyboardSource } from '../input/keyboard';
+import { CpuDriver } from '../ai/bot';
 import { play } from './BootScene';
 
 // Cells are looked up BY NAME from each sheet's meta.json (written by
@@ -65,13 +67,19 @@ export class FightScene extends Phaser.Scene {
   private cellMaps: [Map<string, number>, Map<string, number>] = [new Map(), new Map()];
   private paused = false;
   private pauseOverlay!: Phaser.GameObjects.Container;
+  private cpu = false;
+  private bot: CpuDriver | null = null;
+  private fatalityPanel: Phaser.GameObjects.Image | null = null;
 
   constructor() {
     super('Fight');
   }
 
-  init(data: { p1?: string; p2?: string }): void {
+  init(data: { p1?: string; p2?: string; cpu?: boolean }): void {
     this.chars = [data.p1 ?? 'vincent', data.p2 ?? 'yulia'];
+    this.cpu = !!data.cpu;
+    this.bot = this.cpu ? new CpuDriver(1) : null;
+    this.fatalityPanel = null;
   }
 
   create(): void {
@@ -161,7 +169,8 @@ export class FightScene extends Phaser.Scene {
     this.accumulator += Math.min(deltaMs, 100);
     while (this.accumulator >= TICK_MS) {
       const snap = this.snapshot();
-      step(this.state, [this.inputs.poll(0), this.inputs.poll(1)], characters);
+      const p2 = this.bot ? this.bot.poll(this.state) : this.inputs.poll(1);
+      step(this.state, [this.inputs.poll(0), p2], characters);
       this.accumulator -= TICK_MS;
       this.presentTick(snap);
     }
@@ -200,9 +209,22 @@ export class FightScene extends Phaser.Scene {
         }
       }
     }
-    if (prev.phase === 'roundEnd' && s.phase === 'matchEnd' && s.roundWinner !== null) {
+    if (
+      (prev.phase === 'roundEnd' || prev.phase === 'fatality') &&
+      s.phase === 'matchEnd' &&
+      s.roundWinner !== null
+    ) {
       play(this, `ann-${s.fighters[s.roundWinner].charId}`, 1);
       this.time.delayedCall(900, () => play(this, 'ann-victory', 1));
+    }
+    if (prev.phase === 'fight' && s.phase === 'finisher') {
+      play(this, 'ann-finish-them', 1);
+      this.cameras.main.shake(150, 0.006);
+    }
+    if (prev.phase === 'finisher' && s.phase === 'fatality') {
+      play(this, 'ann-fatality', 1);
+      this.cameras.main.flash(300, 255, 30, 30);
+      this.cameras.main.shake(400, 0.01);
     }
 
     // per-fighter transitions
@@ -227,7 +249,7 @@ export class FightScene extends Phaser.Scene {
       if (kind === 'blockstun' && was !== 'blockstun') play(this, 's-block', 0.6);
       if ((kind === 'attack' || kind === 'airAttack') && was !== kind) {
         play(this, 's-whoosh', 0.4);
-        if (f.action.moveId === 'special') play(this, `v-${f.charId}-kiai`, 0.8);
+        if (characters[f.charId].moves[f.action.moveId!]?.input) play(this, `v-${f.charId}-kiai`, 0.8);
       }
       if (kind === 'air' && was === 'prejump') play(this, 's-jump', 0.35);
     }
@@ -248,8 +270,11 @@ export class FightScene extends Phaser.Scene {
   }
 
   /** Cell-name candidates for an attack, newest naming first, legacy last. */
-  private attackCells(moveId: string, phase: 0 | 1 | 2): string[] {
-    if (moveId === 'special') return [`special-${PHASE_NAME[phase]}`];
+  private attackCells(charId: string, moveId: string, phase: 0 | 1 | 2): string[] {
+    // named specials: own cells, else the legacy single-special cells
+    if (characters[charId].moves[moveId]?.input) {
+      return [`${moveId}-${PHASE_NAME[phase]}`, `special-${PHASE_NAME[phase]}`];
+    }
     if (moveId.startsWith('j')) return [moveId, 'jump'];
     if (moveId.startsWith('c')) {
       // crouch normals have 2 cells on v2 sheets (active art covers startup)
@@ -275,8 +300,9 @@ export class FightScene extends Phaser.Scene {
       case 'airAttack': {
         const m = characters[f.charId].moves[a.moveId!];
         const phase = a.frame < m.startup ? 0 : a.frame < m.startup + m.active ? 1 : 2;
-        return this.cellFor(slot, this.attackCells(a.moveId!, phase as 0 | 1 | 2));
+        return this.cellFor(slot, this.attackCells(f.charId, a.moveId!, phase as 0 | 1 | 2));
       }
+      case 'dazed':
       case 'hitstun': return this.cellFor(slot, ['hit']);
       case 'blockstun':
         return this.cellFor(slot, a.guard === 'crouch' ? ['block-crouch'] : ['block']);
@@ -293,6 +319,14 @@ export class FightScene extends Phaser.Scene {
     gU.clear();
     this.gfxHud.clear();
 
+    if (s.phase === 'fatality' && s.fatality) {
+      this.drawFatality();
+      return;
+    }
+    if (this.fatalityPanel) {
+      this.fatalityPanel.setVisible(false);
+    }
+
     if (!this.hasBg) {
       gU.fillStyle(0x241b2e, 1).fillRect(0, 0, STAGE_W, STAGE_H);
       gU.fillStyle(0x3a2b40, 1).fillRect(0, FLOOR_Y, STAGE_W, STAGE_H - FLOOR_Y);
@@ -306,16 +340,21 @@ export class FightScene extends Phaser.Scene {
 
       const sprite = this.fighterSprites[slot];
       if (sprite) {
+        sprite.setVisible(true);
         const h = def.hurtStand.h * 1.32; // art has margin around the body
         sprite.setDisplaySize((h * CELL_W) / CELL_H, h);
         sprite.setPosition(f.x, f.y + 6);
         sprite.setFlipX(f.facing === -1);
+        sprite.setRotation(0);
         sprite.setFrame(this.actionToCell(slot, f));
         const k = f.action.kind;
         const mirrorTint = this.chars[0] === this.chars[1] && slot === 1 ? 0xffb0a0 : undefined;
         if (k === 'hitstun' || (k === 'airHit' && f.action.frame < 6)) sprite.setTintFill(0xffffff);
         else if (k === 'blockstun') sprite.setTint(0xaaaaff);
-        else if (k === 'ko' || k === 'knockdown') sprite.setTint(0x9a9a9a);
+        else if (k === 'dazed') {
+          sprite.setTint(0x776677);
+          sprite.setRotation(Math.sin(this.state.tick / 9) * 0.05); // woozy sway
+        } else if (k === 'ko' || k === 'knockdown') sprite.setTint(0x9a9a9a);
         else if (mirrorTint) sprite.setTint(mirrorTint);
         else sprite.clearTint();
       } else {
@@ -359,6 +398,39 @@ export class FightScene extends Phaser.Scene {
 
     if (this.debugBoxes) this.drawDebug();
     this.drawHud();
+  }
+
+  /** Full-bleed cutscene panels while the engine ticks the fatality timeline.
+   *  Generic: any character with panels at assets/fatalities/<id>/<fid>-<n>. */
+  private drawFatality(): void {
+    const s = this.state;
+    const { owner, id } = s.fatality!;
+    const def = characters[s.fighters[owner].charId];
+    const panels = def.fatality?.panels ?? 4;
+    const panel = Math.min(panels, 1 + Math.floor((s.phaseFrame / FATALITY_TICKS) * panels));
+    const key = `fat-${s.fighters[owner].charId}-${id}-${panel}`;
+
+    for (const sp of this.fighterSprites) sp?.setVisible(false);
+    for (const img of this.projSprites) img.setVisible(false);
+
+    if (!this.fatalityPanel) {
+      this.fatalityPanel = this.add.image(STAGE_W / 2, STAGE_H / 2, '__DEFAULT').setDepth(8);
+    }
+    const img = this.fatalityPanel;
+    if (this.textures.exists(key)) {
+      if (img.texture.key !== key) {
+        img.setTexture(key).setDisplaySize(STAGE_W, STAGE_H).setVisible(true);
+        this.cameras.main.shake(120, 0.006);
+        this.cameras.main.flash(120, 255, 60, 40);
+        play(this, 's-hit', 0.9);
+      }
+    } else {
+      // no art: dramatic red blackout fallback so the flow still works
+      img.setVisible(false);
+      this.gfxUnder.fillStyle(0x1a0508, 1).fillRect(0, 0, STAGE_W, STAGE_H);
+    }
+    this.msgText.setText('');
+    this.timerText.setText('');
   }
 
   private drawCapsule(slot: 0 | 1): void {
@@ -453,9 +525,12 @@ export class FightScene extends Phaser.Scene {
       case 'roundEnd':
         if (s.roundWinner === null) return s.timer <= 0 ? 'TIME UP' : 'DOUBLE K.O.';
         return s.timer <= 0 ? 'TIME UP' : 'K.O.';
+      case 'finisher':
+        return 'FINISH THEM!';
       case 'matchEnd': {
         const name = characters[s.fighters[s.roundWinner ?? 0].charId].name;
-        return `${name} WINS\nR rematch · ENTER select`;
+        const fatal = s.fatality ? '\nFATALITY' : '';
+        return `${name} WINS${fatal}\nR rematch · ENTER select`;
       }
       default:
         return '';
@@ -473,9 +548,20 @@ export class FightScene extends Phaser.Scene {
       const kd = mv.knockdown ? ' KD' : '';
       return `${mv.damage}dmg ${mv.startup}f${kd}`.padEnd(14);
     };
+    const notate = (input: { motion: string; button: string }) => {
+      const motion = input.motion === 'qcf' ? '↓↘→' : input.motion === 'qcb' ? '↓↙←' : '← →';
+      return `${motion}+${input.button === 'punch' ? 'P' : 'K'}`;
+    };
+    const specials = Object.values(m)
+      .filter((mv) => mv.input)
+      .map((mv) => `★ ${mv.name}: ${notate(mv.input!)}`);
+    const fatality = def.fatality
+      ? [`☠ ${def.fatality.name}: ${notate(def.fatality.input)}  (when they hear FINISH THEM!)`]
+      : [];
     return [
       def.name,
-      def.specialName ? `★ ${def.specialName}` : '',
+      ...specials,
+      ...fatality,
       '',
       '        PUNCH         KICK',
       ` L      ${cell('lp')}${cell('lk')}`,

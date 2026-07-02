@@ -51,8 +51,11 @@
     "jlk",
     "jmk",
     "jhk",
-    "special-startup",
-    "special-active",
-    "special-recovery"
+    "cossack-spiral-startup",
+    "cossack-spiral-active",
+    "cossack-spiral-recovery",
+    "backbend-guillotine-startup",
+    "backbend-guillotine-active",
+    "backbend-guillotine-recovery"
   ]
 }

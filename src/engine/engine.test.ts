@@ -180,21 +180,58 @@ describe('air attacks', () => {
   });
 });
 
-describe('specials (quarter-circle-forward + punch)', () => {
-  it('QCF+P fires the projectile', () => {
+describe('named specials with per-move motions', () => {
+  it("QCF+P fires vincent's Sigil Bolt projectile", () => {
     const s = fresh();
     s.fighters[0].x = 300;
     s.fighters[1].x = 700;
     fireSpecial(s);
-    expect(s.fighters[0].action.moveId).toBe('special');
+    expect(s.fighters[0].action.moveId).toBe('sigil-bolt');
     run(s, 90);
     expect(s.fighters[1].health).toBe(
-      characters[P2].health - characters[P1].moves.special.projectile!.damage,
+      characters[P2].health - characters[P1].moves['sigil-bolt'].projectile!.damage,
     );
     expect(s.projectiles).toHaveLength(0);
   });
 
-  it('punch without the motion does NOT fire the special', () => {
+  it("QCB+P triggers vincent's Cloud Hands (second special)", () => {
+    const s = fresh();
+    closeRange(s);
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ left: true }), inp()], characters); // P1 faces right: back = left
+    step(s, [inp({ left: true, mp: true }), inp()], characters);
+    expect(s.fighters[0].action.moveId).toBe('cloud-hands');
+  });
+
+  it("back-forward + K triggers yulia's Cossack Spiral", () => {
+    const s = fresh();
+    closeRange(s);
+    const e = inp();
+    // P2 faces left: back = right, forward = left
+    step(s, [e, inp({ right: true })], characters);
+    step(s, [e, inp({ right: true })], characters);
+    step(s, [e, inp({ left: true })], characters);
+    step(s, [e, inp({ left: true, mk: true })], characters);
+    expect(s.fighters[1].action.moveId).toBe('cossack-spiral');
+  });
+
+  it("QCB+K Backbend Guillotine is an overhead: beats crouch-block", () => {
+    const s = fresh();
+    s.fighters[0].x = 560;
+    s.fighters[1].x = 640;
+    const guard = inp({ left: true, down: true }); // P1 crouch-blocks (back = left... P1 faces right, back is left)
+    // P2 faces left: qcb = down then back(right)
+    step(s, [guard, inp({ down: true })], characters);
+    step(s, [guard, inp({ down: true })], characters);
+    step(s, [guard, inp({ right: true })], characters);
+    step(s, [guard, inp({ right: true, hk: true })], characters);
+    expect(s.fighters[1].action.moveId).toBe('backbend-guillotine');
+    run(s, 25, guard, inp());
+    expect(s.fighters[0].health).toBeLessThan(characters[P1].health - 20);
+  });
+
+  it('punch without the motion does NOT fire a special', () => {
     const s = fresh();
     s.fighters[0].x = 300;
     s.fighters[1].x = 700;
@@ -209,6 +246,59 @@ describe('specials (quarter-circle-forward + punch)', () => {
     s.fighters[1].x = 860;
     for (let cycle = 0; cycle < 10; cycle++) fireSpecial(s);
     expect(s.projectiles.filter((p) => p.owner === 0).length).toBeLessThanOrEqual(1);
+  });
+});
+
+describe('fatality flow', () => {
+  /** yulia (slot 1) lands the match-deciding KO on vincent */
+  function decideMatch(): GameState {
+    const s = fresh();
+    s.wins = [0, 1];
+    closeRange(s);
+    s.fighters[0].health = 10;
+    // P2 faces left: jab P1 out
+    step(s, [inp(), inp({ lp: true })], characters);
+    run(s, 6);
+    return s;
+  }
+
+  it('match-deciding KO by a fatality-holder opens the finisher window', () => {
+    const s = decideMatch();
+    expect(s.phase).toBe('finisher');
+    expect(s.fighters[0].action.kind).toBe('dazed');
+    expect(s.wins[1]).toBe(2);
+  });
+
+  it('fatality input in range starts the cutscene, then matchEnd', () => {
+    const s = decideMatch();
+    // yulia: Heart Breaker = QCB+P; she faces left so back = right
+    step(s, [inp(), inp({ down: true })], characters);
+    step(s, [inp(), inp({ down: true })], characters);
+    step(s, [inp(), inp({ right: true })], characters);
+    step(s, [inp(), inp({ right: true, hp: true })], characters);
+    expect(s.phase).toBe('fatality');
+    expect(s.fatality).toEqual({ owner: 1, id: 'heart-breaker' });
+    run(s, 470);
+    expect(s.phase).toBe('matchEnd');
+  });
+
+  it('letting the window expire collapses the loser and ends the match', () => {
+    const s = decideMatch();
+    run(s, 380); // FINISHER_TICKS
+    expect(['roundEnd', 'matchEnd']).toContain(s.phase);
+    run(s, 200);
+    expect(s.phase).toBe('matchEnd');
+    expect(s.fatality).toBeNull();
+  });
+
+  it('vincent (no fatality defined) KOs straight to the normal round end', () => {
+    const s = fresh();
+    s.wins = [1, 0];
+    closeRange(s);
+    s.fighters[1].health = 10;
+    step(s, [inp({ lp: true }), inp()], characters);
+    run(s, 6);
+    expect(s.phase).toBe('roundEnd');
   });
 });
 
@@ -250,7 +340,7 @@ describe('sprint 4 mechanics', () => {
     fireSpecial(crouch, crouchGuard);
     for (let i = 0; i < 80; i++) step(crouch, [inp(), crouchGuard], characters);
     expect(crouch.fighters[1].health).toBe(
-      characters[P2].health - Math.floor(characters.catherine.moves.special.projectile!.damage * 0.1),
+      characters[P2].health - Math.floor(characters.catherine.moves['order-up'].projectile!.damage * 0.1),
     );
   });
 

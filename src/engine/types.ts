@@ -61,6 +61,16 @@ export interface ProjectileDef {
   ttl?: number;
 }
 
+/** Fighting-game convention motions: quarter-circle-forward (↓↘→),
+ *  quarter-circle-back (↓↙←), back-then-forward (←→). */
+export type Motion = 'qcf' | 'qcb' | 'bf';
+
+export interface SpecialInput {
+  motion: Motion;
+  /** which button class finishes the motion */
+  button: 'punch' | 'kick';
+}
+
 export interface MoveDef {
   startup: number;
   active: number;
@@ -76,6 +86,21 @@ export interface MoveDef {
   /** forward drift per tick during startup+active (advancing specials) */
   forwardVel?: number;
   projectile?: ProjectileDef;
+  /** display name (specials, shown on the pause screen) */
+  name?: string;
+  /** presence marks the move as a SPECIAL, fired by motion+button instead of
+   *  a raw button press; a character may define any number of these */
+  input?: SpecialInput;
+}
+
+export interface FatalityDef {
+  id: string;
+  name: string;
+  input: SpecialInput;
+  /** max distance to the dazed loser; default engine FATALITY_RANGE */
+  range?: number;
+  /** number of cutscene panels the renderer should play */
+  panels: number;
 }
 
 export interface CharacterDef {
@@ -83,8 +108,7 @@ export interface CharacterDef {
   name: string;
   /** render hint only — engine never reads it */
   color: string;
-  /** shown on the pause/move-list screen */
-  specialName?: string;
+  fatality?: FatalityDef;
   health: number;
   walkSpeed: number;
   backSpeed: number;
@@ -113,7 +137,9 @@ export type ActionKind =
   | 'airHit'
   | 'knockdown'
   | 'getup'
-  | 'ko';
+  | 'ko'
+  /** standing defeated during the finisher window, waiting for the fatality */
+  | 'dazed';
 
 export interface Action {
   kind: ActionKind;
@@ -154,7 +180,7 @@ export interface Projectile {
   ttl: number;
 }
 
-export type Phase = 'intro' | 'fight' | 'roundEnd' | 'matchEnd';
+export type Phase = 'intro' | 'fight' | 'roundEnd' | 'finisher' | 'fatality' | 'matchEnd';
 
 export interface GameState {
   tick: number;
@@ -168,4 +194,6 @@ export interface GameState {
   wins: [number, number];
   /** winner of the round that just ended / the match; null = draw */
   roundWinner: 0 | 1 | null;
+  /** set while a fatality cutscene is playing */
+  fatality: { owner: 0 | 1; id: string } | null;
 }
