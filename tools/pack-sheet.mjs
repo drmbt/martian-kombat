@@ -66,10 +66,11 @@ function pack(charId) {
   };
   writeFileSync(join(outDir, 'meta.json'), JSON.stringify(meta, null, 2));
 
-  const proj = join(inDir, 'projectile.png');
-  if (existsSync(proj)) {
-    const projKey = CHARACTERS[charId]?.extra?.projectileKey ?? '0x00B140';
-    ff(['-i', proj, '-vf', `chromakey=${projKey}:0.15:0.06,scale=96:96`, '-frames:v', '1', join(outDir, 'projectile.png')]);
+  for (const [pid, projSpec] of Object.entries(CHARACTERS[charId]?.extra?.projectiles ?? {})) {
+    const proj = join(inDir, `projectile-${pid}.png`);
+    if (!existsSync(proj)) continue;
+    const projKey = projSpec.key ?? '0x00B140';
+    ff(['-i', proj, '-vf', `chromakey=${projKey}:0.15:0.06,scale=96:96`, '-frames:v', '1', join(outDir, `projectile-${pid}.png`)]);
   }
 
   rmSync(tmp, { recursive: true });

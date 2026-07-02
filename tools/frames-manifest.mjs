@@ -162,40 +162,114 @@ export const CHARACTERS = {
       },
     },
     extra: {
-      // NOTE: teal-on-green was unkeyable (chroma ate the whole rune) — this
-      // one lives on a magenta screen with its own key color.
-      projectile:
-        'A single glowing blue-violet arcane rune sigil energy ball projectile with bright white core, spinning, painted cel-shaded anime style, small, centered, on solid flat magenta background #FF00FF, no character, no text, no watermark.',
-      projectileKey: '0xFF00FF',
+      projectiles: {
+        // NOTE: teal-on-green was unkeyable (chroma ate the whole rune) — this
+        // one lives on a magenta screen with its own key color.
+        'sigil-bolt': {
+          prompt:
+            'A single glowing blue-violet arcane rune sigil energy ball projectile with bright white core, spinning, painted cel-shaded anime style, small, centered, on solid flat magenta background #FF00FF, no character, no text, no watermark.',
+          key: '0xFF00FF',
+        },
+      },
     },
   },
   catherine: {
     canonical: 'assets/raw/canonical/catherine.png',
-    moves: {
-      light: {
-        startup: 'drawing the bo staff back beside the hip, coiled for a thrust',
-        active: 'bo staff thrust fully extended forward at chest height, sharp and direct',
-        recovery: 'retracting the bo staff back to a ready guard',
+    layout: 'v2',
+    // the staff kept vanishing between frames — this rides along on EVERY prompt
+    always:
+      'She is ALWAYS holding her long wooden bo staff — the staff must be clearly visible in this frame, gripped in one or both hands (or planted upright in one hand where the pose says so). Never draw her without the staff.',
+    moves6: {
+      stand: {
+        lp: {
+          startup: 'drawing the bo staff back beside the hip, coiled for a thrust',
+          active: 'bo staff thrust fully extended forward at chest height, sharp and direct',
+          recovery: 'retracting the bo staff back to a ready guard',
+        },
+        mp: {
+          startup: 'spinning the bo staff up across her body, both hands on the shaft',
+          active: 'horizontal staff strike snapped across at chest height, both hands driving it through',
+          recovery: 'the staff rebounding back into a two-handed guard',
+        },
+        hp: {
+          startup: 'raising the bo staff high overhead with both hands',
+          active: 'slamming the bo staff down in a powerful overhead arc, hair flying',
+          recovery: 'lifting the staff back up from the follow-through',
+        },
+        lk: {
+          startup: 'front knee rising, staff pulled tight vertical against her side',
+          active: 'quick snapping front kick at shin height, staff held tight vertical at her side',
+          recovery: 'the kicking foot returning, staff swinging back to guard',
+        },
+        mk: {
+          startup: 'planting the bo staff on the ground like a pole, weight shifting onto it',
+          active: 'pole-assisted side kick at chest height, body swinging around the planted staff, one hand on the staff',
+          recovery: 'landing from the pole kick, pulling the staff back up into both hands',
+        },
+        hk: {
+          startup: 'staff planted firmly, her whole body coiling around it like a vaulter',
+          active: 'pole-vault kick — swinging from the planted staff, both feet together driving forward at head height',
+          recovery: 'landing from the vault, staff returning to a two-handed guard',
+        },
       },
-      heavy: {
-        startup: 'raising the bo staff high overhead with both hands',
-        active: 'slamming the bo staff down in a powerful overhead arc, hair flying',
-        recovery: 'lifting the staff back up from the follow-through',
+      crouch: {
+        lp: {
+          active: 'short staff jab snapped out at waist height from the squat, staff held mid-shaft',
+          recovery: 'staff pulled back to a compact guard, still squatting',
+        },
+        mp: {
+          active: 'rising diagonal staff thrust angled upward out of the squat (anti-air)',
+          recovery: 'the staff arcing back down, weight settling into the squat',
+        },
+        hp: {
+          active: 'powerful vertical staff thrust straight up out of the squat, arms fully extended overhead (anti-air)',
+          recovery: 'staff lowering from overhead, settling back into the squat',
+        },
+        lk: {
+          active: 'squatting on her left leg, her RIGHT leg snapping a quick kick at ankle height, staff braced across her body',
+          recovery: 'the kicking leg pulled back beneath her, staff braced, both feet planted in the squat',
+        },
+        mk: {
+          active: 'squatting on her bent left leg, her RIGHT leg fully extended forward along the ground in a long low kick, staff braced over her shoulder',
+          recovery: 'sliding the extended leg back beneath her into the squat, staff over her shoulder',
+        },
+        hk: {
+          active: 'sweeping the bo staff in a wide low arc along the ground',
+          recovery: 'rising while spinning the staff back up to guard',
+        },
       },
-      sweep: {
-        startup: 'dropping low with the staff cocked horizontally at her side',
-        active: 'sweeping the bo staff in a wide low arc along the ground',
-        recovery: 'rising while spinning the staff back up to guard',
+      air: {
+        lp: 'a quick downward bo staff poke, staff in both hands',
+        mp: 'a bo staff thrust angled 45 degrees downward, arms extended',
+        hp: 'a two-handed overhead bo staff slam swung downward, hair flying',
+        lk: 'a sharp knee strike, the staff pulled up overhead in both hands',
+        mk: 'a side kick angled downward, the staff held across her body',
+        hk: 'a flying downward heel kick — RIGHT leg extended, LEFT tucked, staff swept back behind her in one hand',
       },
-      special: {
-        startup: 'kneeling on one knee, pointing forward commandingly like sending a dog on an attack run, her dog crouched beside her ready to sprint',
-        active: 'arm fully extended pointing forward, dog no longer beside her (already launched off-screen), coat tails swinging',
-        recovery: 'standing back up mid-whistle, hand near her mouth',
+      specials: {
+        'mise-en-place': {
+          startup: 'drawing a fan of three kitchen knives from her chest bandolier with her free hand, bo staff gripped in the other hand',
+          active: 'flinging the fan of three gleaming kitchen knives forward, blades leaving her open hand in a spread, bo staff in her other hand',
+          recovery: 'the throwing hand empty in follow-through, returning to grip the staff with both hands',
+        },
+        'order-up': {
+          startup: 'kneeling on one knee, pointing forward commandingly like sending a dog on an attack run, bo staff planted upright in her other hand, her small scruffy dog crouched beside her ready to sprint',
+          active: 'arm fully extended pointing forward, the dog absent (already launched off-screen), bo staff planted upright in her other hand',
+          recovery: 'standing back up mid-whistle, one hand near her mouth, the other holding the staff',
+        },
       },
     },
     extra: {
-      projectile:
-        'A small scruffy terrier dog sprinting at full speed to the right, ears pinned back, legs stretched mid-gallop, determined face, painted cel-shaded anime style, side view, full body, on solid flat chroma-key green background #00B140, no text, no watermark.',
+      projectiles: {
+        'order-up': {
+          prompt:
+            'A small scruffy terrier dog sprinting at full speed to the right, ears pinned back, legs stretched mid-gallop, determined face, painted cel-shaded anime style, side view, full body, on solid flat chroma-key green background #00B140, no text, no watermark.',
+        },
+        'mise-en-place': {
+          prompt:
+            'A fan of three gleaming steel kitchen chef knives flying point-first to the right in a slight spread, subtle motion streaks, painted cel-shaded anime style, on solid flat chroma-key green background #00B140, no character, no hands, no text, no watermark.',
+        },
+      },
     },
   },
   kirby: {
@@ -223,8 +297,12 @@ export const CHARACTERS = {
       },
     },
     extra: {
-      projectile:
-        'A billowing cone-shaped burst of orange and red fire with curling steam wisps, pointing to the right, painted cel-shaded anime style, on solid flat chroma-key green background #00B140, no character, no text, no watermark.',
+      projectiles: {
+        'scalding-sip': {
+          prompt:
+            'A billowing cone-shaped burst of orange and red fire with curling steam wisps, pointing to the right, painted cel-shaded anime style, on solid flat chroma-key green background #00B140, no character, no text, no watermark.',
+        },
+      },
     },
   },
   yulia: {

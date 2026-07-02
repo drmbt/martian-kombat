@@ -318,10 +318,41 @@
       },
       "height": "high"
     },
-    "order-up": {
-      "name": "Order Up!",
+    "mise-en-place": {
+      "name": "Mise en Place",
       "input": {
         "motion": "qcf",
+        "button": "punch"
+      },
+      "startup": 11,
+      "active": 2,
+      "recovery": 20,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "projectile": {
+        "vx": 11,
+        "spawnX": 84,
+        "spawnY": -176,
+        "box": {
+          "x": -34,
+          "y": -20,
+          "w": 68,
+          "h": 40
+        },
+        "damage": 65,
+        "hitstun": 16,
+        "blockstun": 11,
+        "knockback": 7
+      }
+    },
+    "order-up": {
+      "name": "Order Up! \u2014 Jazzper hits LOW",
+      "input": {
+        "motion": "qcb",
         "button": "punch"
       },
       "startup": 12,

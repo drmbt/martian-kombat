@@ -49,7 +49,9 @@ async function genChar(charId) {
     const out = join(outDir, `${String(i).padStart(2, '0')}-${id}.png`);
     if (skip(out, force)) continue;
     const useAnchor = isLowCell(id) && lowRefPath && existsSync(lowRefPath);
-    const prompt = `${STYLE_BASE}\n${FRAME_RULES}\nPose: ${pose}.${useAnchor ? LOW_ANCHOR : ''}`;
+    // per-character invariant (e.g. Catherine's bo staff in EVERY frame)
+    const always = spec.always ? ` ${spec.always}` : '';
+    const prompt = `${STYLE_BASE}\n${FRAME_RULES}${always}\nPose: ${pose}.${useAnchor ? LOW_ANCHOR : ''}`;
     console.log(`[${charId}] ${i + 1}/${jobs.length} ${id}${useAnchor ? ' (low-anchored)' : ''} ...`);
     try {
       const buf = await geminiImage({
@@ -65,18 +67,18 @@ async function genChar(charId) {
     }
   }
 
-  if (spec.extra?.projectile) {
-    const out = join(outDir, 'projectile.png');
-    if (!skip(out, force)) {
-      console.log(`[${charId}] projectile ...`);
-      const buf = await geminiImage({
-        apiKey: env.GEMINI_API_KEY,
-        model: MODEL,
-        prompt: spec.extra.projectile,
-        aspectRatio: '1:1',
-      });
-      saveAsset(out, buf, spec.extra.projectile);
-    }
+  // one art file per projectile-throwing special: projectile-<move-id>.png
+  for (const [pid, proj] of Object.entries(spec.extra?.projectiles ?? {})) {
+    const out = join(outDir, `projectile-${pid}.png`);
+    if (skip(out, force)) continue;
+    console.log(`[${charId}] projectile ${pid} ...`);
+    const buf = await geminiImage({
+      apiKey: env.GEMINI_API_KEY,
+      model: MODEL,
+      prompt: proj.prompt,
+      aspectRatio: '1:1',
+    });
+    saveAsset(out, buf, proj.prompt);
   }
 }
 

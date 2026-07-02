@@ -144,6 +144,24 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
 - [x] New gameplay-demo.mp4: CPU vincent vs CPU yulia — yulia wins 2-0 and
       lands Heart Breaker on camera
 
+### Sprint 7 — Deploy hardening + Catherine v2 (user-directed)
+- [x] Pages deploys moved to an Actions workflow (`.github/workflows/deploy.yml`,
+      push-to-main, `cancel-in-progress: false`) — the legacy branch pipeline
+      wedged when force-pushes raced (mid-deploy cancel → phantom queued
+      deployment → everything times out). Wedge root-caused + phantom
+      cancelled via the Pages deployments API; queue expected to self-heal
+      (~2h per GitHub norm); site kept serving throughout
+- [x] Rematch (R) and reselect (ENTER) keep CPU mode
+- [x] Catherine v2 53-cell sheet: staff in EVERY frame via new per-character
+      `always` prompt invariant; pole-kick/pole-vault kicks; block-crouch
+      fixed with a cmk-active height anchor
+- [x] Two specials: **Mise en Place** (QCF+P, knife-fan projectile, new art)
+      and **Order Up!** (moved to QCB+P, Jazzper still hits low)
+- [x] Per-move projectile plumbing: `Projectile.moveId`, per-special art files
+      (`projectile-<move>.png`), manifest `extra.projectiles`, scene picks
+      texture per special — characters can own any number of projectiles
+- [x] 35 tests green; both specials verified live in-browser
+
 ### Icebox (post-MVP, do not start)
 Remaining roster (Flo, Freeman, Gene, Marzipan) · new characters · single-player
 arcade mode + CPU opponent · super meter/EX moves · stage variety + interactables ·
@@ -225,7 +243,13 @@ rollback netplay (engine determinism already paid for) · training mode · fatal
 
 *(overwrite this section each handoff — what's mid-flight, gotchas, next action)*
 
-**State:** Sprint 5 shipped (six-button combat). **NEW GOTCHAS:** (1) crouch /
+**State:** Sprint 7 shipped. **DEPLOY RECIPE CHANGED:** just push to main —
+the `deploy` workflow builds and publishes (do NOT force-push gh-pages
+anymore; that pipeline is retired and was the wedge source). If a deploy run
+fails with `deployment_queued` timeouts, check for a phantom via
+`gh api repos/drmbt/martian-kombat/pages/deployments/<sha>` (empty status =
+limbo) and POST `<sha>/cancel`; the queue self-heals ~2h after the last
+mid-deploy cancellation. Never deploy twice in quick succession. **NEW GOTCHAS:** (1) crouch /
 low poses: the model copies the standing canonical's height no matter what the
 text says — pass a SECOND reference image with the desired low pose (e.g. the
 character's own chk-active frame) and say "copy the body height of the second

@@ -371,15 +371,19 @@ export class FightScene extends Phaser.Scene {
         img.setVisible(false);
         return;
       }
-      const key = `proj-${s.fighters[p.owner].charId}`;
+      const ownerChar = s.fighters[p.owner].charId;
+      // per-special art, falling back to the character's legacy single sprite
+      const key = this.textures.exists(`proj-${ownerChar}-${p.moveId}`)
+        ? `proj-${ownerChar}-${p.moveId}`
+        : `proj-${ownerChar}`;
       if (this.textures.exists(key)) {
         if (img.texture.key !== key) img.setTexture(key);
-        const size = s.fighters[p.owner].charId === 'catherine' ? 96 : 72; // Jazzper is a whole dog
+        const size = p.moveId === 'order-up' ? 96 : 72; // Jazzper is a whole dog
         img.setVisible(true).setPosition(p.x, p.y).setDisplaySize(size, size);
-        if (s.fighters[p.owner].charId === 'vincent') {
+        if (p.moveId === 'sigil-bolt') {
           img.setRotation(s.tick * 0.15 * (p.vx > 0 ? 1 : -1)); // runes spin
         } else {
-          img.setRotation(0).setFlipX(p.vx < 0); // dogs and fire just face forward
+          img.setRotation(0).setFlipX(p.vx < 0); // dogs, fire, knives face forward
         }
       } else {
         img.setVisible(false);

@@ -167,6 +167,8 @@ export interface FighterState {
 
 export interface Projectile {
   owner: 0 | 1;
+  /** the special that spawned it (render hint: picks the art) */
+  moveId: string;
   x: number;
   y: number;
   vx: number;

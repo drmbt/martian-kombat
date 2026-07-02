@@ -39,8 +39,13 @@ export class BootScene extends Phaser.Scene {
       this.load.image(`proj-${id}`, `assets/sprites/${id}/projectile.png`);
       this.load.image(`portrait-${id}`, `assets/portraits/${id}.png`);
     }
-    // fatality cutscene panels for any character that defines one
+    // fatality cutscene panels + per-special projectile art
     for (const [id, def] of Object.entries(characters)) {
+      for (const [moveId, mv] of Object.entries(def.moves)) {
+        if (mv.projectile) {
+          this.load.image(`proj-${id}-${moveId}`, `assets/sprites/${id}/projectile-${moveId}.png`);
+        }
+      }
       if (!def.fatality) continue;
       for (let n = 1; n <= def.fatality.panels; n++) {
         this.load.image(`fat-${id}-${def.fatality.id}-${n}`, `assets/fatalities/${id}/${def.fatality.id}-${n}.jpg`);

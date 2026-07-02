@@ -321,7 +321,7 @@ describe('sprint 4 mechanics', () => {
     expect(s.phase).toBe('fight');
   });
 
-  it("catherine's Jazzper hits low: standing block loses, crouch block holds", () => {
+  it("catherine's Jazzper (QCB+P) hits low: standing block loses, crouch block holds", () => {
     const setup = () => {
       const s = initialState('catherine', P2, characters);
       s.phase = 'fight';
@@ -329,18 +329,39 @@ describe('sprint 4 mechanics', () => {
       s.fighters[1].x = 620;
       return s;
     };
+    // catherine faces right: QCB = ↓ then ← (back)
+    const sendDog = (s: GameState, guard: InputFrame) => {
+      step(s, [inp({ down: true }), guard], characters);
+      step(s, [inp({ down: true }), guard], characters);
+      step(s, [inp({ left: true }), guard], characters);
+      step(s, [inp({ left: true, lp: true }), guard], characters);
+      expect(s.fighters[0].action.moveId).toBe('order-up');
+    };
     const stand = setup();
     const standGuard = inp({ right: true });
-    fireSpecial(stand, standGuard);
-    for (let i = 0; i < 80; i++) step(stand, [inp(), standGuard], characters);
+    sendDog(stand, standGuard);
+    for (let i = 0; i < 90; i++) step(stand, [inp(), standGuard], characters);
     expect(stand.fighters[1].health).toBeLessThan(characters[P2].health - 10);
 
     const crouch = setup();
     const crouchGuard = inp({ right: true, down: true });
-    fireSpecial(crouch, crouchGuard);
-    for (let i = 0; i < 80; i++) step(crouch, [inp(), crouchGuard], characters);
+    sendDog(crouch, crouchGuard);
+    for (let i = 0; i < 90; i++) step(crouch, [inp(), crouchGuard], characters);
     expect(crouch.fighters[1].health).toBe(
       characters[P2].health - Math.floor(characters.catherine.moves['order-up'].projectile!.damage * 0.1),
+    );
+  });
+
+  it("catherine's Mise en Place (QCF+P) throws the knife fan as a mid", () => {
+    const s = initialState('catherine', P2, characters);
+    s.phase = 'fight';
+    s.fighters[0].x = 300;
+    s.fighters[1].x = 700;
+    fireSpecial(s);
+    expect(s.fighters[0].action.moveId).toBe('mise-en-place');
+    run(s, 70);
+    expect(s.fighters[1].health).toBe(
+      characters[P2].health - characters.catherine.moves['mise-en-place'].projectile!.damage,
     );
   });
 

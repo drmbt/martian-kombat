@@ -254,6 +254,7 @@ function updateFighter(
         const p = m.projectile;
         s.projectiles.push({
           owner: slot,
+          moveId: a.moveId!,
           x: f.x + f.facing * p.spawnX,
           y: f.y + p.spawnY,
           vx: f.facing * p.vx,
