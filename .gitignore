@@ -1,0 +1,26 @@
+# Secrets — never commit
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+dist/
+.vite/
+*.log
+
+# Asset pipeline intermediates (raw gen output is regenerable and huge;
+# only packed, game-ready assets under public/assets/ get committed)
+assets/raw/
+assets/veo-clips/
+assets/frame-dumps/
+*.mp4.tmp
+
+# Editor
+.vscode/
+.idea/
+*.swp
