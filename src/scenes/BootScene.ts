@@ -11,7 +11,8 @@ const ANNOUNCER = [
   'round-1', 'round-2', 'final-round', 'fight', 'ko', 'time-up',
   'double-ko', 'perfect', 'victory', ...ROSTER.map((r) => r.id),
 ];
-const VOICES = ['vincent-kiai', 'vincent-hurt', 'yulia-kiai', 'yulia-hurt'];
+// kiai+hurt for every playable fighter (missing files 404 harmlessly)
+const VOICES = ROSTER.filter((r) => r.playable).flatMap((r) => [`${r.id}-kiai`, `${r.id}-hurt`]);
 const SFX = ['hit', 'block', 'whoosh', 'jump', 'projectile', 'blip'];
 
 export class BootScene extends Phaser.Scene {

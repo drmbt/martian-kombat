@@ -94,13 +94,14 @@ describe('strikes', () => {
     expect(s.fighters[1].health).toBeLessThan(characters[P2].health);
   });
 
-  it('crouch-block stops the sweep', () => {
+  it('crouch-block stops the sweep (only chip damage gets through)', () => {
     const s = fresh();
     closeRange(s);
     const guard = inp({ right: true, down: true });
     step(s, [inp({ down: true, heavy: true }), guard], characters);
     run(s, 15, inp(), guard);
-    expect(s.fighters[1].health).toBe(characters[P2].health);
+    const chip = Math.floor(characters[P1].moves.sweep.damage * 0.1);
+    expect(s.fighters[1].health).toBe(characters[P2].health - chip);
   });
 
   it('sweep knocks down: defender becomes invulnerable while down', () => {
@@ -137,6 +138,65 @@ describe('projectiles', () => {
     const mash = inp({ special: true });
     run(s, 40, mash, inp());
     expect(s.projectiles.filter((p) => p.owner === 0).length).toBeLessThanOrEqual(1);
+  });
+});
+
+describe('sprint 4 mechanics', () => {
+  it('heavies chip through block; chip cannot KO', () => {
+    const s = fresh();
+    closeRange(s);
+    const guard = inp({ right: true });
+    step(s, [inp({ heavy: true }), guard], characters);
+    run(s, 20, inp(), guard);
+    const expectedChip = Math.floor(characters[P1].moves.heavy.damage * 0.1);
+    expect(s.fighters[1].health).toBe(characters[P2].health - expectedChip);
+
+    run(s, 40, inp(), guard); // let the first heavy fully recover
+    closeRange(s); // the blocker walked backward out of range meanwhile
+    s.fighters[1].health = 2;
+    step(s, [inp({ heavy: true }), guard], characters);
+    run(s, 20, inp(), guard);
+    expect(s.fighters[1].health).toBe(1); // floored, no chip KO
+    expect(s.phase).toBe('fight');
+  });
+
+  it("catherine's Jazzper hits low: standing block loses, crouch block holds", () => {
+    const stand = initialState('catherine', P2, characters);
+    stand.phase = 'fight';
+    stand.fighters[0].x = 300;
+    stand.fighters[1].x = 620;
+    const standGuard = inp({ right: true });
+    step(stand, [inp({ special: true }), standGuard], characters);
+    for (let i = 0; i < 80; i++) step(stand, [inp(), standGuard], characters);
+    expect(stand.fighters[1].health).toBeLessThan(characters[P2].health - 10);
+
+    const crouch = initialState('catherine', P2, characters);
+    crouch.phase = 'fight';
+    crouch.fighters[0].x = 300;
+    crouch.fighters[1].x = 620;
+    const crouchGuard = inp({ right: true, down: true });
+    step(crouch, [inp({ special: true }), crouchGuard], characters);
+    for (let i = 0; i < 80; i++) step(crouch, [inp(), crouchGuard], characters);
+    // crouch-blocked: only chip damage
+    expect(crouch.fighters[1].health).toBe(
+      characters[P2].health - Math.floor(characters.catherine.moves.special.projectile!.damage * 0.1),
+    );
+  });
+
+  it("kirby's fire breath expires at short range (ttl)", () => {
+    const s = initialState('kirby', P2, characters);
+    s.phase = 'fight';
+    s.fighters[0].x = 150;
+    s.fighters[1].x = 800;
+    step(s, [inp({ special: true }), inp()], characters);
+    let maxProjectiles = 0;
+    for (let i = 0; i < 60; i++) {
+      step(s, [inp(), inp()], characters);
+      maxProjectiles = Math.max(maxProjectiles, s.projectiles.length);
+    }
+    expect(maxProjectiles).toBe(1); // it existed...
+    expect(s.projectiles).toHaveLength(0); // ...and died mid-screen
+    expect(s.fighters[1].health).toBe(characters[P2].health); // never reached
   });
 });
 

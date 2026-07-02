@@ -296,8 +296,13 @@ export class FightScene extends Phaser.Scene {
       const key = `proj-${s.fighters[p.owner].charId}`;
       if (this.textures.exists(key)) {
         if (img.texture.key !== key) img.setTexture(key);
-        img.setVisible(true).setPosition(p.x, p.y).setDisplaySize(72, 72);
-        img.setRotation(s.tick * 0.15 * (p.vx > 0 ? 1 : -1));
+        const size = s.fighters[p.owner].charId === 'catherine' ? 96 : 72; // Jazzper is a whole dog
+        img.setVisible(true).setPosition(p.x, p.y).setDisplaySize(size, size);
+        if (s.fighters[p.owner].charId === 'vincent') {
+          img.setRotation(s.tick * 0.15 * (p.vx > 0 ? 1 : -1)); // runes spin
+        } else {
+          img.setRotation(0).setFlipX(p.vx < 0); // dogs and fire just face forward
+        }
       } else {
         img.setVisible(false);
         gU.fillStyle(0xb28aff, 1).fillCircle(p.x, p.y, 16);

@@ -11,6 +11,7 @@ const game = new Phaser.Game({
   width: STAGE_W,
   height: STAGE_H,
   backgroundColor: '#0c0910',
+  input: { gamepad: true },
   scene: [BootScene, MenuScene, SelectScene, FightScene],
   scale: {
     mode: Phaser.Scale.FIT,

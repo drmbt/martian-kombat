@@ -5,8 +5,12 @@
 import type { CharacterDef, Defs } from '../../engine';
 import vincent from './vincent.json';
 import yulia from './yulia.json';
+import catherine from './catherine.json';
+import kirby from './kirby.json';
 
 export const characters: Defs = {
   vincent: vincent as unknown as CharacterDef,
   yulia: yulia as unknown as CharacterDef,
+  catherine: catherine as unknown as CharacterDef,
+  kirby: kirby as unknown as CharacterDef,
 };

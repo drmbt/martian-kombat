@@ -43,6 +43,10 @@ export interface ProjectileDef {
   hitstun: number;
   blockstun: number;
   knockback: number;
+  /** lows must be crouch-blocked (Jazzper runs ankle-height); default mid */
+  height?: MoveHeight;
+  /** lifetime in ticks for short-range projectiles (fire breath); default unlimited */
+  ttl?: number;
 }
 
 export interface MoveDef {
@@ -128,6 +132,9 @@ export interface Projectile {
   hitstun: number;
   blockstun: number;
   knockback: number;
+  height: MoveHeight;
+  /** ticks remaining; negative = unlimited */
+  ttl: number;
 }
 
 export type Phase = 'intro' | 'fight' | 'roundEnd' | 'matchEnd';

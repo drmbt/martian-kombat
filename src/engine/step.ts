@@ -195,6 +195,8 @@ function updateFighter(
           hitstun: p.hitstun,
           blockstun: p.blockstun,
           knockback: p.knockback,
+          height: p.height ?? 'mid',
+          ttl: p.ttl ?? -1,
         });
       }
       if (a.frame >= m.startup + m.active + m.recovery) {
@@ -312,6 +314,8 @@ interface HitPayload {
   knockback: number;
   height: 'mid' | 'low';
   knockdown: boolean;
+  /** damage dealt through block (heavies/specials); can never KO */
+  chip: number;
 }
 
 /** Apply a connected hit or block. attackerFacing pushes the defender. */
@@ -329,7 +333,7 @@ function applyHit(
     const guard = d.action.kind === 'crouch' || defInput.down ? 'crouch' : 'stand';
     d.action = { kind: 'blockstun', frame: hit.blockstun, guard };
     d.vx = attackerFacing * hit.knockback * 0.8;
-    // chip damage lands in the Sprint-4 balance pass
+    if (hit.chip > 0) d.health = Math.max(1, d.health - hit.chip); // chip can't KO
   } else {
     d.health = Math.max(0, d.health - hit.damage);
     if (!grounded(d)) {
@@ -376,13 +380,18 @@ function resolveAttacks(s: GameState, defs: Defs, inputs: [InputFrame, InputFram
         knockback: m.knockback,
         height: m.height,
         knockdown: !!m.knockdown,
+        // lights are chipless; everything meatier shaves 10% through block
+        chip: a.moveId === 'light' ? 0 : Math.floor(m.damage * 0.1),
       }, inputs[defSlot]);
     }
   }
 }
 
 function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputFrame]): void {
-  for (const p of s.projectiles) p.x += p.vx;
+  for (const p of s.projectiles) {
+    p.x += p.vx;
+    if (p.ttl > 0) p.ttl--;
+  }
 
   // projectile vs projectile: clash and both die
   const dead = new Set<Projectile>();
@@ -401,7 +410,7 @@ function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputF
 
   for (const p of s.projectiles) {
     if (dead.has(p)) continue;
-    if (p.x < -60 || p.x > STAGE_W + 60) {
+    if (p.x < -60 || p.x > STAGE_W + 60 || p.ttl === 0) {
       dead.add(p);
       continue;
     }
@@ -415,8 +424,9 @@ function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputF
         hitstun: p.hitstun,
         blockstun: p.blockstun,
         knockback: p.knockback,
-        height: 'mid',
+        height: p.height,
         knockdown: false,
+        chip: Math.floor(p.damage * 0.1),
       }, inputs[defSlot]);
       dead.add(p);
     }

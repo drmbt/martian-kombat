@@ -55,6 +55,64 @@ export const CHARACTERS = {
         'A single glowing teal arcane rune sigil energy ball projectile, spinning, painted cel-shaded anime style, small, centered, on solid flat chroma-key green background #00B140, no character, no text.',
     },
   },
+  catherine: {
+    canonical: 'assets/raw/canonical/catherine.png',
+    moves: {
+      light: {
+        startup: 'drawing the bo staff back beside the hip, coiled for a thrust',
+        active: 'bo staff thrust fully extended forward at chest height, sharp and direct',
+        recovery: 'retracting the bo staff back to a ready guard',
+      },
+      heavy: {
+        startup: 'raising the bo staff high overhead with both hands',
+        active: 'slamming the bo staff down in a powerful overhead arc, hair flying',
+        recovery: 'lifting the staff back up from the follow-through',
+      },
+      sweep: {
+        startup: 'dropping low with the staff cocked horizontally at her side',
+        active: 'sweeping the bo staff in a wide low arc along the ground',
+        recovery: 'rising while spinning the staff back up to guard',
+      },
+      special: {
+        startup: 'kneeling on one knee, pointing forward commandingly like sending a dog on an attack run, her dog crouched beside her ready to sprint',
+        active: 'arm fully extended pointing forward, dog no longer beside her (already launched off-screen), coat tails swinging',
+        recovery: 'standing back up mid-whistle, hand near her mouth',
+      },
+    },
+    extra: {
+      projectile:
+        'A small scruffy terrier dog sprinting at full speed to the right, ears pinned back, legs stretched mid-gallop, determined face, painted cel-shaded anime style, side view, full body, on solid flat chroma-key green background #00B140, no text, no watermark.',
+    },
+  },
+  kirby: {
+    canonical: 'assets/raw/canonical/kirby.png',
+    moves: {
+      light: {
+        startup: 'coiling a quick open-palm strike, teacup still balanced in the other hand',
+        active: 'open-palm strike snapped out at head height, tea unspilled',
+        recovery: 'drawing the palm back with a smug tilt of the head',
+      },
+      heavy: {
+        startup: 'lifting one leg impossibly high in a standing-split chamber, perfectly balanced',
+        active: 'vertical standing-split kick at full extension, heel above their own head',
+        recovery: 'lowering the leg with dancer-like control',
+      },
+      sweep: {
+        startup: 'melting down into a low splits position, one palm on the ground',
+        active: 'low spinning sweep from the splits, leg extended along the ground',
+        recovery: 'flowing back up from the splits like it was nothing',
+      },
+      special: {
+        startup: 'taking a long sip from the teacup, cheeks puffed, ember light glowing between the lips',
+        active: 'head thrown forward spitting a cone of fire from the mouth, teacup held safely out to the side',
+        recovery: 'wiping their mouth with the back of a hand, smirking, wisp of smoke from the lips',
+      },
+    },
+    extra: {
+      projectile:
+        'A billowing cone-shaped burst of orange and red fire with curling steam wisps, pointing to the right, painted cel-shaded anime style, on solid flat chroma-key green background #00B140, no character, no text, no watermark.',
+    },
+  },
   yulia: {
     canonical: 'assets/raw/style-tests/char-yulia-b-painted.png',
     moves: {

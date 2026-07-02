@@ -1,7 +1,8 @@
-// Keyboard -> InputFrame snapshots, one per engine tick.
+// Keyboard + gamepad -> InputFrame snapshots, one per engine tick.
 // P1: WASD + F (light) G (heavy) H (special)
 // P2: arrows + K (light) L (heavy) ; (special)
-// Gamepad support is stubbed behind the same InputSource interface (Sprint 4).
+// Pads (slot order): dpad/left stick moves, X = light, Y = heavy, A/B = special.
+// Keyboard and pad are OR-merged so either works at any moment.
 import Phaser from 'phaser';
 import type { InputFrame } from '../engine';
 
@@ -23,8 +24,10 @@ type KeyMap = Record<keyof InputFrame, Phaser.Input.Keyboard.Key>;
 
 export class KeyboardSource implements InputSource {
   private maps: [KeyMap, KeyMap];
+  private scene: Phaser.Scene;
 
   constructor(scene: Phaser.Scene) {
+    this.scene = scene;
     const kb = scene.input.keyboard!;
     const bind = (spec: typeof P1_KEYS | typeof P2_KEYS): KeyMap => {
       const m = {} as KeyMap;
@@ -40,7 +43,7 @@ export class KeyboardSource implements InputSource {
 
   poll(player: 0 | 1): InputFrame {
     const m = this.maps[player];
-    return {
+    const frame: InputFrame = {
       left: m.left.isDown,
       right: m.right.isDown,
       up: m.up.isDown,
@@ -49,5 +52,18 @@ export class KeyboardSource implements InputSource {
       heavy: m.heavy.isDown,
       special: m.special.isDown,
     };
+
+    const pad = this.scene.input.gamepad?.gamepads[player];
+    if (pad) {
+      const stick = pad.leftStick;
+      frame.left ||= pad.left || stick.x < -0.5;
+      frame.right ||= pad.right || stick.x > 0.5;
+      frame.up ||= pad.up || stick.y < -0.5;
+      frame.down ||= pad.down || stick.y > 0.5;
+      frame.light ||= pad.X;
+      frame.heavy ||= pad.Y;
+      frame.special ||= pad.A || pad.B;
+    }
+    return frame;
   }
 }

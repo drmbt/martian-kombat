@@ -1,0 +1,43 @@
+{
+  "id": "catherine",
+  "name": "CATHERINE",
+  "color": "#ffd24a",
+  "health": 1000,
+  "walkSpeed": 4.7,
+  "backSpeed": 3.5,
+  "jumpVel": 18,
+  "gravity": 0.9,
+  "prejumpFrames": 3,
+  "bodyBox": { "x": -42, "y": -222, "w": 84, "h": 222 },
+  "hurtStand": { "x": -52, "y": -236, "w": 104, "h": 236 },
+  "hurtCrouch": { "x": -52, "y": -150, "w": 104, "h": 150 },
+  "moves": {
+    "light": {
+      "startup": 6, "active": 3, "recovery": 11,
+      "damage": 45, "hitstun": 15, "blockstun": 10, "knockback": 8,
+      "hitbox": { "x": 40, "y": -205, "w": 150, "h": 30 }, "height": "mid"
+    },
+    "heavy": {
+      "startup": 12, "active": 4, "recovery": 21,
+      "damage": 95, "hitstun": 24, "blockstun": 15, "knockback": 12,
+      "hitbox": { "x": 44, "y": -240, "w": 160, "h": 60 }, "height": "mid"
+    },
+    "sweep": {
+      "startup": 10, "active": 4, "recovery": 22,
+      "damage": 60, "hitstun": 20, "blockstun": 12, "knockback": 8,
+      "hitbox": { "x": 30, "y": -36, "w": 170, "h": 36 }, "height": "low",
+      "knockdown": true
+    },
+    "special": {
+      "startup": 12, "active": 2, "recovery": 24,
+      "damage": 0, "hitstun": 0, "blockstun": 0, "knockback": 0,
+      "hitbox": null, "height": "mid",
+      "projectile": {
+        "vx": 7.5, "spawnX": 90, "spawnY": -4,
+        "box": { "x": -38, "y": -44, "w": 76, "h": 44 },
+        "damage": 75, "hitstun": 20, "blockstun": 14, "knockback": 7,
+        "height": "low"
+      }
+    }
+  }
+}

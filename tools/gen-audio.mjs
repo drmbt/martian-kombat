@@ -12,6 +12,8 @@ const KEY = env.ELEVENLABS_API_KEY;
 const ANNOUNCER = 'V33LkP9pVLdcjeB2y5Na'; // Maverick — epic heroic legend
 const VOICE_M = 'SOYHLrjzK2X1ezoPC6cr'; // Harry — fierce warrior (Vincent)
 const VOICE_F = 'EXAVITQu4vr4xnSDxMaL'; // Sarah — mature confident (Yulia)
+const VOICE_CATH = 'cgSgspJ2msm6clMCkdW9'; // Jessica — playful bright (Catherine)
+const VOICE_KIRBY = 'FGY2WhTYpPnrIDTdsKH5'; // Laura — sassy (Kirby)
 
 async function tts(voiceId, text, style = 0.7) {
   const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
@@ -64,6 +66,10 @@ const grunts = [
   ['vincent-hurt', VOICE_M, 'Ugh!'],
   ['yulia-kiai', VOICE_F, 'Hyaaa!'],
   ['yulia-hurt', VOICE_F, 'Agh!'],
+  ['catherine-kiai', VOICE_CATH, 'Order up!'],
+  ['catherine-hurt', VOICE_CATH, 'Agh!'],
+  ['kirby-kiai', VOICE_KIRBY, 'Hyah!'],
+  ['kirby-hurt', VOICE_KIRBY, 'Oof!'],
 ];
 
 const sounds = [
