@@ -56,17 +56,20 @@ docs/            # design docs, CHARACTERS.md roster bible
 
 The pipeline turns a photo of a real person into a game-ready sprite sheet:
 
-1. **Canonical character sheet** — `tools/gen-character-sheet.mjs`: nano-banana
-   (Gemini image API) takes `assets/character-inspo/<name>.jpg` + a style prompt and
-   produces a stylized full-body turnaround in the game's shared art style
-   (defined once in `tools/style.md` so all characters match).
-2. **Motion clips** — `tools/gen-motion.mjs`: Veo (via Gemini API or FAL fallback)
-   animates the canonical sheet per move ("idle stance", "roundhouse kick", …),
-   locked camera, side view, flat background.
-3. **Frames → sheet** — `tools/clip-to-sheet.mjs`: ffmpeg extracts stills,
-   background is keyed/removed, frames are trimmed + packed into a sprite sheet
-   with a JSON atlas in `public/assets/sprites/<name>/`.
-4. **Stills** — GPT Image (OpenAI) for stage backgrounds, UI, portraits, logo.
+1. **Canonical character sheet** — `tools/gen-style-test.mjs` (nano-banana,
+   `gemini-3-pro-image`): `assets/character-inspo/<name>.jpg` + the locked style
+   prompt (`tools/style.md`, approved 2026-07-01: painted cel) → stylized
+   full-body fighter on chroma green. Approved canon lives in
+   `assets/raw/style-tests/char-*-b-painted.png`.
+2. **Pose keyframes** — `tools/gen-frames.mjs` (`gemini-3.1-flash-image`):
+   canonical sheet + per-move pose prompts from `tools/frames-manifest.mjs` →
+   23 keyframes per character (idle/walk/jump/block/hit/down + 3 phases per
+   move, matching the engine's startup/active/recovery). The cell order is a
+   CONTRACT with `FightScene.actionToCell` — append, never reorder.
+   (Veo motion clips + still sampling is the post-MVP smoothness upgrade.)
+3. **Key + pack** — `tools/pack-sheet.mjs`: ffmpeg colorkey/despill, scale to
+   288×384 cells, tile into `public/assets/sprites/<name>/sheet.png` + meta.json.
+4. **Stills** — GPT Image (`gpt-image-2`) for stage backgrounds, UI, portraits.
 5. **Audio** — ElevenLabs for announcer VO ("ROUND ONE… FIGHT!"), per-character
    grunts/taunts, and hit SFX.
 
@@ -81,12 +84,13 @@ sidecar `.prompt.txt` next to each generated asset so results are reproducible.
 npm run dev        # Vite dev server
 npm run build      # production build
 npm run test       # vitest — engine unit tests (determinism, hitboxes, frame data)
-npm run gen:sheet -- --char vincent    # character sheet from inspo photo
-npm run gen:motion -- --char vincent --move idle
-npm run gen:pack -- --char vincent    # clips -> sprite sheet + atlas
+npm run gen:styletest              # style candidates + stage tests
+npm run gen:frames -- --char vincent   # pose keyframes from canonical sheet
+npm run gen:pack -- --char vincent     # key + pack -> sheet.png + meta.json
 ```
 
-(Scripts land in Sprint 2; keep this section updated as they materialize.)
+All gen scripts are idempotent (skip existing files; `--force` regens,
+`--all` for every character).
 
 ## The roster
 

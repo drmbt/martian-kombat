@@ -3,36 +3,36 @@
   "name": "YULIA",
   "color": "#ff5a48",
   "health": 1080,
-  "walkSpeed": 2.9,
-  "backSpeed": 2.2,
-  "jumpVel": 13.5,
-  "gravity": 0.7,
+  "walkSpeed": 4.6,
+  "backSpeed": 3.5,
+  "jumpVel": 19,
+  "gravity": 0.95,
   "prejumpFrames": 4,
-  "bodyBox": { "x": -22, "y": -118, "w": 44, "h": 118 },
-  "hurtStand": { "x": -27, "y": -125, "w": 54, "h": 125 },
-  "hurtCrouch": { "x": -27, "y": -80, "w": 54, "h": 80 },
+  "bodyBox": { "x": -44, "y": -236, "w": 88, "h": 236 },
+  "hurtStand": { "x": -54, "y": -250, "w": 108, "h": 250 },
+  "hurtCrouch": { "x": -54, "y": -160, "w": 108, "h": 160 },
   "moves": {
     "light": {
       "startup": 5, "active": 3, "recovery": 10,
-      "damage": 50, "hitstun": 15, "blockstun": 10, "knockback": 4.5,
-      "hitbox": { "x": 20, "y": -110, "w": 52, "h": 20 }, "height": "mid"
+      "damage": 50, "hitstun": 15, "blockstun": 10, "knockback": 7,
+      "hitbox": { "x": 40, "y": -220, "w": 104, "h": 40 }, "height": "mid"
     },
     "heavy": {
       "startup": 10, "active": 4, "recovery": 18,
-      "damage": 100, "hitstun": 24, "blockstun": 15, "knockback": 8,
-      "hitbox": { "x": 22, "y": -120, "w": 64, "h": 36 }, "height": "mid"
+      "damage": 100, "hitstun": 24, "blockstun": 15, "knockback": 13,
+      "hitbox": { "x": 44, "y": -240, "w": 128, "h": 72 }, "height": "mid"
     },
     "sweep": {
       "startup": 9, "active": 4, "recovery": 20,
-      "damage": 65, "hitstun": 20, "blockstun": 12, "knockback": 5,
-      "hitbox": { "x": 14, "y": -18, "w": 74, "h": 18 }, "height": "low",
+      "damage": 65, "hitstun": 20, "blockstun": 12, "knockback": 8,
+      "hitbox": { "x": 28, "y": -36, "w": 148, "h": 36 }, "height": "low",
       "knockdown": true
     },
     "special": {
       "startup": 10, "active": 8, "recovery": 20,
-      "damage": 85, "hitstun": 24, "blockstun": 14, "knockback": 6,
-      "hitbox": { "x": 8, "y": -42, "w": 58, "h": 42 }, "height": "mid",
-      "knockdown": true, "forwardVel": 5
+      "damage": 85, "hitstun": 24, "blockstun": 14, "knockback": 10,
+      "hitbox": { "x": 16, "y": -84, "w": 116, "h": 84 }, "height": "mid",
+      "knockdown": true, "forwardVel": 8
     }
   }
 }

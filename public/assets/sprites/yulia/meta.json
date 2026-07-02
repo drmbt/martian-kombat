@@ -1,0 +1,31 @@
+{
+  "cellW": 288,
+  "cellH": 384,
+  "cols": 6,
+  "rows": 4,
+  "frames": [
+    "idle-a",
+    "idle-b",
+    "walk-a",
+    "walk-b",
+    "crouch",
+    "jump",
+    "block",
+    "block-crouch",
+    "hit",
+    "fall",
+    "down",
+    "light-startup",
+    "light-active",
+    "light-recovery",
+    "heavy-startup",
+    "heavy-active",
+    "heavy-recovery",
+    "sweep-startup",
+    "sweep-active",
+    "sweep-recovery",
+    "special-startup",
+    "special-active",
+    "special-recovery"
+  ]
+}

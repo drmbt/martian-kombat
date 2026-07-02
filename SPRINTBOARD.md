@@ -6,7 +6,7 @@
 > Unchecked boxes in the active sprint = the backlog. Do not silently add scope;
 > new ideas go to the Icebox.
 
-**Current sprint: 2** · MVP target: two humans on one keyboard, character select
+**Current sprint: 3** · MVP target: two humans on one keyboard, character select
 (≥2 fully-built fighters), best-of-3 rounds, health bars + timer, basic + special
 moves, AI-generated sprites/stage/audio.
 
@@ -39,21 +39,27 @@ Goal: two rectangles can fight each other and it already *feels* like a fighter.
       (Sigil Bolt projectile) and Yulia (Cossack Spiral advancing knockdown)
 - [x] Fight scene renders placeholder rects/capsules; hit sparks as flashes
 
-### Sprint 2 — Asset pipeline (photos → sprite sheets)
+### Sprint 2 — Asset pipeline (photos → sprite sheets) ✅
 Goal: `npm run gen:*` turns an inspo photo into a game-ready animated fighter.
-- [x] Style test samples generated (`tools/gen-style-test.mjs`): 3 art styles ×
-      Vincent/Yulia (gemini-3-pro-image) + 4 stage tests (2 from user's
-      `assets/stage-inspo/` refs; salton-shoreline via gpt-image-2) —
-      **awaiting user style approval before pipeline build-out**
-- [ ] `tools/style.md`: lock the approved art-style prompt
-- [ ] `gen-character-sheet.mjs`: inspo photo → stylized turnaround (nano-banana)
-- [ ] `gen-motion.mjs`: character sheet + move prompt → Veo clip (FAL fallback)
-- [ ] `clip-to-sheet.mjs`: ffmpeg frame extraction → bg removal → trim → packed
-      sheet + JSON atlas in `public/assets/sprites/<name>/`
-- [ ] Prompt sidecar logging (`.prompt.txt`) + idempotent/`--force` behavior
-- [ ] Full sprite sets for **Vincent** and **Yulia** (idle, walk, jump, crouch,
-      jab, heavy, sweep, special, block, hit, KO) wired into the fight scene
-- [ ] One stage background (GPT Image): Bombay Beach / Salton Sea sunset
+- [x] Style test samples (`tools/gen-style-test.mjs`): 3 art styles × 2 chars +
+      4 stage tests. **User approved: painted-cel style, salton-shoreline stage**
+- [x] `tools/style.md`: locked art-style prompt (painted cel, chroma #00B140)
+- [x] Canonical sheets: approved `char-*-b-painted.png` from the style test
+      double as the canonical reference for each character
+- [x] `gen-frames.mjs` + `frames-manifest.mjs`: canonical sheet → 23 pose
+      keyframes/char via `gemini-3-pro-image` (flash drifts bg color + fumbles
+      lying/crouch poses). Cell order = renderer contract. 1 keyframe per
+      startup/active/recovery phase maps 1:1 onto engine frame data.
+      *(Veo motion clips → smoother animation is the post-MVP upgrade path.)*
+- [x] `pack-sheet.mjs`: ffmpeg `chromakey` 0.15 (NOT colorkey+despill — despill
+      bleaches wardrobe greens/hair) → 288×384 cells → 6×4 sheet + meta.json
+- [x] Prompt sidecar logging (`.prompt.txt`) + idempotent/`--force` behavior
+- [x] Full sprite sets for **Vincent** and **Yulia** wired into FightScene
+      (sprites + tint feedback; capsule fallback stays for sheet-less chars)
+- [x] Stage background: Salton shoreline sunset (gpt-image-2) in
+      `public/assets/backgrounds/`, drawn behind the fight
+- [x] Verified in browser: sprites render on stage, Sigil Bolt fired, hit
+      flash + damage confirmed (via `window.__game` manual loop stepping)
 
 ### Sprint 3 — Real characters, sound, presentation
 Goal: it looks and sounds like a real (janky, charming) fighting game.
@@ -86,6 +92,17 @@ rollback netplay (engine determinism already paid for) · training mode · fatal
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-01 · assets+scene · Sprint 2 complete** — user locked painted-cel
+  style + salton-shoreline stage; built keyframe pipeline (gen-frames /
+  frames-manifest / pack-sheet); generated + packed full sprite sets for
+  Vincent & Yulia (23 cells each + Vincent projectile); scaled character JSON
+  geometry ~2× to sprite proportions; FightScene renders sheets with state→cell
+  mapping, tints, stage bg, capsule fallback; `window.__game` debug handle.
+  Gotchas learned: use gemini-3-pro-image (not flash) for pose frames; use
+  ffmpeg `chromakey` ~0.15 without `despill` (bleaches greens); transparent
+  sheets preview dark in image viewers — composite before judging. 18 tests
+  still green. *(Claude)*
+
 - **2026-07-01 · tools · Sprint 2 style tests** — `tools/lib.mjs` (env loader,
   gemini/openai image helpers w/ prompt sidecars + skip/--force) and
   `tools/gen-style-test.mjs`; generated 6 character style candidates
@@ -112,13 +129,15 @@ rollback netplay (engine determinism already paid for) · training mode · fatal
 
 *(overwrite this section each handoff — what's mid-flight, gotchas, next action)*
 
-**State:** Sprint 1 done, nothing mid-flight. Game is playable: `npm run dev`,
-P1 WASD+F/G/H, P2 arrows+K/L/;, F1 toggles hitbox view. **Next action:** Sprint 2,
-first box — write `tools/style.md` (the shared art-style prompt) and test it on
-two characters via nano-banana before building the rest of the pipeline.
-**Gotchas:** `.env` in repo root (gitignored) has all four keys populated.
-Character JSONs cast through `unknown` in `src/data/characters/index.ts` (JSON
-imports widen literal types) — runtime schema validation is an Icebox item, so
-a typo'd `height` field fails silently; be careful hand-editing frame data.
+**State:** Sprints 0–2 done, nothing mid-flight. Game is playable with real
+sprites on the Salton Sea stage: `npm run dev`, P1 WASD+F/G/H, P2 arrows+K/L/;,
+F1 hitboxes, R rematch. **Next action:** Sprint 3 — ElevenLabs announcer pack +
+SFX, then character select. **Gotchas:** `.env` in repo root (gitignored), all
+four keys live. Frame-gen: ALWAYS `gemini-3-pro-image`; keying: `chromakey`
+~0.15, never despill (bleaches Yulia's bandana/hair); transparent sheet PNGs
+look navy in previews — composite over grey before judging keying. Cell order
+in `tools/frames-manifest.mjs` is a contract with `FightScene.actionToCell` —
+append only. Character JSONs cast through `unknown` (no runtime validation).
 Stun `Action.frame` counts DOWN; attack/knockdown/getup count UP. Chip damage
-and throws intentionally absent until Sprint 4.
+and throws intentionally absent until Sprint 4. Preview-browser tabs throttle
+rAF — step the loop via `window.__game.loop.step(t)` when verifying headless.
