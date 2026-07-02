@@ -24,3 +24,4 @@ assets/frame-dumps/
 .vscode/
 .idea/
 *.swp
+.lh/

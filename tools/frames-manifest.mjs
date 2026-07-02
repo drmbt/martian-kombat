@@ -289,6 +289,127 @@ export const CHARACTERS = {
       },
     },
   },
+  flo: {
+    canonical: 'assets/raw/canonical/flo.png',
+    layout: 'v2',
+    // the spliff is his staff — it kept a 50/50 survival rate in early tests
+    always:
+      'A thin smoking spliff ALWAYS hangs from the corner of his mouth with a faint grey smoke wisp — it must be visible in this frame. Any glowing code glyphs are AMBER-ORANGE, never green.',
+    moves6: {
+      stand: {
+        lp: {
+          startup: 'chambering a quick dismissive jab, shoulders hunched, scowling',
+          active: 'long lead jab fully extended at head height, lanky arm at full reach',
+          recovery: 'retracting the jab, settling back into a grumpy hunched guard',
+        },
+        mp: {
+          startup: 'rotating the hips, winding up a stiff straight right, amber glyphs flickering at the fist',
+          active: 'stiff straight cross fully extended at chin height, long reach, amber glyphs trailing the fist',
+          recovery: 'pulling the cross back, shaking out the arm, unimpressed',
+        },
+        hp: {
+          startup: 'rearing back with both fists raised overhead, amber glyphs swirling around them',
+          active: 'double-fist overhand slam driven down at head height, amber glyph burst on the fists',
+          recovery: 'straightening back up from the slam, cracking his neck',
+        },
+        lk: {
+          startup: 'front knee lifting for a quick shin kick, hands kept lazily in guard',
+          active: 'quick snapping kick at shin height, long leg extended',
+          recovery: 'the foot returning to stance, still scowling',
+        },
+        mk: {
+          startup: 'lead knee chambered high across the body, leaning back',
+          active: 'very long rangy front push-kick fully extended at chest height, lanky leg at maximum reach',
+          recovery: 'the long leg folding back down into stance',
+        },
+        hk: {
+          startup: 'balancing on his left leg only, RIGHT knee chambered near his chest, arms counterbalanced',
+          active: 'tall stepping side kick fully extended at head height, his RIGHT leg (clearly attached at the hip) driven out, amber glyphs streaking off the heel — exactly ONE foot on the ground',
+          recovery: 'the kicking leg returning to the ground, slumping back into the hunched guard',
+        },
+      },
+      crouch: {
+        lp: {
+          active: 'short jab snapped out at waist height from the squat',
+          recovery: 'jab arm pulled back in, still compact in the squat',
+        },
+        mp: {
+          active: 'rising elbow driven diagonally upward out of the squat, amber glyphs sparking',
+          recovery: 'the elbow lowering, weight sinking back into the squat',
+        },
+        hp: {
+          active: 'both fists thrust powerfully straight upward out of the squat, a burst of amber glyphs above them (anti-air)',
+          recovery: 'arms lowering from overhead, settling back into the squat',
+        },
+        lk: {
+          active: 'squatting on his left leg while his RIGHT leg (clearly attached at the hip) snaps a quick kick forward at ankle height',
+          recovery: 'the kicking leg pulled back beneath him, both feet planted in the squat',
+        },
+        mk: {
+          active: 'squatting on his bent left leg while his RIGHT leg (clearly attached at the hip) is fully extended forward along the ground in an extremely long low kick, lanky leg at maximum reach',
+          recovery: 'sliding the long leg back beneath his body into a compact squat',
+        },
+        hk: {
+          active: 'low spinning leg sweep fully extended along the ground, long leg covering a wide arc',
+          recovery: 'rising from the sweep back toward stance, dusting off a knee',
+        },
+      },
+      air: {
+        lp: 'throwing a quick short downward-angled jab',
+        mp: 'a straight punch driven at a 45-degree downward angle, amber glyphs trailing',
+        hp: 'a double-fist overhead hammer blow swung downward, long arms fully extended',
+        lk: 'a sharp knee strike raised toward the opponent',
+        mk: 'a side kick extended at a downward angle, lanky leg at full reach',
+        hk: 'a flying kick — RIGHT leg fully extended with an amber glyph trail, LEFT leg tucked beneath him, both legs clearly attached',
+      },
+      specials: {
+        'fork-bomb': {
+          startup: 'pulling a battered black laptop from behind his back with one hand, arm cocking back to lob it, eyeing the arc',
+          active: 'arm in full follow-through after lobbing the laptop — the laptop tumbling through the air ahead of him in a high arc',
+          recovery: 'arms folding across his chest, watching his throw land, smug scowl',
+        },
+        smokescreen: {
+          startup: 'taking an enormous drag on the spliff, cheeks hollowed, the ember flaring bright orange',
+          active: 'head thrown forward exhaling a HUGE billowing wall of thick grey smoke from his mouth, the cloud filling the air in front of him',
+          recovery: 'waving one hand through the thinning grey smoke, coughing into his fist',
+        },
+        'root-access': {
+          startup: 'dropping low to slap one palm flat on the ground, amber code glyphs racing from his hand along the floor',
+          active: 'kneeling with his arm driven into the ground, a black network cable erupting UP out of the floor ahead of him in a whipping arc, amber sparks at its tip',
+          recovery: 'yanking the hand back from the floor and rising, the last amber glyphs fading from the ground',
+        },
+        'sudo-kill': {
+          startup: 'both hands raised typing furiously in the air on a floating translucent amber holographic terminal window in front of him',
+          active: 'both palms thrust forward, a short-range cone of amber-orange flame mixed with glowing code fragments erupting from his hands',
+          recovery: 'shaking out his wrists, amber embers fading between his fingers, deeply unimpressed scowl',
+        },
+      },
+    },
+    extra: {
+      projectiles: {
+        'fork-bomb': {
+          prompt:
+            'A single battered black laptop computer tumbling through the air half-open, subtle motion streaks, painted cel-shaded anime style, small, centered, on solid flat chroma-key green background #00B140, no character, no hands, no text, no watermark.',
+        },
+        'fork-bomb-burst': {
+          prompt:
+            'A burst of overlapping glowing amber-orange holographic terminal windows exploding outward from a center point, filled with abstract unreadable glyph fragments, painted cel-shaded anime style, centered, on solid flat chroma-key green background #00B140, no character, no readable words, no watermark.',
+        },
+        smokescreen: {
+          prompt:
+            'A single thick billowing cloud of grey-white smoke, dense and opaque in the center with curling wisps at the edges, painted cel-shaded anime style, centered, on solid flat chroma-key green background #00B140, no character, no text, no watermark.',
+        },
+        'root-access': {
+          prompt:
+            'A coiled black network ethernet cable whipping upward out of the ground in a sharp rising arc, glowing amber sparks at the connector tip, painted cel-shaded anime style, centered, on solid flat chroma-key green background #00B140, no character, no text, no watermark.',
+        },
+        'sudo-kill': {
+          prompt:
+            'A billowing cone-shaped burst of amber-orange fire mixed with fragments of glowing abstract unreadable code glyphs, pointing to the right, painted cel-shaded anime style, on solid flat chroma-key green background #00B140, no character, no readable words, no watermark.',
+        },
+      },
+    },
+  },
   kirby: {
     canonical: 'assets/raw/canonical/kirby.png',
     moves: {

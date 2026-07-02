@@ -14,6 +14,7 @@ import {
   Strength,
 } from './types';
 import {
+  CHARGE_TICKS,
   FATALITY_RANGE,
   FATALITY_TICKS,
   FINISHER_TICKS,
@@ -47,6 +48,7 @@ function initFighter(charId: string, def: CharacterDef, slot: 0 | 1): FighterSta
     health: def.health,
     action: { kind: 'idle', frame: 0 },
     inputBuffer: [],
+    charge: 0,
   };
 }
 
@@ -148,7 +150,13 @@ function motionDone(f: FighterState, motion: Motion): boolean {
     return seen === 7;
   }
 
-  const STAGES: Record<Exclude<Motion, '360'>, { need: number; not?: number }[]> = {
+  // charge down-up: banked hold (f.charge, decays fast on release) + up now.
+  // pickAttack runs before the jump check, so the special wins over prejump.
+  if (motion === 'du') {
+    return f.charge >= CHARGE_TICKS && ((buf[buf.length - 1] ?? 0) & BIT.up) !== 0;
+  }
+
+  const STAGES: Record<Exclude<Motion, '360' | 'du'>, { need: number; not?: number }[]> = {
     qcf: [{ need: BIT.down }, { need: fwd, not: BIT.down }],
     qcb: [{ need: BIT.down }, { need: back, not: BIT.down }],
     bf: [{ need: back }, { need: fwd, not: back }],
@@ -264,9 +272,10 @@ function grounded(f: FighterState): boolean {
   return f.y >= FLOOR_Y;
 }
 
-/** Can this player fire a projectile? (classic one-fireball-on-screen rule) */
+/** Can this player fire a projectile? (classic one-fireball-on-screen rule;
+ *  visual fields like smoke don't count) */
 function ownsLiveProjectile(s: GameState, slot: 0 | 1): boolean {
-  return s.projectiles.some((p) => p.owner === slot);
+  return s.projectiles.some((p) => p.owner === slot && !p.field);
 }
 
 // ---------- per-fighter update ----------
@@ -296,7 +305,7 @@ function pickAttack(
     const strength = combo ? (comboPress(f, cls) ? 'm' : null) : freshStrength(f, cls);
     if (!strength) continue;
     if (m.input.motion && !motionDone(f, m.input.motion)) continue;
-    if (m.projectile && ownsLiveProjectile(s, slot)) continue;
+    if (m.projectile && !m.projectile.field && ownsLiveProjectile(s, slot)) continue;
     return { id, strength };
   }
   const prefix = stance === 'crouch' ? 'c' : '';
@@ -386,6 +395,12 @@ function updateFighter(
             knockback: p.knockback,
             height: p.height ?? 'mid',
             ttl: p.ttl ?? -1,
+            vy: p.vy ?? 0,
+            gravity: p.gravity ?? 0,
+            fuse: p.fuse ?? -1,
+            knockdown: p.knockdown ?? false,
+            field: p.field ?? false,
+            detonate: p.detonate,
           });
         }
       }
@@ -637,16 +652,49 @@ function resolveAttacks(s: GameState, defs: Defs, inputs: [InputFrame, InputFram
   }
 }
 
+/** Armed and waiting (lobbed bomb in flight or fuse ticking) — no collisions. */
+function isDormant(p: Projectile): boolean {
+  return p.fuse > 0;
+}
+
 function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputFrame]): void {
   for (const p of s.projectiles) {
     p.x += p.vx;
+    // lobbed arc: fall, then stick to the floor and start the fuse
+    if (p.gravity > 0) {
+      p.vy += p.gravity;
+      p.y += p.vy;
+      if (p.y >= FLOOR_Y) {
+        p.y = FLOOR_Y;
+        p.vx = 0;
+        p.vy = 0;
+        p.gravity = 0;
+      }
+    }
+    if (p.fuse > 0 && p.gravity === 0) p.fuse--;
+    if (p.fuse === 0 && p.detonate) {
+      const d = p.detonate;
+      p.box = d.box;
+      p.damage = d.damage;
+      p.hitstun = d.hitstun;
+      p.blockstun = d.blockstun;
+      p.knockback = d.knockback;
+      p.height = d.height ?? 'mid';
+      p.ttl = d.ttl;
+      p.knockdown = true;
+      p.moveId = `${p.moveId}-burst`; // renderer swaps to the blast art
+      p.fuse = -1;
+      p.detonate = undefined;
+    }
     if (p.ttl > 0) p.ttl--;
   }
 
-  // projectile vs projectile: clash and both die
+  // projectile vs projectile: clash and both die (smoke fields and armed
+  // bombs don't participate)
   const dead = new Set<Projectile>();
   for (const p of s.projectiles) {
     for (const q of s.projectiles) {
+      if (p.field || q.field || isDormant(p) || isDormant(q)) continue;
       if (p.owner !== q.owner && !dead.has(p) && !dead.has(q)) {
         const pr = { l: p.x + p.box.x, t: p.y + p.box.y, r: p.x + p.box.x + p.box.w, b: p.y + p.box.y + p.box.h };
         const qr = { l: q.x + q.box.x, t: q.y + q.box.y, r: q.x + q.box.x + q.box.w, b: q.y + q.box.y + q.box.h };
@@ -664,6 +712,7 @@ function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputF
       dead.add(p);
       continue;
     }
+    if (p.field || isDormant(p)) continue; // smoke / armed bombs never hit
     const defSlot = p.owner === 0 ? 1 : 0;
     const d = s.fighters[defSlot];
     if (isInvulnerable(d)) continue;
@@ -687,7 +736,7 @@ function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputF
         blockstun: p.blockstun,
         knockback: p.knockback,
         height: p.height,
-        knockdown: false,
+        knockdown: p.knockdown,
         chip: Math.floor(p.damage * 0.1),
       }, inputs[defSlot]);
       dead.add(p);
@@ -755,9 +804,13 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
   s.tick++;
 
   for (const slot of [0, 1] as const) {
-    const buf = s.fighters[slot].inputBuffer;
+    const f = s.fighters[slot];
+    const buf = f.inputBuffer;
     buf.push(packInput(inputs[slot]));
     if (buf.length > INPUT_BUFFER_LEN) buf.shift();
+    // bank charge while holding down; bleed it fast on release (short grace
+    // window to flick ↓→↑ without losing the charge)
+    f.charge = inputs[slot].down ? Math.min(f.charge + 1, 600) : Math.max(0, f.charge - 8);
   }
 
   if (s.phase === 'intro') {

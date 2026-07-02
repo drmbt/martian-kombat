@@ -10,6 +10,9 @@ import { ROOT, loadEnv, geminiImage, saveAsset, skip } from './lib.mjs';
 
 const env = loadEnv();
 const force = process.argv.includes('--force');
+const only = process.argv.includes('--char')
+  ? process.argv[process.argv.indexOf('--char') + 1]
+  : null;
 const MODEL = 'gemini-3-pro-image';
 const CANON = join(ROOT, 'assets/raw/canonical');
 const PORTRAITS = join(ROOT, 'public/assets/portraits');
@@ -23,7 +26,9 @@ const STYLE = `Art style: hand-painted cel-shaded 2D anime fighter (modern Capco
 
 const FLAVOR = {
   catherine: `Character flavor: "The Chef de Guerre" — a warrior chef. She holds a wooden bo staff in a ready grip and wears a chef's apron over her outfit with a bandolier of kitchen knives across the chest. Her small scruffy dog Jazzper stands alert at her feet, also facing right.`,
-  flo: `Character flavor: "Kernel Panic" — a very tall, lanky, permanently annoyed German hacker. Keep his scowl. A thin smoking spliff hangs from the corner of his mouth, and faint green terminal-code glyphs float around one clenched fist.`,
+  // glyphs must be AMBER, never green — green-on-green dies in the chroma key
+  // (same lesson as Vincent's teal rune)
+  flo: `Character flavor: "Kernel Panic" — a very tall, lanky, permanently annoyed German hacker. Keep his scowl. A thin smoking spliff hangs from the corner of his mouth, and faint glowing AMBER-ORANGE terminal-code glyphs float around one clenched fist (never green glyphs).`,
   freeman: `Character flavor: "The Still Point" — a serene warrior yogi. Loose comfortable clothes, mala beads around the neck or wrist, barefoot, calm centered half-smile, weight perfectly balanced in a meditative fighting stance.`,
   gene: `Character flavor: "Prompt Injection" — an AI-startup hacker. Keep his outfit from the photo; add subtle AR glasses with a faint HUD glow and glitchy digital pixel artifacts trailing from one open hand.`,
   kirby: `Character flavor: "Spill the Tea" — a flexible fire-breathing yogi gossip. One hand balances a steaming teacup effortlessly; a faint ember glow flickers at the lips. Relaxed, smug, dangerous.`,
@@ -41,10 +46,12 @@ mkdirSync(PORTRAITS, { recursive: true });
 
 for (const [id, src] of Object.entries(REUSE)) {
   const dst = join(CANON, `${id}.png`);
-  if (!existsSync(dst)) copyFileSync(join(ROOT, src), dst);
+  // style-test raws are gitignored and may be gone on a fresh checkout
+  if (!existsSync(dst) && existsSync(join(ROOT, src))) copyFileSync(join(ROOT, src), dst);
 }
 
 for (const [id, flavor] of Object.entries(FLAVOR)) {
+  if (only && id !== only) continue;
   const out = join(CANON, `${id}.png`);
   if (skip(out, force)) continue;
   console.log(`canonical ${id} ...`);

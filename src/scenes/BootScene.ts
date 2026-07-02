@@ -46,6 +46,9 @@ export class BootScene extends Phaser.Scene {
       for (const [moveId, mv] of Object.entries(def.moves)) {
         if (mv.projectile) {
           this.load.image(`proj-${id}-${moveId}`, `assets/sprites/${id}/projectile-${moveId}.png`);
+          if (mv.projectile.detonate) {
+            this.load.image(`proj-${id}-${moveId}-burst`, `assets/sprites/${id}/projectile-${moveId}-burst.png`);
+          }
         }
       }
       if (!def.fatality) continue;
