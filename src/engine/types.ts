@@ -95,6 +95,7 @@ export interface VariantPatch {
   invuln?: number;
   grab?: { range: number };
   vault?: { vx: number; vy: number };
+  leap?: { vx: number; vy: number };
   projectile?: Partial<ProjectileDef>;
 }
 
@@ -130,6 +131,9 @@ export interface MoveDef {
   projImmune?: boolean;
   /** at first active frame, launch into the air with this velocity (vaults) */
   vault?: { vx: number; vy: number };
+  /** shoryuken physics: rise with this velocity AT the first active frame while
+   *  the attack stays out (hitbox travels with the fighter) */
+  leap?: { vx: number; vy: number };
   /** SFII Turbo L/M/H button variants, merged over the base numbers */
   variants?: { l?: VariantPatch; m?: VariantPatch; h?: VariantPatch };
 }

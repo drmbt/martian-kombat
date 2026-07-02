@@ -90,12 +90,12 @@ export const CHARACTERS = {
         },
         mp: {
           startup: 'chambering a short double-palm push, palms stacked at his side',
-          active: 'short double-palm push thrust forward at chest height, faint teal shimmer at the palms',
+          active: 'short double-palm push thrust forward at chest height, faint crimson red shimmer at the palms',
           recovery: 'palms drawing back into a tai chi guard',
         },
         hp: {
           startup: 'winding into a spinning double-palm push, cloak wrapping around the body',
-          active: 'double-palm push fully extended, cloak flared wide, burst of teal energy at the palms',
+          active: 'double-palm push fully extended, cloak flared wide, burst of crimson red energy at the palms',
           recovery: 'completing the spin, cloak settling, arms lowering',
         },
         lk: {
@@ -110,7 +110,7 @@ export const CHARACTERS = {
         },
         hk: {
           startup: 'coiling into a spin, cloak wrapping tight, one leg chambered high',
-          active: 'spinning high crescent kick fully extended at head height, cloak flared in a full circle, teal energy trail — exactly one foot on the ground',
+          active: 'spinning high crescent kick fully extended at head height, cloak flared in a full circle, crimson red energy trail — exactly one foot on the ground',
           recovery: 'the spin completing, cloak settling around him, both feet planted',
         },
       },
@@ -120,11 +120,11 @@ export const CHARACTERS = {
           recovery: 'palm pulled back to guard, still coiled in the squat',
         },
         mp: {
-          active: 'rising palm thrust angled upward out of the squat, teal shimmer trailing',
+          active: 'rising palm thrust angled upward out of the squat, crimson red shimmer trailing',
           recovery: 'the arm settling down, weight sinking back into the squat',
         },
         hp: {
-          active: 'both palms thrust powerfully straight upward out of the squat, cloak rising, teal energy burst (anti-air)',
+          active: 'both palms thrust powerfully straight upward out of the squat, cloak rising, crimson red energy burst (anti-air)',
           recovery: 'arms lowering from overhead, settling back into the squat',
         },
         lk: {
@@ -142,43 +142,40 @@ export const CHARACTERS = {
       },
       air: {
         lp: 'throwing a quick downward-angled palm strike',
-        mp: 'a double-palm thrust angled 45 degrees downward, teal shimmer',
+        mp: 'a double-palm thrust angled 45 degrees downward, crimson red shimmer',
         hp: 'an overhead double-fist hammer blow swung downward, cloak billowing above him',
         lk: 'a sharp knee strike raised toward the opponent',
         mk: 'a side kick extended at a downward angle, cloak trailing',
-        hk: 'a flying spinning crescent kick — RIGHT leg fully extended with a teal energy trail, LEFT leg tucked beneath him, both legs clearly attached',
+        hk: 'a flying spinning crescent kick — RIGHT leg fully extended with a crimson red energy trail, LEFT leg tucked beneath him, both legs clearly attached',
       },
       specials: {
         'sigil-bolt': {
-          startup: 'tracing a glowing teal arcane glyph in the air with one finger, eyes focused',
-          active: 'palm thrust forward launching a bright teal glowing rune projectile, cloak blown back',
+          startup: 'tracing a glowing crimson red arcane glyph in the air with one finger, eyes focused',
+          active: 'palm thrust forward launching a bright crimson red glowing rune projectile, cloak blown back',
           recovery: 'follow-through with palm open, glyph light fading from the fingertips',
         },
         'cloud-hands': {
-          startup: 'both palms beginning a flowing circular cloud-hands motion, teal light gathering between them',
-          active: 'advancing forward as his palms flow in circles, a blurred triple palm strike, teal light trailing each palm',
-          recovery: 'the flowing motion settling, palms returning to center, teal light fading',
+          startup: 'both palms beginning a flowing circular cloud-hands motion, crimson red light gathering between them',
+          active: 'advancing forward as his palms flow in circles, a blurred triple palm strike, crimson red light trailing each palm',
+          recovery: 'the flowing motion settling, palms returning to center, crimson red light fading',
         },
         'rising-glyph': {
-          startup: 'coiling low, one palm charging with a blazing teal glyph, knees deeply bent ready to spring',
-          active: 'a rising glyph uppercut — leaping upward, palm driving a blazing teal sigil skyward, cloak trailing below, both feet off the ground',
+          startup: 'coiling low, one palm charging with a blazing crimson-red glyph, knees deeply bent ready to spring',
+          active: 'a rising glyph uppercut — leaping upward, palm driving a blazing crimson-red sigil skyward, cloak trailing below, both feet off the ground',
           recovery: 'descending from the rise, cloak settling around him, the glyph light fading',
         },
         redirect: {
-          startup: 'settling into a push-hands stance, palms circling, a faint teal ward beginning to shimmer in front of him',
-          active: 'palms extended in a deflecting circle, a shimmering translucent teal ward-plane hovering in front of his hands',
+          startup: 'settling into a push-hands stance, palms circling, a faint crimson red ward beginning to shimmer in front of him',
+          active: 'palms extended in a deflecting circle, a shimmering translucent crimson red ward-plane hovering in front of his hands',
           recovery: 'the ward dissolving, hands drawing back to guard',
         },
       },
     },
     extra: {
       projectiles: {
-        // NOTE: teal-on-green was unkeyable (chroma ate the whole rune) — this
-        // one lives on a magenta screen with its own key color.
         'sigil-bolt': {
           prompt:
-            'A single glowing blue-violet arcane rune sigil energy ball projectile with bright white core, spinning, painted cel-shaded anime style, small, centered, on solid flat magenta background #FF00FF, no character, no text, no watermark.',
-          key: '0xFF00FF',
+            'A single glowing CRIMSON RED arcane rune sigil energy ball projectile with bright white-hot core, spinning, painted cel-shaded anime style, small, centered, on solid flat chroma-key green background #00B140, no character, no text, no watermark.',
         },
       },
     },

@@ -404,7 +404,7 @@
         "button": "punch"
       },
       "startup": 5,
-      "active": 8,
+      "active": 10,
       "recovery": 24,
       "damage": 90,
       "hitstun": 24,
@@ -429,13 +429,25 @@
             "y": -240,
             "w": 88,
             "h": 180
+          },
+          "leap": {
+            "vx": 1.5,
+            "vy": 11
           }
         },
         "h": {
           "damage": 105,
           "invuln": 10,
-          "recovery": 30
+          "recovery": 30,
+          "leap": {
+            "vx": 3.5,
+            "vy": 17
+          }
         }
+      },
+      "leap": {
+        "vx": 2.5,
+        "vy": 14
       }
     },
     "redirect": {

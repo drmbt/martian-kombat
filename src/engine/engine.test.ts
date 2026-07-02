@@ -235,6 +235,21 @@ describe('named specials with per-move motions', () => {
     expect(heavy.damage).toBeGreaterThan(light.damage);
   });
 
+  it('Rising Glyph leaps like a shoryuken: airborne with the attack out, then lands', () => {
+    const s = fresh();
+    closeRange(s);
+    step(s, [inp({ right: true }), inp()], characters);
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ right: true, down: true, hp: true }), inp()], characters);
+    expect(s.fighters[0].action.moveId).toBe('rising-glyph');
+    run(s, 10); // into the active window
+    expect(s.fighters[0].action.kind).toBe('attack'); // still attacking...
+    expect(s.fighters[0].y).toBeLessThan(FLOOR_Y);    // ...while rising
+    run(s, 90);
+    expect(s.fighters[0].y).toBe(FLOOR_Y);            // back down
+    expect(['idle', 'air', 'walkF', 'walkB']).toContain(s.fighters[0].action.kind);
+  });
+
   it('dp+P fires Rising Glyph and its i-frames beat a meaty jab', () => {
     const s = fresh();
     closeRange(s);

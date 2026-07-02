@@ -343,6 +343,24 @@ function updateFighter(
       if (m.forwardVel && act.frame <= m.startup + m.active) {
         f.x += f.facing * m.forwardVel;
       }
+      // shoryuken leaps: rise while the attack stays out
+      if (m.leap) {
+        if (act.frame === m.startup) {
+          f.vy = -m.leap.vy;
+          f.vx = f.facing * m.leap.vx;
+          f.y -= 1;
+        }
+        if (!grounded(f)) {
+          f.vy += def.gravity;
+          f.y += f.vy;
+          f.x += f.vx;
+          if (f.y >= FLOOR_Y) {
+            f.y = FLOOR_Y;
+            f.vy = 0;
+            f.vx = 0;
+          }
+        }
+      }
       // vaults launch airborne at the first active frame (Staff Vault)
       if (m.vault && act.frame === m.startup) {
         f.vy = -m.vault.vy;
@@ -372,7 +390,8 @@ function updateFighter(
         }
       }
       if (act.frame >= m.startup + m.active + m.recovery) {
-        f.action = { kind: 'idle', frame: 0 };
+        // a leap that ends airborne falls the rest of the way
+        f.action = grounded(f) ? { kind: 'idle', frame: 0 } : { kind: 'air', frame: 0 };
       }
       break;
     }
