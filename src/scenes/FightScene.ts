@@ -23,6 +23,7 @@ import { characters } from '../data/characters';
 import { KeyboardSource } from '../input/keyboard';
 import { CpuDriver } from '../ai/bot';
 import { play } from './BootScene';
+import { nextTrack, playMusic } from '../audio/music';
 
 // Cells are looked up BY NAME from each sheet's meta.json (written by
 // tools/pack-sheet.mjs), so v2 six-button sheets and legacy 23-cell sheets
@@ -129,6 +130,9 @@ export class FightScene extends Phaser.Scene {
     this.accumulator = 0;
     this.comboHits = 0;
     this.comboTicks = 0;
+
+    // per-stage fight music; a rematch on the same stage keeps the track going
+    playMusic([`stages/${this.stageId}`, 'stages/default']);
 
     // Stage art keeps its native aspect at full screen height; anything wider
     // than the screen (ultra-wide 21:9 stages) becomes parallax travel.
@@ -238,6 +242,10 @@ export class FightScene extends Phaser.Scene {
       if (this.training) this.toCharacterSelect();
       else if (this.state.phase === 'matchEnd') this.toCharacterSelect();
     });
+    // clicking through the win-quote screen skips back to character select
+    this.input.on('pointerdown', () => {
+      if (this.state.phase === 'matchEnd') this.toCharacterSelect();
+    });
 
     play(this, 'ann-round-1');
   }
@@ -299,6 +307,7 @@ export class FightScene extends Phaser.Scene {
     // announcer cues
     if (s.phase === 'intro' && s.phaseFrame === 1 && s.tick > 1) {
       play(this, s.roundNumber === 2 ? 'ann-round-2' : 'ann-final-round');
+      nextTrack(); // fresh stage track between rounds (no-op for single-track folders)
     }
     if (s.phase === 'intro' && s.phaseFrame === Math.floor(INTRO_TICKS * 0.6)) {
       play(this, 'ann-fight', 1);
@@ -321,6 +330,15 @@ export class FightScene extends Phaser.Scene {
     ) {
       play(this, `ann-${s.fighters[s.roundWinner].charId}`, 1);
       this.time.delayedCall(900, () => play(this, 'ann-victory', 1));
+      // victory theme plays once over the win-quote screen, then the game
+      // returns to character select (any click/ENTER skips ahead, R rematches)
+      playMusic('victory', {
+        keepOnMiss: true,
+        once: true,
+        onEnd: () => {
+          if (this.state.phase === 'matchEnd') this.toCharacterSelect();
+        },
+      });
     }
     if (prev.phase === 'fight' && s.phase === 'finisher') {
       play(this, 'ann-finish-them', 1);

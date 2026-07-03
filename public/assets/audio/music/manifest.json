@@ -1,0 +1,86 @@
+{
+  "menu": [
+    "title.mp3"
+  ],
+  "stages/altar": [
+    "altar-hai-dai-temple-1.mp3",
+    "altar-hai-dai-temple-2.mp3",
+    "altar-hai-dai-temple-3.mp3"
+  ],
+  "stages/bbac": [
+    "bbac.mp3"
+  ],
+  "stages/chiba": [
+    "chiba-1.mp3",
+    "chiba.mp3"
+  ],
+  "stages/chiba-roof": [
+    "chiba-roof-world.mp3"
+  ],
+  "stages/default": [
+    "dojo.mp3"
+  ],
+  "stages/dodecahedron": [
+    "dodecahedron.mp3"
+  ],
+  "stages/drive-in": [
+    "drive-in-1.mp3",
+    "drive-in.mp3"
+  ],
+  "stages/estates": [
+    "estates-downtempo-lofi-ambient.mp3",
+    "estates.mp3"
+  ],
+  "stages/institute": [
+    "institute-1.mp3",
+    "institute-2.mp3",
+    "institute-3.mp3",
+    "institute.mp3"
+  ],
+  "stages/mars": [
+    "mars.mp3"
+  ],
+  "stages/neptune": [
+    "neptune.mp3"
+  ],
+  "stages/painted-canyon": [
+    "painted-canyon.mp3"
+  ],
+  "stages/salton": [
+    "salton-shoreline.mp3"
+  ],
+  "stages/saturn": [
+    "saturn-1.mp3",
+    "saturn.mp3"
+  ],
+  "stages/shipwreck": [
+    "shipwreck-1.mp3",
+    "shipwreck.mp3"
+  ],
+  "stages/ski-inn": [
+    "ski-inn-1.mp3",
+    "ski-inn.mp3"
+  ],
+  "stages/the-range": [
+    "the-range.mp3"
+  ],
+  "stages/van": [
+    "van-1.mp3",
+    "van.mp3"
+  ],
+  "versus": [
+    "versus-screen-1.mp3",
+    "versus-screen-2.mp3",
+    "versus-screen-3.mp3",
+    "versus-screen-4.mp3",
+    "versus-screen-5.mp3",
+    "versus-screen-6.mp3",
+    "versus-screen-7.mp3",
+    "versus-screen-8.mp3",
+    "versus-screen-9.mp3",
+    "versus-screen.mp3"
+  ],
+  "victory": [
+    "victory.mp3"
+  ]
+}

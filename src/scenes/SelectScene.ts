@@ -8,17 +8,20 @@ import { ROSTER } from '../data/roster';
 import { characters } from '../data/characters';
 import { STAGES, stageOwner } from '../data/stages';
 import { play } from './BootScene';
+import { playMusic } from '../audio/music';
 
 const COLS = 4;
 const CELL = 150;
 const GAP = 24;
 
-// stage dialog grid: RANDOM tile + every stage
-const SCOLS = 4;
-const SCELL_W = 214;
-const SCELL_H = 122;
-const THUMB_W = 190;
-const THUMB_H = 81; // 21:9
+// stage dialog: the grid sizes itself to the option count (RANDOM + every
+// stage) so a growing roster keeps fitting the 960x540 canvas — see
+// layoutStageGrid, which picks the column count giving the largest 21:9 thumb.
+const SGRID_TOP = 84; // below the CHOOSE STAGE title
+const SGRID_BOTTOM = STAGE_H - 34; // above the controls hint
+const SLABEL_H = 26; // thumb->label gap + label line
+const SMARGIN_X = 32;
+const STHUMB_MAX_W = 190;
 
 export class SelectScene extends Phaser.Scene {
   private idx: [number, number] = [0, 1];
@@ -31,6 +34,13 @@ export class SelectScene extends Phaser.Scene {
   private stageMode = false;
   private stageIdx = 0;
   private stageCursor: Phaser.GameObjects.Graphics | null = null;
+  // stage-dialog layout, computed by layoutStageGrid for the current count
+  private scols = 4;
+  private sThumbW = STHUMB_MAX_W;
+  private sThumbH = Math.round((STHUMB_MAX_W * 9) / 21);
+  private sCellW = STHUMB_MAX_W + 24;
+  private sCellH = Math.round((STHUMB_MAX_W * 9) / 21) + SLABEL_H;
+  private sFirstRowY = 128;
 
   constructor() {
     super('Select');
@@ -48,6 +58,8 @@ export class SelectScene extends Phaser.Scene {
     this.stageMode = false;
     this.stageIdx = 0;
     this.stageCursor = null;
+    // the menu theme carries through character select (no-op if already playing)
+    playMusic('menu');
 
     if (this.textures.exists('bg-salton')) {
       this.add.image(STAGE_W / 2, STAGE_H / 2, 'bg-salton').setDisplaySize(STAGE_W, STAGE_H).setAlpha(0.35);
@@ -114,14 +126,14 @@ export class SelectScene extends Phaser.Scene {
     };
     kb.on('keydown-A', () => (this.stageMode ? this.stageMove(-1) : move(slotForP1(), -1)));
     kb.on('keydown-D', () => (this.stageMode ? this.stageMove(1) : move(slotForP1(), 1)));
-    kb.on('keydown-W', () => (this.stageMode ? this.stageMove(-SCOLS) : move(slotForP1(), -COLS)));
-    kb.on('keydown-S', () => (this.stageMode ? this.stageMove(SCOLS) : move(slotForP1(), COLS)));
+    kb.on('keydown-W', () => (this.stageMode ? this.stageMove(-this.scols) : move(slotForP1(), -COLS)));
+    kb.on('keydown-S', () => (this.stageMode ? this.stageMove(this.scols) : move(slotForP1(), COLS)));
     kb.on('keydown-F', () => (this.stageMode ? this.confirmStage() : this.confirm(slotForP1())));
     // arrows/K always work in the stage dialog — it's a shared pick
     kb.on('keydown-LEFT', () => this.stageMode && this.stageMove(-1));
     kb.on('keydown-RIGHT', () => this.stageMode && this.stageMove(1));
-    kb.on('keydown-UP', () => this.stageMode && this.stageMove(-SCOLS));
-    kb.on('keydown-DOWN', () => this.stageMode && this.stageMove(SCOLS));
+    kb.on('keydown-UP', () => this.stageMode && this.stageMove(-this.scols));
+    kb.on('keydown-DOWN', () => this.stageMode && this.stageMove(this.scols));
     kb.on('keydown-K', () => this.stageMode && this.confirmStage());
     if (!this.cpu && !this.training) {
       kb.on('keydown-LEFT', () => !this.stageMode && move(1, -1));
@@ -177,13 +189,37 @@ export class SelectScene extends Phaser.Scene {
     return [{ id: 'random', name: 'RANDOM' }, ...STAGES];
   }
 
+  /**
+   * Size the dialog grid to the option count: pick the column count (4..10)
+   * that yields the largest 21:9 thumbnail fitting both the canvas width and
+   * the vertical band between title and controls hint, then center the rows.
+   */
+  private layoutStageGrid(n: number): void {
+    let best = { cols: 4, tw: 0 };
+    for (let cols = 4; cols <= 10; cols++) {
+      const rows = Math.ceil(n / cols);
+      const byWidth = Math.floor((STAGE_W - SMARGIN_X) / cols) - 16;
+      const byHeight = Math.floor(((SGRID_BOTTOM - SGRID_TOP) / rows - SLABEL_H) * (21 / 9));
+      const tw = Math.min(STHUMB_MAX_W, byWidth, byHeight);
+      if (tw > best.tw) best = { cols, tw };
+    }
+    this.scols = best.cols;
+    this.sThumbW = best.tw;
+    this.sThumbH = Math.round((best.tw * 9) / 21);
+    this.sCellW = best.tw + 16;
+    this.sCellH = this.sThumbH + SLABEL_H;
+    const rows = Math.ceil(n / this.scols);
+    const slack = Math.max(0, SGRID_BOTTOM - SGRID_TOP - rows * this.sCellH);
+    this.sFirstRowY = SGRID_TOP + Math.round(slack / 2) + Math.round(this.sCellH / 2);
+  }
+
   private stageCellXY(i: number): { x: number; y: number } {
-    const col = i % SCOLS;
-    const row = Math.floor(i / SCOLS);
-    const gridW = SCOLS * SCELL_W;
+    const col = i % this.scols;
+    const row = Math.floor(i / this.scols);
+    const gridW = this.scols * this.sCellW;
     return {
-      x: STAGE_W / 2 - gridW / 2 + SCELL_W / 2 + col * SCELL_W,
-      y: 128 + row * SCELL_H,
+      x: STAGE_W / 2 - gridW / 2 + this.sCellW / 2 + col * this.sCellW,
+      y: this.sFirstRowY + row * this.sCellH,
     };
   }
 
@@ -191,6 +227,7 @@ export class SelectScene extends Phaser.Scene {
     if (this.stageMode || this.starting) return;
     this.stageMode = true;
     this.stageIdx = 0; // RANDOM is the default
+    this.layoutStageGrid(this.stageOptions().length);
     const picked = [ROSTER[this.idx[0]].id, ROSTER[this.idx[1]].id];
 
     this.add.rectangle(STAGE_W / 2, STAGE_H / 2, STAGE_W, STAGE_H, 0x0c0910, 1).setDepth(10);
@@ -203,23 +240,27 @@ export class SelectScene extends Phaser.Scene {
       .setDepth(11);
 
     const font = { fontFamily: 'monospace', stroke: '#000', strokeThickness: 3 };
+    const tw = this.sThumbW;
+    const th = this.sThumbH;
+    const labelSize = tw < 130 ? '10px' : '12px';
     this.stageOptions().forEach((opt, i) => {
       const { x, y } = this.stageCellXY(i);
-      const tile = this.add.rectangle(x, y - 8, THUMB_W, THUMB_H, 0x14101a, 1).setStrokeStyle(1, 0x594566).setDepth(11);
+      const ty = y - SLABEL_H / 2; // thumb center; label sits below it
+      const tile = this.add.rectangle(x, ty, tw, th, 0x14101a, 1).setStrokeStyle(1, 0x594566).setDepth(11);
       tile.setInteractive({ useHandCursor: true });
       tile.on('pointerover', () => { this.stageIdx = i; });
       tile.on('pointerdown', () => { this.stageIdx = i; this.confirmStage(); });
       if (opt.id === 'random') {
-        this.add.text(x, y - 8, '?', { ...font, fontSize: '44px', fontStyle: 'bold', color: '#ffd24a' })
+        this.add.text(x, ty, '?', { ...font, fontSize: `${Math.round(th * 0.55)}px`, fontStyle: 'bold', color: '#ffd24a' })
           .setOrigin(0.5).setDepth(12);
       } else if (this.textures.exists(`bg-stage-${opt.id}`)) {
-        this.add.image(x, y - 8, `bg-stage-${opt.id}`).setDisplaySize(THUMB_W, THUMB_H).setDepth(12);
+        this.add.image(x, ty, `bg-stage-${opt.id}`).setDisplaySize(tw, th).setDepth(12);
       }
       const owner = opt.id === 'random' ? null : stageOwner(opt.id, picked, characters);
       const label = owner ? `${opt.name} · ${characters[owner].name}` : opt.name;
       this.add
-        .text(x, y + THUMB_H / 2 - 2, label, {
-          ...font, fontSize: '12px', color: owner ? characters[owner].color : '#f5ead9',
+        .text(x, ty + th / 2 + 3, label, {
+          ...font, fontSize: labelSize, color: owner ? characters[owner].color : '#f5ead9',
         })
         .setOrigin(0.5, 0)
         .setDepth(12);
@@ -252,7 +293,7 @@ export class SelectScene extends Phaser.Scene {
     play(this, 's-blip', 0.8);
     this.redrawStage();
     this.time.delayedCall(500, () => {
-      this.scene.start('Fight', {
+      this.scene.start('Versus', {
         p1: ROSTER[this.idx[0]].id, p2: ROSTER[this.idx[1]].id, cpu: this.cpu, training: this.training, stage,
       });
     });
@@ -262,9 +303,10 @@ export class SelectScene extends Phaser.Scene {
     const g = this.stageCursor;
     if (!g) return;
     const { x, y } = this.stageCellXY(this.stageIdx);
+    const ty = y - SLABEL_H / 2;
     g.clear();
     g.lineStyle(this.starting ? 5 : 3, 0x58e6d9, 1);
-    g.strokeRect(x - THUMB_W / 2 - 4, y - 8 - THUMB_H / 2 - 4, THUMB_W + 8, THUMB_H + 8);
+    g.strokeRect(x - this.sThumbW / 2 - 4, ty - this.sThumbH / 2 - 4, this.sThumbW + 8, this.sThumbH + 8);
   }
 
   update(): void {

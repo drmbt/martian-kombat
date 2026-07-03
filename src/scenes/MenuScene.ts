@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { STAGE_H, STAGE_W } from '../engine';
 import { play } from './BootScene';
+import { playMusic } from '../audio/music';
 
 export class MenuScene extends Phaser.Scene {
   constructor() {
@@ -8,6 +9,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   create(): void {
+    playMusic('menu');
     if (this.textures.exists('bg-salton')) {
       this.add.image(STAGE_W / 2, STAGE_H / 2, 'bg-salton').setDisplaySize(STAGE_W, STAGE_H).setAlpha(0.55);
     }

@@ -355,7 +355,9 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
 Remaining roster (Gene, Marzipan) · new characters · single-player
 arcade mode + CPU opponent · super meter/EX moves · stage interactables ·
 rollback netplay (engine determinism already paid for) · training mode · fatalities
-("Kombat" earns it) · music generation · mobile/touch.
+("Kombat" earns it) · music generation · mobile/touch · per-character victory
+song: a `victorySong` attribute in the character JSON names a track in
+`music/victory/` that overrides the random pick when that fighter wins.
 
 ---
 
@@ -363,6 +365,58 @@ rollback netplay (engine determinism already paid for) · training mode · fatal
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-02 · audio+scenes · full music loop: title/versus/victory tracks +
+  end-driven flow** — installed the Suno utility batch: `menu/title.mp3`
+  (seamless title loop), 10 `versus/` clips, `victory/victory.mp3`, bonus 4th
+  institute track (42 tracks total). Playback grew `once`/`onEnd` (play a
+  single pass, caller reacts to the end) and `nextTrack()` (crossfade to a
+  different track in the current context). Flow now: title loops menu→select,
+  VS screen plays one random clip and **its end starts the fight** (timer
+  fallback if no tracks/blocked audio), stage folders rotate to a fresh track
+  between rounds (single tracks keep looping), victory plays once over the
+  win-quote screen and **its end returns to character select** (click/ENTER
+  skips, R rematches) where the title loop resumes. Smoke-tested end-to-end in
+  browser: title → select → versus clip → clip-end fight (institute) →
+  round-boundary rotations (institute-1→3→1) → matchEnd victory.mp3 →
+  auto-return to select with title playing. Icebox: per-character `victorySong`
+  attribute. — Claude
+
+- **2026-07-02 · scenes+audio · SF2-style VS screen + music paradigm cleanup** —
+  new `VersusScene` between stage confirm and Fight: portraits slide in on
+  black (P2 mirrored to face off), name plates, red-burst VS pop, stage name,
+  blinking INSERT COIN homage; 3.4s hold, any key/click skips. Music contexts
+  simplified to the final paradigm: `menu/` loops from title through character
+  select, fades into `versus/` on the VS screen, stage music runs the fight,
+  `victory/` fades in over the win-quote screen. Removed the `select/` and
+  `fatality/` contexts (menu carries over; fatalities will be video cutscenes
+  with baked-in audio). Scaffold/README/manifest updated. Verified in-browser:
+  select → VS screen → auto-advance → fight playing salton stage track.
+  `menu/`, `versus/`, `victory/` still await tracks (Suno prompts handed to
+  user). — Claude
+
+- **2026-07-02 · assets · stage music tracks installed** — copied 29 mp3s from
+  `assets/raw/music/Martian Kombat/` into `public/assets/audio/music/stages/<id>/`
+  (kebab-cased filenames), regenerated `manifest.json`. Every stage has music
+  except `dome` — `DOJO.mp3` had no matching stage so it went to
+  `stages/default/` and covers dome via the fallback chain. Multi-track stages:
+  altar (3), institute (3), chiba/drive-in/estates/saturn/shipwreck/ski-inn/van
+  (2 each). Verified in-browser: salton/altar/chiba fights played their own
+  tracks, dome fell back to default; mp3s stream (206) with zero failed
+  requests. Menu/select/victory/fatality folders still await tracks. — Claude
+
+- **2026-07-02 · audio+tools · stage/menu music playback scaffold** — new
+  `src/audio/music.ts`: streaming HTMLAudio music keyed to named subfolders of
+  `public/assets/audio/music/` (`menu/`, `select/`, `victory/`, `fatality/`,
+  `stages/<id>/` + `stages/default/` fallback; see README there). Multi-track
+  folders pick randomly and rotate on end; single tracks loop; empty folders
+  degrade gracefully (select falls back to menu, victory/fatality keep stage
+  music). `tools/gen-music-manifest.mjs` (`npm run gen:music`, auto via
+  predev/prebuild) scans folders → `manifest.json`; `--scaffold` creates the
+  context dirs. Wired into Boot/Menu/Select/Fight (stage music on create,
+  victory/fatality overlays on phase transitions); autoplay-block handled via
+  first-gesture retry. `pickTrack` unit-tested (5 tests). Verified in-browser:
+  menu → select fallback → fight stage-default chain all played. **No tracks
+  committed yet — drop mp3s in and run `npm run gen:music`.** — Claude
 - **2026-07-02 · assets+data+engine · Sprint 14: Kirby rebuild (Firebreather)** —
   reimagined Kirby as an acrobatic fire-breathing contortionist; stripped every
   tea/teacup/match reference (canonical flavor, manifest `always`, bible, win
@@ -374,8 +428,8 @@ rollback netplay (engine determinism already paid for) · training mode · fatal
   + 4 panels. Updated the no-fatality KO-branch test (kirby now owns one). 50 tests
   green, build clean. Scoped commit: Kirby files only (stage-restyle work left
   untouched, pending its own approval). *(Claude)*
-- **2026-07-02 · assets · stage art restyle: retro pixel-art pass (PENDING USER
-  APPROVAL)** — regenerated all 11 stages (10 + salton) via reworked
+- **2026-07-02 · assets · stage art restyle: retro pixel-art pass (USER
+  APPROVED, uncommitted)** — regenerated all 11 stages (10 + salton) via reworked
   `tools/gen-stage.mjs`: style contract switched from cel-shaded cartoon to
   16-bit retro pixel-art anchored on the salton-shoreline render (style ref
   copied to `assets/stage-inspo/style-ref-salton.jpg`, passed as first
@@ -392,7 +446,27 @@ rollback netplay (engine determinism already paid for) · training mode · fatal
   in `src/data/stages.ts` (roster now 15 stages); verified in-browser — all
   stage textures load, menu renders new salton. Pre-existing unrelated
   console error: `proj-yulia` (missing
-  `public/assets/sprites/yulia/projectile.png`). *(Claude)*
+  `public/assets/sprites/yulia/projectile.png`). All 15 approved by user.
+  Third pass: previous wrecked-structure dodecahedron render renamed to new
+  stage DOME (id `dome`; its inspo refs moved to `assets/stage-inspo/DOME/`);
+  DODECAHEDRON regenerated from a new user photo
+  (`assets/stage-inspo/DODECAHEDRON/image.png` — intact skeletal dodecahedron
+  silhouetted at blue-hour dusk, owl perched on top, camp lights on horizon).
+  Registry now 16 stages; both textures verified loading in-browser. Fourth
+  pass: ALTAR (desert ritual altar, solar-panel wall, flowers/silver vessels)
+  and VAN (graffiti sprinter on sunset playa) generated from new inspo
+  folders; van re-rolled once — first take kept photographic detail, prompt
+  gained an explicit "redraw everything as pixel art" line. Registry now 18
+  stages; both verified loading in-browser. Fifth pass: van re-rolled again
+  per user (centered, three-quarter angle, invented front end the ref photo
+  crops off); CLAUDE.md pipeline step 5 rewritten to document the stage
+  workflow (style-ref anchor, 21:9/1680×720, floor contract, SCENES dict +
+  `src/data/stages.ts` registry, `npm run gen:stages`); stage-select dialog
+  grid now auto-sizes to the option count (SelectScene `layoutStageGrid`:
+  picks the 4–10 column layout with the largest fitting 21:9 thumbs, centers
+  rows — the old fixed 4-col grid already overflowed 540px at 19 tiles).
+  Verified: 55 tests green, tsc clean, dialog shows all 19 tiles in 5 cols
+  in-browser, WASD/arrow row-jumps follow the computed column count. *(Claude)*
 - **2026-07-02 · assets · Flo frame QA fixes** — cleaned up Flo cells flagged for
   duplicate/extra-limb artifacts: re-rolled 5 via `gen-frames --cells` (lk-active,
   mk-recovery, clk-recovery, cmk-recovery, chk-active), and the user manually

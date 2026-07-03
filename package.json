@@ -4,7 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "predev": "node tools/gen-music-manifest.mjs",
     "dev": "vite",
+    "prebuild": "node tools/gen-music-manifest.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
@@ -14,6 +16,7 @@
     "gen:pack": "node tools/pack-sheet.mjs",
     "gen:stages": "node tools/gen-stage.mjs",
     "gen:audio": "node tools/gen-audio.mjs",
+    "gen:music": "node tools/gen-music-manifest.mjs",
     "gen:fatality": "node tools/gen-fatality.mjs"
   },
   "dependencies": {

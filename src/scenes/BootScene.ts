@@ -5,6 +5,7 @@ import { STAGE_H, STAGE_W } from '../engine';
 import { ROSTER } from '../data/roster';
 import { characters } from '../data/characters';
 import { STAGES } from '../data/stages';
+import { initMusic } from '../audio/music';
 
 const CELL_W = 288;
 const CELL_H = 384;
@@ -64,6 +65,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
+    initMusic(); // fetches music/manifest.json; playback degrades to silence if absent
     this.scene.start('Menu');
   }
 }
