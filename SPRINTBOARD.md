@@ -338,6 +338,12 @@ rollback netplay (engine determinism already paid for) · training mode · fatal
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-02 · assets · Flo frame QA fixes** — cleaned up Flo cells flagged for
+  duplicate/extra-limb artifacts: re-rolled 5 via `gen-frames --cells` (lk-active,
+  mk-recovery, clk-recovery, cmk-recovery, chk-active), and the user manually
+  fixed/QC'd further cells (down, hk-active, clp-recovery). Repacked Flo's 8×8
+  sheet (59 frames, alpha verified transparent). *(Claude + user)*
+
 - **2026-07-02 · tools+assets · Freeman frame QA re-rolls** — added a `--cells`
   targeted-regen flag to `gen-frames.mjs` (regenerates ONLY the named cells —
   bare id or `NN-id` stem — force-overwriting, anchor-first still honored,
