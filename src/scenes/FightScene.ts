@@ -109,7 +109,9 @@ export class FightScene extends Phaser.Scene {
   private pauseScroll: { txt: Phaser.GameObjects.Text; top: number; maxScroll: number; scroll: number }[] = [];
   private cpu = false;
   private training = false;
+  private demo = false;
   private bot: CpuDriver | null = null;
+  private botP1: CpuDriver | null = null;
   private fatalityPanel: Phaser.GameObjects.Image | null = null;
   /** SFII-style post-match taunt: winner portrait, beaten loser portrait, quote */
   private winScreen: Phaser.GameObjects.Container | null = null;
@@ -128,12 +130,14 @@ export class FightScene extends Phaser.Scene {
     super('Fight');
   }
 
-  init(data: { p1?: string; p2?: string; cpu?: boolean; training?: boolean; stage?: string }): void {
+  init(data: { p1?: string; p2?: string; cpu?: boolean; training?: boolean; demo?: boolean; stage?: string }): void {
     this.chars = [data.p1 ?? 'vincent', data.p2 ?? 'yulia'];
     this.stageId = data.stage ?? 'salton';
     this.cpu = !!data.cpu;
     this.training = !!data.training;
-    this.bot = this.cpu ? new CpuDriver(1) : null;
+    this.demo = !!data.demo;
+    this.bot = this.cpu || this.demo ? new CpuDriver(1) : null;
+    this.botP1 = this.demo ? new CpuDriver(0) : null;
     this.fatalityPanel = null;
     this.moveLogOn = this.training; // sandbox shows the move log by default
     this.moveLog = [];
@@ -255,6 +259,22 @@ export class FightScene extends Phaser.Scene {
         .setDepth(6);
     }
 
+    if (this.demo) {
+      // attract mode: a blinking banner, and ANY input returns to the title
+      const banner = this.add
+        .text(STAGE_W / 2, STAGE_H - 44, 'DEMO — PRESS ANY KEY', {
+          fontFamily: 'monospace', fontSize: '26px', fontStyle: 'bold', color: '#ffd24a',
+          stroke: '#000', strokeThickness: 6,
+        })
+        .setOrigin(0.5)
+        .setDepth(30);
+      this.tweens.add({ targets: banner, alpha: 0.15, duration: 550, yoyo: true, repeat: -1 });
+      this.input.keyboard!.on('keydown', () => this.toMainMenu());
+      this.input.on('pointerdown', () => this.toMainMenu());
+      this.input.gamepad?.on('down', () => this.toMainMenu());
+      return; // none of the human-match keybinds below apply to the demo
+    }
+
     this.buildPauseOverlay();
     this.input.keyboard!.on('keydown-F2', () => {
       this.moveLogOn = !this.moveLogOn;
@@ -315,7 +335,7 @@ export class FightScene extends Phaser.Scene {
     this.accumulator += Math.min(deltaMs, 100) * (koSlow ? 0.35 : 1);
     while (this.accumulator >= TICK_MS) {
       const snap = this.snapshot();
-      const p1 = this.inputs.poll(0);
+      const p1 = this.botP1 ? this.botP1.poll(this.state) : this.inputs.poll(0);
       const p2 = this.bot ? this.bot.poll(this.state) : this.inputs.poll(1);
       step(this.state, [p1, p2], characters);
       if (this.training) this.trainingUpkeep();
@@ -373,9 +393,15 @@ export class FightScene extends Phaser.Scene {
         keepOnMiss: true,
         once: true,
         onEnd: () => {
-          if (this.state.phase === 'matchEnd') this.toCharacterSelect();
+          if (this.state.phase !== 'matchEnd') return;
+          if (this.demo) this.toMainMenu();
+          else this.toCharacterSelect();
         },
       });
+    }
+    // attract demo loops back to the title once the win screen has had its beat
+    if (this.demo && s.phase === 'matchEnd' && s.phaseFrame === 300) {
+      this.toMainMenu();
     }
     if (prev.phase === 'fight' && s.phase === 'finisher') {
       play(this, 'ann-finish-them', 1);

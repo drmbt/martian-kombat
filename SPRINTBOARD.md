@@ -400,9 +400,10 @@ Goal: the game we have, but it *feels* great — juice, VFX, attract mode, contr
       (render-only `vfx` block on the move). Engine stays pure — VFX are
       renderer-side, triggered by state-diffing in `presentTick`.
       `tools/gen-vfx.mjs` (`npm run gen:vfx`) generates both classes
-- [ ] **Attract mode**: no input on the menu for N seconds → CPU-vs-CPU demo
-      fight (random fighters/stage, HUD on, "DEMO — PRESS ANY KEY" overlay);
-      any input returns to the title. CpuDriver already powers both sides
+- [x] **Attract mode**: no input on the menu for 20s → CPU-vs-CPU demo
+      fight (random fighters/stage, HUD on, blinking "DEMO — PRESS ANY KEY"
+      overlay); any key/click/pad input returns to the title, matchEnd
+      auto-returns after the win-screen beat. CpuDriver powers both sides
 - [ ] **Control remapping in Settings**: per-player key AND gamepad-button
       mapping UI (press-to-bind rows), persisted to localStorage via
       `src/settings.ts`; defaults = current bindings; reset row
@@ -457,6 +458,22 @@ victory song: a `victorySong` attribute in the character JSON names a track in
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-03 · scenes+ai · Sprint 16: attract mode** — idle on the title for
+  20s (keyboard/mouse/pad activity all reset the watchdog, pads polled since
+  sticks don't emit events) → CPU-vs-CPU demo fight: random playable pair +
+  random stage, HUD on, blinking "DEMO — PRESS ANY KEY" banner, `CpuDriver`
+  driving BOTH slots (`botP1`). Any key/click/pad button exits to the title;
+  in demo none of the human-match keybinds (pause/rematch/move-log) are
+  registered. matchEnd auto-returns to the title after the win-screen beat
+  (phaseFrame 300) or when the victory track ends, whichever lands first.
+  72 tests green, tsc clean. Verified in-browser (throttled-tab loop pumping):
+  idle → demo (marzipan vs freeman on chiba, both bots fighting to a
+  roundEnd), keydown → straight back to Menu. NEW GOTCHA for preview
+  verification: after a reload in a throttled tab the Boot loader can finish
+  its list without ever firing 'complete' — resume the audio context, call
+  `checkLoadQueue()` a few times, then pump `__game.loop.step(t)` manually;
+  scene.start ops also only apply on pumped steps. — Claude
 
 - **2026-07-03 · assets+tools+scenes · Sprint 16: impact-VFX overlay system** —
   new `tools/gen-vfx.mjs` (`npm run gen:vfx`, pooled, idempotent, prompt
