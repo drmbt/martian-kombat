@@ -111,6 +111,15 @@ export class SettingsScene extends Phaser.Scene {
       },
       {
         kind: 'stepper',
+        label: 'CONTROLS',
+        value: () => 'REBIND ►',
+        adjust: () => {
+          play(this, 's-blip');
+          this.scene.start('Controls');
+        },
+      },
+      {
+        kind: 'stepper',
         label: 'RESET DEFAULTS',
         value: () => '◄ ►',
         adjust: () => {

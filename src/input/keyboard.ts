@@ -1,47 +1,41 @@
 // Keyboard + gamepad -> InputFrame snapshots, one per engine tick.
+// Bindings come from settings (Settings → Controls, press-to-bind); defaults:
 // P1: WASD moves · R/T/Y = LP/MP/HP · F/G/H = LK/MK/HK
 // P2: arrows move · U/I/O = LP/MP/HP · J/K/L = LK/MK/HK
-// Pads (slot order): dpad/left stick moves · X/Y/RB = punches · A/B/RT = kicks.
+// Pads (slot order): remappable button indices (default dpad moves ·
+// X/Y/RB = punches · A/B/RT = kicks); the left stick always moves.
 // Keyboard and pad are OR-merged so either works at any moment.
 // Specials are motion inputs (QCF+punch), resolved inside the engine.
 import Phaser from 'phaser';
 import type { InputFrame } from '../engine';
+import { BIND_ACTIONS, getSettings, PlayerBindings } from '../settings';
 
 export interface InputSource {
   poll(player: 0 | 1): InputFrame;
 }
 
-const P1_KEYS = {
-  left: 'A', right: 'D', up: 'W', down: 'S',
-  lp: 'R', mp: 'T', hp: 'Y',
-  lk: 'F', mk: 'G', hk: 'H',
-} as const;
-
-const P2_KEYS = {
-  left: 'LEFT', right: 'RIGHT', up: 'UP', down: 'DOWN',
-  lp: 'U', mp: 'I', hp: 'O',
-  lk: 'J', mk: 'K', hk: 'L',
-} as const;
-
 type KeyMap = Record<keyof InputFrame, Phaser.Input.Keyboard.Key>;
 
 export class KeyboardSource implements InputSource {
   private maps: [KeyMap, KeyMap];
+  private pads: [PlayerBindings['pad'], PlayerBindings['pad']];
   private scene: Phaser.Scene;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     const kb = scene.input.keyboard!;
-    const bind = (spec: typeof P1_KEYS | typeof P2_KEYS): KeyMap => {
+    const bindings = getSettings().bindings;
+    const bind = (b: PlayerBindings): KeyMap => {
       const m = {} as KeyMap;
-      (Object.keys(spec) as (keyof InputFrame)[]).forEach((k) => {
-        m[k] = kb.addKey(Phaser.Input.Keyboard.KeyCodes[spec[k] as keyof typeof Phaser.Input.Keyboard.KeyCodes]);
-      });
+      for (const a of BIND_ACTIONS) {
+        m[a] = kb.addKey(b.keys[a]);
+        // keep bound keys (arrows, space, ...) from scrolling the page
+        kb.addCapture(b.keys[a]);
+      }
       return m;
     };
-    this.maps = [bind(P1_KEYS), bind(P2_KEYS)];
-    // keep arrows/space from scrolling the page
-    kb.addCapture(['LEFT', 'RIGHT', 'UP', 'DOWN', 'SPACE']);
+    this.maps = [bind(bindings[0]), bind(bindings[1])];
+    this.pads = [bindings[0].pad, bindings[1].pad];
   }
 
   poll(player: 0 | 1): InputFrame {
@@ -61,17 +55,22 @@ export class KeyboardSource implements InputSource {
 
     const pad = this.scene.input.gamepad?.gamepads[player];
     if (pad) {
+      const b = this.pads[player];
+      const btn = (i: number): boolean => {
+        const bt = pad.buttons[i];
+        return !!bt && (bt.pressed || bt.value > 0.4);
+      };
       const stick = pad.leftStick;
-      frame.left ||= pad.left || stick.x < -0.5;
-      frame.right ||= pad.right || stick.x > 0.5;
-      frame.up ||= pad.up || stick.y < -0.5;
-      frame.down ||= pad.down || stick.y > 0.5;
-      frame.lp ||= pad.X;
-      frame.mp ||= pad.Y;
-      frame.hp ||= pad.R1 > 0.4;
-      frame.lk ||= pad.A;
-      frame.mk ||= pad.B;
-      frame.hk ||= pad.R2 > 0.4;
+      frame.left ||= btn(b.left) || stick.x < -0.5;
+      frame.right ||= btn(b.right) || stick.x > 0.5;
+      frame.up ||= btn(b.up) || stick.y < -0.5;
+      frame.down ||= btn(b.down) || stick.y > 0.5;
+      frame.lp ||= btn(b.lp);
+      frame.mp ||= btn(b.mp);
+      frame.hp ||= btn(b.hp);
+      frame.lk ||= btn(b.lk);
+      frame.mk ||= btn(b.mk);
+      frame.hk ||= btn(b.hk);
     }
     return frame;
   }

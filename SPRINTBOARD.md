@@ -404,9 +404,10 @@ Goal: the game we have, but it *feels* great — juice, VFX, attract mode, contr
       fight (random fighters/stage, HUD on, blinking "DEMO — PRESS ANY KEY"
       overlay); any key/click/pad input returns to the title, matchEnd
       auto-returns after the win-screen beat. CpuDriver powers both sides
-- [ ] **Control remapping in Settings**: per-player key AND gamepad-button
-      mapping UI (press-to-bind rows), persisted to localStorage via
-      `src/settings.ts`; defaults = current bindings; reset row
+- [x] **Control remapping in Settings**: per-player key AND gamepad-button
+      mapping UI (press-to-bind rows, `ControlsScene` off Settings), persisted
+      to localStorage via `src/settings.ts`; defaults = old hardwired
+      bindings; duplicates swap; RESET BINDINGS row
 - [x] **Game-feel juice bundle** (pairs with the VFX work):
       hitstop (3–8 tick freeze on contact, deterministic in-engine, scaled by
       button strength — L 3 / M 5 / H 7 / specials 8), delayed red health
@@ -458,6 +459,23 @@ victory song: a `victorySong` attribute in the character JSON names a track in
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-03 · input+scenes · Sprint 16: control remapping** — bindings
+  moved into settings: `bindings: [PlayerBindings, PlayerBindings]` with
+  per-action keyboard keyCodes AND gamepad button indices (defaults = the old
+  hardwired layout; deep-sanitized against corrupt storage). `KeyboardSource`
+  now builds its key maps and pad lookups from settings at construction (each
+  fight picks up the latest bindings) and captures every bound key so arrows/
+  space stop scrolling the page; the left stick always drives movement,
+  unremappable. New `ControlsScene` (Settings → CONTROLS → REBIND ►): P1/P2
+  tabs, ten action rows × [KEYBOARD][GAMEPAD] press-to-bind cells (click →
+  "PRESS…" → next key / next FRESH pad button binds; ESC cancels),
+  same-device duplicates SWAP with the old binding so no action is ever
+  orphaned, RESET BINDINGS + BACK rows. 72 tests green, tsc clean. Verified
+  in-browser: rebound P1 LP→Q (persisted), MP→W swapped W/T with UP, P2
+  untouched; in a live fight Q jabbed and the old R did nothing; reset row
+  restored defaults. Gamepad-button binding exercised with the synthetic-pad
+  harness in the controller-verification pass. — Claude
 
 - **2026-07-03 · scenes+ai · Sprint 16: attract mode** — idle on the title for
   20s (keyboard/mouse/pad activity all reset the watchdog, pads polled since
