@@ -344,17 +344,22 @@ function updateFighter(
 
   switch (a.kind) {
     case 'attack': {
-      // early chord upgrade: a lone punch that becomes a 2-punch chord within
-      // the first few frames kara-cancels into the PPP/KKK special (nobody
-      // can hit two keys on the same 60hz tick)
-      if (!def.moves[a.moveId!].input && a.frame < 4) {
+      // early chord upgrade: a lone button that becomes a 2-button chord
+      // within the first few frames kara-cancels into the PPP/KKK special
+      // (nobody can hit two keys on the same 60hz tick). Single-button
+      // SPECIALS upgrade too — dp+2P lands one tick apart and the qcf-tail
+      // special would otherwise steal the input (Gene's Diffusion vs
+      // Hallucination) — but chord specials themselves never re-upgrade.
+      const cur = def.moves[a.moveId!];
+      const curIsChord = cur.input?.button === 'PPP' || cur.input?.button === 'KKK';
+      if (!curIsChord && a.frame < 4) {
         for (const [id, mv] of Object.entries(def.moves)) {
           if (!mv.input || (mv.input.button !== 'PPP' && mv.input.button !== 'KKK')) continue;
-          if (comboPress(f, mv.input.button === 'PPP' ? 'punch' : 'kick')) {
-            const up = resolveMove(mv, 'm');
-            f.action = { kind: 'attack', frame: 0, moveId: id, strength: 'm', hasHit: false, invuln: up.invuln ?? 0 };
-            break;
-          }
+          if (!comboPress(f, mv.input.button === 'PPP' ? 'punch' : 'kick')) continue;
+          if (mv.input.motion && !motionDone(f, mv.input.motion)) continue;
+          const up = resolveMove(mv, 'm');
+          f.action = { kind: 'attack', frame: 0, moveId: id, strength: 'm', hasHit: false, invuln: up.invuln ?? 0 };
+          break;
         }
       }
       const act = f.action;
@@ -362,6 +367,16 @@ function updateFighter(
       act.frame++;
       if (m.forwardVel && act.frame <= m.startup + m.active) {
         f.x += f.facing * m.forwardVel;
+      }
+      // teleports blink at the first active frame (Diffusion)
+      if (m.teleport && act.frame === m.startup) {
+        const o = s.fighters[slot === 0 ? 1 : 0];
+        if (m.teleport.mode === 'behind') {
+          f.x = o.x + (f.x <= o.x ? 90 : -90);
+        } else {
+          f.x = f.facing === 1 ? STAGE_MIN_X + 40 : STAGE_MAX_X - 40;
+        }
+        f.x = Math.min(STAGE_MAX_X, Math.max(STAGE_MIN_X, f.x));
       }
       // shoryuken leaps: rise while the attack stays out
       if (m.leap) {
@@ -412,6 +427,9 @@ function updateFighter(
             knockdown: p.knockdown ?? false,
             field: p.field ?? false,
             detonate: p.detonate,
+            rehit: p.rehit ?? 0,
+            hitCooldown: 0,
+            slowFactor: p.slowFactor ?? 0,
           });
         }
       }
@@ -643,6 +661,8 @@ function resolveAttacks(s: GameState, defs: Defs, inputs: [InputFrame, InputFram
           unblockable: true,
         }, inputs[defSlot]);
         if (m.grabRecoil) f.vx = -f.facing * m.grabRecoil; // 86'd bounce-away
+        // kudzu drain: the grab feeds the attacker (Symbiosis)
+        if (m.heal) f.health = Math.min(defs[f.charId].health, f.health + m.heal);
       }
       continue;
     }
@@ -663,14 +683,25 @@ function resolveAttacks(s: GameState, defs: Defs, inputs: [InputFrame, InputFram
   }
 }
 
-/** Armed and waiting (lobbed bomb in flight or fuse ticking) — no collisions. */
+/** Armed and waiting (lobbed bomb in flight or fuse ticking) — hits nobody,
+ *  but CAN still clash with enemy projectiles (interceptable bombs, and
+ *  Hallucination clones that pop real fireballs). */
 function isDormant(p: Projectile): boolean {
   return p.fuse > 0;
 }
 
+function projRect(p: Projectile): Rect {
+  return { l: p.x + p.box.x, t: p.y + p.box.y, r: p.x + p.box.x + p.box.w, b: p.y + p.box.y + p.box.h };
+}
+
 function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputFrame]): void {
+  const slowFields = s.projectiles.filter((q) => q.field && q.slowFactor > 0);
+  const slowBy = (p: Projectile): number => {
+    const zone = slowFields.find((q) => q.owner !== p.owner && overlaps(projRect(p), projRect(q)));
+    return zone ? zone.slowFactor : 1;
+  };
   for (const p of s.projectiles) {
-    p.x += p.vx;
+    p.x += p.vx * (p.field ? 1 : slowBy(p));
     // lobbed arc: fall, then stick to the floor and start the fuse
     if (p.gravity > 0) {
       p.vy += p.gravity;
@@ -683,8 +714,10 @@ function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputF
       }
     }
     if (p.fuse > 0 && p.gravity === 0) p.fuse--;
+    if (p.hitCooldown > 0) p.hitCooldown--;
     if (p.fuse === 0 && p.detonate) {
       const d = p.detonate;
+      p.vx = 0; // walking clones stop where they pop
       p.box = d.box;
       p.damage = d.damage;
       p.hitstun = d.hitstun;
@@ -700,12 +733,20 @@ function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputF
     if (p.ttl > 0) p.ttl--;
   }
 
-  // projectile vs projectile: clash and both die (smoke fields and armed
-  // bombs don't participate)
+  // slow fields also drag the opposing fighter's ground impulses (dash/knockback)
+  for (const zone of slowFields) {
+    const foe = s.fighters[zone.owner === 0 ? 1 : 0];
+    if (overlaps(projRect(zone), defenderHurtRect(foe, defs[foe.charId]))) {
+      foe.vx *= zone.slowFactor;
+    }
+  }
+
+  // projectile vs projectile: clash and both die (smoke/slow fields don't
+  // participate; dormant bombs and clones DO — they're interceptable)
   const dead = new Set<Projectile>();
   for (const p of s.projectiles) {
     for (const q of s.projectiles) {
-      if (p.field || q.field || isDormant(p) || isDormant(q)) continue;
+      if (p.field || q.field) continue;
       if (p.owner !== q.owner && !dead.has(p) && !dead.has(q)) {
         const pr = { l: p.x + p.box.x, t: p.y + p.box.y, r: p.x + p.box.x + p.box.w, b: p.y + p.box.y + p.box.h };
         const qr = { l: q.x + q.box.x, t: q.y + q.box.y, r: q.x + q.box.x + q.box.w, b: q.y + q.box.y + q.box.h };
@@ -724,6 +765,7 @@ function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputF
       continue;
     }
     if (p.field || isDormant(p)) continue; // smoke / armed bombs never hit
+    if (p.hitCooldown > 0) continue; // tick-damage cloud between hits
     const defSlot = p.owner === 0 ? 1 : 0;
     const d = s.fighters[defSlot];
     if (isInvulnerable(d)) continue;
@@ -750,7 +792,9 @@ function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputF
         knockdown: p.knockdown,
         chip: Math.floor(p.damage * 0.1),
       }, inputs[defSlot]);
-      dead.add(p);
+      // lingering clouds survive their hits and re-hit on a cooldown
+      if (p.rehit > 0) p.hitCooldown = p.rehit;
+      else dead.add(p);
     }
   }
 

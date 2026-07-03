@@ -20,16 +20,23 @@ const stage = (id: string, name: string): StageEntry => ({
 export const STAGES: StageEntry[] = [
   // the original MVP stage keeps its legacy file location
   { id: 'salton', name: 'SALTON SHORELINE', file: 'assets/backgrounds/salton-shoreline.jpg' },
+  stage('altar', 'ALTAR'),
   stage('bbac', 'BBAC'),
   stage('chiba', 'CHIBA'),
+  stage('chiba-roof', 'CHIBA ROOF'),
+  stage('dodecahedron', 'DODECAHEDRON'),
+  stage('dome', 'DOME'),
   stage('drive-in', 'DRIVE IN'),
   stage('estates', 'ESTATES'),
   stage('institute', 'INSTITUTE'),
   stage('mars', 'MARS'),
   stage('neptune', 'NEPTUNE'),
+  stage('painted-canyon', 'PAINTED CANYON'),
   stage('saturn', 'SATURN'),
+  stage('ski-inn', 'SKI INN'),
   stage('shipwreck', 'SHIPWRECK'),
   stage('the-range', 'THE RANGE'),
+  stage('van', 'VAN'),
 ];
 
 export function stageById(id: string): StageEntry | undefined {

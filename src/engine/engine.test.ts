@@ -777,3 +777,161 @@ describe('flo fatality: rm -rf /', () => {
     expect(s.fatality).toEqual({ owner: 0, id: 'rm-rf' });
   });
 });
+
+describe('marzipan: photosynthesizer kit (delayed traps, tick clouds, drain grab)', () => {
+  function freshMarz(): GameState {
+    const s = initialState('marzipan', 'yulia', characters);
+    s.phase = 'fight';
+    return s;
+  }
+
+  it('Overgrowth plants a dormant seed that erupts into a vine column and pops the opponent', () => {
+    const s = freshMarz();
+    // qcf + HP: the H seed lands at 360 in front — right on P2's spawn (660)
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ right: true }), inp()], characters);
+    step(s, [inp({ right: true, hp: true }), inp()], characters);
+    expect(s.fighters[0].action.moveId).toBe('overgrowth');
+
+    run(s, 16); // past startup: seed planted, fuse ticking
+    expect(s.projectiles[0].moveId).toBe('overgrowth');
+    run(s, 10); // fuse (30) not yet done
+    expect(s.fighters[1].health).toBe(characters.yulia.health); // dormant seed is harmless
+
+    run(s, 40); // fuse expires -> vine column burst
+    expect(s.fighters[1].health).toBe(characters.yulia.health - 85);
+    expect(['airHit', 'knockdown', 'getup']).toContain(s.fighters[1].action.kind);
+  });
+
+  it('Spore Bloom lingers and ticks damage more than once', () => {
+    const s = freshMarz();
+    closeRange(s);
+    // qcb + LP (no forward input, so the hcb grab cannot steal it)
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ left: true }), inp()], characters);
+    step(s, [inp({ left: true, lp: true }), inp()], characters);
+    expect(s.fighters[0].action.moveId).toBe('spore-bloom');
+
+    run(s, 130);
+    // at least two ticks of 18 landed and the cloud survived its hits
+    expect(s.fighters[1].health).toBeLessThanOrEqual(characters.yulia.health - 36);
+  });
+
+  it('Symbiosis grab drains the victim and heals marzipan', () => {
+    const s = freshMarz();
+    closeRange(s);
+    s.fighters[0].health = 500;
+    // hcb + HP: forward, down, back, punch
+    step(s, [inp({ right: true }), inp()], characters);
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ left: true }), inp()], characters);
+    step(s, [inp({ left: true, hp: true }), inp()], characters);
+    expect(s.fighters[0].action.moveId).toBe('symbiosis');
+
+    run(s, 15);
+    expect(s.fighters[1].health).toBe(characters.yulia.health - 140); // H variant
+    expect(s.fighters[0].health).toBe(560); // +60 kudzu drain
+  });
+
+  it('the heal never overfills max health', () => {
+    const s = freshMarz();
+    closeRange(s);
+    step(s, [inp({ right: true }), inp()], characters);
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ left: true }), inp()], characters);
+    step(s, [inp({ left: true, lp: true }), inp()], characters);
+    run(s, 15);
+    expect(s.fighters[0].health).toBe(characters.marzipan.health); // was already full
+  });
+});
+
+describe('gene: prompt injection kit (teleports, slow field, fake clone)', () => {
+  function freshGene(): GameState {
+    const s = initialState('gene', 'yulia', characters);
+    s.phase = 'fight';
+    return s;
+  }
+
+  /** P1 dragon punch motion: forward, down, forward (+ buttons on the last) */
+  function dpMotion(s: GameState, last: Partial<InputFrame>): void {
+    step(s, [inp({ right: true }), inp()], characters);
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ right: true, ...last }), inp()], characters);
+  }
+
+  it('Diffusion (dp+2P chord) blinks behind the opponent with i-frames', () => {
+    const s = freshGene();
+    dpMotion(s, { lp: true });
+    step(s, [inp({ right: true, lp: true, mp: true }), inp()], characters);
+    expect(s.fighters[0].action.moveId).toBe('diffusion-strike');
+    const before = s.fighters[0].x;
+    run(s, 16); // past startup: the blink happened
+    expect(s.fighters[0].x).toBeGreaterThan(s.fighters[1].x); // crossed to the far side
+    expect(s.fighters[0].x).not.toBe(before);
+  });
+
+  it('Diffusion escape (dp+2K) retreats to his own corner', () => {
+    const s = freshGene();
+    dpMotion(s, { lk: true });
+    step(s, [inp({ right: true, lk: true, mk: true }), inp()], characters);
+    expect(s.fighters[0].action.moveId).toBe('diffusion-escape');
+    run(s, 14);
+    expect(s.fighters[0].x).toBeLessThan(100); // back wall (faces right -> retreats left)
+  });
+
+  it('Rate Limit field slows enemy projectiles inside it', () => {
+    // gene (P2, faces left) drops the field; yulia-side P1 is vincent for a fireball
+    const s = initialState('vincent', 'gene', characters);
+    s.phase = 'fight';
+    // gene: qcb+P — he faces left, so back = right
+    step(s, [inp(), inp({ down: true })], characters);
+    step(s, [inp(), inp({ right: true })], characters);
+    step(s, [inp(), inp({ right: true, lp: true })], characters);
+    expect(s.fighters[1].action.moveId).toBe('rate-limit');
+    run(s, 16); // field out
+    const field = s.projectiles.find((p) => p.field);
+    expect(field?.slowFactor).toBe(0.35);
+
+    // vincent fires sigil bolt into the field
+    fireSpecial(s);
+    run(s, 16); // past sigil-bolt startup
+    const bolt = s.projectiles.find((p) => !p.field);
+    expect(bolt).toBeDefined();
+    const x0 = bolt!.x;
+    run(s, 10);
+    const insideSpeed = (bolt!.x - x0) / 10;
+    expect(Math.abs(insideSpeed)).toBeLessThan(Math.abs(bolt!.vx) * 0.6); // crawling
+  });
+
+  it('Hallucination clone walks harmlessly, then pops for damage', () => {
+    const s = freshGene();
+    s.fighters[1].x = 560; // stand where the clone pops (~500 + margin)
+    fireSpecial(s); // qcf+LP -> L clone, vx 1.5
+    expect(s.fighters[0].action.moveId).toBe('hallucination');
+    run(s, 20);
+    const clone = s.projectiles[0];
+    expect(clone.moveId).toBe('hallucination');
+    run(s, 20); // mid-walk: dormant, no contact damage even overlapping
+    expect(s.fighters[1].health).toBe(characters.yulia.health);
+    run(s, 60); // fuse (55) expires -> pop
+    expect(s.fighters[1].health).toBe(characters.yulia.health - 60);
+  });
+
+  it('a real projectile clashes the dormant clone out of existence', () => {
+    const s = initialState('gene', 'vincent', characters);
+    s.phase = 'fight';
+    fireSpecial(s); // gene qcf+LP: clone out
+    run(s, 16);
+    expect(s.projectiles).toHaveLength(1);
+    // vincent (faces left): qcf = down, left; fire sigil bolt at the clone
+    step(s, [inp(), inp({ down: true })], characters);
+    step(s, [inp(), inp({ down: true })], characters);
+    step(s, [inp(), inp({ left: true })], characters);
+    step(s, [inp(), inp({ left: true, lp: true })], characters);
+    run(s, 40);
+    // both died in the clash: clone never popped, bolt never reached gene
+    expect(s.projectiles).toHaveLength(0);
+    expect(s.fighters[0].health).toBe(characters.gene.health);
+  });
+});

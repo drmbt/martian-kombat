@@ -351,8 +351,37 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
 - [ ] Regenerate kirby's KO/defeated bust (`portraits/kirby-ko.png`) from the new
       canonical — still the old tea-era art (cosmetic; win-screen loser portrait).
 
+### Sprint 15 — Gene + Marzipan integration (marzi-char branch harvest)
+- [x] Harvested Gene + Marzipan from the stale `origin/marzi-char` draft branch
+      (2 commits off an old base; main was 10 ahead). No merge — cherry-picked
+      the branch-only assets and **hand-ported** the engine mechanics on top of
+      current main so nothing (round clock / winQuotes / leap / freeman / newer
+      pipeline) got reverted. Kept the **branch canonicals** (`gene.png`/
+      `marzipan.png`): their prompts are the refined "never green" chroma-safe
+      versions the sprites were generated from — main's older portraits may want
+      a `gen:canonical` re-run for perfect accent-color parity (cosmetic).
+- [x] Assets pulled (game-ready + raw, per reproducibility rule): packed sheets
+      `public/assets/sprites/{gene,marzipan}/` (+ 3 projectiles each), fatality
+      panels (`four-oh-four` ×4 / `compost` ×4), voice grunts (kiai+hurt), the two
+      character JSONs, raw canonicals + ~240 frame dumps + raw fatalities, and
+      `docs/MOVE_DURATIONS.md`. Portraits + KO busts + announcer VO already lived
+      on main (untouched).
+- [x] Engine additions (ported additively, sit beside main's `leap`/`MatchRules`):
+      `teleport` (Gene Diffusion blink-behind / retreat), grab `heal` (Marzipan
+      Symbiosis kudzu drain), projectile `rehit` tick-clouds (Spore Bloom),
+      `slowFactor` field that drags enemy projectiles + ground impulses (Rate
+      Limit), and the chord-upgrade fix (single-button specials upgrade too, dp+2P
+      vs qcf-tail). +9 engine tests.
+- [x] Wired: `index.ts` (both registered alongside freeman), `roster.ts` (both →
+      playable), `FightScene.ts` (6 PROJ_SIZE entries), `frames-manifest.mjs`
+      (both v2 pose dicts). Authored `winQuotes` for both (were missing — the last
+      parity gap). **Roster now 8/8 fully-built, all playable, all with fatalities.**
+- [x] 68 tests green (63 engine incl. the new Gene/Marzipan kits); typecheck +
+      prod build clean. In-browser: all 16 new assets serve 200, both selectable
+      and playable, no character-specific console errors.
+
 ### Icebox (post-MVP, do not start)
-Remaining roster (Gene, Marzipan) · new characters · single-player
+New characters · single-player
 arcade mode + CPU opponent · super meter/EX moves · stage interactables ·
 rollback netplay (engine determinism already paid for) · training mode · fatalities
 ("Kombat" earns it) · music generation · mobile/touch · per-character victory
@@ -364,6 +393,31 @@ song: a `victorySong` attribute in the character JSON names a track in
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-02 · assets+engine+stages · Gene + Marzipan (8/8 playable) + pixel-art
+  stage expansion + music/kirby assets** — bundles this session's fighter work with
+  parallel-session stage & audio work into one snapshot commit.
+  **Fighters (this session):** harvested Gene + Marzipan off the stale
+  `origin/marzi-char` draft rather than merging it (would have reverted main's
+  round-clock/winQuotes/leap/freeman/pipeline work). Cherry-picked branch-only
+  assets — packed sprite sheets + per-move projectiles, fatality panels
+  (`four-oh-four`/`compost`), voice grunts, the two character JSONs, raw canonicals
+  + frame dumps + `MOVE_DURATIONS.md` — and **hand-ported** the engine mechanics
+  they depend on onto current main: `teleport` (Diffusion), grab `heal` (Symbiosis),
+  projectile `rehit` clouds (Spore Bloom), `slowFactor` slow-field (Rate Limit),
+  + the chord-upgrade fix. Kept the branch canonicals (refined "never green"
+  chroma-safe prompts the sprites came from). Registered both in `index.ts`/
+  `roster.ts`/`FightScene.ts`/`frames-manifest.mjs`, authored `winQuotes` for each.
+  Roster now 8/8 fully-built and playable, all with fatalities. 68 tests green
+  (9 new), typecheck + build clean, 16 new assets 200 + both selectable in-browser.
+  **Stages (parallel session):** locked 16-bit pixel-art look (`gen-stage.mjs`
+  reworked, CLAUDE.md step 5 rewritten), existing stage backgrounds regenerated in
+  the new style + 8 new stages registered in `stages.ts` (ALTAR, CHIBA ROOF,
+  DODECAHEDRON, DOME, PAINTED CANYON, SKI INN, VAN, SALTON) with inspo folders;
+  superseded cel-shade art archived under `_old/`.
+  **Audio/misc (parallel session):** raw generated music tracks under
+  `assets/raw/music/`; kirby KO/defeated bust regenerated from the new canonical.
+  — Claude
 
 - **2026-07-02 · engine+scenes · settings page (volumes, round clock, match
   length)** — new `SettingsScene` off the main menu (`4 · SETTINGS`): music

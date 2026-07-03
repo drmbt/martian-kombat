@@ -76,7 +76,25 @@ The pipeline turns a photo of a real person into a game-ready sprite sheet:
    (`public/assets/portraits/<name>.png`) from the canonical, AND generates a
    beaten-and-bloodied *defeated* bust (`<name>-ko.png`, chroma-keyed) that the
    post-match win-quote screen shows for the loser. Both are idempotent/`--force`.
-5. **Stills** — GPT Image (`gpt-image-2`) for stage backgrounds, UI, portraits.
+5. **Stages** — `tools/gen-stage.mjs` (`npm run gen:stages`, `gemini-3-pro-image`).
+   Adding a stage is a three-touch job: (a) drop reference photos in
+   `assets/stage-inspo/<FOLDER>/` — the folder name, lowercased with spaces→dashes,
+   becomes the stage id; (b) add a scene line to the `SCENES` dict inside the
+   script; (c) register the stage in the `STAGES` array in `src/data/stages.ts` —
+   that array is the game's stage index (BootScene preloads from it, the
+   stage-select dialog lists it; the dialog grid auto-sizes to any count).
+   **Locked stage look (approved 2026-07-02): gritty 16-bit retro pixel-art**
+   anchored on `assets/stage-inspo/style-ref-salton.jpg`, which the script
+   passes as the FIRST reference image for every stage — don't drift back to
+   cel-shade, and keep the "redraw as pixel art" language for photo-heavy refs.
+   **Always 21:9**, packed via ffmpeg cover-crop to a 1680×720 jpg in
+   `public/assets/backgrounds/stages/<id>.jpg` (committed; raw gen in
+   `assets/raw/stages/`). **Floor contract:** the bottom quarter of every stage
+   is a continuous, textured, walkable ground plane running edge-to-edge and
+   touching the bottom of the frame — no blank bands, no props/people in the
+   fighter strip (the `STAGE_STYLE` prompt in the script enforces this; keep it
+   intact). Stages generate concurrently (`--concurrency N`, default 4).
+   GPT Image (`gpt-image-2`) remains the route for non-stage stills (UI art).
 6. **Audio** — ElevenLabs for announcer VO ("ROUND ONE… FIGHT!"), per-character
    grunts/taunts, and hit SFX.
 7. **Fatality panels** — `tools/gen-fatality.mjs` (`gemini-3-pro-image`, 16:9):
@@ -120,6 +138,7 @@ npm run test       # vitest — engine unit tests (determinism, hitboxes, frame 
 npm run gen:styletest              # style candidates + stage tests
 npm run gen:frames -- --char vincent   # pose keyframes (add --concurrency N)
 npm run gen:pack -- --char vincent     # key + pack -> sheet.png + meta.json
+npm run gen:stages -- --stage van      # 21:9 pixel-art stage (--force, --concurrency N)
 npm run gen:audio                      # announcer + grunts + sfx (--concurrency N)
 npm run gen:fatality -- --char vincent # 4 cutscene panels (--concurrency N)
 ```

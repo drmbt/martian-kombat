@@ -89,6 +89,12 @@ export interface ProjectileDef {
   /** visual field (smoke): never collides, never clashes, and does not count
    *  against the one-projectile-per-owner rule */
   field?: boolean;
+  /** ticks between hits for lingering tick-damage clouds; the projectile
+   *  survives its hits instead of dying on contact (Spore Bloom) */
+  rehit?: number;
+  /** field only: enemy projectiles inside the box move at vx*slowFactor and
+   *  enemy ground impulses decay faster (Rate Limit) */
+  slowFactor?: number;
 }
 
 /** Fighting-game convention motions: quarter-circles, back-forward,
@@ -151,12 +157,18 @@ export interface MoveDef {
   grab?: { range: number };
   /** backward hop applied to the ATTACKER when a grab connects (86'd) */
   grabRecoil?: number;
+  /** health restored to the ATTACKER when a grab connects, capped at max
+   *  (Symbiosis kudzu drain) */
+  heal?: number;
   /** reflects enemy projectiles during startup+active (Redirect) */
   reflect?: boolean;
   /** immune to projectiles during startup+active (lariats) */
   projImmune?: boolean;
   /** at first active frame, launch into the air with this velocity (vaults) */
   vault?: { vx: number; vy: number };
+  /** at first active frame, blink: 'behind' crosses to the far side of the
+   *  opponent, 'retreat' snaps back to own corner (Diffusion) */
+  teleport?: { mode: 'behind' | 'retreat' };
   /** shoryuken physics: rise with this velocity AT the first active frame while
    *  the attack stays out (hitbox travels with the fighter) */
   leap?: { vx: number; vy: number };
@@ -271,6 +283,12 @@ export interface Projectile {
   knockdown: boolean;
   field: boolean;
   detonate?: DetonationDef;
+  /** ticks between hits (0 = dies on first hit like a normal projectile) */
+  rehit: number;
+  /** ticks until this lingering projectile may hit again */
+  hitCooldown: number;
+  /** field slow strength; 0 = no slow */
+  slowFactor: number;
 }
 
 export type Phase = 'intro' | 'fight' | 'roundEnd' | 'finisher' | 'fatality' | 'matchEnd';
