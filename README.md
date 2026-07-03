@@ -32,8 +32,9 @@ move-set designs: [docs/CHARACTERS.md](docs/CHARACTERS.md).
 each with a six-button kit, named motion-input specials, and a fatality.
 19 pixel-art stages with their own music, full title/versus/victory music
 loop, announcer + SFX, VS screen and win-quote screen, CPU opponent, training
-mode, settings (volumes, round clock, match length), keyboard / gamepad /
-touch. Current focus: smoothness and playability — game feel, impact VFX,
+mode, settings (volumes, round clock, match length), full keyboard +
+gamepad support (fight, menus, and pause/settings navigation all wired to
+both). Current focus: smoothness and playability — game feel, impact VFX,
 attract mode, control remapping. Roadmap, task state, and changelog live in
 [SPRINTBOARD.md](SPRINTBOARD.md).
 

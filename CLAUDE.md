@@ -37,14 +37,16 @@ audio assets are AI-generated from real inspiration photos via scripted pipeline
 ```
 src/
   engine/        # deterministic fight core: state, physics, hitboxes, inputs, frame data
-  scenes/        # Phaser scenes: Boot, Menu, Select, Versus, Fight, Settings, VolumeOverlay
+  scenes/        # Phaser scenes: Boot, Menu, Select, Versus, Fight, Settings, Controls, VolumeOverlay
   ai/            # CpuDriver — CPU opponent (tick-hash decisions, motion-input queue)
   audio/         # music playback (context folders) + volume math
-  input/         # touch controls (on-screen pad)
+  input/         # keyboard.ts: fight input, keyboard+gamepad OR-merged, press-to-bind
+                 # via settings.ts; menu-nav.ts: shared gamepad poller for menu/UI
+                 # navigation (title, select, settings, pause, win screen) — no
+                 # on-screen touch controls (removed 2026-07-02, mouse covers menus)
   data/
     characters/  # one JSON per character (frame data, moves, asset refs)
     stages.ts    # stage registry — the game's stage index
-  ui/            # health bars, timers, combo counters
 tools/           # asset generation scripts (Node, hit the APIs in .env)
 assets/
   character-inspo/  # source photos of real people (committed, the ground truth)
