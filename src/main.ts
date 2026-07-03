@@ -5,6 +5,7 @@ import { MenuScene } from './scenes/MenuScene';
 import { SelectScene } from './scenes/SelectScene';
 import { VersusScene } from './scenes/VersusScene';
 import { FightScene } from './scenes/FightScene';
+import { SettingsScene } from './scenes/SettingsScene';
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,
@@ -13,7 +14,7 @@ const game = new Phaser.Game({
   height: STAGE_H,
   backgroundColor: '#0c0910',
   input: { gamepad: true },
-  scene: [BootScene, MenuScene, SelectScene, VersusScene, FightScene],
+  scene: [BootScene, MenuScene, SelectScene, VersusScene, FightScene, SettingsScene],
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,

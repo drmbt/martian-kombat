@@ -365,6 +365,19 @@ song: a `victorySong` attribute in the character JSON names a track in
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-02 · engine+scenes · settings page (volumes, round clock, match
+  length)** — new `SettingsScene` off the main menu (`4 · SETTINGS`): music
+  volume (live), SFX volume (audible preview), round time (OFF/30/60/99s),
+  match length (best of 1/3/5), reset-defaults row; W/S+A/D or mouse,
+  persisted to localStorage via `src/settings.ts`. Engine: match rules moved
+  into deterministic state — `initialState(..., rules?)` takes `MatchRules`
+  (`roundTicks` 0 = clock off, `winsNeeded`), replacing the WINS_NEEDED /
+  ROUND_TICKS constants at runtime; timer-off never time-ups, HUD shows ∞.
+  `play()` now scales every SFX by the setting. Defaults (user-picked): music
+  60% · SFX 80% · 60s rounds · best of 3. 4 new engine tests (59 green).
+  Verified in-browser: fresh profile shows the new defaults; settings persist;
+  OFF/best-of-5 flowed into a live fight (`rules {0,3}`, ∞ HUD). — Claude
+
 - **2026-07-02 · audio+scenes · full music loop: title/versus/victory tracks +
   end-driven flow** — installed the Suno utility batch: `menu/title.mp3`
   (seamless title loop), 10 `versus/` clips, `victory/victory.mp3`, bonus 4th

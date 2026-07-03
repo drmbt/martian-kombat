@@ -36,7 +36,7 @@ export interface PlayOpts {
 let manifest: MusicManifest | null = null;
 let current: { ctx: string; file: string; el: HTMLAudioElement } | null = null;
 let pending: { ctxs: string[]; opts: PlayOpts } | null = null;
-let musicVolume = 0.5;
+let musicVolume = 0.6; // pre-boot fallback; BootScene applies the saved setting
 let unlockArmed = false;
 
 /** Pure track selection: first context in the chain with tracks wins.

@@ -585,6 +585,45 @@ describe('round flow', () => {
   });
 });
 
+describe('match rules', () => {
+  it('defaults to the classic 99s / best-of-3 rules', () => {
+    const s = initialState(P1, P2, characters);
+    expect(s.rules).toEqual({ roundTicks: ROUND_TICKS, winsNeeded: 2 });
+    expect(s.timer).toBe(ROUND_TICKS);
+  });
+
+  it('custom round length counts down and carries into the next round', () => {
+    const s = initialState(P1, P2, characters, { roundTicks: 5 });
+    s.phase = 'fight';
+    s.fighters[1].health = 400;
+    run(s, 10);
+    expect(s.phase).toBe('roundEnd');
+    expect(s.roundWinner).toBe(0); // healthier fighter takes the time-up
+    run(s, 200); // roundEnd -> next round
+    expect(s.roundNumber).toBe(2);
+    expect(s.timer).toBe(5);
+  });
+
+  it('roundTicks 0 disables the clock: no countdown, no time-up', () => {
+    const s = initialState(P1, P2, characters, { roundTicks: 0 });
+    s.phase = 'fight';
+    run(s, 300);
+    expect(s.timer).toBe(0);
+    expect(s.phase).toBe('fight'); // still going — only a KO can end it
+  });
+
+  it('winsNeeded 1 ends the match after a single KO', () => {
+    const s = initialState(P1, P2, characters, { winsNeeded: 1 });
+    s.phase = 'fight';
+    closeRange(s);
+    s.fighters[1].health = 10;
+    step(s, [inp({ lp: true }), inp()], characters);
+    run(s, 620); // finisher window + collapse roundEnd + margin
+    expect(s.phase).toBe('matchEnd');
+    expect(s.wins[0]).toBe(1);
+  });
+});
+
 describe('movement', () => {
   it('walking forward moves toward the opponent', () => {
     const s = fresh();

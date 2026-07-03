@@ -7,7 +7,6 @@ import {
   FATALITY_TICKS,
   FLOOR_Y,
   InputFrame,
-  ROUND_TICKS,
   GameState,
   INTRO_TICKS,
   STAGE_W,
@@ -24,10 +23,14 @@ import { KeyboardSource } from '../input/keyboard';
 import { CpuDriver } from '../ai/bot';
 import { play } from './BootScene';
 import { nextTrack, playMusic } from '../audio/music';
+import { getSettings } from '../settings';
 
 // Cells are looked up BY NAME from each sheet's meta.json (written by
 // tools/pack-sheet.mjs), so v2 six-button sheets and legacy 23-cell sheets
 // coexist. Legacy sheets fall back: new buttons borrow the nearest old art.
+/** Round ended by the clock (never true when the round clock is off). */
+const timedOut = (s: GameState): boolean => s.rules.roundTicks > 0 && s.timer <= 0;
+
 const CELL_W = 288;
 const CELL_H = 384;
 const PHASE_NAME = ['startup', 'active', 'recovery'] as const;
@@ -121,7 +124,11 @@ export class FightScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.state = initialState(this.chars[0], this.chars[1], characters);
+    const cfg = getSettings();
+    this.state = initialState(this.chars[0], this.chars[1], characters, {
+      roundTicks: cfg.roundSeconds * 60,
+      winsNeeded: cfg.winsNeeded,
+    });
     this.inputs = new KeyboardSource(this);
     this.fighterSprites = [null, null];
     this.projSprites = [];
@@ -313,7 +320,7 @@ export class FightScene extends Phaser.Scene {
       play(this, 'ann-fight', 1);
     }
     if (prev.phase === 'fight' && s.phase === 'roundEnd') {
-      if (s.timer <= 0) play(this, 'ann-time-up');
+      if (s.rules.roundTicks > 0 && s.timer <= 0) play(this, 'ann-time-up');
       else if (s.roundWinner === null) play(this, 'ann-double-ko');
       else {
         play(this, 'ann-ko', 1);
@@ -436,7 +443,7 @@ export class FightScene extends Phaser.Scene {
   /** Sandbox rules: frozen clock, refilling health, rounds never end. */
   private trainingUpkeep(): void {
     const s = this.state;
-    s.timer = ROUND_TICKS;
+    s.timer = s.rules.roundTicks;
     for (const slot of [0, 1] as const) {
       const f = s.fighters[slot];
       const full = characters[f.charId].health;
@@ -805,7 +812,7 @@ export class FightScene extends Phaser.Scene {
       }
     }
 
-    this.timerText.setText(String(Math.max(0, Math.ceil(s.timer / 60))));
+    this.timerText.setText(s.rules.roundTicks === 0 ? '∞' : String(Math.max(0, Math.ceil(s.timer / 60))));
     this.msgText.setText(this.message());
   }
 
@@ -815,8 +822,8 @@ export class FightScene extends Phaser.Scene {
       case 'intro':
         return s.phaseFrame < INTRO_TICKS * 0.6 ? `ROUND ${s.roundNumber}` : 'FIGHT!';
       case 'roundEnd':
-        if (s.roundWinner === null) return s.timer <= 0 ? 'TIME UP' : 'DOUBLE K.O.';
-        return s.timer <= 0 ? 'TIME UP' : 'K.O.';
+        if (s.roundWinner === null) return timedOut(s) ? 'TIME UP' : 'DOUBLE K.O.';
+        return timedOut(s) ? 'TIME UP' : 'K.O.';
       case 'finisher':
         return 'FINISH THEM!';
       case 'matchEnd': {

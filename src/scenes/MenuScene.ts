@@ -32,13 +32,18 @@ export class MenuScene extends Phaser.Scene {
     };
 
     // clickable menu buttons (mouse) — also 1/2/3 hotkeys + ENTER
+    const toSettings = () => {
+      play(this, 's-blip');
+      this.scene.start('Settings');
+    };
     const opts: { label: string; act: () => void }[] = [
       { label: '1 · VS CPU', act: () => go(true) },
       { label: '2 · TWO PLAYERS', act: () => go(false) },
       { label: '3 · TRAINING', act: () => go(false, true) },
+      { label: '4 · SETTINGS', act: toSettings },
     ];
     opts.forEach((o, i) => {
-      const y = 370 + i * 56;
+      const y = 352 + i * 52;
       const bg = this.add
         .rectangle(STAGE_W / 2, y, 340, 46, 0x241b2e, 0.85)
         .setStrokeStyle(2, 0x7a6a86)
@@ -57,6 +62,7 @@ export class MenuScene extends Phaser.Scene {
     this.input.keyboard!.on('keydown-ONE', () => go(true));
     this.input.keyboard!.on('keydown-TWO', () => go(false));
     this.input.keyboard!.on('keydown-THREE', () => go(false, true));
+    this.input.keyboard!.on('keydown-FOUR', toSettings);
     this.input.keyboard!.on('keydown-ENTER', () => go(false));
   }
 }

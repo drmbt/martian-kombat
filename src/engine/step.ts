@@ -8,6 +8,7 @@ import {
   FighterState,
   GameState,
   InputFrame,
+  MatchRules,
   Motion,
   MoveDef,
   Projectile,
@@ -52,13 +53,23 @@ function initFighter(charId: string, def: CharacterDef, slot: 0 | 1): FighterSta
   };
 }
 
-export function initialState(charA: string, charB: string, defs: Defs): GameState {
+export function initialState(
+  charA: string,
+  charB: string,
+  defs: Defs,
+  rules?: Partial<MatchRules>,
+): GameState {
+  const r: MatchRules = {
+    roundTicks: rules?.roundTicks ?? ROUND_TICKS,
+    winsNeeded: rules?.winsNeeded ?? WINS_NEEDED,
+  };
   return {
     tick: 0,
     phase: 'intro',
     phaseFrame: 0,
     roundNumber: 1,
-    timer: ROUND_TICKS,
+    rules: r,
+    timer: r.roundTicks,
     fighters: [initFighter(charA, defs[charA], 0), initFighter(charB, defs[charB], 1)],
     projectiles: [],
     wins: [0, 0],
@@ -71,7 +82,7 @@ function resetRound(s: GameState, defs: Defs): void {
   const [a, b] = s.fighters;
   s.fighters = [initFighter(a.charId, defs[a.charId], 0), initFighter(b.charId, defs[b.charId], 1)];
   s.projectiles = [];
-  s.timer = ROUND_TICKS;
+  s.timer = s.rules.roundTicks;
   s.roundNumber++;
   s.roundWinner = null;
   s.phase = 'intro';
@@ -754,7 +765,7 @@ function endRound(s: GameState, winner: 0 | 1 | null, defs: Defs): void {
 
   // match-deciding KO by a fighter with a fatality: open the finisher window
   // instead of the normal KO — the loser stands dazed, awaiting their fate
-  if (winner !== null && s.wins[winner] >= WINS_NEEDED) {
+  if (winner !== null && s.wins[winner] >= s.rules.winsNeeded) {
     const loser = winner === 0 ? 1 : 0;
     const winnerDef = defs[s.fighters[winner].charId];
     if (winnerDef.fatality && s.fighters[loser].health <= 0) {
@@ -828,7 +839,7 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
       passivePhysics(s.fighters[slot], defs[s.fighters[slot].charId]);
     }
     if (s.phaseFrame >= ROUND_END_TICKS) {
-      if (s.roundWinner !== null && s.wins[s.roundWinner] >= WINS_NEEDED) {
+      if (s.roundWinner !== null && s.wins[s.roundWinner] >= s.rules.winsNeeded) {
         s.phase = 'matchEnd';
         s.phaseFrame = 0;
       } else {
@@ -938,14 +949,14 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
     f.x = Math.min(STAGE_MAX_X, Math.max(STAGE_MIN_X, f.x));
   }
 
-  s.timer--;
+  if (s.rules.roundTicks > 0) s.timer--;
 
-  // KO / time-up
+  // KO / time-up (no time-up when the round clock is off)
   const ko1 = f1.health <= 0;
   const ko2 = f2.health <= 0;
   if (ko1 || ko2) {
     endRound(s, ko1 && ko2 ? null : ko1 ? 1 : 0, defs);
-  } else if (s.timer <= 0) {
+  } else if (s.rules.roundTicks > 0 && s.timer <= 0) {
     endRound(s, f1.health > f2.health ? 0 : f2.health > f1.health ? 1 : null, defs);
   }
 

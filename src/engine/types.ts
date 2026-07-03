@@ -275,12 +275,21 @@ export interface Projectile {
 
 export type Phase = 'intro' | 'fight' | 'roundEnd' | 'finisher' | 'fatality' | 'matchEnd';
 
+/** Match rules, fixed at initialState — part of state so replays stay deterministic. */
+export interface MatchRules {
+  /** ticks per round; 0 = no round clock */
+  roundTicks: number;
+  /** rounds needed to take the match */
+  winsNeeded: number;
+}
+
 export interface GameState {
   tick: number;
   phase: Phase;
   phaseFrame: number;
   roundNumber: number;
-  /** remaining ticks on the round clock */
+  rules: MatchRules;
+  /** remaining ticks on the round clock (stays 0 when the clock is off) */
   timer: number;
   fighters: [FighterState, FighterState];
   projectiles: Projectile[];
