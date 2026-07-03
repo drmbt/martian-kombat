@@ -390,7 +390,10 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
 ### Sprint 16 — Smoothness & playability (planned 2026-07-04)
 Goal: the game we have, but it *feels* great — juice, VFX, attract mode, controls.
 - [ ] **Controller playtest** (user + real gamepad) — keyboard-in-browser isn't
-      fun; validate the pad path end-to-end, fix top feel complaints
+      fun; fix top feel complaints. *The code path is pre-verified end-to-end
+      with a synthetic pad (see 2026-07-03 changelog): registration, dpad +
+      stick movement, all six buttons, analog-trigger threshold, dpad motion
+      specials, press-to-bind rebinding — what's owed is the human feel pass*
 - [x] **Impact VFX system**: composited hit-overlay sprites separate from the
       fighter sheets — hit sparks on every connecting normal, bigger
       explosions/smoke/shockwaves on specials that land (e.g. Yulia's Volga
@@ -459,6 +462,28 @@ victory song: a `victorySong` attribute in the character JSON names a track in
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-03 · verify+assets · Sprint 16: gamepad path verified end-to-end +
+  juice/VFX demo recorded** — synthetic standard-mapping pad injected into the
+  preview browser (`navigator.getGamepads` monkeypatch; GOTCHA: Phaser's
+  `Gamepad.update` drops pads whose `timestamp` predates the wrapper's
+  `_created` — make the fake pad's timestamp a live `performance.now()`
+  getter, and do NOT hand-dispatch `gamepadconnected` events without a
+  `.gamepad` payload or the plugin queue crashes; `refreshPads()` polls every
+  update anyway). Verified through the real fight loop: pad registration,
+  dpad-right walks / left-stick walks back, X→LP Y→MP RB→HP A→LK B→MK,
+  RT analog fires HK at 0.6 and stays idle at 0.2 (0.4 threshold), dpad
+  QCF+X produced a live Sigil Bolt (motion buffer through the pad), and
+  ControlsScene pad press-to-bind bound LB→LP then reset. Bindings and match
+  settings restored to defaults afterward — **ready for the user's real
+  controller playtest**. Recorded `juice-vfx-demo.mp4` (repo root, 31s,
+  30fps): scripted Yulia vs zoner-CPU Vincent on CHIBA — jab/heavy sparks
+  with hitstop, blocked sigil bolts, TWO Volga Piledrivers with the ground
+  smoke cloud, ghost bars draining both ways, KO slow-mo into FINISH THEM!,
+  and a scripted Heart Breaker fatality (all four panels) into the win
+  screen. Captured via deterministic frame-dump (pump `loop.step`, canvas
+  JPEG per 2 renders → local HTTP receiver → ffmpeg 30fps), immune to
+  preview-tab rAF throttling. 72 tests green; prod build clean. — Claude
 
 - **2026-07-03 · input+scenes · Sprint 16: control remapping** — bindings
   moved into settings: `bindings: [PlayerBindings, PlayerBindings]` with
@@ -860,16 +885,22 @@ victory song: a `victorySong` attribute in the character JSON names a track in
 
 *(overwrite this section each handoff — what's mid-flight, gotchas, next action)*
 
-**State (2026-07-03):** Content-complete — 8/8 fighters built and playable with
-fatalities, 19 stages, full music loop (title/versus/stage/victory), settings
-page, CPU + training modes, VS screen, win-quote screen. Keyboard playtest done;
-things mostly work. Working tree has an uncommitted parallel-session change
-(quick-volume overlay + mouse-first settings — see 2026-07-03 changelog entry).
-**Next action: Sprint 16** (see roadmap) — controller playtest, impact-VFX
-overlay system, attract mode (idle menu → CPU-vs-CPU demo), per-player control
-remapping in Settings, juice bundle (hitstop / delayed red health drain / KO
-slow-mo). Approved near-term roadmap after that: combo chains/cancels, blocking
-feel, throws+teching, dizzy, damage scaling, CPU difficulty levels, round
+**State (2026-07-03, post-Sprint-16 build-out):** 8/8 fighters playable with
+fatalities, 20 stages, full music loop, settings + controls pages, CPU +
+training + attract modes, VS screen, win-quote screen. **Sprint 16 code items
+all landed** (four commits: juice bundle → impact VFX → attract mode →
+control remapping, each verified in-browser; see changelog): hitstop is
+engine state, ghost bars + KO slow-mo renderer-side; `gen-vfx.mjs` pipeline +
+overlay sparks/per-move VFX; idle title → CPU-vs-CPU demo; per-player
+keyboard+pad rebinding UI. `juice-vfx-demo.mp4` (repo root) shows the juice.
+**The one open Sprint 16 box is the USER's controller playtest** — the pad
+code path is pre-verified end-to-end with a synthetic pad, bindings are at
+defaults, plug in a pad and play; capture feel complaints as new items.
+NOTE: a parallel session works this repo simultaneously (MIMOS stage landed
+mid-sprint; new inspo photos for possible new fighters lyosha/ygor are in the
+working tree) — commit with explicit paths only. **Next after the playtest:**
+approved near-term roadmap — combo chains/cancels, blocking feel,
+throws+teching, dizzy, damage scaling, CPU difficulty levels, round
 intros/victory poses, CRT toggle. Long-term RFEs: character designer dialog,
 online multiplayer, arcade story mode, Veo motion smoothing. docs/MOVES.md is
 the living move spec (checkboxes = implementation state); edit it and re-run
