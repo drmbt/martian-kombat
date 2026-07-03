@@ -19,6 +19,7 @@ import {
   worldBox,
 } from '../engine';
 import { characters } from '../data/characters';
+import { stageById } from '../data/stages';
 import { KeyboardSource } from '../input/keyboard';
 import { CpuDriver } from '../ai/bot';
 import { play } from './BootScene';
@@ -33,6 +34,8 @@ const timedOut = (s: GameState): boolean => s.rules.roundTicks > 0 && s.timer <=
 
 const CELL_W = 288;
 const CELL_H = 384;
+const SHADOW_W = 96;
+const SHADOW_H = 36;
 const PHASE_NAME = ['startup', 'active', 'recovery'] as const;
 // per-special projectile draw size (square px); default 72
 const PROJ_SIZE: Record<string, number> = {
@@ -55,6 +58,7 @@ const LEGACY_BUTTON: Record<string, string> = {
 
 const BAR_W = 320;
 const BAR_X1 = 100;
+const DEFAULT_LAYER_FACTORS = { sky: 0.15, back: 0.4, stage: 1.0 } as const;
 
 interface Spark {
   x: number;
@@ -81,6 +85,57 @@ interface TickSnapshot {
   projectiles: number;
 }
 
+interface BgLayer {
+  img: Phaser.GameObjects.Image;
+  overhang: number;
+  factor: number;
+}
+
+interface PerfDrawBuckets {
+  draw: number;
+  vfx: number;
+  world: number;
+  fighters: number;
+  projectiles: number;
+  sparks: number;
+  debug: number;
+  hud: number;
+  cutscene: number;
+}
+
+interface PerfFrameSample extends PerfDrawBuckets {
+  frame: number;
+  sim: number;
+  tick: number;
+  present: number;
+  ticks: number;
+}
+
+const blankDrawPerf = (): PerfDrawBuckets => ({
+  draw: 0,
+  vfx: 0,
+  world: 0,
+  fighters: 0,
+  projectiles: 0,
+  sparks: 0,
+  debug: 0,
+  hud: 0,
+  cutscene: 0,
+});
+
+const mixColor = (a: number, b: number, t: number): number => {
+  const ar = (a >> 16) & 0xff;
+  const ag = (a >> 8) & 0xff;
+  const ab = a & 0xff;
+  const br = (b >> 16) & 0xff;
+  const bg = (b >> 8) & 0xff;
+  const bb = b & 0xff;
+  const r = Math.round(ar + (br - ar) * t);
+  const g = Math.round(ag + (bg - ag) * t);
+  const blue = Math.round(ab + (bb - ab) * t);
+  return (r << 16) | (g << 8) | blue;
+};
+
 export class FightScene extends Phaser.Scene {
   private chars: [string, string] = ['vincent', 'yulia'];
   private state!: GameState;
@@ -88,6 +143,9 @@ export class FightScene extends Phaser.Scene {
   private gfxUnder!: Phaser.GameObjects.Graphics;
   private gfxHud!: Phaser.GameObjects.Graphics;
   private fighterSprites: (Phaser.GameObjects.Sprite | null)[] = [null, null];
+  private hitFlashSprites: (Phaser.GameObjects.Sprite | null)[] = [null, null];
+  private fighterShadows: (Phaser.GameObjects.Image | null)[] = [null, null];
+  private hudPortraitShadows: Phaser.GameObjects.Image[] = [];
   private projSprites: Phaser.GameObjects.Image[] = [];
   private msgText!: Phaser.GameObjects.Text;
   private timerText!: Phaser.GameObjects.Text;
@@ -95,10 +153,12 @@ export class FightScene extends Phaser.Scene {
   private hasBg = false;
   private stageId = 'salton';
   private bg: Phaser.GameObjects.Image | null = null;
+  private bgLayers: BgLayer[] = [];
   /** px of background hidden past each screen edge — the parallax travel */
   private bgOverhang = 0;
   private accumulator = 0;
   private debugBoxes = false;
+  private stageGuide = false;
   private sparks: Spark[] = [];
   private vfx: VfxSprite[] = [];
   private comboHits = 0;
@@ -120,11 +180,16 @@ export class FightScene extends Phaser.Scene {
   private moveLogText!: Phaser.GameObjects.Text;
   private inputHist: [string[], string[]] = [[], []];
   private inputHistTexts: Phaser.GameObjects.Text[] = [];
+  private stageGuideTexts: Phaser.GameObjects.Text[] = [];
   private prevInputs: [InputFrame, InputFrame] = [{ ...EMPTY_INPUT }, { ...EMPTY_INPUT }];
   private lastDamageTick: [number, number] = [0, 0];
   /** SF2 ghost bar: trails real health, holds a beat, then drains in red */
   private ghostHealth: [number, number] = [0, 0];
   private ghostHoldUntil: [number, number] = [0, 0];
+  private perfOn = false;
+  private perfText!: Phaser.GameObjects.Text;
+  private perfSamples: PerfFrameSample[] = [];
+  private perfDraw = blankDrawPerf();
 
   constructor() {
     super('Fight');
@@ -142,6 +207,7 @@ export class FightScene extends Phaser.Scene {
     this.moveLogOn = this.training; // sandbox shows the move log by default
     this.moveLog = [];
     this.lastDamageTick = [0, 0];
+    this.stageGuide = false;
     // scene instances are reused across matches — reset transient UI state so a
     // match entered from a *paused* one doesn't start frozen
     this.paused = false;
@@ -155,6 +221,9 @@ export class FightScene extends Phaser.Scene {
     });
     this.inputs = new KeyboardSource(this);
     this.fighterSprites = [null, null];
+    this.hitFlashSprites = [null, null];
+    this.fighterShadows = [null, null];
+    this.hudPortraitShadows = [];
     this.projSprites = [];
     this.winScreen = null; // rebuilt lazily on matchEnd (scene.restart destroys it)
     this.sparks = [];
@@ -162,6 +231,7 @@ export class FightScene extends Phaser.Scene {
     this.accumulator = 0;
     this.comboHits = 0;
     this.comboTicks = 0;
+    this.perfOn = false;
     this.ghostHealth = [characters[this.chars[0]].health, characters[this.chars[1]].health];
     this.ghostHoldUntil = [0, 0];
 
@@ -175,8 +245,32 @@ export class FightScene extends Phaser.Scene {
       : this.textures.exists('bg-salton') ? 'bg-salton' : null;
     this.hasBg = bgKey !== null;
     this.bg = null;
+    this.bgLayers = [];
     this.bgOverhang = 0;
-    if (bgKey) {
+    const stageDef = stageById(this.stageId);
+    const layerDefs = stageDef?.layers;
+    if (layerDefs) {
+      const ordered = [
+        ['sky', layerDefs.sky],
+        ['back', layerDefs.back],
+        ['stage', layerDefs.stage],
+      ] as const;
+      for (const [name, layer] of ordered) {
+        if (!layer) continue;
+        const key = `bg-stage-${this.stageId}-${name}`;
+        if (!this.textures.exists(key)) continue;
+        const src = this.textures.get(key).getSourceImage();
+        const bgW = Math.max(STAGE_W, (STAGE_H * src.width) / src.height);
+        const img = this.add.image(STAGE_W / 2, STAGE_H / 2, key).setDisplaySize(bgW, STAGE_H).setDepth(0);
+        this.bgLayers.push({
+          img,
+          overhang: (bgW - STAGE_W) / 2,
+          factor: layer.factor ?? DEFAULT_LAYER_FACTORS[name],
+        });
+      }
+      this.hasBg = this.bgLayers.length > 0;
+    }
+    if (bgKey && this.bgLayers.length === 0) {
       const src = this.textures.get(bgKey).getSourceImage();
       const bgW = Math.max(STAGE_W, (STAGE_H * src.width) / src.height);
       this.bg = this.add.image(STAGE_W / 2, STAGE_H / 2, bgKey).setDisplaySize(bgW, STAGE_H).setDepth(0);
@@ -190,11 +284,28 @@ export class FightScene extends Phaser.Scene {
       const meta = this.cache.json.get(`meta-${id}`) as { frames?: string[] } | undefined;
       this.cellMaps[slot] = new Map((meta?.frames ?? []).map((n, i) => [n, i]));
       if (this.textures.exists(`sheet-${id}`)) {
+        this.fighterShadows[slot] = this.add.image(0, 0, '__DEFAULT').setOrigin(0.5).setDepth(1.5).setVisible(false);
         this.fighterSprites[slot] = this.add.sprite(0, 0, `sheet-${id}`, 0).setOrigin(0.5, 0.95).setDepth(2);
+        this.hitFlashSprites[slot] = this.add
+          .sprite(0, 0, `sheet-${id}`, 0)
+          .setOrigin(0.5, 0.95)
+          .setDepth(3)
+          .setTintFill(0xfff0ea)
+          .setAlpha(0.45)
+          .setVisible(false);
       }
       // HUD portrait
       if (this.textures.exists(`portrait-${id}`)) {
         const px = slot === 0 ? 68 : STAGE_W - 68;
+        this.hudPortraitShadows.push(
+          this.add
+            .image(px + (slot === 0 ? 2 : -2), 48, `portrait-${id}`)
+            .setDisplaySize(48, 48)
+            .setDepth(5.5)
+            .setFlipX(slot === 1)
+            .setTintFill(0x000000)
+            .setAlpha(0.38),
+        );
         this.add.image(px, 46, `portrait-${id}`).setDisplaySize(48, 48).setDepth(6).setFlipX(slot === 1);
         this.gfxHud; // portraits framed in drawHud
       }
@@ -224,7 +335,7 @@ export class FightScene extends Phaser.Scene {
       .setOrigin(1, 0)
       .setDepth(6);
     this.add
-      .text(STAGE_W / 2, STAGE_H - 14, 'P1: WASD + RTY punches FGH kicks   P2: ARROWS + UIO punches JKL kicks   ESC menu · F2 move log', {
+      .text(STAGE_W / 2, STAGE_H - 14, 'P1: WASD + RTY punches FGH kicks   P2: ARROWS + UIO punches JKL kicks   ESC menu · F2 moves · F3 stage · ` perf', {
         ...font, fontSize: '12px', color: '#e8dcc8', stroke: '#000', strokeThickness: 3,
       })
       .setOrigin(0.5)
@@ -249,18 +360,58 @@ export class FightScene extends Phaser.Scene {
         .setOrigin(1, 0)
         .setDepth(6),
     );
+    this.stageGuideTexts = [
+      this.add.text(10, (260 / 720) * STAGE_H - 16, 'horizon y=260', {
+        fontFamily: 'monospace', fontSize: '11px', color: '#ffffff', stroke: '#000', strokeThickness: 3,
+      }),
+      this.add.text(10, (500 / 720) * STAGE_H - 16, 'floor starts y=500', {
+        fontFamily: 'monospace', fontSize: '11px', color: '#ffffff', stroke: '#000', strokeThickness: 3,
+      }),
+      this.add.text(10, (613 / 720) * STAGE_H - 18, 'FLOOR_Y / feet y=613', {
+        fontFamily: 'monospace', fontSize: '11px', color: '#ffffff', stroke: '#000', strokeThickness: 3,
+      }),
+      this.add.text(10, (700 / 720) * STAGE_H - 18, 'clear fighter strip y=560-700', {
+        fontFamily: 'monospace', fontSize: '11px', color: '#ffffff', stroke: '#000', strokeThickness: 3,
+      }),
+      this.add.text(STAGE_W - 236, 98, 'F3 STAGE GUIDE\nblue: horizon\nwhite: fighter feet\norange: floor plane', {
+        fontFamily: 'monospace', fontSize: '11px', color: '#d8e7ff', stroke: '#000', strokeThickness: 3, lineSpacing: 3,
+      }),
+    ].map((t) => t.setDepth(7).setVisible(false));
+    this.perfSamples = [];
+    this.perfDraw = blankDrawPerf();
+    this.perfText = this.add
+      .text(14, 14, '', {
+        fontFamily: 'monospace', fontSize: '12px', color: '#dfffe6',
+        backgroundColor: '#050806cc', padding: { x: 8, y: 6 },
+      })
+      .setDepth(50)
+      .setVisible(false);
 
     if (this.training) {
       this.add
-        .text(STAGE_W / 2, 84, 'TRAINING — dummy never fights back · health refills · ENTER to leave', {
+        .text(STAGE_W / 2, 84, 'TRAINING · ENTER to leave', {
           fontFamily: 'monospace', fontSize: '13px', color: '#ffd24a', stroke: '#000', strokeThickness: 3,
         })
         .setOrigin(0.5)
         .setDepth(6);
     }
 
+    this.input.keyboard!.on('keydown', (e: KeyboardEvent) => {
+      if (e.key !== '`') return;
+      this.perfOn = !this.perfOn;
+      this.perfText.setVisible(this.perfOn);
+    });
+
     if (this.demo) {
       // attract mode: a blinking banner, and ANY input returns to the title
+      const coin = this.add
+        .text(STAGE_W / 2, STAGE_H - 88, 'INSERT COIN', {
+          fontFamily: 'monospace', fontSize: '34px', fontStyle: 'bold', color: '#ffb347',
+          stroke: '#2a3a7a', strokeThickness: 8,
+        })
+        .setOrigin(0.5)
+        .setDepth(30);
+      this.time.addEvent({ delay: 600, loop: true, callback: () => coin.setVisible(!coin.visible) });
       const banner = this.add
         .text(STAGE_W / 2, STAGE_H - 44, 'DEMO — PRESS ANY KEY', {
           fontFamily: 'monospace', fontSize: '26px', fontStyle: 'bold', color: '#ffd24a',
@@ -269,7 +420,9 @@ export class FightScene extends Phaser.Scene {
         .setOrigin(0.5)
         .setDepth(30);
       this.tweens.add({ targets: banner, alpha: 0.15, duration: 550, yoyo: true, repeat: -1 });
-      this.input.keyboard!.on('keydown', () => this.toMainMenu());
+      this.input.keyboard!.on('keydown', (e: KeyboardEvent) => {
+        if (e.key !== '`') this.toMainMenu();
+      });
       this.input.on('pointerdown', () => this.toMainMenu());
       this.input.gamepad?.on('down', () => this.toMainMenu());
       return; // none of the human-match keybinds below apply to the demo
@@ -285,6 +438,7 @@ export class FightScene extends Phaser.Scene {
     });
     this.input.keyboard!.on('keydown-ESC', () => this.togglePause());
     this.input.keyboard!.on('keydown-F1', () => (this.debugBoxes = !this.debugBoxes));
+    this.input.keyboard!.on('keydown-F3', () => (this.stageGuide = !this.stageGuide));
     this.input.keyboard!.on('keydown-R', () => {
       if (this.state.phase === 'matchEnd') this.restartMatch();
     });
@@ -324,6 +478,10 @@ export class FightScene extends Phaser.Scene {
       this.accumulator = 0;
       return;
     }
+    const frameStart = performance.now();
+    let tickMs = 0;
+    let presentMs = 0;
+    let tickCount = 0;
     // fixed timestep: rendering fps may vary, simulation never does.
     // KO slow-motion: the round-ending hit plays out at ~1/3 speed (pure
     // presentation — ticks still advance identically, just spaced out)
@@ -334,6 +492,7 @@ export class FightScene extends Phaser.Scene {
       s.fighters.some((f) => f.health <= 0);
     this.accumulator += Math.min(deltaMs, 100) * (koSlow ? 0.35 : 1);
     while (this.accumulator >= TICK_MS) {
+      const tickStart = performance.now();
       const snap = this.snapshot();
       const p1 = this.botP1 ? this.botP1.poll(this.state) : this.inputs.poll(0);
       const p2 = this.bot ? this.bot.poll(this.state) : this.inputs.poll(1);
@@ -341,9 +500,21 @@ export class FightScene extends Phaser.Scene {
       if (this.training) this.trainingUpkeep();
       this.logInputs([p1, p2]);
       this.accumulator -= TICK_MS;
+      tickMs += performance.now() - tickStart;
+      const presentStart = performance.now();
       this.presentTick(snap);
+      presentMs += performance.now() - presentStart;
+      tickCount++;
     }
     this.draw();
+    this.recordPerf({
+      ...this.perfDraw,
+      frame: performance.now() - frameStart,
+      sim: tickMs + presentMs,
+      tick: tickMs,
+      present: presentMs,
+      ticks: tickCount,
+    });
   }
 
   private snapshot(): TickSnapshot {
@@ -634,7 +805,120 @@ export class FightScene extends Phaser.Scene {
     }
   }
 
+  private shadowKey(charId: string, frame: number): string {
+    return `shadow-${charId}-${frame}`;
+  }
+
+  private ensureShadowTexture(charId: string, frame: number): string | null {
+    const key = this.shadowKey(charId, frame);
+    if (this.textures.exists(key)) return key;
+
+    const sheet = this.textures.get(`sheet-${charId}`);
+    const src = sheet.getSourceImage() as HTMLImageElement | HTMLCanvasElement | undefined;
+    if (!src) return null;
+
+    const cols = Math.max(1, Math.floor(src.width / CELL_W));
+    const sx0 = (frame % cols) * CELL_W;
+    const sy0 = Math.floor(frame / cols) * CELL_H;
+
+    const srcCanvas = document.createElement('canvas');
+    srcCanvas.width = CELL_W;
+    srcCanvas.height = CELL_H;
+    const srcCtx = srcCanvas.getContext('2d', { willReadFrequently: true });
+    if (!srcCtx) return null;
+    srcCtx.drawImage(src, sx0, sy0, CELL_W, CELL_H, 0, 0, CELL_W, CELL_H);
+    const pixels = srcCtx.getImageData(0, 0, CELL_W, CELL_H).data;
+
+    const weights = new Float32Array(SHADOW_W);
+    for (let y = 0; y < CELL_H; y += 4) {
+      const heightFromFeet = CELL_H - y;
+      const yNorm = Phaser.Math.Clamp(heightFromFeet / CELL_H, 0.08, 1);
+      const footBias = 1 - yNorm;
+      for (let x = 0; x < CELL_W; x += 3) {
+        const alpha = pixels[(y * CELL_W + x) * 4 + 3];
+        if (alpha < 24) continue;
+        const nx = (x - CELL_W / 2) / (CELL_W / 2);
+        const spread = 0.72 + yNorm * 0.52;
+        const center = Math.round(((nx * spread + 1) / 2) * (SHADOW_W - 1));
+        const radius = 4 + Math.round(yNorm * 4.0 + footBias * 3.6);
+        const amount = (alpha / 255) * (0.5 + yNorm * 0.85 + footBias * 0.75);
+        for (let dx = -radius; dx <= radius; dx++) {
+          const ix = center + dx;
+          if (ix < 0 || ix >= SHADOW_W) continue;
+          const falloff = 1 - Math.abs(dx) / (radius + 1);
+          weights[ix] += amount * falloff * falloff;
+        }
+      }
+    }
+
+    let max = 0;
+    for (const w of weights) max = Math.max(max, w);
+    if (max <= 0) return null;
+
+    const out = document.createElement('canvas');
+    out.width = SHADOW_W;
+    out.height = SHADOW_H;
+    const ctx = out.getContext('2d');
+    if (!ctx) return null;
+    const img = ctx.createImageData(SHADOW_W, SHADOW_H);
+    const cy = SHADOW_H * 0.54;
+    for (let y = 0; y < SHADOW_H; y++) {
+      const dy = (y - cy) / (SHADOW_H * 0.52);
+      const rowSoft = Math.max(0, 1 - dy * dy);
+      for (let x = 0; x < SHADOW_W; x++) {
+        const col = weights[x] / max;
+        const soft =
+          col * 0.55 +
+          ((weights[Math.max(0, x - 2)] + weights[Math.min(SHADOW_W - 1, x + 2)]) / (max * 2)) * 0.28 +
+          ((weights[Math.max(0, x - 6)] + weights[Math.min(SHADOW_W - 1, x + 6)]) / (max * 2)) * 0.17;
+        const a = Math.round(245 * Math.min(1, soft) * rowSoft);
+        const i = (y * SHADOW_W + x) * 4;
+        img.data[i] = 0;
+        img.data[i + 1] = 0;
+        img.data[i + 2] = 0;
+        img.data[i + 3] = a;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    this.textures.addCanvas(key, out);
+    return key;
+  }
+
+  private drawFighterShadow(slot: 0 | 1, f: FighterState, def: typeof characters[string], frame: number): void {
+    const shadow = this.fighterShadows[slot];
+    if (!shadow) {
+      this.gfxUnder.fillStyle(0x000000, 0.35).fillEllipse(f.x, FLOOR_Y + 8, def.bodyBox.w * 1.6, 18);
+      return;
+    }
+    const key = this.ensureShadowTexture(f.charId, frame);
+    if (!key) {
+      shadow.setVisible(false);
+      this.gfxUnder.fillStyle(0x000000, 0.35).fillEllipse(f.x, FLOOR_Y + 8, def.bodyBox.w * 1.6, 18);
+      return;
+    }
+
+    const k = f.action.kind;
+    const air = f.y < FLOOR_Y || k === 'air' || k === 'airAttack' || k === 'airHit';
+    const dist = Math.max(0, FLOOR_Y - f.y);
+    const crouch = k === 'crouch' || f.action.guard === 'crouch' || (k === 'attack' && f.action.moveId?.startsWith('c'));
+    const down = k === 'knockdown' || k === 'getup' || (k === 'ko' && f.y >= FLOOR_Y);
+    const artW = (def.hurtStand.h * 1.32 * CELL_W) / CELL_H;
+    const width = artW * (down ? 1.68 : crouch ? 1.5 : 1.42) * (air ? Math.max(0.6, 1 - dist / 460) : 1);
+    const height = (down ? 42 : crouch ? 37 : 35) * (air ? Math.max(0.58, 1 - dist / 540) : 1);
+    const alpha = (down ? 0.58 : 0.68) * (air ? Math.max(0.24, 1 - dist / 280) : 1);
+    shadow
+      .setTexture(key)
+      .setVisible(alpha > 0.04)
+      .setPosition(f.x, FLOOR_Y + 10)
+      .setDisplaySize(width, height)
+      .setAlpha(alpha)
+      .setFlipX(f.facing === -1);
+  }
+
   private draw(): void {
+    const drawStart = performance.now();
+    let sectionStart = drawStart;
+    const perf = blankDrawPerf();
     const s = this.state;
     const gU = this.gfxUnder;
     gU.clear();
@@ -649,13 +933,19 @@ export class FightScene extends Phaser.Scene {
         return false;
       }
       const t = v.life / v.max;
-      v.img.setAlpha(Math.min(1, t * 1.6));
+      v.img.setAlpha(Math.min(1, t * 2.15));
       v.img.setDisplaySize(v.img.displayWidth + v.grow, v.img.displayHeight + v.grow);
       return true;
     });
+    perf.vfx = performance.now() - sectionStart;
+    sectionStart = performance.now();
 
     if (s.phase === 'fatality' && s.fatality) {
+      for (const sh of this.fighterShadows) sh?.setVisible(false);
       this.drawFatality();
+      perf.cutscene = performance.now() - sectionStart;
+      perf.draw = performance.now() - drawStart;
+      this.perfDraw = perf;
       return;
     }
     if (this.fatalityPanel) {
@@ -665,7 +955,11 @@ export class FightScene extends Phaser.Scene {
     // Post-match win-quote screen: after the K.O./victory beat lands, the winner
     // portrait taunts the beaten loser portrait with a quote (SFII win screen).
     if (s.phase === 'matchEnd' && s.roundWinner !== null && s.phaseFrame > 72) {
+      for (const sh of this.fighterShadows) sh?.setVisible(false);
       this.showWinScreen(s.roundWinner);
+      perf.cutscene = performance.now() - sectionStart;
+      perf.draw = performance.now() - drawStart;
+      this.perfDraw = perf;
       return;
     }
     if (this.winScreen) this.winScreen.setVisible(false);
@@ -676,30 +970,53 @@ export class FightScene extends Phaser.Scene {
       gU.lineStyle(2, 0x594566, 1).lineBetween(0, FLOOR_Y, STAGE_W, FLOOR_Y);
     }
 
-    // SF2-style parallax: the background slides opposite the fighters' midpoint
-    if (this.bg && this.bgOverhang > 0) {
+    // SF2-style parallax: backgrounds slide opposite the fighters' midpoint.
+    // Layered stages use smaller factors for farther art.
+    if (this.bgLayers.length > 0) {
+      const mid = (s.fighters[0].x + s.fighters[1].x) / 2;
+      const t = Phaser.Math.Clamp((mid - STAGE_W / 2) / (STAGE_W / 2), -1, 1);
+      for (const layer of this.bgLayers) {
+        layer.img.setX(STAGE_W / 2 - t * layer.overhang * layer.factor);
+      }
+    } else if (this.bg && this.bgOverhang > 0) {
       const mid = (s.fighters[0].x + s.fighters[1].x) / 2;
       const t = Phaser.Math.Clamp((mid - STAGE_W / 2) / (STAGE_W / 2), -1, 1);
       this.bg.setX(STAGE_W / 2 - t * this.bgOverhang);
     }
+    perf.world = performance.now() - sectionStart;
+    sectionStart = performance.now();
 
     for (const slot of [0, 1] as const) {
       const f = s.fighters[slot];
       const def = characters[f.charId];
-      gU.fillStyle(0x000000, 0.35).fillEllipse(f.x, FLOOR_Y + 8, def.bodyBox.w * 1.6, 18);
 
       const sprite = this.fighterSprites[slot];
       if (sprite) {
+        const flash = this.hitFlashSprites[slot];
         sprite.setVisible(true);
         const h = def.hurtStand.h * 1.32; // art has margin around the body
         sprite.setDisplaySize((h * CELL_W) / CELL_H, h);
         sprite.setPosition(f.x, f.y + 6);
         sprite.setFlipX(f.facing === -1);
         sprite.setRotation(0);
-        sprite.setFrame(this.actionToCell(slot, f));
+        const frame = this.actionToCell(slot, f);
+        this.drawFighterShadow(slot, f, def, frame);
+        sprite.setFrame(frame);
+        if (flash) {
+          flash
+            .setVisible(false)
+            .setDisplaySize(sprite.displayWidth, sprite.displayHeight)
+            .setPosition(sprite.x, sprite.y)
+            .setFlipX(sprite.flipX)
+            .setRotation(sprite.rotation)
+            .setFrame(frame);
+        }
         const k = f.action.kind;
         const mirrorTint = this.chars[0] === this.chars[1] && slot === 1 ? 0xffb0a0 : undefined;
-        if (k === 'hitstun' || (k === 'airHit' && f.action.frame < 6)) sprite.setTintFill(0xffffff);
+        if (k === 'hitstun' || (k === 'airHit' && f.action.frame < 6)) {
+          sprite.clearTint();
+          flash?.setVisible(true);
+        }
         else if (k === 'blockstun') sprite.setTint(0xaaaaff);
         else if (k === 'dazed') {
           sprite.setTint(0x776677);
@@ -708,9 +1025,13 @@ export class FightScene extends Phaser.Scene {
         else if (mirrorTint) sprite.setTint(mirrorTint);
         else sprite.clearTint();
       } else {
+        this.fighterShadows[slot]?.setVisible(false);
+        gU.fillStyle(0x000000, 0.35).fillEllipse(f.x, FLOOR_Y + 8, def.bodyBox.w * 1.6, 18);
         this.drawCapsule(slot);
       }
     }
+    perf.fighters = performance.now() - sectionStart;
+    sectionStart = performance.now();
 
     while (this.projSprites.length < s.projectiles.length) {
       this.projSprites.push(this.add.image(0, 0, '__DEFAULT').setDepth(2));
@@ -744,19 +1065,51 @@ export class FightScene extends Phaser.Scene {
         gU.fillStyle(0xffffff, 0.8).fillCircle(p.x, p.y, 7);
       }
     });
+    perf.projectiles = performance.now() - sectionStart;
+    sectionStart = performance.now();
 
     this.sparks = this.sparks.filter((sp) => --sp.life > 0);
     for (const sp of this.sparks) {
       this.gfxHud.fillStyle(sp.color, sp.life / 12).fillCircle(sp.x, sp.y, 26 - sp.life);
     }
+    perf.sparks = performance.now() - sectionStart;
+    sectionStart = performance.now();
 
     this.comboText.setVisible(this.comboHits >= 2 && this.comboTicks > 0);
     this.comboText.setAlpha(Math.min(1, this.comboTicks / 30));
 
+    if (this.stageGuide) this.drawStageGuide();
+    else for (const t of this.stageGuideTexts) t.setVisible(false);
     if (this.debugBoxes) this.drawDebug();
+    perf.debug = performance.now() - sectionStart;
+    sectionStart = performance.now();
     this.moveLogText.setVisible(this.moveLogOn);
     for (const t of this.inputHistTexts) t.setVisible(this.moveLogOn);
     this.drawHud();
+    perf.hud = performance.now() - sectionStart;
+    perf.draw = performance.now() - drawStart;
+    this.perfDraw = perf;
+  }
+
+  private recordPerf(sample: PerfFrameSample): void {
+    this.perfSamples.push(sample);
+    if (this.perfSamples.length > 45) this.perfSamples.shift();
+    if (!this.perfOn || this.perfSamples.length === 0) return;
+
+    const avg = (key: keyof PerfFrameSample) =>
+      this.perfSamples.reduce((sum, s) => sum + s[key], 0) / this.perfSamples.length;
+    const max = (key: keyof PerfFrameSample) =>
+      this.perfSamples.reduce((hi, s) => Math.max(hi, s[key]), 0);
+    const fps = this.game.loop.actualFps;
+    this.perfText.setText([
+      `FPS ${fps.toFixed(1)}   frame ${avg('frame').toFixed(2)}ms avg / ${max('frame').toFixed(2)} max`,
+      `ticks/frame ${avg('ticks').toFixed(2)}   sim ${avg('sim').toFixed(2)}ms`,
+      `  engine ${avg('tick').toFixed(2)}   present ${avg('present').toFixed(2)}`,
+      `draw ${avg('draw').toFixed(2)}ms`,
+      `  vfx ${avg('vfx').toFixed(2)}   world ${avg('world').toFixed(2)}   fighters ${avg('fighters').toFixed(2)}`,
+      `  projectiles ${avg('projectiles').toFixed(2)}   sparks ${avg('sparks').toFixed(2)}   hud ${avg('hud').toFixed(2)}`,
+      `  debug ${avg('debug').toFixed(2)}   cutscene ${avg('cutscene').toFixed(2)}`,
+    ].join('\n'));
   }
 
   /** Full-bleed cutscene panels while the engine ticks the fatality timeline.
@@ -770,6 +1123,8 @@ export class FightScene extends Phaser.Scene {
     const key = `fat-${s.fighters[owner].charId}-${id}-${panel}`;
 
     for (const sp of this.fighterSprites) sp?.setVisible(false);
+    for (const sp of this.hitFlashSprites) sp?.setVisible(false);
+    for (const sp of this.fighterShadows) sp?.setVisible(false);
     for (const img of this.projSprites) img.setVisible(false);
 
     if (!this.fatalityPanel) {
@@ -910,6 +1265,37 @@ export class FightScene extends Phaser.Scene {
     }
   }
 
+  private drawStageGuide(): void {
+    const g = this.gfxHud;
+    const y = (stageY: number) => (stageY / 720) * STAGE_H;
+    const horizon = y(260);
+    const horizonMax = y(310);
+    const floorStart = y(500);
+    const clearTop = y(560);
+    const foot = y(613);
+    const clearBottom = y(700);
+    const vanishing = { x: STAGE_W / 2, y: horizon };
+
+    g.fillStyle(0x1f6fff, 0.09).fillRect(0, 0, STAGE_W, horizonMax);
+    g.fillStyle(0xffd166, 0.08).fillRect(0, floorStart, STAGE_W, STAGE_H - floorStart);
+    g.fillStyle(0xff5a48, 0.11).fillRect(0, clearTop, STAGE_W, clearBottom - clearTop);
+
+    g.lineStyle(2, 0x9cc7ff, 0.95).lineBetween(0, horizon, STAGE_W, horizon);
+    g.lineStyle(1, 0x9cc7ff, 0.7).lineBetween(0, horizonMax, STAGE_W, horizonMax);
+    g.lineStyle(2, 0xffd166, 0.95).lineBetween(0, floorStart, STAGE_W, floorStart);
+    g.lineStyle(4, 0xffffff, 0.95).lineBetween(0, foot, STAGE_W, foot);
+    g.lineStyle(1, 0xff8a5c, 0.75).lineBetween(0, clearTop, STAGE_W, clearTop);
+    g.lineStyle(1, 0xff8a5c, 0.75).lineBetween(0, clearBottom, STAGE_W, clearBottom);
+
+    g.lineStyle(1, 0xffd166, 0.45);
+    for (const x of [70, 250, STAGE_W / 2, STAGE_W - 250, STAGE_W - 70]) {
+      g.lineBetween(x, STAGE_H, vanishing.x + (x - STAGE_W / 2) * 0.16, vanishing.y);
+    }
+
+    g.fillStyle(0x05070c, 0.72).fillRoundedRect(STAGE_W - 246, 88, 230, 78, 6);
+    for (const t of this.stageGuideTexts) t.setVisible(true);
+  }
+
   private drawHud(): void {
     const g = this.gfxHud;
     const s = this.state;
@@ -918,8 +1304,17 @@ export class FightScene extends Phaser.Scene {
       const def = characters[f.charId];
       const ratio = Math.max(0, f.health / def.health);
       const x = slot === 0 ? BAR_X1 : STAGE_W - BAR_X1 - BAR_W;
-      // portrait frame
       const px = slot === 0 ? 68 : STAGE_W - 68;
+      // portrait background uses the same character color source as impact sparks
+      const accent = Phaser.Display.Color.HexStringToColor(def.color).color;
+      const deep = mixColor(accent, 0x05030a, 0.82);
+      const glow = mixColor(accent, 0x000000, 0.24);
+      if (slot === 0) {
+        g.fillGradientStyle(glow, deep, accent, deep, 1, 1, 1, 1);
+      } else {
+        g.fillGradientStyle(deep, glow, deep, accent, 1, 1, 1, 1);
+      }
+      g.fillRect(px - 25, 21, 50, 50);
       g.lineStyle(2, 0x594566, 1).strokeRect(px - 25, 21, 50, 50);
       g.fillStyle(0x14101a, 0.9).fillRect(x - 2, 26, BAR_W + 4, 22);
       // SF2 ghost bar: recently lost health lingers in red behind the live
@@ -1085,7 +1480,7 @@ export class FightScene extends Phaser.Scene {
 
     items.push(
       this.add
-        .text(STAGE_W / 2, py + PH - 20, 'ESC resume · F1 hitboxes · F2 move log · click a button above', {
+        .text(STAGE_W / 2, py + PH - 20, 'ESC resume · F1 hitboxes · F2 move log · F3 stage guide · ` perf · click a button above', {
           ...font, fontSize: '11px', color: '#9a8fa8',
         })
         .setOrigin(0.5),

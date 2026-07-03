@@ -7,6 +7,7 @@ import { characters } from '../data/characters';
 import { STAGES } from '../data/stages';
 import { initMusic } from '../audio/music';
 import { applyMusicVolume, effectiveSfxVolume } from '../audio/volume';
+import { devBootTarget, rememberDevLaunch } from '../devLaunch';
 
 const CELL_W = 288;
 const CELL_H = 384;
@@ -33,7 +34,12 @@ export class BootScene extends Phaser.Scene {
     });
 
     this.load.image('bg-salton', 'assets/backgrounds/salton-shoreline.jpg');
-    for (const st of STAGES) this.load.image(`bg-stage-${st.id}`, st.file);
+    for (const st of STAGES) {
+      this.load.image(`bg-stage-${st.id}`, st.file);
+      if (st.layers?.sky) this.load.image(`bg-stage-${st.id}-sky`, st.layers.sky.file);
+      if (st.layers?.back) this.load.image(`bg-stage-${st.id}-back`, st.layers.back.file);
+      if (st.layers?.stage) this.load.image(`bg-stage-${st.id}-stage`, st.layers.stage.file);
+    }
     for (const { id } of ROSTER) {
       this.load.spritesheet(`sheet-${id}`, `assets/sprites/${id}/sheet.png`, {
         frameWidth: CELL_W,
@@ -76,7 +82,13 @@ export class BootScene extends Phaser.Scene {
     initMusic(); // fetches music/manifest.json; playback degrades to silence if absent
     applyMusicVolume();
     this.scene.launch('Volume'); // persistent quick-volume overlay, above every scene
-    this.scene.start('Menu');
+    const target = devBootTarget();
+    if (target) {
+      this.scene.start(target.scene, target.data);
+    } else {
+      rememberDevLaunch('Menu');
+      this.scene.start('Menu');
+    }
   }
 }
 

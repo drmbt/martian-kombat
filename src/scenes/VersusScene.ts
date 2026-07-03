@@ -87,16 +87,6 @@ export class VersusScene extends Phaser.Scene {
         .setDepth(3);
     }
 
-    // blinking INSERT COIN homage, top right like the arcade attract screen
-    const coin = this.add
-      .text(STAGE_W - 24, 26, 'INSERT COIN', {
-        fontFamily: 'monospace', fontSize: '22px', fontStyle: 'bold', color: '#ffb347',
-        stroke: '#2a3a7a', strokeThickness: 6,
-      })
-      .setOrigin(1, 0.5)
-      .setDepth(3);
-    this.time.addEvent({ delay: 600, loop: true, callback: () => coin.setVisible(!coin.visible) });
-
     this.input.keyboard!.once('keydown', () => this.startFight());
     this.input.once('pointerdown', () => this.startFight());
   }

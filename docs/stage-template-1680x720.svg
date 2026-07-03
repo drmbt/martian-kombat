@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1680" height="720" viewBox="0 0 1680 720">
+  <rect width="1680" height="720" fill="#11131a"/>
+
+  <rect x="0" y="0" width="1680" height="230" fill="#27364a"/>
+  <rect x="0" y="230" width="1680" height="90" fill="#41516a"/>
+  <rect x="0" y="320" width="1680" height="180" fill="#5b4e45"/>
+  <rect x="0" y="500" width="1680" height="220" fill="#5b362f"/>
+  <rect x="0" y="560" width="1680" height="140" fill="#7a3d35" opacity="0.8"/>
+
+  <line x1="0" y1="260" x2="1680" y2="260" stroke="#9cc7ff" stroke-width="5"/>
+  <line x1="0" y1="310" x2="1680" y2="310" stroke="#9cc7ff" stroke-width="3" stroke-dasharray="18 12"/>
+  <line x1="0" y1="500" x2="1680" y2="500" stroke="#ffd166" stroke-width="5"/>
+  <line x1="0" y1="560" x2="1680" y2="560" stroke="#ff8a5c" stroke-width="4" stroke-dasharray="18 12"/>
+  <line x1="0" y1="613" x2="1680" y2="613" stroke="#ffffff" stroke-width="7"/>
+  <line x1="0" y1="700" x2="1680" y2="700" stroke="#ff8a5c" stroke-width="4" stroke-dasharray="18 12"/>
+
+  <path d="M 120 720 L 750 260" stroke="#ffd166" stroke-width="3" opacity="0.55"/>
+  <path d="M 420 720 L 800 260" stroke="#ffd166" stroke-width="3" opacity="0.55"/>
+  <path d="M 840 720 L 840 260" stroke="#ffd166" stroke-width="3" opacity="0.55"/>
+  <path d="M 1260 720 L 880 260" stroke="#ffd166" stroke-width="3" opacity="0.55"/>
+  <path d="M 1560 720 L 930 260" stroke="#ffd166" stroke-width="3" opacity="0.55"/>
+
+  <rect x="35" y="28" width="620" height="146" fill="#05070c" opacity="0.78" rx="10"/>
+  <text x="60" y="72" font-family="monospace" font-size="38" font-weight="700" fill="#ffffff">MARTIAN KOMBAT STAGE GUIDE</text>
+  <text x="60" y="112" font-family="monospace" font-size="24" fill="#d8e7ff">final art: 1680x720  |  game: 960x540</text>
+  <text x="60" y="148" font-family="monospace" font-size="24" fill="#d8e7ff">keep props out of fighter strip</text>
+
+  <rect x="1060" y="40" width="560" height="230" fill="#05070c" opacity="0.78" rx="10"/>
+  <text x="1088" y="84" font-family="monospace" font-size="28" font-weight="700" fill="#9cc7ff">HORIZON / SKY</text>
+  <text x="1088" y="122" font-family="monospace" font-size="22" fill="#d8e7ff">horizon target: y=260-310</text>
+  <text x="1088" y="164" font-family="monospace" font-size="28" font-weight="700" fill="#ffd166">LANDMARKS</text>
+  <text x="1088" y="202" font-family="monospace" font-size="22" fill="#fff2c2">identity props: y=220-500</text>
+  <text x="1088" y="244" font-family="monospace" font-size="22" fill="#fff2c2">keep middle distance behind fighters</text>
+
+  <rect x="1060" y="510" width="560" height="178" fill="#05070c" opacity="0.78" rx="10"/>
+  <text x="1088" y="552" font-family="monospace" font-size="28" font-weight="700" fill="#ffd166">FLOOR START y=500</text>
+  <text x="1088" y="592" font-family="monospace" font-size="28" font-weight="700" fill="#ffffff">FOOT LINE y=613</text>
+  <text x="1088" y="632" font-family="monospace" font-size="22" fill="#ffd8c8">clear strip: y=560-700</text>
+  <text x="1088" y="666" font-family="monospace" font-size="22" fill="#ffd8c8">ground texture continues to bottom</text>
+
+  <text x="60" y="254" font-family="monospace" font-size="24" font-weight="700" fill="#9cc7ff">y=260 horizon center</text>
+  <text x="60" y="494" font-family="monospace" font-size="24" font-weight="700" fill="#ffd166">y=500 floor visually begins</text>
+  <text x="60" y="606" font-family="monospace" font-size="28" font-weight="700" fill="#ffffff">y=613 fighter feet / FLOOR_Y</text>
+  <text x="60" y="692" font-family="monospace" font-size="22" font-weight="700" fill="#ffd8c8">no prop clutter in this strip</text>
+</svg>
