@@ -113,6 +113,16 @@ The pipeline turns a photo of a real person into a game-ready sprite sheet:
    in the character JSON (`id`, `name`, `input`, `panels`) wires the FINISH THEM
    trigger. **A full asset-generation run for a new character is all seven steps**
    — a fighter isn't "done" until their fatality panels exist too.
+8. **Impact VFX** — `tools/gen-vfx.mjs` (`npm run gen:vfx`, `gemini-3-pro-image`
+   on a MAGENTA screen, chroma-keyed): (a) greyscale generic hit sparks in
+   `public/assets/vfx/` (spark-hit / spark-heavy / spark-block), tinted the
+   attacker's color at runtime — these are global, not per-character; and
+   (b) per-move overlay art that lives with the move like projectiles do —
+   `public/assets/sprites/<char>/vfx-<moveId>.png`, wired by an optional
+   render-only `vfx: {size, anchor: 'impact'|'ground'}` block on the move in
+   the character JSON (prompts in the script's `PER_MOVE` dict). FightScene
+   plays them by state-diffing in `presentTick`; missing art falls back to the
+   generic spark, then to a plain flash.
 
 Every character needs, alongside frame data: a `winQuotes: string[]` array in
 their JSON (SFII-style victory taunts — the win screen picks one at random), a
@@ -149,6 +159,7 @@ npm run gen:pack -- --char vincent     # key + pack -> sheet.png + meta.json
 npm run gen:stages -- --stage van      # 21:9 pixel-art stage (--force, --concurrency N)
 npm run gen:audio                      # announcer + grunts + sfx (--concurrency N)
 npm run gen:fatality -- --char vincent # 4 cutscene panels (--concurrency N)
+npm run gen:vfx                        # impact sparks + per-move overlays (--concurrency N)
 npm run gen:music                      # rescan music folders -> manifest.json
 ```
 

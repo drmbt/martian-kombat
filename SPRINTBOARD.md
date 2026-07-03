@@ -391,14 +391,15 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
 Goal: the game we have, but it *feels* great — juice, VFX, attract mode, controls.
 - [ ] **Controller playtest** (user + real gamepad) — keyboard-in-browser isn't
       fun; validate the pad path end-to-end, fix top feel complaints
-- [ ] **Impact VFX system**: composited hit-overlay sprites separate from the
+- [x] **Impact VFX system**: composited hit-overlay sprites separate from the
       fighter sheets — hit sparks on every connecting normal, bigger
       explosions/smoke/shockwaves on specials that land (e.g. Yulia's Volga
       Piledriver pushes a ground smoke cloud). Two asset classes: (a) greyscale
       generics with a per-character color tint/LUT so they're reusable, and
       (b) per-move art that lives with the move like projectiles do today
-      (`extra.` manifest plumbing is the template). Engine stays pure — VFX are
-      renderer-side, triggered by state-diffing in `presentTick`
+      (render-only `vfx` block on the move). Engine stays pure — VFX are
+      renderer-side, triggered by state-diffing in `presentTick`.
+      `tools/gen-vfx.mjs` (`npm run gen:vfx`) generates both classes
 - [ ] **Attract mode**: no input on the menu for N seconds → CPU-vs-CPU demo
       fight (random fighters/stage, HUD on, "DEMO — PRESS ANY KEY" overlay);
       any input returns to the title. CpuDriver already powers both sides
@@ -456,6 +457,28 @@ victory song: a `victorySong` attribute in the character JSON names a track in
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-03 · assets+tools+scenes · Sprint 16: impact-VFX overlay system** —
+  new `tools/gen-vfx.mjs` (`npm run gen:vfx`, pooled, idempotent, prompt
+  sidecars, MAGENTA chroma screen — never green): generates (a) three greyscale
+  generic sparks (`public/assets/vfx/spark-{hit,heavy,block}.png`) tinted the
+  attacker's character color at runtime, and (b) per-move overlay art that
+  lives with the move like projectiles do
+  (`public/assets/sprites/<char>/vfx-<moveId>.png`, prompts in the script's
+  `PER_MOVE` dict). New render-only `vfx: {size, anchor: 'impact'|'ground'}`
+  hint on `MoveDef` (engine never reads it) wires per-move art: shipped Yulia
+  Volga Piledriver ground smoke + Vincent Rising Glyph energy column.
+  FightScene: overlay sprites spawn from state-diffing in `presentTick` —
+  every connecting hit picks per-move art if declared, else a generic spark
+  (heavy for specials/H-buttons/55+ damage, small for the rest), block contact
+  spawns an icy shield ripple; overlays grow + fade over ~14 render frames,
+  fall back to the legacy flash circle when textures are missing (dev-404
+  gotcha). BootScene loads generics + every declared per-move VFX. CLAUDE.md
+  pipeline step 8 + command documented. 72 tests green, tsc clean. Verified
+  in-browser through the real engine path: scripted jab → 90px tinted spark,
+  HK → 135px heavy burst, 360+HP Volga Piledriver → 240px ground smoke under
+  the piledriven victim (screenshot ftw — ghost bar visible in the same
+  frame). — Claude
 
 - **2026-07-03 · engine+scenes · Sprint 16: game-feel juice bundle** — hitstop:
   connecting hits freeze the whole world (fighters, projectiles, clock) for a

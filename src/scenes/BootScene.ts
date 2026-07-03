@@ -45,7 +45,11 @@ export class BootScene extends Phaser.Scene {
       // beaten-and-bloodied portrait for the post-match win-quote screen
       this.load.image(`portrait-ko-${id}`, `assets/portraits/${id}-ko.png`);
     }
-    // fatality cutscene panels + per-special projectile art
+    // generic impact sparks (greyscale, tinted per character at spawn)
+    for (const v of ['spark-hit', 'spark-heavy', 'spark-block']) {
+      this.load.image(`vfx-${v}`, `assets/vfx/${v}.png`);
+    }
+    // fatality cutscene panels + per-special projectile art + per-move VFX
     for (const [id, def] of Object.entries(characters)) {
       for (const [moveId, mv] of Object.entries(def.moves)) {
         if (mv.projectile) {
@@ -53,6 +57,9 @@ export class BootScene extends Phaser.Scene {
           if (mv.projectile.detonate) {
             this.load.image(`proj-${id}-${moveId}-burst`, `assets/sprites/${id}/projectile-${moveId}-burst.png`);
           }
+        }
+        if (mv.vfx) {
+          this.load.image(`vfx-${id}-${moveId}`, `assets/sprites/${id}/vfx-${moveId}.png`);
         }
       }
       if (!def.fatality) continue;

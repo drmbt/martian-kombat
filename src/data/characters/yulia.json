@@ -439,6 +439,10 @@
           },
           "recovery": 32
         }
+      },
+      "vfx": {
+        "size": 240,
+        "anchor": "ground"
       }
     },
     "braid-lariat": {

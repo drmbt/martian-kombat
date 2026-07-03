@@ -453,6 +453,10 @@
       "leap": {
         "vx": 2.5,
         "vy": 14
+      },
+      "vfx": {
+        "size": 180,
+        "anchor": "impact"
       }
     },
     "redirect": {

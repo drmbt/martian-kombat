@@ -63,6 +63,16 @@ interface Spark {
   color: number;
 }
 
+/** Composited impact overlay (hit sparks, per-move smoke/bursts): a sprite
+ *  that grows and fades over a handful of render frames. */
+interface VfxSprite {
+  img: Phaser.GameObjects.Image;
+  life: number;
+  max: number;
+  /** display-size growth per render frame, px */
+  grow: number;
+}
+
 interface TickSnapshot {
   phase: GameState['phase'];
   kinds: [string, string];
@@ -90,6 +100,7 @@ export class FightScene extends Phaser.Scene {
   private accumulator = 0;
   private debugBoxes = false;
   private sparks: Spark[] = [];
+  private vfx: VfxSprite[] = [];
   private comboHits = 0;
   private comboTicks = 0;
   private cellMaps: [Map<string, number>, Map<string, number>] = [new Map(), new Map()];
@@ -143,6 +154,7 @@ export class FightScene extends Phaser.Scene {
     this.projSprites = [];
     this.winScreen = null; // rebuilt lazily on matchEnd (scene.restart destroys it)
     this.sparks = [];
+    this.vfx = []; // scene.restart destroyed the old images with the scene
     this.accumulator = 0;
     this.comboHits = 0;
     this.comboTicks = 0;
@@ -386,7 +398,7 @@ export class FightScene extends Phaser.Scene {
         this.ghostHoldUntil[slot] = s.tick + 32; // ghost bar hangs, then drains
         play(this, 's-hit');
         play(this, `v-${f.charId}-hurt`, 0.7);
-        this.sparks.push({ x: f.x + f.facing * -20, y: f.y - 150, life: 12, color: 0xfff06e });
+        this.spawnHitVfx(slot, prev.healths[slot] - f.health);
         this.cameras.main.shake(60, 0.004);
         // combo: consecutive hits while the defender never left stun
         this.comboHits = was === 'hitstun' || was === 'airHit' ? this.comboHits + 1 : 1;
@@ -395,7 +407,11 @@ export class FightScene extends Phaser.Scene {
           this.comboText.setX(s.fighters[other].x).setText(`${this.comboHits} HITS`);
         }
       }
-      if (kind === 'blockstun' && was !== 'blockstun') play(this, 's-block', 0.6);
+      if (kind === 'blockstun' && was !== 'blockstun') {
+        play(this, 's-block', 0.6);
+        // icy shield ripple on the guarding side
+        this.spawnVfx('vfx-spark-block', f.x + f.facing * 42, f.y - 130, 95, 0xa8c8ff, f.facing === 1);
+      }
       if (
         (kind === 'attack' || kind === 'airAttack') &&
         (was !== kind || prev.moveIds[slot] !== f.action.moveId)
@@ -410,6 +426,51 @@ export class FightScene extends Phaser.Scene {
     if (s.projectiles.length > prev.projectiles) play(this, 's-projectile', 0.6);
 
     if (this.comboTicks > 0 && --this.comboTicks === 0) this.comboHits = 0;
+  }
+
+  // ---------- impact VFX (renderer-side; engine state is never touched) ----------
+
+  /** Spawn an overlay sprite that grows and fades. Returns false when the
+   *  texture never loaded (dev-server 404s) so callers can fall back. */
+  private spawnVfx(key: string, x: number, y: number, size: number, tint?: number, flip = false): boolean {
+    if (!this.textures.exists(key)) return false;
+    const img = this.add.image(x, y, key).setDepth(4).setDisplaySize(size, size).setFlipX(flip);
+    if (tint !== undefined) img.setTint(tint);
+    this.vfx.push({ img, life: 14, max: 14, grow: size * 0.04 });
+    return true;
+  }
+
+  /** Impact overlay for a connecting hit on `slot`: the attacker's per-move
+   *  art when the move declares some (vfx-<char>-<move>), else a generic
+   *  greyscale spark tinted the attacker's color — heavier contact, bigger
+   *  spark. Falls back to the old flash circle if no texture loaded. */
+  private spawnHitVfx(slot: 0 | 1, damage: number): void {
+    const s = this.state;
+    const f = s.fighters[slot]; // defender
+    const atk = s.fighters[slot === 0 ? 1 : 0];
+    const atkDef = characters[atk.charId];
+    const atkAction = atk.action;
+    const atkMove =
+      atkAction.kind === 'attack' || atkAction.kind === 'airAttack'
+        ? atkDef.moves[atkAction.moveId!]
+        : undefined;
+    const ix = f.x - f.facing * 20;
+    const iy = f.y - 150;
+
+    if (atkMove?.vfx) {
+      const size = atkMove.vfx.size ?? 160;
+      const onGround = atkMove.vfx.anchor === 'ground';
+      if (this.spawnVfx(`vfx-${atk.charId}-${atkAction.moveId}`,
+        onGround ? f.x : ix, onGround ? FLOOR_Y - size * 0.3 : iy, size, undefined, atk.facing === -1)) {
+        return;
+      }
+    }
+    // specials, heavy buttons, and meaty projectile damage earn the big burst
+    const heavy = !!atkMove?.input || /h[pk]$/.test(atkAction.moveId ?? '') || damage >= 55;
+    const tint = Phaser.Display.Color.HexStringToColor(atkDef.color).color;
+    if (!this.spawnVfx(heavy ? 'vfx-spark-heavy' : 'vfx-spark-hit', ix, iy, heavy ? 135 : 90, tint)) {
+      this.sparks.push({ x: ix, y: iy, life: 12, color: 0xfff06e });
+    }
   }
 
   /** Raw-input ticker: arrows for held direction + freshly pressed buttons,
@@ -552,6 +613,20 @@ export class FightScene extends Phaser.Scene {
     const gU = this.gfxUnder;
     gU.clear();
     this.gfxHud.clear();
+
+    // animate impact overlays first (runs even during fatality/win screens so
+    // stragglers finish fading instead of freezing under the cutscene)
+    this.vfx = this.vfx.filter((v) => {
+      v.life--;
+      if (v.life <= 0) {
+        v.img.destroy();
+        return false;
+      }
+      const t = v.life / v.max;
+      v.img.setAlpha(Math.min(1, t * 1.6));
+      v.img.setDisplaySize(v.img.displayWidth + v.grow, v.img.displayHeight + v.grow);
+      return true;
+    });
 
     if (s.phase === 'fatality' && s.fatality) {
       this.drawFatality();

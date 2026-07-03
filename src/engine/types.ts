@@ -174,6 +174,10 @@ export interface MoveDef {
   leap?: { vx: number; vy: number };
   /** SFII Turbo L/M/H button variants, merged over the base numbers */
   variants?: { l?: VariantPatch; m?: VariantPatch; h?: VariantPatch };
+  /** render hint only — per-move impact overlay art
+   *  (assets/sprites/<char>/vfx-<moveId>.png, tools/gen-vfx.mjs) played by the
+   *  scene when this move connects; engine never reads it */
+  vfx?: { size?: number; anchor?: 'impact' | 'ground' };
 }
 
 export interface FatalityDef {
