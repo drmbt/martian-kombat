@@ -456,6 +456,16 @@ victory song: a `victorySong` attribute in the character JSON names a track in
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-03 · assets+data · MIMOS stage** — generated the MIMOS café-lounge
+  stage from `assets/stage-inspo/MIMOS/` (orange-red pallet-rack lounge, pink
+  star canopy, MAIS AMOR posters, coffee bar, ping-pong table at left, white
+  gravel fighter foreground) via the locked pixel-art pipeline; `SCENES` line
+  in `tools/gen-stage.mjs` + registry entry in `src/data/stages.ts` (19 stages).
+  Verified in-browser (texture loads, boot clean) + tsc clean. Re-rolled once
+  per user: first take read too clean/vector-flat — reworked the `SCENES` line
+  to emphasize gritty weathered/lived-in clutter and MARS-grade dithering
+  (first take backed up in scratchpad). Part of the still-uncommitted
+  stage-art batch. *(Claude)*
 - **2026-07-03 · docs · sprintboard/README/CLAUDE.md refresh + Sprint 16 plan** —
   reconciled stale checkboxes after the keyboard playtest (things mostly work):
   ticked S4 human playtest (controller playtest carried to S16), S5 roster

@@ -30,6 +30,7 @@ export const STAGES: StageEntry[] = [
   stage('estates', 'ESTATES'),
   stage('institute', 'INSTITUTE'),
   stage('mars', 'MARS'),
+  stage('mimos', 'MIMOS'),
   stage('neptune', 'NEPTUNE'),
   stage('painted-canyon', 'PAINTED CANYON'),
   stage('saturn', 'SATURN'),
