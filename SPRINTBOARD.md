@@ -1200,32 +1200,34 @@ fixed-screen SF2 framing is intentional).
 
 *(overwrite this section each handoff — what's mid-flight, gotchas, next action)*
 
-**State (2026-07-03, Sprint 17 CODE-COMPLETE, NOTHING COMMITTED):** 8/8
+**State (2026-07-03, Sprint 17 SHIPPED + COMMITTED, Sprint 18 next):** 8/8
 fighters playable with fatalities, 20 stages, full music loop, settings +
 controls pages, CPU + training + attract modes, VS screen, win-quote screen.
 **Sprint 17 (universal throws + dizzy/stun) is fully implemented, tested
-(95/95 vitest, tsc + build clean), and verified live in the browser — but
-the ENTIRE sprint sits uncommitted in the working tree awaiting the user's
-frame-review pass.** What's in flight for whoever picks this up:
-- **Throw frames are APPROVED (2026-07-03)** after two re-roll rounds plus
-  the user's own manual edits to the raws; sheets re-packed from the edited
-  raws and render-verified in-game (throw plays cells 59/60/61 =
-  startup/active/recovery by name). Re-roll history, for the record:
-  (1) prompts rewritten to solo-mime "reaching" poses (no opponent/clothes
-  in frame) + a global FRAME_RULES rule that nothing may touch the frame
-  edges (edge-cropped content shows a hard line in-game); Gene's 3 originals
-  and all non-Kirby recoveries kept. (2) every `throw-active` except Gene's
-  re-rolled again as an ACTIVE forward grab: arms fully extended toward the
-  right frame edge, hands actively clutching the empty air, a small impact
-  flash obscuring the hands (per-character flavor color). Targeted re-rolls
-  stay cheap: `node tools/gen-frames.mjs --char X --cells throw-active`
-  (force-regens only the named cells), then `npm run gen:pack -- --char X`.
-- **Next action: commit** (mind the parallel-session note below — explicit
-  paths). Scoped commits fine — engine/scenes/data/docs are one logical
-  change; sheets + raw prompt sidecars ride along. NOTE: `gen:pack` re-runs
-  also byte-churn the `projectile-*.png` files (ffmpeg re-encode noise) —
-  harmless, commit or checkout, either is fine.
-- **Where the code landed:** engine — `throwChord`/`LPLK` chord + pendingThrow
+(95/95 vitest, tsc + build clean), verified live in the browser, frame-
+reviewed and approved by the user (two re-roll rounds + manual raw edits),
+and committed** in `03ad717` (`engine+data+assets+audio: universal throws +
+dizzy/stun (Sprint 17), voice-variant depth` — bundled with a parallel
+session's voice-variant work, see below). **Sprint 18 (input forgiveness +
+hit feedback) is fully scoped in the section above and is the next planned
+sprint** — nobody has started it yet. What's on record for whoever picks
+this up:
+- Throw frame re-roll history, for the record: (1) prompts rewritten to
+  solo-mime "reaching" poses (no opponent/clothes in frame) + a global
+  FRAME_RULES rule that nothing may touch the frame edges (edge-cropped
+  content shows a hard line in-game); Gene's 3 originals and all non-Kirby
+  recoveries kept. (2) every `throw-active` except Gene's re-rolled again as
+  an ACTIVE forward grab: arms fully extended toward the right frame edge,
+  hands actively clutching the empty air, a small impact flash obscuring the
+  hands (per-character flavor color). Targeted re-rolls stay cheap:
+  `node tools/gen-frames.mjs --char X --cells throw-active` (force-regens
+  only the named cells), then `npm run gen:pack -- --char X`.
+- **Next action: Sprint 18** (see the section above for full scope: action
+  input buffering + reversal buffer, counterhits, landing recovery,
+  per-fighter asymmetric hitstop, ground-impact bounce, hitstop-tuning
+  playtest). All engine work, every item ships with vitest coverage, no new
+  art needed.
+- **Where the Sprint 17 code landed:** engine — `throwChord`/`LPLK` chord + pendingThrow
   tech window + `techable` flag in step.ts/types.ts/constants.ts (constants:
   THROW_TECH_TICKS 12, THROW_TECH_PUSH 6, THROW_TECH_RECOIL 10,
   STUN_THRESHOLD 250, STUN_DECAY 0.5/tick, DIZZY_TICKS 180). `dazed` was
@@ -1246,12 +1248,21 @@ frame-review pass.** What's in flight for whoever picks this up:
   — the sprint brief's throw prompt said "her"; fixed in the manifest.
 NOTE: a parallel session may work this repo simultaneously — commit with
 explicit paths only if that's still true when you pick this up.
-**After Sprint 17:** remaining near-term roadmap — combo chains/cancels,
-blocking feel, damage scaling, CPU difficulty levels, round intros/victory
-poses, CRT toggle. Long-term RFEs: character designer dialog, online
-multiplayer, arcade story mode, Veo motion smoothing. docs/MOVES.md is
-the living move spec (checkboxes = implementation state); edit it and re-run
-the buildout. **DEPLOY RECIPE:** just push to main —
+**After Sprint 17:** a parallel session ran a full game-feel review (industry-
+conventions audit + user fix list) and re-planned the pipeline — see the
+Sprint 18/19/20 sections above and the 2026-07-03 "Sprints 18–20 planned"
+changelog entry for the full reasoning. Order is now **Sprint 18 (input
+buffering + hit feedback) → Sprint 19 (cancels & chains) → Sprint 20
+(personality specials + Flo fatality rework)**; combo chains/cancels and
+damage scaling moved OFF the generic near-term roadmap and into Sprint 19.
+Near-term roadmap (now Sprint-18/19/20 leftovers): per-move hurtbox
+overrides, post-stun throw protection, CPU difficulty levels, round intros/
+victory poses, height normalization, post-fatality flow, attract-mode blink
+cleanup, sound priority/cooldowns, clash/tech feedback, CRT toggle. Long-term
+RFEs unchanged: character designer dialog, online multiplayer, arcade story
+mode, Veo motion smoothing. docs/MOVES.md is the living move spec
+(checkboxes = implementation state); edit it and re-run the buildout.
+**DEPLOY RECIPE:** just push to main —
 the `deploy` workflow builds and publishes (do NOT force-push gh-pages
 anymore; that pipeline is retired and was the wedge source). If a deploy run
 fails with `deployment_queued` timeouts, check for a phantom via
