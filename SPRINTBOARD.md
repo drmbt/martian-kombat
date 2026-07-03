@@ -326,6 +326,31 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
       mechanics (Presence teleport-behind, Breathwork hit-absorb) if the engine
       grows buff/counter support — approximated with invuln for MVP.
 
+### Sprint 14 — Kirby rebuild: acrobatic fire-breather (user-directed)
+- [x] Reimagined Kirby "Spill the Tea" gossip → **"Firebreather"**: an acrobatic
+      fire-breathing contortionist. ALL tea/teacup/match refs removed (canonical
+      flavor, manifest `always`, docs/CHARACTERS.md, win quotes). New canonical
+      (user-edited: no mouth fire) with a face-shot ref (`FACE[]`) now merged into
+      `gen-canonical` for sharper facial fidelity; new select icon via `gen-icons`.
+- [x] New kit (bible + kirby.json + frames-manifest v2), all on existing engine
+      primitives (engine untouched): **Fire Breath** (qcf+P, ttl fire cone),
+      **Sonic Scream** (qcb+P, knockdown shockwave-ring projectile), **Cartwheel**
+      (dp+K, invuln rising anti-air) — L/M/H variants each.
+- [x] Promoted legacy 23-cell → **v2 56-cell sheet** (8×7) + 2 keyed per-move
+      projectiles (fire-breath cone, sonic-scream rings); user QA'd raw frames,
+      packed clean (alpha transparent). Grunts refreshed. Removed the stale bare
+      `projectile.png` (kit is all per-move art now, like flo — `proj-kirby` dev
+      404 is the same benign gotcha flo/freeman/yulia already have).
+- [x] Fatality **Hot Yoga** (hcb+P): 4 panels via `gen-fatality` (breath charge →
+      fire-breath inferno → cartwheel through firestorm → serene bridge pose
+      blowing smoke). `fatality` block in kirby.json; BootScene loads generically.
+- [x] Engine test updated: the "no-fatality → straight roundEnd" branch test
+      (previously used kirby as the fatality-less example) now strips a def's
+      fatality locally, since every roster fighter owns one. 50 tests green,
+      typecheck + prod build clean. Roster now **6/8 fully-built, all with fatalities**.
+- [ ] Regenerate kirby's KO/defeated bust (`portraits/kirby-ko.png`) from the new
+      canonical — still the old tea-era art (cosmetic; win-screen loser portrait).
+
 ### Icebox (post-MVP, do not start)
 Remaining roster (Gene, Marzipan) · new characters · single-player
 arcade mode + CPU opponent · super meter/EX moves · stage interactables ·
@@ -338,6 +363,36 @@ rollback netplay (engine determinism already paid for) · training mode · fatal
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-02 · assets+data+engine · Sprint 14: Kirby rebuild (Firebreather)** —
+  reimagined Kirby as an acrobatic fire-breathing contortionist; stripped every
+  tea/teacup/match reference (canonical flavor, manifest `always`, bible, win
+  quotes). Face-shot ref merged into `gen-canonical` (`FACE[]`); new select icon.
+  New kit, all on existing engine primitives: Fire Breath (qcf+P cone), Sonic
+  Scream (qcb+P knockdown rings), Cartwheel (dp+K invuln anti-air), L/M/H variants.
+  Promoted legacy 23-cell → v2 56-cell sheet (8×7) + 2 keyed per-move projectiles;
+  grunts refreshed; removed stale bare `projectile.png`. Fatality Hot Yoga (hcb+P)
+  + 4 panels. Updated the no-fatality KO-branch test (kirby now owns one). 50 tests
+  green, build clean. Scoped commit: Kirby files only (stage-restyle work left
+  untouched, pending its own approval). *(Claude)*
+- **2026-07-02 · assets · stage art restyle: retro pixel-art pass (PENDING USER
+  APPROVAL)** — regenerated all 11 stages (10 + salton) via reworked
+  `tools/gen-stage.mjs`: style contract switched from cel-shaded cartoon to
+  16-bit retro pixel-art anchored on the salton-shoreline render (style ref
+  copied to `assets/stage-inspo/style-ref-salton.jpg`, passed as first
+  reference for every stage); hard "walkable floor to the bottom edge, no
+  blank bands, no foreground obstructions" contract (fixes drive-in deadspace
+  + chiba blocked floor); salton remade in 21:9 (now 1680×720 at its legacy
+  path, no code changes); script now parallel via `pool()`
+  (`--concurrency N`, default 4) with per-stage log-and-skip errors. Previous
+  art offlined to `public/assets/backgrounds/stages/_old/` and raws to
+  `assets/raw/stages/_old/`. drive-in was re-rolled once for a continuous
+  ground surface. Awaiting user approval before commit. Second pass: 4 NEW
+  stages generated from new inspo folders (chiba-roof, dodecahedron,
+  painted-canyon, ski-inn) with scene prompts in `gen-stage.mjs` and entries
+  in `src/data/stages.ts` (roster now 15 stages); verified in-browser — all
+  stage textures load, menu renders new salton. Pre-existing unrelated
+  console error: `proj-yulia` (missing
+  `public/assets/sprites/yulia/projectile.png`). *(Claude)*
 - **2026-07-02 · assets · Flo frame QA fixes** — cleaned up Flo cells flagged for
   duplicate/extra-limb artifacts: re-rolled 5 via `gen-frames --cells` (lk-active,
   mk-recovery, clk-recovery, cmk-recovery, chk-active), and the user manually

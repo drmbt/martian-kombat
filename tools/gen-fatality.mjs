@@ -69,6 +69,16 @@ const FATALITIES = {
       `Only a faint glowing white-gold OUTLINE of the defeated figure remains, frozen seated in a cross-legged lotus pose, as the very last white-gold petals drift away into darkness around it. The man from the reference image sits beside it in serene meditation, eyes closed, a peaceful half-smile. Calm, quiet, final.`,
     ],
   },
+  kirby: {
+    id: 'hot-yoga',
+    canonical: 'assets/raw/canonical/kirby.png',
+    panels: [
+      `The woman from the reference image (long wavy dark-brown hair, athletic flexible build, colorful splatter-print top, barefoot yoga wear) dropping into an impossibly deep flexible backbend lunge, chest swelling as she draws an ENORMOUS breath, bright orange embers and heat-shimmer gathering at her lips, while ${HUSK} stands frozen before her. Low dramatic angle, orange firelight beginning to wash over everything.`,
+      `Extreme close-up of the woman's face as she UNLEASHES a colossal torrent of roaring orange-and-red fire from her mouth, cheeks full, a raging inferno erupting forward and engulfing the frame, ${HUSK} a black silhouette swallowed in the blaze. Maximum contrast, radial firelight streaks.`,
+      `The woman from the reference image cartwheeling gracefully THROUGH a swirling firestorm, body inverted mid-handspring, legs whipping overhead, as ${HUSK} curls and blackens, coming apart into a rising vortex of orange cinders and ash around her. Dynamic dutch angle, embers everywhere.`,
+      `The woman from the reference image landing serene in a one-handed bridge pose amid smoldering embers, blowing a single wisp of smoke off a fingertip with a smug smile, as the last cinders of the husk scatter into the dark behind her. She does not look back. Warm dying-ember glow, quiet and final.`,
+    ],
+  },
 };
 
 async function genPanel(charId, spec, i) {

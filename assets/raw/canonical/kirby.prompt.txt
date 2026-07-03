@@ -3,4 +3,4 @@ CRITICAL: preserve their real facial features, hairstyle, skin tone, body type a
 Pose: dynamic side-on martial-arts fighting stance facing right, knees bent, hands up ready to fight, full body visible head to toe with a small margin, centered.
 Background: solid flat chroma-key green (#00B140), completely uniform, no shadows cast on the background, no floor, no text, no watermark, no border.
 Art style: hand-painted cel-shaded 2D anime fighter (modern Capcom / Arc System Works aesthetic). Bold clean line art, painterly cel shading, confident silhouette, slightly heroic proportions while keeping the person recognizable.
-Character flavor: "Spill the Tea" — a flexible fire-breathing yogi gossip. One hand balances a steaming teacup effortlessly; a faint ember glow flickers at the lips. Relaxed, smug, dangerous.
+Character flavor: "Firebreather" — an extremely flexible, acrobatic fire-breathing yogi. Barefoot in fitted athletic yoga wear, lithe and limber, with a smug confident smile. She holds NO teacup and has NOTHING in her mouth (no cup, no match, no cigarette) — instead a faint orange ember heat-shimmer flickers at her lips. Poised, playful, dangerous.

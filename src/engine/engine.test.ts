@@ -438,14 +438,17 @@ describe('fatality flow', () => {
     expect(s.fatality).toBeNull();
   });
 
-  it('kirby (no fatality defined) KOs straight to the normal round end', () => {
-    const s = initialState('kirby', P2, characters);
+  it('a fighter with no fatality defined KOs straight to the normal round end', () => {
+    // every roster fighter now owns a fatality, so strip one to exercise the
+    // no-finisher KO branch (winner = kirby here)
+    const defs = { ...characters, kirby: { ...characters.kirby, fatality: undefined } };
+    const s = initialState('kirby', P2, defs);
     s.phase = 'fight';
     s.wins = [1, 0];
     closeRange(s);
     s.fighters[1].health = 10;
-    step(s, [inp({ lp: true }), inp()], characters);
-    run(s, 6);
+    step(s, [inp({ lp: true }), inp()], defs);
+    for (let i = 0; i < 6; i++) step(s, [inp(), inp()], defs);
     expect(s.phase).toBe('roundEnd');
   });
 });

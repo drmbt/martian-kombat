@@ -72,18 +72,22 @@ dog at her side.
 - Win quotes: "You were out of tokens before you started." / "I pitched. You got
   liquidated." / "Nice try. I already fine-tuned past you."
 
-## Kirby — "Spill the Tea"
-**Archetype:** flexible rushdown with a fire install.
-**Look:** yoga wear, teacup that never spills, knowing smirk.
-- Contortionist normals: attacks come from angles that look anatomically illegal.
-- **Scalding Sip** (↓↘→+L): sips, then spits a short-range fire cone.
-- **Hot Gossip** (↓↙←+L): whisper projectile — slow-moving rumor cloud that
-  briefly reverses opponent's left/right inputs on hit (gimmick, post-MVP OK).
-- **Full Kettle** (↓↘→+H, install): finishes the tea — next 5 seconds all
-  normals gain fire trails and chip damage.
-- Win pose: bridge pose while refilling the cup.
+## Kirby — "Firebreather"
+**Archetype:** acrobatic fire-breathing rushdown — fast, fragile, never stops moving.
+**Look:** fitted athletic yoga wear, barefoot, absurdly flexible; a smug smile and
+a faint orange ember heat-shimmer at the lips. No teacup, nothing in her mouth.
+- Contortionist normals: standing-splits, backbends and handsprings — attacks
+  come from angles that look anatomically illegal. Her heavy is a vertical
+  standing-split kick (heel above her own head).
+- **Fire Breath** (↓↘→+P): draws a deep breath and spits a short-range cone of
+  fire — a ttl-limited fire projectile (button strength picks range/damage).
+- **Sonic Scream** (↓↙←+P): a piercing shout that blasts concentric shockwave
+  rings forward — a disjointed sound-wave projectile that pushes back and staggers.
+- **Cartwheel** (→↓↘+K): a rising acrobatic cartwheel-handspring kick with
+  invulnerable startup — her reversal / anti-air (the "cartwheel triangle roll").
+- Win pose: drops into a one-handed bridge and blows a wisp of smoke off a fingertip.
 - Win quotes: "Oh, we are absolutely telling everyone about this." / "You fold
-  better than a lawn chair, darling." / "The tea? Still full. You? Not so much."
+  better than a lawn chair, darling." / "I bend, you break — now sit down and cool off."
 
 ## Marzipan — "Photosynthesizer"
 **Archetype:** zoner/summoner, battlefield control.

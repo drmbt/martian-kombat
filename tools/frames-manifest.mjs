@@ -412,33 +412,105 @@ export const CHARACTERS = {
   },
   kirby: {
     canonical: 'assets/raw/canonical/kirby.png',
-    moves: {
-      light: {
-        startup: 'coiling a quick open-palm strike, teacup still balanced in the other hand',
-        active: 'open-palm strike snapped out at head height, tea unspilled',
-        recovery: 'drawing the palm back with a smug tilt of the head',
+    layout: 'v2',
+    // "Firebreather": acrobatic fire-breathing contortionist. Flexible yoga
+    // forms, standing-splits and handsprings. NO teacup, NOTHING in her mouth.
+    always:
+      'She is an extremely flexible acrobatic fire-breathing yogi — barefoot in fitted athletic yoga wear, lithe and limber, with a smug confident smile. She holds NO teacup and has NOTHING in her mouth (no cup, no match, no cigarette).',
+    moves6: {
+      stand: {
+        lp: {
+          startup: 'chambering a quick open-palm jab near the cheek, poised and limber',
+          active: 'quick open-palm jab fully extended at head height, fingers together, wrist snapped',
+          recovery: 'drawing the palm back with a smug tilt of the head',
+        },
+        mp: {
+          startup: 'torso coiling with dancer poise, winding an open-palm strike back at the waist',
+          active: 'open-palm strike fully extended at chest height, hips rotated through the hit',
+          recovery: 'retracting the palm, flowing back into a light springy stance',
+        },
+        hp: {
+          startup: 'both palms drawn back stacked at one hip, weight loaded onto the front leg',
+          active: 'double-palm thrust driven forward at chest height, both arms fully extended, a faint orange heat-shimmer off the palms',
+          recovery: 'lowering both arms, recentering with a smirk',
+        },
+        lk: {
+          startup: 'front knee lifting for a quick snap kick, arms floating for balance',
+          active: 'quick snapping front kick at shin height, one leg extended, exactly ONE foot on the ground',
+          recovery: 'the foot returning lightly to a springy stance',
+        },
+        mk: {
+          startup: 'lead knee chambered high across the body, spine arched, arms floating',
+          active: 'a flexible high roundhouse kick fully extended at chest height, one leg at full reach, exactly ONE foot on the ground',
+          recovery: 'swinging the leg smoothly back down into stance',
+        },
+        hk: {
+          startup: 'balancing on her LEFT leg only, her RIGHT leg (clearly attached at the hip) lifting into a vertical standing-split chamber, knee near her chest, perfectly poised',
+          active: 'a vertical standing-split kick at full extension — balancing on her LEFT leg, her RIGHT leg driven straight up with the heel above her own head, exactly ONE foot on the ground',
+          recovery: 'lowering the raised leg with dancer-like control, both feet planted',
+        },
       },
-      heavy: {
-        startup: 'lifting one leg impossibly high in a standing-split chamber, perfectly balanced',
-        active: 'vertical standing-split kick at full extension, heel above their own head',
-        recovery: 'lowering the leg with dancer-like control',
+      crouch: {
+        lp: {
+          active: 'a short open-palm jab snapped out at waist height from the low squat',
+          recovery: 'the palm drawn back in, staying compact in the squat',
+        },
+        mp: {
+          active: 'a rising open-palm strike lifting diagonally upward out of the squat',
+          recovery: 'the palm lowering, weight sinking back into the squat',
+        },
+        hp: {
+          active: 'both palms thrust straight upward out of the squat, a faint orange heat-shimmer above them (anti-air)',
+          recovery: 'arms lowering from overhead, settling back into the squat',
+        },
+        lk: {
+          active: 'squatting on her LEFT leg while her RIGHT leg (clearly attached at the hip) snaps a quick kick forward at ankle height',
+          recovery: 'the kicking leg drawn back beneath her, both feet planted in the squat',
+        },
+        mk: {
+          active: 'squatting low on her bent LEFT leg while her RIGHT leg (clearly attached at the hip) extends forward along the ground in a long low kick',
+          recovery: 'sliding the long leg back beneath her body into a compact squat',
+        },
+        hk: {
+          active: 'a low spinning splits-sweep fully extended along the ground, one leg carving a wide arc, palms lightly touching the floor',
+          recovery: 'flowing back up out of the splits toward stance',
+        },
       },
-      sweep: {
-        startup: 'melting down into a low splits position, one palm on the ground',
-        active: 'low spinning sweep from the splits, leg extended along the ground',
-        recovery: 'flowing back up from the splits like it was nothing',
+      air: {
+        lp: 'throwing a quick short downward open-palm jab, body tucked',
+        mp: 'a straight open-palm strike driven at a 45-degree downward angle',
+        hp: 'a double-palm downward press swung with both arms fully extended',
+        lk: 'a sharp knee strike raised toward the opponent, body tucked mid-flip',
+        mk: 'a side kick extended at a downward angle, one leg at full reach',
+        hk: 'a flying acrobatic scissor kick — RIGHT leg fully extended, LEFT leg tucked beneath her, both legs clearly attached',
       },
-      special: {
-        startup: 'taking a long sip from the teacup, cheeks puffed, ember light glowing between the lips',
-        active: 'head thrown forward spitting a cone of fire from the mouth, teacup held safely out to the side',
-        recovery: 'wiping their mouth with the back of a hand, smirking, wisp of smoke from the lips',
+      specials: {
+        'fire-breath': {
+          startup: 'drawing a deep breath, cheeks puffed, an orange ember glowing brightly between her lips',
+          active: 'head thrown forward breathing a billowing cone of orange fire from her mouth, arms flung back',
+          recovery: 'wiping her mouth with the back of a hand, a wisp of smoke curling from her lips, smirking',
+        },
+        'sonic-scream': {
+          startup: 'inhaling sharply, both hands cupped around her mouth, throat swelling, eyes wide',
+          active: 'mouth wide open unleashing a piercing scream — visible concentric white-blue shockwave rings blasting forward from her mouth',
+          recovery: 'catching her breath, one hand drifting to her throat, poised',
+        },
+        cartwheel: {
+          startup: 'coiling low, both arms reaching down to one side, one leg lifting, ready to spring into a cartwheel',
+          active: 'a rising cartwheel-handspring kick — body inverted mid-cartwheel, both legs whipping up and over in a vertical arc, hands leaving the ground',
+          recovery: 'landing lightly on both feet out of the cartwheel, springy and balanced',
+        },
       },
     },
     extra: {
       projectiles: {
-        'scalding-sip': {
+        'fire-breath': {
           prompt:
-            'A billowing cone-shaped burst of orange and red fire with curling steam wisps, pointing to the right, painted cel-shaded anime style, on solid flat chroma-key green background #00B140, no character, no text, no watermark.',
+            'A billowing cone-shaped burst of orange and red fire with curling heat wisps, pointing to the right, painted cel-shaded anime style, on solid flat chroma-key green background #00B140, no character, no text, no watermark.',
+        },
+        'sonic-scream': {
+          prompt:
+            'A series of concentric translucent white and pale-blue sonic shockwave rings expanding outward to the right, a visible sound wave, painted cel-shaded anime style, centered, on solid flat chroma-key green background #00B140, no character, no text, no watermark.',
         },
       },
     },

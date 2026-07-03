@@ -37,8 +37,14 @@ const FLAVOR = {
   flo: `Character flavor: "Kernel Panic" — a very tall, lanky, permanently annoyed German hacker. Keep his scowl. A thin smoking spliff hangs from the corner of his mouth, and faint glowing AMBER-ORANGE terminal-code glyphs float around one clenched fist (never green glyphs).`,
   freeman: `Character flavor: "The Still Point" — a serene warrior yogi. Loose comfortable clothes, mala beads around the neck or wrist, barefoot, calm centered half-smile, weight perfectly balanced in a meditative fighting stance.`,
   gene: `Character flavor: "Prompt Injection" — an AI-startup hacker. Keep his outfit from the photo; add subtle AR glasses with a faint HUD glow and glitchy digital pixel artifacts trailing from one open hand.`,
-  kirby: `Character flavor: "Spill the Tea" — a flexible fire-breathing yogi gossip. One hand balances a steaming teacup effortlessly; a faint ember glow flickers at the lips. Relaxed, smug, dangerous.`,
+  kirby: `Character flavor: "Firebreather" — an extremely flexible, acrobatic fire-breathing yogi. Barefoot in fitted athletic yoga wear, lithe and limber, with a smug confident smile. She holds NO teacup and has NOTHING in her mouth (no cup, no match, no cigarette) — instead a faint orange ember heat-shimmer flickers at her lips. Poised, playful, dangerous.`,
   marzipan: `Character flavor: "Photosynthesizer" — a dreadlocked vegan biologist druid. Keep the long dreads; earth-tone clothes, barefoot, a small seed pouch on the belt, and thin green vines with tiny leaves curling around both forearms.`,
+};
+
+// optional extra face-shot reference merged into the canonical prompt for
+// sharper facial fidelity (used when a clean head-on face photo exists)
+const FACE = {
+  kirby: 'assets/character-inspo/face/kirby.jpg',
 };
 
 // approved style-test canon doubles as canonical for the first two fighters
@@ -62,11 +68,12 @@ for (const [id, flavor] of Object.entries(FLAVOR)) {
   if (skip(out, force)) continue;
   console.log(`canonical ${id} ...`);
   const prompt = `${CHAR_BASE}\n${STYLE}\n${flavor}`;
+  const faceRef = FACE[id] && existsSync(join(ROOT, FACE[id])) ? [join(ROOT, FACE[id])] : [];
   const buf = await geminiImage({
     apiKey: env.GEMINI_API_KEY,
     model: MODEL,
     prompt,
-    referencePaths: [join(ROOT, `assets/character-inspo/${id}.jpg`)],
+    referencePaths: [join(ROOT, `assets/character-inspo/${id}.jpg`), ...faceRef],
     aspectRatio: '3:4',
   });
   saveAsset(out, buf, prompt);
