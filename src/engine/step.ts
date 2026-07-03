@@ -15,7 +15,11 @@ import {
   Strength,
 } from './types';
 import {
+  ACTION_BUFFER_TICKS,
+  BOUNCE_VY,
   CHARGE_TICKS,
+  COUNTER_HITSTOP_BONUS,
+  COUNTER_HITSTUN_MULT,
   DIZZY_TICKS,
   FATALITY_RANGE,
   FATALITY_TICKS,
@@ -25,6 +29,8 @@ import {
   GROUND_FRICTION,
   HITSTOP_HEAVY,
   HITSTOP_LIGHT,
+  LANDING_TICKS,
+  LANDING_WHIFF_TICKS,
   HITSTOP_MEDIUM,
   HITSTOP_SPECIAL,
   INPUT_BUFFER_LEN,
@@ -61,6 +67,8 @@ function initFighter(charId: string, def: CharacterDef, slot: 0 | 1): FighterSta
     inputBuffer: [],
     charge: 0,
     stun: 0,
+    hitstop: 0,
+    buffered: null,
   };
 }
 
@@ -86,7 +94,6 @@ export function initialState(
     wins: [0, 0],
     roundWinner: null,
     fatality: null,
-    hitstop: 0,
     pendingThrow: null,
   };
 }
@@ -100,7 +107,6 @@ function resetRound(s: GameState, defs: Defs): void {
   s.roundWinner = null;
   s.phase = 'intro';
   s.phaseFrame = 0;
-  s.hitstop = 0;
   s.pendingThrow = null;
 }
 
@@ -303,13 +309,30 @@ const BACKDASH_SPEED = 7;
 
 const ACTIONABLE = new Set(['idle', 'walkF', 'walkB', 'crouch']);
 
+/** States where a fresh button press waits in the action buffer instead of
+ *  being dropped: your own attack's tail, every reel, wakeup, prejump, and
+ *  landing recovery. ('air' is absent — pickAirAttack consumes air presses.) */
+const BUFFERABLE = new Set([
+  'attack', 'airAttack', 'hitstun', 'blockstun', 'knockdown', 'getup', 'prejump', 'landing', 'dazed',
+]);
+
 function canAct(f: FighterState): boolean {
   return ACTIONABLE.has(f.action.kind);
+}
+
+/** Any of the six attack buttons freshly pressed this tick (per-button edge —
+ *  a second button pressed while another is held still counts). */
+function anyFreshButton(f: FighterState): boolean {
+  const buf = f.inputBuffer;
+  const cur = buf[buf.length - 1] ?? 0;
+  const prev = buf[buf.length - 2] ?? 0;
+  return ((cur & ~prev) & (PUNCH_BITS | KICK_BITS)) !== 0;
 }
 
 function isInvulnerable(f: FighterState): boolean {
   const a = f.action;
   if (a.kind === 'attack' && (a.invuln ?? 0) > a.frame) return true; // reversal i-frames
+  if (a.kind === 'airHit' && a.bounced) return true; // rebounding off the floor = already down
   const k = a.kind;
   // 'dazed' is NOT here: a dizzied fighter is fully vulnerable (the finisher-
   // window daze doesn't care — nothing resolves attacks in that phase)
@@ -500,11 +523,22 @@ function updateFighter(
       f.y += f.vy;
       f.x += f.vx;
       if (f.y >= FLOOR_Y) {
-        f.y = FLOOR_Y;
-        f.vy = 0;
-        f.vx = 0;
-        f.action =
-          a.kind === 'airHit' ? { kind: 'knockdown', frame: 0 } : { kind: 'idle', frame: 0 };
+        if (a.kind === 'airHit' && !a.bounced) {
+          // ground-impact bounce: pop back off the floor once (invulnerable —
+          // you're already down), then the next contact settles for real
+          f.vy = -BOUNCE_VY;
+          f.vx *= 0.5;
+          f.y = FLOOR_Y - 1; // lift so the rebound arc plays
+          a.bounced = true;
+        } else {
+          f.y = FLOOR_Y;
+          f.vy = 0;
+          f.vx = 0;
+          f.action =
+            a.kind === 'airHit'
+              ? { kind: 'knockdown', frame: 0 }
+              : { kind: 'landing', frame: LANDING_TICKS };
+        }
       } else if (a.kind === 'air') {
         const id = pickAirAttack(f, def, input);
         if (id) f.action = { kind: 'airAttack', frame: 0, moveId: id, hasHit: false };
@@ -518,14 +552,19 @@ function updateFighter(
       f.y += f.vy;
       f.x += f.vx;
       if (f.y >= FLOOR_Y) {
-        // landing cancels the air normal
+        // landing interrupts the air normal — a whiff eats extra recovery
         f.y = FLOOR_Y;
         f.vy = 0;
         f.vx = 0;
-        f.action = { kind: 'idle', frame: 0 };
+        f.action = { kind: 'landing', frame: a.hasHit ? LANDING_TICKS : LANDING_WHIFF_TICKS };
       } else if (a.frame >= m.startup + m.active + m.recovery) {
         f.action = { kind: 'air', frame: 0 };
       }
+      break;
+    }
+    case 'landing': {
+      a.frame--;
+      if (a.frame <= 0) f.action = { kind: 'idle', frame: 0 };
       break;
     }
     case 'hitstun':
@@ -579,7 +618,19 @@ function updateFighter(
     default: {
       // idle / walkF / walkB / crouch — fully actionable
       const stance = input.down ? 'crouch' : 'stand';
-      const attack = pickAttack(s, slot, def, input, stance);
+      // a buffered press (wakeup reversal, landing buffer, tap during a reel
+      // or recovery) fires on this first actionable frame; consumed either
+      // way — one press never triggers twice
+      let attack: AttackPick | null = null;
+      if (f.buffered) {
+        const mv = def.moves[f.buffered.id];
+        // re-check the one-fireball rule at execution time
+        if (mv && !(mv.projectile && !mv.projectile.field && ownsLiveProjectile(s, slot))) {
+          attack = { id: f.buffered.id, strength: f.buffered.strength };
+        }
+        f.buffered = null;
+      }
+      if (!attack) attack = pickAttack(s, slot, def, input, stance);
       if (attack) {
         const resolved = resolveMove(def.moves[attack.id], attack.strength);
         f.action = {
@@ -648,10 +699,24 @@ interface HitPayload {
   knockdown: boolean;
   /** damage dealt through block (heavies/specials); can never KO */
   chip: number;
-  /** whole-world freeze ticks this contact buys (L short, H long, specials most) */
+  /** freeze ticks this contact buys (L short, H long, specials most) */
   hitstop: number;
+  /** melee freezes both fighters; projectiles freeze the victim only */
+  freezeAttacker: boolean;
+  /** defender was clipped during their own attack's startup or recovery:
+   *  bonus hitstun + extra victim-side freeze */
+  counter: boolean;
   /** command grabs ignore blocking entirely */
   unblockable?: boolean;
+}
+
+/** Counterhit test: the defender is mid-attack and NOT in active frames
+ *  (active-vs-active the same tick is a trade, not a counter). */
+function isCounterhit(d: FighterState, defs: Defs): boolean {
+  const a = d.action;
+  if (a.kind !== 'attack' && a.kind !== 'airAttack') return false;
+  const m = resolveMove(defs[d.charId].moves[a.moveId!], a.strength);
+  return a.frame < m.startup || a.frame >= m.startup + m.active;
 }
 
 /** lights are chipless; everything meatier shaves 10% through block */
@@ -676,8 +741,13 @@ function applyHit(
   const d = s.fighters[defSlot];
   const atkSlot = defSlot === 0 ? 1 : 0;
 
-  // contact freezes the whole world for a beat (trades keep the longest)
-  s.hitstop = Math.max(s.hitstop, hit.hitstop);
+  // per-fighter freeze: the victim always, the attacker only on melee;
+  // trades keep the longest via max(); counterhits sting the victim longer
+  d.hitstop = Math.max(d.hitstop, hit.hitstop + (hit.counter ? COUNTER_HITSTOP_BONUS : 0));
+  if (hit.freezeAttacker) {
+    const atk = s.fighters[atkSlot];
+    atk.hitstop = Math.max(atk.hitstop, hit.hitstop);
+  }
 
   if (!hit.unblockable && isBlocking(d, defInput, hit.height)) {
     const guard = d.action.kind === 'crouch' || defInput.down ? 'crouch' : 'stand';
@@ -690,16 +760,18 @@ function applyHit(
     // fighter ends the dizzy instead of stacking toward the next one
     if (d.action.kind === 'dazed') d.stun = 0;
     else d.stun += hit.damage;
+    const counter = hit.counter || undefined;
     if (!grounded(d)) {
-      d.action = { kind: 'airHit', frame: 0 };
+      d.action = { kind: 'airHit', frame: 0, counter };
       d.vx = attackerFacing * hit.knockback * 0.6;
       d.vy = -5;
     } else if (hit.knockdown) {
-      d.action = { kind: 'airHit', frame: 0 };
+      d.action = { kind: 'airHit', frame: 0, counter };
       d.vx = attackerFacing * hit.knockback * 0.6;
       d.vy = -4.5;
     } else {
-      d.action = { kind: 'hitstun', frame: hit.hitstun };
+      const stun = hit.counter ? Math.floor(hit.hitstun * COUNTER_HITSTUN_MULT) : hit.hitstun;
+      d.action = { kind: 'hitstun', frame: stun, counter };
       d.vx = attackerFacing * hit.knockback;
     }
   }
@@ -711,11 +783,17 @@ function applyHit(
   }
 }
 
-function resolveAttacks(s: GameState, defs: Defs, inputs: [InputFrame, InputFrame]): void {
+function resolveAttacks(
+  s: GameState,
+  defs: Defs,
+  inputs: [InputFrame, InputFrame],
+  frozen: [boolean, boolean],
+): void {
   // snapshot both attacks first so trades (both connect same tick) work
   for (const slot of [0, 1] as const) {
     const f = s.fighters[slot];
     const a = f.action;
+    if (frozen[slot]) continue; // a frozen attacker's hitbox is inert this tick
     if ((a.kind !== 'attack' && a.kind !== 'airAttack') || a.hasHit) continue;
     const m = resolveMove(defs[f.charId].moves[a.moveId!], a.strength);
     if (a.frame < m.startup || a.frame >= m.startup + m.active) continue;
@@ -750,7 +828,9 @@ function resolveAttacks(s: GameState, defs: Defs, inputs: [InputFrame, InputFram
           };
           d.action = { kind: 'hitstun', frame: THROW_TECH_TICKS + 2 };
           d.vx = 0;
-          s.hitstop = Math.max(s.hitstop, HITSTOP_LIGHT);
+          // the grab thunk freezes both for a beat (melee-style)
+          f.hitstop = Math.max(f.hitstop, HITSTOP_LIGHT);
+          d.hitstop = Math.max(d.hitstop, HITSTOP_LIGHT);
           continue;
         }
         applyHit(s, defSlot, f.facing, {
@@ -762,6 +842,8 @@ function resolveAttacks(s: GameState, defs: Defs, inputs: [InputFrame, InputFram
           knockdown: true,
           chip: 0,
           hitstop: hitstopFor(a.moveId!, m),
+          freezeAttacker: true,
+          counter: false, // grabs land clean, never as counters
           unblockable: true,
         }, inputs[defSlot]);
         if (m.grabRecoil) f.vx = -f.facing * m.grabRecoil; // 86'd bounce-away
@@ -783,6 +865,8 @@ function resolveAttacks(s: GameState, defs: Defs, inputs: [InputFrame, InputFram
         knockdown: !!m.knockdown,
         chip: CHIPLESS.has(a.moveId!) ? 0 : Math.floor(m.damage * 0.1),
         hitstop: hitstopFor(a.moveId!, m),
+        freezeAttacker: true,
+        counter: isCounterhit(d, defs),
       }, inputs[defSlot]);
     }
   }
@@ -898,6 +982,8 @@ function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputF
         // projectiles are special-born; lingering tick-clouds stay light so
         // rehit damage doesn't stutter the whole match
         hitstop: p.rehit > 0 ? HITSTOP_LIGHT : HITSTOP_SPECIAL,
+        freezeAttacker: false, // SF fireballs never freeze the shooter
+        counter: isCounterhit(d, defs),
         chip: Math.floor(p.damage * 0.1),
       }, inputs[defSlot]);
       // lingering clouds survive their hits and re-hit on a cooldown
@@ -974,13 +1060,26 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
     // bank charge while holding down; bleed it fast on release (short grace
     // window to flick ↓→↑ without losing the charge)
     f.charge = inputs[slot].down ? Math.min(f.charge + 1, 600) : Math.max(0, f.charge - 8);
+    // action buffer: a button tapped while unactionable (or frozen in
+    // hitstop) resolves its attack pick NOW — motions and chords are read at
+    // press time so wakeup reversals keep their input window — and fires on
+    // the first actionable frame. Newest press wins; TTL drops stale ones.
+    if (f.buffered && --f.buffered.ticksLeft <= 0) f.buffered = null;
+    if (
+      s.phase === 'fight' &&
+      (BUFFERABLE.has(f.action.kind) || f.hitstop > 0) &&
+      anyFreshButton(f)
+    ) {
+      const pick = pickAttack(s, slot, defs[f.charId], inputs[slot], inputs[slot].down ? 'crouch' : 'stand');
+      if (pick) f.buffered = { id: pick.id, strength: pick.strength, ticksLeft: ACTION_BUFFER_TICKS };
+    }
   }
 
-  // hitstop: the whole world freezes for a beat on contact — fighters, timer,
-  // projectiles, even a fresh KO's roundEnd. Inputs keep buffering (above) so
-  // motions finished during the freeze still come out.
-  if (s.hitstop > 0) {
-    s.hitstop--;
+  // outside the fight phase, any leftover freeze stops the whole world — the
+  // KO hit's dramatic pause carries into roundEnd/finisher exactly as before.
+  // (Inputs keep buffering above so motions finished mid-freeze still count.)
+  if (s.phase !== 'fight' && (s.fighters[0].hitstop > 0 || s.fighters[1].hitstop > 0)) {
+    for (const f of s.fighters) if (f.hitstop > 0) f.hitstop--;
     return s;
   }
 
@@ -1076,9 +1175,16 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
   // --- phase: fight ---
   const [f1, f2] = s.fighters;
 
+  // per-fighter hitstop: a frozen fighter skips their update entirely this
+  // tick (no action frames, no physics, no stun decay); the other side keeps
+  // moving — that's the SF fireball asymmetry. Projectiles keep flying.
+  const frozen: [boolean, boolean] = [f1.hitstop > 0, f2.hitstop > 0];
+  for (const f of s.fighters) if (f.hitstop > 0) f.hitstop--;
+
   // universal throw mid-hold: the victim's own LP+LK inside the window techs
-  // it (both bounce back, no damage); expiry lands the unblockable knockdown
-  if (s.pendingThrow) {
+  // it (both bounce back, no damage); expiry lands the unblockable knockdown.
+  // The grab thunk's freeze pauses the tech window along with everything else.
+  if (s.pendingThrow && !frozen[s.pendingThrow.attacker]) {
     const pt = s.pendingThrow;
     const atk = s.fighters[pt.attacker];
     const vicSlot = pt.attacker === 0 ? 1 : 0;
@@ -1107,6 +1213,8 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
         knockdown: true,
         chip: 0,
         hitstop: hitstopFor(pt.moveId, m),
+        freezeAttacker: true,
+        counter: false,
         unblockable: true,
       }, inputs[vicSlot]);
       if (m.grabRecoil) atk.vx = -atk.facing * m.grabRecoil;
@@ -1115,26 +1223,31 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
     }
   }
 
-  // dizzy meter bleeds off a little every live tick (poking can't stun-lock)
-  for (const f of s.fighters) {
-    if (f.stun > 0 && f.action.kind !== 'dazed') f.stun = Math.max(0, f.stun - STUN_DECAY);
+  // dizzy meter bleeds off a little every live tick (poking can't stun-lock;
+  // a frozen fighter's meter holds — freeze is time standing still for them)
+  for (const slot of [0, 1] as const) {
+    const f = s.fighters[slot];
+    if (!frozen[slot] && f.stun > 0 && f.action.kind !== 'dazed') {
+      f.stun = Math.max(0, f.stun - STUN_DECAY);
+    }
   }
 
-  updateFighter(s, 0, defs[f1.charId], inputs[0]);
-  updateFighter(s, 1, defs[f2.charId], inputs[1]);
+  if (!frozen[0]) updateFighter(s, 0, defs[f1.charId], inputs[0]);
+  if (!frozen[1]) updateFighter(s, 1, defs[f2.charId], inputs[1]);
 
   // face the opponent whenever actionable
   for (const slot of [0, 1] as const) {
     const f = s.fighters[slot];
     const o = s.fighters[slot === 0 ? 1 : 0];
-    if (canAct(f) && grounded(f)) {
+    if (!frozen[slot] && canAct(f) && grounded(f)) {
       if (o.x > f.x) f.facing = 1;
       else if (o.x < f.x) f.facing = -1;
     }
   }
 
-  // body push: grounded fighters can't overlap
-  if (grounded(f1) && grounded(f2) && !isInvulnerable(f1) && !isInvulnerable(f2)) {
+  // body push: grounded fighters can't overlap (skipped while either side is
+  // frozen so the freeze frame actually holds still)
+  if (!frozen[0] && !frozen[1] && grounded(f1) && grounded(f2) && !isInvulnerable(f1) && !isInvulnerable(f2)) {
     const r1 = worldBox(f1, defs[f1.charId].bodyBox);
     const r2 = worldBox(f2, defs[f2.charId].bodyBox);
     if (overlaps(r1, r2)) {
@@ -1146,14 +1259,15 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
   }
 
   updateProjectiles(s, defs, inputs);
-  resolveAttacks(s, defs, inputs);
+  resolveAttacks(s, defs, inputs, frozen);
 
   for (const slot of [0, 1] as const) {
     const f = s.fighters[slot];
     f.x = Math.min(STAGE_MAX_X, Math.max(STAGE_MIN_X, f.x));
   }
 
-  if (s.rules.roundTicks > 0) s.timer--;
+  // the round clock holds its breath with the freeze frames
+  if (s.rules.roundTicks > 0 && !frozen[0] && !frozen[1]) s.timer--;
 
   // KO / time-up (no time-up when the round clock is off)
   const ko1 = f1.health <= 0;

@@ -234,6 +234,9 @@ export type ActionKind =
   | 'airHit'
   | 'knockdown'
   | 'getup'
+  /** brief unactionable touchdown recovery: short after a plain jump, longer
+   *  after a whiffed air normal (buffered presses fire the moment it ends) */
+  | 'landing'
   | 'ko'
   /** helpless: dizzy from stun buildup (fight phase, times out after
    *  DIZZY_TICKS), or standing defeated in the finisher window waiting for
@@ -252,6 +255,23 @@ export interface Action {
   strength?: Strength;
   /** cached i-frame count for the current attack */
   invuln?: number;
+  /** hitstun/airHit: this reel came from a counterhit (defender was clipped
+   *  during their own attack's startup or recovery) — bonus hitstun and
+   *  victim-side hitstop already applied; the renderer flashes it */
+  counter?: boolean;
+  /** airHit: already rebounded off the floor once — the next floor contact
+   *  settles into knockdown (invulnerable while bounced, like knockdown) */
+  bounced?: boolean;
+}
+
+/** A button press captured while unactionable, waiting for the first
+ *  actionable frame. The attack pick (motion, strength, chord) is resolved at
+ *  press time so wakeup reversals keep their motion window. */
+export interface BufferedAction {
+  id: string;
+  strength?: Strength;
+  /** remaining ticks before the unconsumed press expires */
+  ticksLeft: number;
 }
 
 export interface FighterState {
@@ -272,6 +292,12 @@ export interface FighterState {
   /** dizzy accumulator: connecting hits add their damage, decays every tick,
    *  crossing STUN_THRESHOLD forces 'dazed' when the current reel ends */
   stun: number;
+  /** per-fighter freeze ticks from a connected hit: melee freezes both sides,
+   *  projectiles freeze the victim only, trades keep the longest (inputs
+   *  still buffer while frozen) */
+  hitstop: number;
+  /** action input buffer — null once consumed or expired */
+  buffered: BufferedAction | null;
 }
 
 /** A techable throw mid-hold: the victim is frozen while this counts down.
@@ -339,8 +365,6 @@ export interface GameState {
   roundWinner: 0 | 1 | null;
   /** set while a fatality cutscene is playing */
   fatality: { owner: 0 | 1; id: string } | null;
-  /** remaining freeze ticks from the last connected hit (inputs still buffer) */
-  hitstop: number;
   /** a universal throw holding its victim through the tech window */
   pendingThrow: PendingThrow | null;
 }

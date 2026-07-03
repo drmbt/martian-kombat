@@ -85,6 +85,8 @@ interface TickSnapshot {
   kinds: [string, string];
   moveIds: [string | undefined, string | undefined];
   healths: [number, number];
+  /** airHit ground-bounce flags — a false→true flip is the floor impact */
+  bounced: [boolean, boolean];
   projectiles: number;
   pendingThrow: boolean;
 }
@@ -592,6 +594,7 @@ export class FightScene extends Phaser.Scene {
       kinds: [a.action.kind, b.action.kind],
       moveIds: [a.action.moveId, b.action.moveId],
       healths: [a.health, b.health],
+      bounced: [a.action.bounced === true, b.action.bounced === true],
       projectiles: this.state.projectiles.length,
       pendingThrow: this.state.pendingThrow !== null,
     };
@@ -663,11 +666,15 @@ export class FightScene extends Phaser.Scene {
       const other = slot === 0 ? 1 : 0;
 
       if (f.health < prev.healths[slot]) {
+        // counterhit: distinct red spark, a sharper layered crack, a harder
+        // shake (the engine flags the reel; see applyHit)
+        const counter = f.action.counter === true;
         this.ghostHoldUntil[slot] = s.tick + 32; // ghost bar hangs, then drains
-        play(this, 's-hit');
+        play(this, 's-hit', counter ? 1 : undefined);
+        if (counter) play(this, 's-whoosh', 0.9);
         playVoice(this, f.charId, 'hurt', 0.7);
-        this.spawnHitVfx(slot, prev.healths[slot] - f.health);
-        this.cameras.main.shake(60, 0.004);
+        this.spawnHitVfx(slot, prev.healths[slot] - f.health, counter);
+        this.cameras.main.shake(counter ? 100 : 60, counter ? 0.006 : 0.004);
         // combo: consecutive hits while the defender never left stun
         this.comboHits = was === 'hitstun' || was === 'airHit' ? this.comboHits + 1 : 1;
         this.comboTicks = 90;
@@ -689,6 +696,14 @@ export class FightScene extends Phaser.Scene {
         this.logMove(slot);
       }
       if (kind === 'air' && was === 'prejump') play(this, 's-jump', 0.35);
+
+      // ground-impact dust: the airHit bounce (flag flip) and the settling
+      // knockdown each puff a sandy cloud at the feet with a soft thud
+      const bouncedNow = f.action.kind === 'airHit' && f.action.bounced === true;
+      if ((bouncedNow && !prev.bounced[slot]) || (kind === 'knockdown' && was !== 'knockdown')) {
+        this.spawnVfx('vfx-spark-hit', f.x, FLOOR_Y - 16, 95, 0xcbb894);
+        play(this, 's-hit', 0.3);
+      }
     }
 
     if (s.projectiles.length > prev.projectiles) play(this, 's-projectile', 0.6);
@@ -715,8 +730,9 @@ export class FightScene extends Phaser.Scene {
   /** Impact overlay for a connecting hit on `slot`: the attacker's per-move
    *  art when the move declares some (vfx-<char>-<move>), else a generic
    *  greyscale spark tinted the attacker's color — heavier contact, bigger
-   *  spark. Falls back to the old flash circle if no texture loaded. */
-  private spawnHitVfx(slot: 0 | 1, damage: number): void {
+   *  spark. Counterhits override with a big sharp red burst. Falls back to
+   *  the old flash circle if no texture loaded. */
+  private spawnHitVfx(slot: 0 | 1, damage: number, counter = false): void {
     const s = this.state;
     const f = s.fighters[slot]; // defender
     const atk = s.fighters[slot === 0 ? 1 : 0];
@@ -729,6 +745,11 @@ export class FightScene extends Phaser.Scene {
     const ix = f.x - f.facing * 20;
     const iy = f.y - 150;
 
+    if (counter) {
+      if (this.spawnVfx('vfx-spark-heavy', ix, iy, 155, 0xff3b30, atk.facing === -1)) return;
+      this.sparks.push({ x: ix, y: iy, life: 12, color: 0xff3b30 });
+      return;
+    }
     if (atkMove?.vfx) {
       const size = atkMove.vfx.size ?? 160;
       const onGround = atkMove.vfx.anchor === 'ground';
@@ -865,6 +886,7 @@ export class FightScene extends Phaser.Scene {
       case 'walkB': return this.cellFor(slot, [(t >> 3) % 2 ? 'walk-b' : 'walk-a']);
       case 'crouch':
       case 'prejump':
+      case 'landing':
       case 'getup': return this.cellFor(slot, ['crouch']);
       case 'air': return this.cellFor(slot, ['jump']);
       case 'attack':
@@ -1008,7 +1030,7 @@ export class FightScene extends Phaser.Scene {
     const k = f.action.kind;
     const air = f.y < FLOOR_Y || k === 'air' || k === 'airAttack' || k === 'airHit';
     const dist = Math.max(0, FLOOR_Y - f.y);
-    const crouch = k === 'crouch' || f.action.guard === 'crouch' || (k === 'attack' && f.action.moveId?.startsWith('c'));
+    const crouch = k === 'crouch' || k === 'landing' || f.action.guard === 'crouch' || (k === 'attack' && f.action.moveId?.startsWith('c'));
     const down = k === 'knockdown' || k === 'getup' || (k === 'ko' && f.y >= FLOOR_Y);
     const artW = (def.hurtStand.h * 1.32 * CELL_W) / CELL_H;
     const width = artW * (down ? 1.78 : crouch ? 1.58 : 1.5) * (air ? Math.max(0.6, 1 - dist / 460) : 1);

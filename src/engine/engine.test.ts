@@ -1,13 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import {
+  COUNTER_HITSTOP_BONUS,
+  COUNTER_HITSTUN_MULT,
   DIZZY_TICKS,
   EMPTY_INPUT,
   FLOOR_Y,
+  GETUP_TICKS,
   GameState,
   HITSTOP_HEAVY,
   HITSTOP_LIGHT,
   HITSTOP_SPECIAL,
   InputFrame,
+  LANDING_TICKS,
+  LANDING_WHIFF_TICKS,
   ROUND_TICKS,
   STUN_THRESHOLD,
   initialState,
@@ -950,7 +955,7 @@ describe('gene: prompt injection kit (teleports, slow field, fake clone)', () =>
   });
 });
 
-describe('hitstop', () => {
+describe('hitstop (per-fighter, sprint 18)', () => {
   /** step until the defender's health drops; returns ticks waited */
   function stepUntilContact(s: GameState, p1: InputFrame = inp()): number {
     const before = s.fighters[1].health;
@@ -961,12 +966,13 @@ describe('hitstop', () => {
     throw new Error('no contact within 60 ticks');
   }
 
-  it('a light hit freezes the whole world for HITSTOP_LIGHT ticks', () => {
+  it('a melee hit freezes BOTH fighters for HITSTOP_LIGHT ticks', () => {
     const s = fresh();
     closeRange(s);
     step(s, [inp({ lp: true }), inp()], characters);
     stepUntilContact(s);
-    expect(s.hitstop).toBe(HITSTOP_LIGHT);
+    expect(s.fighters[0].hitstop).toBe(HITSTOP_LIGHT);
+    expect(s.fighters[1].hitstop).toBe(HITSTOP_LIGHT);
 
     // frozen: nobody moves, stun doesn't tick down, the clock holds
     const x0 = s.fighters[0].x;
@@ -976,11 +982,11 @@ describe('hitstop', () => {
     expect(s.fighters[0].x).toBe(x0);
     expect(s.fighters[1].action.frame).toBe(stun);
     expect(s.timer).toBe(timer);
-    expect(s.hitstop).toBe(HITSTOP_LIGHT - 1);
+    expect(s.fighters[1].hitstop).toBe(HITSTOP_LIGHT - 1);
 
     // thaw: the world resumes (stun ticks again)
     run(s, HITSTOP_LIGHT - 1);
-    expect(s.hitstop).toBe(0);
+    expect(s.fighters[1].hitstop).toBe(0);
     step(s, [inp(), inp()], characters);
     expect(s.fighters[1].action.frame).toBe(stun - 1);
   });
@@ -990,17 +996,44 @@ describe('hitstop', () => {
     closeRange(s);
     step(s, [inp({ hp: true }), inp()], characters);
     stepUntilContact(s);
-    expect(s.hitstop).toBe(HITSTOP_HEAVY);
+    expect(s.fighters[1].hitstop).toBe(HITSTOP_HEAVY);
     expect(HITSTOP_HEAVY).toBeGreaterThan(HITSTOP_LIGHT);
   });
 
-  it('specials hit hardest — even off a light button (projectile contact)', () => {
+  it('a projectile freezes the VICTIM only — the shooter keeps moving', () => {
+    const s = fresh();
+    s.fighters[0].x = 300;
+    s.fighters[1].x = 700;
+    fireSpecial(s); // vincent qcf+LP -> sigil bolt
+    // ride out the attack recovery, then walk while the bolt travels
+    const before = s.fighters[1].health;
+    let landed = false;
+    for (let t = 0; t < 90 && !landed; t++) {
+      step(s, [inp({ right: true }), inp()], characters);
+      landed = s.fighters[1].health < before;
+    }
+    expect(landed).toBe(true);
+    expect(s.fighters[1].hitstop).toBe(HITSTOP_SPECIAL);
+    expect(s.fighters[0].hitstop).toBe(0);
+    expect(HITSTOP_SPECIAL).toBeGreaterThan(HITSTOP_HEAVY);
+
+    // during the victim's freeze the shooter still walks; the victim's
+    // hitstun clock holds
+    const x0 = s.fighters[0].x;
+    const reel = s.fighters[1].action.frame;
+    run(s, 2, inp({ right: true }), inp());
+    expect(s.fighters[0].x).toBeGreaterThan(x0);
+    expect(s.fighters[1].action.frame).toBe(reel);
+  });
+
+  it('a second hit never SHORTENS an existing freeze (trades keep the longest)', () => {
     const s = fresh();
     closeRange(s);
-    fireSpecial(s); // vincent qcf+LP -> sigil bolt
-    stepUntilContact(s);
-    expect(s.hitstop).toBe(HITSTOP_SPECIAL);
-    expect(HITSTOP_SPECIAL).toBeGreaterThan(HITSTOP_HEAVY);
+    s.fighters[1].hitstop = 20; // pretend a meatier freeze is already running
+    step(s, [inp({ lp: true }), inp()], characters);
+    run(s, 10);
+    // the jab's light freeze must not clobber the longer one
+    expect(s.fighters[1].hitstop).toBeGreaterThan(HITSTOP_LIGHT);
   });
 
   it('blocked contact freezes too, and resetRound clears any leftover freeze', () => {
@@ -1012,20 +1045,22 @@ describe('hitstop', () => {
       step(s, [inp(), guard], characters);
     }
     expect(s.fighters[1].action.kind).toBe('blockstun');
-    expect(s.hitstop).toBe(HITSTOP_HEAVY);
+    expect(s.fighters[1].hitstop).toBe(HITSTOP_HEAVY);
 
     // KO into round reset: the next round starts unfrozen
     run(s, 40); // let the freeze + blockstun + pushback settle
     closeRange(s);
     s.fighters[1].health = 1;
-    s.hitstop = 0;
+    s.fighters[0].hitstop = 0;
+    s.fighters[1].hitstop = 0;
     step(s, [inp({ hp: true }), inp()], characters);
     stepUntilContact(s);
     expect(s.phase).toBe('roundEnd');
-    expect(s.hitstop).toBe(HITSTOP_HEAVY); // the KO hit still lands its freeze
+    expect(s.fighters[1].hitstop).toBe(HITSTOP_HEAVY); // the KO hit still lands its freeze
     run(s, 400); // freeze + roundEnd beat + reset
     expect(s.phase).not.toBe('roundEnd');
-    expect(s.hitstop).toBe(0);
+    expect(s.fighters[0].hitstop).toBe(0);
+    expect(s.fighters[1].hitstop).toBe(0);
   });
 });
 
@@ -1219,5 +1254,263 @@ describe('dizzy/stun', () => {
     );
     run(s, 80); // land + knockdown + getup
     expect(s.fighters[1].action.kind).not.toBe('dazed'); // stun was reset by the throw
+  });
+});
+
+describe('action input buffer (sprint 18)', () => {
+  /** step until a predicate holds; throws if it never does */
+  function until(
+    s: GameState,
+    pred: (s: GameState) => boolean,
+    max: number,
+    p1: InputFrame = inp(),
+    p2: InputFrame = inp(),
+  ): void {
+    for (let t = 0; t < max; t++) {
+      if (pred(s)) return;
+      step(s, [p1, p2], characters);
+    }
+    if (!pred(s)) throw new Error(`predicate never held within ${max} ticks`);
+  }
+
+  it('a press during blockstun comes out on the first actionable frame', () => {
+    const s = fresh();
+    closeRange(s);
+    const guard = inp({ right: true }); // P2 faces left: back = right
+    step(s, [inp({ lp: true }), guard], characters);
+    // ride into the tail of P2's blockstun (inside the buffer window)
+    until(
+      s,
+      (st) => st.fighters[1].action.kind === 'blockstun'
+        && st.fighters[1].action.frame <= 5 && st.fighters[1].hitstop === 0,
+      60, inp(), guard,
+    );
+    // one tap, then nothing but held guard — the press must survive the reel
+    step(s, [inp(), inp({ right: true, lp: true })], characters);
+    until(s, (st) => st.fighters[1].action.kind === 'attack', 12, inp(), guard);
+    expect(s.fighters[1].action.moveId).toBe('lp');
+  });
+
+  it('the buffered press fires once, never twice', () => {
+    const s = fresh();
+    closeRange(s);
+    const guard = inp({ right: true });
+    step(s, [inp({ lp: true }), guard], characters);
+    until(
+      s,
+      (st) => st.fighters[1].action.kind === 'blockstun'
+        && st.fighters[1].action.frame <= 5 && st.fighters[1].hitstop === 0,
+      60, inp(), guard,
+    );
+    step(s, [inp(), inp({ lp: true })], characters);
+    // count P2 attack starts across the whole aftermath
+    let starts = 0;
+    let wasAttack = false;
+    for (let t = 0; t < 90; t++) {
+      step(s, [inp(), inp()], characters);
+      const isAttack = s.fighters[1].action.kind === 'attack';
+      if (isAttack && !wasAttack) starts++;
+      wasAttack = isAttack;
+    }
+    expect(starts).toBe(1);
+  });
+
+  it('a press too far ahead of the actionable frame expires unconsumed', () => {
+    const s = fresh();
+    closeRange(s);
+    step(s, [inp({ down: true, hk: true }), inp()], characters); // sweep P2 down
+    until(s, (st) => st.fighters[1].action.kind === 'knockdown', 90);
+    // tap at the very START of the knockdown — way more than the buffer ahead
+    step(s, [inp(), inp({ lp: true })], characters);
+    let attacked = false;
+    for (let t = 0; t < 120; t++) {
+      step(s, [inp(), inp()], characters);
+      if (s.fighters[1].action.kind === 'attack') attacked = true;
+    }
+    expect(attacked).toBe(false);
+  });
+
+  it('wakeup reversal: dp+P buffered during getup fires on the first actionable frame', () => {
+    const s = fresh();
+    closeRange(s);
+    s.fighters[0].action = { kind: 'getup', frame: 0 };
+    // feed the dp motion so the punch press lands late in the getup
+    run(s, GETUP_TICKS - 6);
+    step(s, [inp({ right: true }), inp()], characters);
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ right: true, down: true, hp: true }), inp()], characters);
+    expect(s.fighters[0].action.kind).toBe('getup'); // still waking up
+    until(s, (st) => st.fighters[0].action.kind === 'attack', 12);
+    expect(s.fighters[0].action.moveId).toBe('rising-glyph'); // the reversal, not a plain HP
+  });
+
+  it('landing buffer: a press during landing recovery attacks the moment it ends', () => {
+    const s = fresh();
+    step(s, [inp({ up: true }), inp()], characters);
+    until(s, (st) => st.fighters[0].action.kind === 'landing', 120);
+    step(s, [inp({ lp: true }), inp()], characters);
+    expect(s.fighters[0].action.kind).toBe('landing'); // no attack mid-landing
+    until(s, (st) => st.fighters[0].action.kind === 'attack', LANDING_TICKS + 3);
+    expect(s.fighters[0].action.moveId).toBe('lp');
+  });
+});
+
+describe('counterhits (sprint 18)', () => {
+  /** P1 jabs P2 out of P2's own HP startup; returns state at contact */
+  function counterJab(): GameState {
+    const s = fresh();
+    closeRange(s);
+    // both press together: P1's jab is faster than P2's heavy
+    step(s, [inp({ lp: true }), inp({ hp: true })], characters);
+    const before = s.fighters[1].health;
+    for (let t = 0; t < 20 && s.fighters[1].health === before; t++) {
+      step(s, [inp(), inp()], characters);
+    }
+    expect(s.fighters[1].health).toBeLessThan(before);
+    return s;
+  }
+
+  it('a defender clipped during their attack startup eats bonus hitstun and the counter flag', () => {
+    const s = counterJab();
+    const d = s.fighters[1];
+    expect(d.action.kind).toBe('hitstun');
+    expect(d.action.counter).toBe(true);
+    expect(d.action.frame).toBe(
+      Math.floor(characters[P1].moves.lp.hitstun * COUNTER_HITSTUN_MULT),
+    );
+  });
+
+  it('the counter adds bonus hitstop to the victim only', () => {
+    const s = counterJab();
+    expect(s.fighters[1].hitstop).toBe(HITSTOP_LIGHT + COUNTER_HITSTOP_BONUS);
+    expect(s.fighters[0].hitstop).toBe(HITSTOP_LIGHT); // attacker keeps the base freeze
+  });
+
+  it('a neutral hit is NOT a counter', () => {
+    const s = fresh();
+    closeRange(s);
+    step(s, [inp({ lp: true }), inp()], characters);
+    const before = s.fighters[1].health;
+    for (let t = 0; t < 20 && s.fighters[1].health === before; t++) {
+      step(s, [inp(), inp()], characters);
+    }
+    const d = s.fighters[1];
+    expect(d.action.counter).toBeUndefined();
+    expect(d.action.frame).toBe(characters[P1].moves.lp.hitstun);
+    expect(d.hitstop).toBe(HITSTOP_LIGHT);
+  });
+});
+
+describe('landing recovery (sprint 18)', () => {
+  it('an empty jump lands with LANDING_TICKS of recovery before idle', () => {
+    const s = fresh();
+    step(s, [inp({ up: true }), inp()], characters);
+    let sawLanding = false;
+    for (let t = 0; t < 120 && !sawLanding; t++) {
+      step(s, [inp(), inp()], characters);
+      if (s.fighters[0].action.kind === 'landing') sawLanding = true;
+    }
+    expect(sawLanding).toBe(true);
+    expect(s.fighters[0].action.frame).toBe(LANDING_TICKS);
+    run(s, LANDING_TICKS);
+    expect(s.fighters[0].action.kind).toBe('idle');
+  });
+
+  it('a whiffed air normal eats the longer landing recovery', () => {
+    const s = fresh(); // full-screen: the air kick hits nothing
+    step(s, [inp({ up: true }), inp()], characters);
+    // wait until falling and close to the floor, then swing
+    for (let t = 0; t < 120; t++) {
+      const f = s.fighters[0];
+      if (f.action.kind === 'air' && f.vy > 0 && f.y > FLOOR_Y - 80) break;
+      step(s, [inp(), inp()], characters);
+    }
+    step(s, [inp({ hk: true }), inp()], characters);
+    expect(s.fighters[0].action.kind).toBe('airAttack');
+    let sawLanding = false;
+    for (let t = 0; t < 60 && !sawLanding; t++) {
+      step(s, [inp(), inp()], characters);
+      if (s.fighters[0].action.kind === 'landing') sawLanding = true;
+    }
+    expect(sawLanding).toBe(true);
+    expect(s.fighters[0].action.frame).toBe(LANDING_WHIFF_TICKS);
+  });
+
+  it('an air normal that CONNECTED lands with only the short recovery', () => {
+    const s = fresh();
+    // defender near the corner (same shape as the jump-in block tests)
+    s.fighters[0].x = 800;
+    s.fighters[1].x = 880;
+    const guard = inp({ right: true }); // stand-blocks the overhead
+    step(s, [inp({ up: true, right: true }), guard], characters);
+    for (let t = 0; t < 25; t++) step(s, [inp(), guard], characters);
+    step(s, [inp({ hk: true }), guard], characters);
+    expect(s.fighters[0].action.kind).toBe('airAttack');
+    let sawLanding = false;
+    for (let t = 0; t < 90 && !sawLanding; t++) {
+      step(s, [inp(), guard], characters);
+      if (s.fighters[0].action.kind === 'landing') sawLanding = true;
+    }
+    expect(sawLanding).toBe(true);
+    expect(s.fighters[0].action.frame).toBe(LANDING_TICKS);
+  });
+});
+
+describe('ground-impact bounce (sprint 18)', () => {
+  it('a knockdown rebounds off the floor once before settling', () => {
+    const s = fresh();
+    closeRange(s);
+    step(s, [inp({ down: true, hk: true }), inp()], characters); // sweep
+    // ride until the victim has bounced (flag set at first floor contact)
+    let bounceTick = -1;
+    for (let t = 0; t < 90; t++) {
+      step(s, [inp(), inp()], characters);
+      const a = s.fighters[1].action;
+      if (a.kind === 'airHit' && a.bounced) {
+        bounceTick = t;
+        break;
+      }
+    }
+    expect(bounceTick).toBeGreaterThan(-1);
+    step(s, [inp(), inp()], characters);
+    expect(s.fighters[1].y).toBeLessThan(FLOOR_Y); // back off the floor
+    // ...and the second contact settles into the knockdown
+    let kind = s.fighters[1].action.kind as string;
+    for (let t = 0; t < 60 && kind !== 'knockdown'; t++) {
+      step(s, [inp(), inp()], characters);
+      kind = s.fighters[1].action.kind;
+    }
+    expect(kind).toBe('knockdown');
+    expect(s.fighters[1].y).toBe(FLOOR_Y);
+  });
+
+  it('the victim is invulnerable during the bounce', () => {
+    const s = fresh();
+    closeRange(s);
+    step(s, [inp({ down: true, hk: true }), inp()], characters);
+    for (let t = 0; t < 90; t++) {
+      step(s, [inp(), inp()], characters);
+      const a = s.fighters[1].action;
+      if (a.kind === 'airHit' && a.bounced) break;
+    }
+    const hp = s.fighters[1].health;
+    step(s, [inp({ lp: true }), inp()], characters);
+    run(s, 10);
+    expect(s.fighters[1].health).toBe(hp); // the jab whiffed through the bounce
+  });
+
+  it('a thrown victim bounces too', () => {
+    const s = fresh();
+    closeRange(s);
+    const chord = inp({ lp: true, lk: true });
+    for (let i = 0; i < 12 && !s.pendingThrow; i++) step(s, [chord, inp()], characters);
+    expect(s.pendingThrow).not.toBeNull();
+    let bounced = false;
+    for (let t = 0; t < 120 && !bounced; t++) {
+      step(s, [inp(), inp()], characters);
+      const a = s.fighters[1].action;
+      bounced = a.kind === 'airHit' && a.bounced === true;
+    }
+    expect(bounced).toBe(true);
   });
 });

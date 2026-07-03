@@ -6,13 +6,13 @@
 > Unchecked boxes in the active sprint = the backlog. Do not silently add scope;
 > new ideas go to the Icebox.
 
-**Current sprint: 18 — input forgiveness + hit feedback** · MVP shipped
-2026-07-02 (8/8 fighters playable, 19 stages, full music loop, fatalities,
-CPU + training modes, settings). Sprint 17 (universal throws + dizzy/stun)
-shipped 2026-07-03 (frames approved, sitting in the working tree). Sprints
-18–20 planned 2026-07-03 from the game-feel review: input forgiveness →
-cancels/chains → personality specials + Flo fatality rework. Long-term RFEs
-live in their own roadmap section below.
+**Current sprint: 19 — cancels & chains** · MVP shipped 2026-07-02 (8/8
+fighters playable, 19 stages, full music loop, fatalities, CPU + training
+modes, settings). Sprint 17 (universal throws + dizzy/stun) shipped +
+committed 2026-07-03. Sprint 18 (input forgiveness + hit feedback) shipped +
+committed 2026-07-03 (all engine work, 110/110 vitest, verified live; user
+authorized the commit, not pushed). Sprint 19 (cancels & chains) is in
+flight. Long-term RFEs live in their own roadmap section below.
 
 ---
 
@@ -497,33 +497,47 @@ before any art exists.
       without the user's explicit review pass over the new frames first
       (nothing committed — everything sits in the working tree for review)
 
-### Sprint 18 — Input forgiveness + hit feedback (planned 2026-07-03)
+### Sprint 18 — Input forgiveness + hit feedback ✅ (shipped 2026-07-03)
 Goal: the "special sauce" pass from the 2026-07-03 game-feel review (industry-
 conventions list audited against the engine — most of it we already have; these
 are the gaps). Sim stays strict, controls get forgiving, hits get legible.
 All engine work; every item ships with vitest coverage.
-- [ ] **Action input buffering + reversal buffer** — the #1 gap: a button
-      press only registers on an actionable tick today (`freshPress` is an
-      exact-tick check), so presses during recovery/hitstun/blockstun/getup/
-      prejump/landing are silently dropped. Buffer presses ~6–8 ticks with a
-      consumed flag (one press never fires twice); the first actionable frame
-      executes the buffered action. Covers wakeup reversals + landing buffer
-      in the same change.
-- [ ] **Counterhits** — defender hit during their own attack's startup or
-      recovery: bonus hitstun (+25–50%), +2–4 hitstop, distinct spark tint +
-      sharper sound (renderer side via state-diff, like all VFX)
-- [ ] **Landing recovery** — 2–4 tick generic jump landing, 4–8 ticks after
-      a whiffed air normal (landing currently cancels straight to idle,
-      making jumps consequence-free)
-- [ ] **Per-fighter (asymmetric) hitstop** — split `GameState.hitstop` into
-      per-fighter freeze counters: projectile hits freeze the VICTIM only
-      (today the global freeze stops the shooter too — SF fireballs don't);
-      melee keeps both frozen, trades keep the longest. Opens the attacker/
-      defender asymmetry lever for counterhits and heavies.
-- [ ] **Ground-impact bounce** — SF-style bounce off the floor on knockdowns
-      and throws (small vy rebound + dust-puff VFX) instead of the flat stick
-- [ ] Feel-tuning playtest alongside the above: consider raising base hitstop
-      (L4 / M6 / H9, specials 10–12)
+- [x] **Action input buffering + reversal buffer** — `FighterState.buffered`:
+      a fresh button press in any unactionable state (or while frozen in
+      hitstop) resolves its attack pick AT PRESS TIME (so dp motions stay
+      inside their window for wakeup reversals) and fires on the first
+      actionable frame; ACTION_BUFFER_TICKS=8 TTL, consumed-once, newest
+      press wins, one-fireball rule re-checked at execution. Covers wakeup
+      reversals + landing buffer + presses during hitstop.
+- [x] **Counterhits** — `isCounterhit()`: defender in their own attack's
+      startup or recovery (active-frame trades excluded) → hitstun ×1.5
+      (COUNTER_HITSTUN_MULT), +3 victim-only hitstop
+      (COUNTER_HITSTOP_BONUS), `counter` flag on the reel action; renderer
+      shows a big red spark + layered s-hit/s-whoosh crack + harder shake
+- [x] **Landing recovery** — new `'landing'` action kind: LANDING_TICKS=3
+      after a plain jump, LANDING_WHIFF_TICKS=6 after a whiffed air normal
+      (connected/blocked air normals land light); unactionable + can't
+      block, renders as the crouch cell
+- [x] **Per-fighter (asymmetric) hitstop** — `GameState.hitstop` split into
+      `FighterState.hitstop`: projectiles freeze the VICTIM only, melee
+      freezes both, max() keeps the longest; frozen fighters skip their
+      whole update (timer + throw-tech window pause while anyone's frozen;
+      non-fight phases keep the whole-world KO freeze); projectiles keep
+      flying through freezes (real SF fireball pressure)
+- [x] **Ground-impact bounce** — airHit rebounds off the floor once
+      (BOUNCE_VY=3.2, vx halved, invulnerable during the bounce via the
+      `bounced` flag) before settling into knockdown; throws inherit it
+      free via their airHit path; renderer puffs sand-tinted dust + soft
+      thud on the bounce and the settle
+- [x] Feel-tuning playtest: base hitstop raised to L4 / M6 / H9, specials 10;
+      verified live in the browser (bot-vs-bot demo, ~5700 frames stepped:
+      asymmetric freezes, bounces, counters, landing 3→2→1 all observed in
+      engine state; no console errors) — subjective feel pass is the user's
+      review
+- [x] Engine tests: 17 new (buffer fire/expire/once, wakeup reversal,
+      landing buffer, counter hitstun/hitstop/neutral, landing short/whiff/
+      connected, bounce + bounce-invuln + throw bounce, per-fighter freeze
+      asymmetry, max-freeze rule) — 110/110 green, tsc clean
 
 ### Sprint 19 — Cancels & chains (planned 2026-07-03)
 Goal: combos become deliberate, not accidental (moved up from the near-term
@@ -601,18 +615,35 @@ review — chains/cancels/scaling promoted to Sprint 19)
       generate canonical/frames/portraits (the 7-step pipeline as a product)
 - [ ] **Online multiplayer** — two-player versus from remote locations in the
       browser; engine determinism was built for rollback netcode from day one
-- [ ] **1-player arcade story mode** — ladder of CPU fights with intro/ending
-      story beats per character (wants CPU difficulty levels first)
+- [ ] **Arcade story mode** — 1-player ladder: fight through every roster
+      fighter in their home stage, with intro/ending story beats per
+      character. Between fights, a stylized overhead map of Mars + Bombay
+      Beach zooms into a defined map location associated with each stage as
+      the player advances the ladder (wants CPU difficulty levels first)
+- [ ] **Super bar + super move** — per-player meter builds over the fight;
+      when full, each fighter gets one cinematic signature super (super
+      freeze/flash ships with it). Promoted from the Icebox
+- [ ] **Bonus stages** — SF2-style interludes between arcade-ladder fights
+      where players break certain items against the clock (car-smash homage
+      promoted from the Icebox; more item-break variants welcome)
+- [ ] **Unlockable hidden characters** — secret fighters from town (Tao, RJ,
+      Rapha, Anderson, Puddles, etc.) unlocked through play; characters are
+      data files, so each is a pipeline run + an unlock condition
+- [ ] **Expanded Martian roster** — more Mars College fighters beyond the
+      launch eight; the pipeline is proven and the roster bible has room
+- [ ] **Per-character double jump** — enable a double jump for certain
+      acrobatic characters via a character-JSON flag (data-driven — no
+      per-character engine special cases)
 - [ ] **Veo motion smoothing** — upgrade keyframe animation to sampled
       motion-clip frames; the biggest visual-quality lever we have
 
 ### Icebox (do not start)
-New characters (pipeline is proven; the roster bible has room) · super
-meter/EX moves (super freeze/flash ships with them when they land) · stage
+*(new characters, super meter, and the bonus stage PROMOTED 2026-07-03 to
+the Long-term RFEs above)* · stage
 interactables · rage meter + ENOUGH., armored/vault dashes, backdash
 i-frames (Sprint 8 deferred list; mash motions PROMOTED to Sprint 20 —
 Kirby's cat scratch) · real counter/armor primitives (Freeman's
-Presence/Breathwork upgrades) · bonus stage (car-smash homage) · gamepad
+Presence/Breathwork upgrades) · gamepad
 rumble · fullscreen button + scaling · RANDOM tile on character select ·
 persistent win/loss stats · per-character victory song: a `victorySong`
 attribute in the character JSON names a track in `music/victory/` that
@@ -627,7 +658,40 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
-- **2026-07-03 · docs · Sprints 18–20 planned from the game-feel review** —
+- **2026-07-03 · engine+scenes · Sprint 18 shipped: input forgiveness + hit
+  feedback** — all six items, engine-core only + renderer presentation.
+  (1) Action input buffer: `FighterState.buffered` captures a fresh press in
+  any unactionable state (incl. during hitstop) with the attack pick resolved
+  at press time — motions keep their window, so wakeup reversals work — and
+  fires it on the first actionable frame (TTL 8, consumed once, fireball rule
+  re-checked). (2) Counterhits: startup/recovery clips (not active-frame
+  trades) reel ×1.5 hitstun with +3 victim-only freeze and a `counter` action
+  flag; FightScene diffs it into a red spark + layered crack + harder shake.
+  (3) Landing recovery: new `landing` kind — 3 ticks plain jump, 6 after a
+  whiffed air normal. (4) Per-fighter hitstop: `GameState.hitstop` →
+  `FighterState.hitstop`; melee freezes both, projectiles the victim only,
+  max() on stacked freezes, frozen fighters skip their update, timer/throw-
+  tech pause while anyone's frozen, non-fight phases keep the whole-world KO
+  freeze, projectiles fly through freezes. (5) Ground bounce: airHit rebounds
+  once (invulnerable, `bounced` flag), throws inherit it; dust puff + thud on
+  impacts. (6) Hitstop retuned 3/5/7/8 → 4/6/9/10. 17 new vitests (110/110),
+  tsc clean, verified live (demo bots, ~5700 frames: asymmetric freezes,
+  bounces, counters, landing countdown all observed; zero console errors).
+  Committed (not pushed) on the user's go-ahead; the same commit carries a
+  parallel session's uncommitted SPRINTBOARD docs edits (long-term RFE
+  additions — same file, docs-only). — Claude
+
+- **2026-07-03 · docs · long-term stretch goals added to the RFE roadmap** —
+  user-requested, explicitly not current priorities: super bar + super move
+  per player (promoted from the Icebox, carries the super-freeze note with
+  it), arcade story mode expanded with its presentation concept (fight every
+  fighter in their home stage; stylized overhead Mars/Bombay Beach map zooms
+  into a location per stage between fights), SF2-style item-breaking bonus
+  stages (absorbs the Icebox car-smash homage), unlockable hidden characters
+  from town (Tao, RJ, Rapha, Anderson, Puddles, …), expanded Martian roster
+  (promoted from the Icebox's "new characters"), and per-character double
+  jump via a character-JSON flag. Icebox trimmed to match. No code changed.
+  — Claude
   audited an industry-conventions "special sauce" list (36 items), a
   time-freeze follow-up, and the user's personal fix list against the engine
   and FightScene. Already covered (no action): hitstop, KO slow-mo, motion
@@ -1200,52 +1264,57 @@ fixed-screen SF2 framing is intentional).
 
 *(overwrite this section each handoff — what's mid-flight, gotchas, next action)*
 
-**State (2026-07-03, Sprint 17 SHIPPED + COMMITTED, Sprint 18 next):** 8/8
+**State (2026-07-03, Sprint 18 SHIPPED — committed & pushed on the user's
+go-ahead, Sprint 19 next):** 8/8
 fighters playable with fatalities, 20 stages, full music loop, settings +
 controls pages, CPU + training + attract modes, VS screen, win-quote screen.
-**Sprint 17 (universal throws + dizzy/stun) is fully implemented, tested
-(95/95 vitest, tsc + build clean), verified live in the browser, frame-
-reviewed and approved by the user (two re-roll rounds + manual raw edits),
-and committed** in `03ad717` (`engine+data+assets+audio: universal throws +
-dizzy/stun (Sprint 17), voice-variant depth` — bundled with a parallel
-session's voice-variant work, see below). **Sprint 18 (input forgiveness +
-hit feedback) is fully scoped in the section above and is the next planned
-sprint** — nobody has started it yet. What's on record for whoever picks
-this up:
-- Throw frame re-roll history, for the record: (1) prompts rewritten to
-  solo-mime "reaching" poses (no opponent/clothes in frame) + a global
-  FRAME_RULES rule that nothing may touch the frame edges (edge-cropped
-  content shows a hard line in-game); Gene's 3 originals and all non-Kirby
-  recoveries kept. (2) every `throw-active` except Gene's re-rolled again as
-  an ACTIVE forward grab: arms fully extended toward the right frame edge,
-  hands actively clutching the empty air, a small impact flash obscuring the
-  hands (per-character flavor color). Targeted re-rolls stay cheap:
-  `node tools/gen-frames.mjs --char X --cells throw-active` (force-regens
-  only the named cells), then `npm run gen:pack -- --char X`.
-- **Next action: Sprint 18** (see the section above for full scope: action
-  input buffering + reversal buffer, counterhits, landing recovery,
-  per-fighter asymmetric hitstop, ground-impact bounce, hitstop-tuning
-  playtest). All engine work, every item ships with vitest coverage, no new
-  art needed.
-- **Where the Sprint 17 code landed:** engine — `throwChord`/`LPLK` chord + pendingThrow
-  tech window + `techable` flag in step.ts/types.ts/constants.ts (constants:
-  THROW_TECH_TICKS 12, THROW_TECH_PUSH 6, THROW_TECH_RECOIL 10,
-  STUN_THRESHOLD 250, STUN_DECAY 0.5/tick, DIZZY_TICKS 180). `dazed` was
-  REMOVED from `isInvulnerable` — deliberate, dizzied fighters must be
-  punishable; the finisher-window daze is unaffected (that phase never calls
-  resolveAttacks, and updateFighter never runs for the loser there, which is
-  also why the dazed case's new frame-count/timeout can't end a finisher
-  daze). Renderer — persistent `dizzySprites` overlay pair in FightScene
-  (hidden on fatality/win-screen early-return paths — remember those if you
-  add more overlays), `pendingThrow` added to TickSnapshot for the grab SFX.
-- **Gotchas hit this sprint:** (1) a back-WALKING blocker legitimately
-  retreats out of throw range — body push settles fighters at ~(wA+wB)/2 ≈
-  80-88px apart, so throw range must clear ~88 to ever connect vs big-body
-  crouchers (hence 105/115, still under every command grab's 110-150).
-  (2) On tech, do NOT drop both fighters to `idle` — the victim's still-held
-  chord would fire an instant counter-throw the same tick; they get a
-  10-tick blockstun-shaped recoil instead. (3) Marzipan's prompts use "he"
-  — the sprint brief's throw prompt said "her"; fixed in the manifest.
+Sprint 17 shipped + committed in `03ad717`. **Sprint 18 (input forgiveness +
+hit feedback) is fully implemented, committed, and pushed.**
+110/110 vitest, tsc clean, verified live in the browser (demo bots
+via `window.__game` manual loop stepping — the hidden-preview-tab gotcha:
+Phaser's loader ALSO stalls without rAF; kick `boot.load.checkLoadQueue()`
+between `loop.step()` pumps). Touched files: `src/engine/{types,constants,
+step}.ts`, `src/engine/engine.test.ts`, `src/scenes/FightScene.ts`,
+`SPRINTBOARD.md`. What's on record for whoever picks this up:
+- **Next action:** user reviews + commits Sprint 18, then **Sprint 19
+  (cancels & chains)** — scoped in its section above; it builds directly on
+  the action buffer (a buffered special during an attack's cancel window is
+  the natural cancel implementation: check `f.buffered` inside the attack
+  case the way the chord-upgrade path already does).
+- **Where the Sprint 18 code landed (design notes for S19):**
+  (1) `FighterState.buffered` (`BufferedAction`): pick resolved at PRESS
+  time (motion windows stay honest for reversals), executed in
+  updateFighter's default branch before live pickAttack, TTL 8, cleared on
+  execution. Capture happens in step()'s per-slot input loop, gated on
+  `BUFFERABLE` set ∪ frozen, fight phase only. (2) hitstop is per-fighter
+  now (`f.hitstop`): melee → both, projectiles → victim only, counter → +3
+  victim side; frozen fighters skip updateFighter/facing/stun-decay/attack
+  resolution entirely (a frozen attacker's active hitbox is inert);
+  body-push, timer, and the pendingThrow tech countdown pause while EITHER
+  side is frozen; projectiles keep flying. Non-fight phases still hard-
+  freeze the whole world so the KO thunk carries into roundEnd. (3) `landing`
+  is a new ActionKind — anything that switches on action kinds (bot, future
+  UI) should treat it like getup; it's in the renderer's crouch-cell bucket.
+  (4) `airHit` bounce: `bounced` flag on the Action; bounced airHit is
+  invulnerable (isInvulnerable) or juggle loops would eat the sweep-invuln
+  test; applyHit resets it on fresh launches (juggles re-arm the bounce).
+  (5) Counterhit = defender in attack startup OR recovery, NOT active
+  (active-frame same-tick contact stays a plain trade); flag rides the
+  victim's action so the renderer state-diff sees it with zero extra
+  plumbing.
+- **Feel numbers now live:** HITSTOP 4/6/9/10 (was 3/5/7/8),
+  COUNTER_HITSTUN_MULT 1.5, COUNTER_HITSTOP_BONUS 3, ACTION_BUFFER_TICKS 8,
+  LANDING_TICKS 3, LANDING_WHIFF_TICKS 6, BOUNCE_VY 3.2. All in
+  `src/engine/constants.ts` — the user's subjective feel pass may want to
+  nudge these; every one is covered by a test that reads the constant, so
+  retuning won't break the suite.
+- **Known non-issues:** console shows pre-existing `proj-<char>` 404
+  process errors for characters with no legacy projectile art — BootScene
+  loads those speculatively by design, not a Sprint 18 regression. Trades
+  are still slot-0-first (resolveAttacks reads live actions, so P1's hit
+  interrupts P2's same-tick attack before it resolves) — pre-existing
+  behavior, left alone; true simultaneous trades would need the snapshot
+  the comment already claims.
 NOTE: a parallel session may work this repo simultaneously — commit with
 explicit paths only if that's still true when you pick this up.
 **After Sprint 17:** a parallel session ran a full game-feel review (industry-

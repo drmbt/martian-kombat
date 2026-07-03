@@ -40,8 +40,30 @@ export const STUN_THRESHOLD = 250;
 export const STUN_DECAY = 0.5; // per tick (binary-exact, so decay stays deterministic)
 export const DIZZY_TICKS = 180; // ~3s helpless
 
-// hitstop: whole-world freeze frames on contact, scaled by button strength
-export const HITSTOP_LIGHT = 3;
-export const HITSTOP_MEDIUM = 5;
-export const HITSTOP_HEAVY = 7;
-export const HITSTOP_SPECIAL = 8; // specials (and their projectiles) hit hardest
+// hitstop: per-fighter freeze frames on contact, scaled by button strength.
+// Melee freezes both fighters; projectiles freeze the VICTIM only (SF
+// fireballs never stop the shooter); trades keep the longest freeze.
+// (Raised from 3/5/7/8 in the Sprint 18 feel pass — hits read heavier.)
+export const HITSTOP_LIGHT = 4;
+export const HITSTOP_MEDIUM = 6;
+export const HITSTOP_HEAVY = 9;
+export const HITSTOP_SPECIAL = 10; // specials (and their projectiles) hit hardest
+
+// counterhit: a defender clipped during their own attack's startup or
+// recovery reels longer and the victim-side freeze runs a few extra ticks
+export const COUNTER_HITSTUN_MULT = 1.5;
+export const COUNTER_HITSTOP_BONUS = 3;
+
+// action input buffer: a button tapped while unactionable (reeling,
+// recovering, getting up, frozen in hitstop) fires on the first actionable
+// frame instead of being dropped — covers wakeup reversals + landing buffer
+export const ACTION_BUFFER_TICKS = 8;
+
+// landing recovery: jumps have consequences — a short unactionable window on
+// touchdown, longer after an air normal that whiffed
+export const LANDING_TICKS = 3;
+export const LANDING_WHIFF_TICKS = 6;
+
+// ground-impact bounce: knockdowns pop back up off the floor with this
+// vertical speed before settling (the renderer puffs dust on each impact)
+export const BOUNCE_VY = 3.2;
