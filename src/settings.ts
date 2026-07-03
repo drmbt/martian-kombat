@@ -3,6 +3,10 @@
 // engine via initialState's MatchRules, never read from inside src/engine/.
 
 export interface Settings {
+  /** 0..1, scales music AND sfx — the quick-access overlay fader */
+  masterVolume: number;
+  /** master mute — the quick-access overlay speaker toggle */
+  muted: boolean;
   /** 0..1 */
   musicVolume: number;
   /** 0..1, multiplies every play() call (sfx, announcer, voice) */
@@ -14,6 +18,8 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
+  masterVolume: 1,
+  muted: false,
   musicVolume: 0.6,
   sfxVolume: 0.8,
   roundSeconds: 60,
@@ -31,6 +37,8 @@ function sanitize(raw: Partial<Settings>): Settings {
   const pickFrom = (choices: readonly number[], v: unknown, fallback: number): number =>
     typeof v === 'number' && choices.includes(v) ? v : fallback;
   return {
+    masterVolume: typeof raw.masterVolume === 'number' ? clamp01(raw.masterVolume) : DEFAULT_SETTINGS.masterVolume,
+    muted: typeof raw.muted === 'boolean' ? raw.muted : DEFAULT_SETTINGS.muted,
     musicVolume: typeof raw.musicVolume === 'number' ? clamp01(raw.musicVolume) : DEFAULT_SETTINGS.musicVolume,
     sfxVolume: typeof raw.sfxVolume === 'number' ? clamp01(raw.sfxVolume) : DEFAULT_SETTINGS.sfxVolume,
     roundSeconds: pickFrom(ROUND_SECONDS_CHOICES, raw.roundSeconds, DEFAULT_SETTINGS.roundSeconds),

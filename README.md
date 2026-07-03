@@ -18,19 +18,23 @@ Veo for sprites, GPT Image for stages/UI, ElevenLabs for the announcer and SFX).
 | **Flo** | Angry German hacker; terminal exploits and spliff smokescreens |
 | **Freeman** | Yogi-meditator; stillness, counters, and inner-peace armor |
 | **Gene** | AI-startup hacker; generative-AI glitch attacks |
-| **Kirby** | Flexible yogi; sips tea, spits fire, spreads gossip |
+| **Kirby** | Acrobatic fire-breathing contortionist; cartwheels and scalding breath |
 | **Marzipan** | Dreadlocked vegan biologist; vines, spores, and symbiosis |
 | **Vincent** | Tai chi + digital wizardry in a long black cloak |
 | **Yulia** | Tall Russian yogi; flexibility plus a rage meter you don't want full |
 
-More Martians join the roster after MVP. Full move-set designs:
-[docs/CHARACTERS.md](docs/CHARACTERS.md).
+More Martians can join the roster — characters are data files, not code. Full
+move-set designs: [docs/CHARACTERS.md](docs/CHARACTERS.md).
 
 ## Status
 
-**MVP shipped** — 4 of 8 Martians playable (Vincent, Yulia, Catherine +
-Jazzper, Kirby), best-of-3 fights on the Salton Sea shoreline, announcer +
-SFX, keyboard or gamepads. Roadmap, task state, and changelog live in
+**MVP shipped, roster complete** — all 8 Martians fully built and playable,
+each with a six-button kit, named motion-input specials, and a fatality.
+19 pixel-art stages with their own music, full title/versus/victory music
+loop, announcer + SFX, VS screen and win-quote screen, CPU opponent, training
+mode, settings (volumes, round clock, match length), keyboard / gamepad /
+touch. Current focus: smoothness and playability — game feel, impact VFX,
+attract mode, control remapping. Roadmap, task state, and changelog live in
 [SPRINTBOARD.md](SPRINTBOARD.md).
 
 ## Stack

@@ -85,16 +85,18 @@ export class SelectScene extends Phaser.Scene {
           stroke: '#000', strokeThickness: 3,
         })
         .setOrigin(0.5);
-      // mouse: hovering moves the active cursor here; clicking confirms it
+      // mouse: hovering moves the active cursor here; clicking confirms it.
+      // The mouse always drives the first unconfirmed slot — in every mode it
+      // picks P1 first, then (once P1 locks) P2 / the CPU opponent / the dummy.
       cellBg.setInteractive({ useHandCursor: entry.playable });
       cellBg.on('pointerover', () => {
         if (this.stageMode) return;
-        const p = this.cpu || this.training ? (this.confirmed[0] ? 1 : 0) : 0;
+        const p = this.confirmed[0] ? 1 : 0;
         if (!this.confirmed[p] && !this.starting) this.idx[p] = i;
       });
       cellBg.on('pointerdown', () => {
         if (this.stageMode) return;
-        const p = this.cpu || this.training ? (this.confirmed[0] ? 1 : 0) : 0;
+        const p = this.confirmed[0] ? 1 : 0;
         if (this.confirmed[p] || this.starting) return;
         this.idx[p] = i;
         this.confirm(p);
@@ -135,6 +137,11 @@ export class SelectScene extends Phaser.Scene {
     kb.on('keydown-UP', () => this.stageMode && this.stageMove(-this.scols));
     kb.on('keydown-DOWN', () => this.stageMode && this.stageMove(this.scols));
     kb.on('keydown-K', () => this.stageMode && this.confirmStage());
+    // ENTER confirms in sequence: P1's pick, then P2's, then the stage
+    kb.on('keydown-ENTER', () => {
+      if (this.stageMode) this.confirmStage();
+      else this.confirm(this.confirmed[0] ? 1 : 0);
+    });
     if (!this.cpu && !this.training) {
       kb.on('keydown-LEFT', () => !this.stageMode && move(1, -1));
       kb.on('keydown-RIGHT', () => !this.stageMode && move(1, 1));

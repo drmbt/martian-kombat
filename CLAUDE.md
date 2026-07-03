@@ -37,9 +37,13 @@ audio assets are AI-generated from real inspiration photos via scripted pipeline
 ```
 src/
   engine/        # deterministic fight core: state, physics, hitboxes, inputs, frame data
-  scenes/        # Phaser scenes: Boot, Menu, CharacterSelect, Fight, Results
+  scenes/        # Phaser scenes: Boot, Menu, Select, Versus, Fight, Settings, VolumeOverlay
+  ai/            # CpuDriver — CPU opponent (tick-hash decisions, motion-input queue)
+  audio/         # music playback (context folders) + volume math
+  input/         # touch controls (on-screen pad)
   data/
     characters/  # one JSON per character (frame data, moves, asset refs)
+    stages.ts    # stage registry — the game's stage index
   ui/            # health bars, timers, combo counters
 tools/           # asset generation scripts (Node, hit the APIs in .env)
 assets/
@@ -96,7 +100,11 @@ The pipeline turns a photo of a real person into a game-ready sprite sheet:
    intact). Stages generate concurrently (`--concurrency N`, default 4).
    GPT Image (`gpt-image-2`) remains the route for non-stage stills (UI art).
 6. **Audio** — ElevenLabs for announcer VO ("ROUND ONE… FIGHT!"), per-character
-   grunts/taunts, and hit SFX.
+   grunts/taunts, and hit SFX. Music tracks (Suno, generated outside the repo
+   scripts) drop into `public/assets/audio/music/<context>/` (`menu/`,
+   `versus/`, `victory/`, `stages/<id>/` + `stages/default/` fallback);
+   `npm run gen:music` rescans folders into `manifest.json` (runs automatically
+   via predev/prebuild).
 7. **Fatality panels** — `tools/gen-fatality.mjs` (`gemini-3-pro-image`, 16:9):
    4 full-bleed cutscene panels per character from the canonical + a generic
    burnt-husk victim, scaled to 1280×720 into
@@ -141,6 +149,7 @@ npm run gen:pack -- --char vincent     # key + pack -> sheet.png + meta.json
 npm run gen:stages -- --stage van      # 21:9 pixel-art stage (--force, --concurrency N)
 npm run gen:audio                      # announcer + grunts + sfx (--concurrency N)
 npm run gen:fatality -- --char vincent # 4 cutscene panels (--concurrency N)
+npm run gen:music                      # rescan music folders -> manifest.json
 ```
 
 All gen scripts are idempotent (skip existing files; `--force` regens,
@@ -149,13 +158,14 @@ All gen scripts are idempotent (skip existing files; `--force` regens,
 
 ## The roster
 
-Eight fighters at MVP (photos in `assets/character-inspo/`), full move-set design
-in `docs/CHARACTERS.md`: Catherine (bo staff + chef, dog Jazzper assist),
-Flo (angry German hacker, spliff smoke), Freeman (yogi/meditator), Gene (AI-startup
-hacker, genAI glitch moves), Kirby (flexible yogi, tea sipper, fire breath),
-Marzipan (dreadlocked vegan biologist), Vincent (tai chi + digital wizardry, black
-cloak), Yulia (tall Russian yogi, rage mechanics). More characters come later —
-which is why characters are data files, not code.
+All eight fighters are fully built and playable, each with a six-button kit,
+named motion-input specials, and a fatality (photos in `assets/character-inspo/`,
+full move-set design in `docs/CHARACTERS.md`): Catherine (bo staff + chef, dog
+Jazzper assist), Flo (angry German hacker, spliff smoke), Freeman
+(yogi/meditator), Gene (AI-startup hacker, genAI glitch moves), Kirby (acrobatic
+fire-breathing contortionist), Marzipan (dreadlocked vegan biologist), Vincent
+(tai chi + digital wizardry, black cloak), Yulia (tall Russian yogi). More
+characters come later — which is why characters are data files, not code.
 
 ## Conventions
 

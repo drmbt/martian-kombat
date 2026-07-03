@@ -6,9 +6,10 @@
 > Unchecked boxes in the active sprint = the backlog. Do not silently add scope;
 > new ideas go to the Icebox.
 
-**Current sprint: 4** · MVP target: two humans on one keyboard, character select
-(≥2 fully-built fighters), best-of-3 rounds, health bars + timer, basic + special
-moves, AI-generated sprites/stage/audio.
+**Current sprint: 16** · MVP shipped 2026-07-02 (8/8 fighters playable, 19
+stages, full music loop, fatalities, CPU + training modes, settings). Focus now:
+smoothness and playability — game feel, impact VFX, attract mode, control
+remapping. Long-term RFEs live in their own roadmap section below.
 
 ---
 
@@ -94,7 +95,9 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
 - [x] Balance/feel pass part 1: chip damage (10% through block on everything
       but lights, floored at 1 HP — chip can't KO). Throws remain deferred
       (Icebox) — 21 engine tests green incl. chip/low-projectile/ttl specs
-- [ ] Playtest with 2+ humans, fix top-5 feel complaints ← **needs humans**
+- [x] Playtest with 2+ humans — done over keyboard, mostly working; feel RFEs
+      captured in Sprint 16+. A proper **game-controller playtest is still
+      owed** (browser keyboard isn't fun) → Sprint 16
 - [x] Deployed: **https://drmbt.github.io/martian-kombat/** (user approved,
       made the repo public; gh-pages branch, force-push dist per handoff
       recipe) — **MVP SHIPPED 2026-07-02**
@@ -115,8 +118,11 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
       `gen-icons.mjs` (Vincent + sunglasses; Kirby face + sprite outfit)
 - [x] ESC pause overlay: both fighters' move lists (dmg/startup/KD), controls,
       special names; F1 hitbox debug confirmed working and documented in-game
-- [ ] Remaining roster frame QA (user does per-character passes like Yulia's)
-- [ ] v2 sheets + native art for Vincent, Catherine, Kirby
+- [x] Remaining roster frame QA — completed per-character as each fighter was
+      built or rebuilt (Vincent S6, Catherine S7, Flo S11, Freeman S13,
+      Kirby S14, Gene/Marzipan S15)
+- [x] v2 sheets + native art for Vincent, Catherine, Kirby — shipped in
+      Sprints 6, 7, and 14 respectively
 
 ### Sprint 6 — Named specials, fatality, CPU (user-directed)
 - [x] Vincent on the v2 53-cell sheet: full six-button art, his old
@@ -181,8 +187,8 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
       Dinner Service fatality
 - [x] 41 tests green (variants, dp i-frames vs meaty, unblockable grab vs
       block, reflect, knife counts, vault airborne)
-- [ ] Deferred: rage meter + ENOUGH., armored/vault dashes, backdash
-      i-frames, charge + mash motions (first users: Freeman, Flo, Kirby)
+- [ ] Deferred (stays deferred): rage meter + ENOUGH., armored/vault dashes,
+      backdash i-frames, mash motions (charge `du` shipped with Flo in S11)
 
 ### Sprint 9 — Move-log overlay + training sandbox (user-directed)
 - [x] Move-log overlay: scrolling FIFO (last 8) of triggered moves —
@@ -266,8 +272,8 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
       dissolves into cascading amber directory listings; shares qcb+P with
       Smokescreen safely (fatality check overrides in finisher; tested)
 - [x] 49 engine tests green; production build clean
-- [ ] In-browser TRAINING-mode verification (blocked: Chrome extension not
-      connected in this session)
+- [x] In-browser TRAINING-mode verification — closed by subsequent play
+      sessions; Flo has been played and QA'd extensively since
 
 ### Sprint 12 — Post-match win-quote screen (user-directed)
 - [x] SFII-style victory taunt phase: after the K.O./victory beat (matchEnd
@@ -322,9 +328,9 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
       `fatality` block added to `freeman.json`; BootScene loads it generically.
       `gen-fatality` also made concurrent; added `gen:audio`/`gen:fatality` npm
       scripts. CLAUDE.md now lists fatality as step 7 — a full asset run is all 7.
-- [ ] Balance pass on Freeman's normals (currently flo's numbers) + counter/armor
-      mechanics (Presence teleport-behind, Breathwork hit-absorb) if the engine
-      grows buff/counter support — approximated with invuln for MVP.
+- [x] Balance pass on Freeman's normals — closed in playtesting (the numbers
+      play fine). Real counter/armor mechanics (Presence teleport-behind,
+      Breathwork hit-absorb) folded into the combat-depth roadmap below.
 
 ### Sprint 14 — Kirby rebuild: acrobatic fire-breather (user-directed)
 - [x] Reimagined Kirby "Spill the Tea" gossip → **"Firebreather"**: an acrobatic
@@ -348,8 +354,9 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
       (previously used kirby as the fatality-less example) now strips a def's
       fatality locally, since every roster fighter owns one. 50 tests green,
       typecheck + prod build clean. Roster now **6/8 fully-built, all with fatalities**.
-- [ ] Regenerate kirby's KO/defeated bust (`portraits/kirby-ko.png`) from the new
-      canonical — still the old tea-era art (cosmetic; win-screen loser portrait).
+- [x] Regenerate kirby's KO/defeated bust (`portraits/kirby-ko.png`) from the new
+      canonical — done 2026-07-02 (parallel session, committed with the
+      Gene+Marzipan snapshot).
 
 ### Sprint 15 — Gene + Marzipan integration (marzi-char branch harvest)
 - [x] Harvested Gene + Marzipan from the stale `origin/marzi-char` draft branch
@@ -380,12 +387,67 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
       prod build clean. In-browser: all 16 new assets serve 200, both selectable
       and playable, no character-specific console errors.
 
-### Icebox (post-MVP, do not start)
-New characters · single-player
-arcade mode + CPU opponent · super meter/EX moves · stage interactables ·
-rollback netplay (engine determinism already paid for) · training mode · fatalities
-("Kombat" earns it) · music generation · mobile/touch · per-character victory
-song: a `victorySong` attribute in the character JSON names a track in
+### Sprint 16 — Smoothness & playability (planned 2026-07-04)
+Goal: the game we have, but it *feels* great — juice, VFX, attract mode, controls.
+- [ ] **Controller playtest** (user + real gamepad) — keyboard-in-browser isn't
+      fun; validate the pad path end-to-end, fix top feel complaints
+- [ ] **Impact VFX system**: composited hit-overlay sprites separate from the
+      fighter sheets — hit sparks on every connecting normal, bigger
+      explosions/smoke/shockwaves on specials that land (e.g. Yulia's Volga
+      Piledriver pushes a ground smoke cloud). Two asset classes: (a) greyscale
+      generics with a per-character color tint/LUT so they're reusable, and
+      (b) per-move art that lives with the move like projectiles do today
+      (`extra.` manifest plumbing is the template). Engine stays pure — VFX are
+      renderer-side, triggered by state-diffing in `presentTick`
+- [ ] **Attract mode**: no input on the menu for N seconds → CPU-vs-CPU demo
+      fight (random fighters/stage, HUD on, "DEMO — PRESS ANY KEY" overlay);
+      any input returns to the title. CpuDriver already powers both sides
+- [ ] **Control remapping in Settings**: per-player key AND gamepad-button
+      mapping UI (press-to-bind rows), persisted to localStorage via
+      `src/settings.ts`; defaults = current bindings; reset row
+- [ ] **Game-feel juice bundle** (pairs with the VFX work):
+      hitstop (3–8 tick freeze on contact, deterministic in-engine),
+      delayed red health drain (SF2 ghost bar), KO slow-motion on the
+      round-ending hit
+
+### Near-term roadmap (approved 2026-07-03, order TBD)
+**Combat depth — closer to SF2:**
+- [ ] Better combo logic: chains/cancels (normal→normal target combos,
+      special-cancel windows on normals) so combos are deliberate, not
+      accidental
+- [ ] Better blocking mechanics (proximity guard, block-release timing feel)
+- [ ] Throws + throw teching (deferred since Sprint 1; command-grab plumbing
+      exists — this is the universal throw)
+- [ ] Dizzy/stun state: stun accumulation on hits, birds-circling dizzy
+      animation, classic comeback moment
+- [ ] Combo damage scaling (later hits in a combo do less)
+- [ ] CPU difficulty levels (easy/medium/hard bot — feeds arcade mode and
+      makes attract-mode demos look better)
+**Presentation:**
+- [ ] Round-intro animations (fighters walk in / strike a pose before
+      "ROUND 1… FIGHT!") + in-fight victory pose at round end
+- [ ] CRT/scanline filter toggle in Settings (post-process; leans into the
+      16-bit pixel-art stages)
+
+### Long-term RFEs (roadmap, not scheduled)
+- [ ] **Custom character designer dialog** — in-game UI that runs the
+      photo→fighter pipeline: upload an inspo photo, pick a kit archetype,
+      generate canonical/frames/portraits (the 7-step pipeline as a product)
+- [ ] **Online multiplayer** — two-player versus from remote locations in the
+      browser; engine determinism was built for rollback netcode from day one
+- [ ] **1-player arcade story mode** — ladder of CPU fights with intro/ending
+      story beats per character (wants CPU difficulty levels first)
+- [ ] **Veo motion smoothing** — upgrade keyframe animation to sampled
+      motion-clip frames; the biggest visual-quality lever we have
+
+### Icebox (do not start)
+New characters (pipeline is proven; the roster bible has room) · super
+meter/EX moves · stage interactables · rage meter + ENOUGH., armored/vault
+dashes, backdash i-frames, mash motions (Sprint 8 deferred list) · real
+counter/armor primitives (Freeman's Presence/Breathwork upgrades) · bonus
+stage (car-smash homage) · gamepad rumble · fullscreen button + scaling ·
+RANDOM tile on character select · persistent win/loss stats · per-character
+victory song: a `victorySong` attribute in the character JSON names a track in
 `music/victory/` that overrides the random pick when that fighter wins.
 
 ---
@@ -393,6 +455,38 @@ song: a `victorySong` attribute in the character JSON names a track in
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-03 · docs · sprintboard/README/CLAUDE.md refresh + Sprint 16 plan** —
+  reconciled stale checkboxes after the keyboard playtest (things mostly work):
+  ticked S4 human playtest (controller playtest carried to S16), S5 roster
+  frame QA + v2 sheets (done in S6/S7/S14), S11 Flo TRAINING verify, S13
+  Freeman balance pass, S14 kirby KO bust; S8 deferred mechanics stay deferred.
+  Planned **Sprint 16 — smoothness & playability**: controller playtest,
+  impact-VFX overlay system (greyscale+tint generics & per-move art), attract
+  mode (idle menu → CPU-vs-CPU demo), per-player control remapping in Settings,
+  juice bundle (hitstop, delayed red health drain, KO slow-mo). Added approved
+  near-term roadmap (combo chains/cancels, blocking feel, throws+teching,
+  dizzy, damage scaling, CPU difficulty, round intros/victory poses, CRT
+  toggle) and long-term RFEs (character designer dialog, online multiplayer,
+  arcade story mode, Veo motion smoothing). Icebox rebuilt (dropped shipped
+  items, added declined-for-now ideas). README status brought to 8/8 +
+  19 stages + music; CLAUDE.md roster/commands touched up. — Claude
+
+- **2026-07-03 · scenes+audio · quick-volume overlay + mouse-first settings +
+  select QoL** — new `VolumeOverlayScene` pinned lower-right, launched once at
+  boot above every scene: fades in on mouse motion, hides after ~2.6s (stays
+  while muted/dragging); speaker click = master mute, fader drag = master
+  volume, both persisted + applied live. New `masterVolume` (default 100%) and
+  `muted` settings scale music AND SFX via `src/audio/volume.ts`
+  (`effectiveSfxVolume`/`applyMusicVolume` — the one place volume math lives).
+  Settings page: MASTER VOLUME row added; faders are real draggable tracks
+  with handles; ROUND TIME / MATCH LENGTH step by horizontal drag or click to
+  cycle; arrows still nudge; settings page and overlay live-sync when the
+  other changes values. Character select: mouse now drives P1 then P2 in every
+  mode (hover moves the active cursor, click confirms), and ENTER confirms in
+  sequence P1 → P2 → stage. Verified in-browser: overlay reveal/mute/drag,
+  fader + stepper drags, reset-defaults click, and a full two-player
+  click/ENTER select into the VS screen. 68 tests green. — Claude
 
 - **2026-07-02 · assets+engine+stages · Gene + Marzipan (8/8 playable) + pixel-art
   stage expansion + music/kirby assets** — bundles this session's fighter work with
@@ -677,13 +771,20 @@ song: a `victorySong` attribute in the character JSON names a track in
 
 *(overwrite this section each handoff — what's mid-flight, gotchas, next action)*
 
-**State:** Sprint 12 — post-match win-quote screen shipped (winner taunts a
-beaten loser portrait + random win quote; `FightScene.showWinScreen`, engine
-untouched). `winQuotes[]` on all 5 playable JSONs; `<id>-ko.png` defeated busts
-generated for all 8 via `gen-canonical.mjs`. When building Freeman/Gene/Marzipan,
-their `winQuotes` are already authored in docs/CHARACTERS.md (copy into the JSON)
-and their KO portraits already exist. Sprint 11 — Flo is PLAYABLE (assets +
-engine plumbing + flo.json + rm -rf / fatality; roster 5/8). Next action: in-browser TRAINING verification of Flo (was blocked on the Chrome extension), then Freeman/Gene/Marzipan via the same recipe (their kits need: Freeman charge b,f — trivial 'bf' exists — plus counter-stance + hit-absorb armor; Gene teleport + slow-field). NOTE: `assets/raw/` was wiped and partially regenerated — only flo's canonical exists; regen others via `node tools/gen-canonical.mjs --char <id>` before any frame work on them. docs/MOVES.md is the living move spec (checkboxes = implementation state); edit it and re-run the buildout. Three QA-ready characters: vincent, yulia, catherine. **DEPLOY RECIPE CHANGED:** just push to main —
+**State (2026-07-03):** Content-complete — 8/8 fighters built and playable with
+fatalities, 19 stages, full music loop (title/versus/stage/victory), settings
+page, CPU + training modes, VS screen, win-quote screen. Keyboard playtest done;
+things mostly work. Working tree has an uncommitted parallel-session change
+(quick-volume overlay + mouse-first settings — see 2026-07-03 changelog entry).
+**Next action: Sprint 16** (see roadmap) — controller playtest, impact-VFX
+overlay system, attract mode (idle menu → CPU-vs-CPU demo), per-player control
+remapping in Settings, juice bundle (hitstop / delayed red health drain / KO
+slow-mo). Approved near-term roadmap after that: combo chains/cancels, blocking
+feel, throws+teching, dizzy, damage scaling, CPU difficulty levels, round
+intros/victory poses, CRT toggle. Long-term RFEs: character designer dialog,
+online multiplayer, arcade story mode, Veo motion smoothing. docs/MOVES.md is
+the living move spec (checkboxes = implementation state); edit it and re-run
+the buildout. **DEPLOY RECIPE:** just push to main —
 the `deploy` workflow builds and publishes (do NOT force-push gh-pages
 anymore; that pipeline is retired and was the wedge source). If a deploy run
 fails with `deployment_queued` timeouts, check for a phantom via
@@ -703,22 +804,17 @@ ones. Legacy-art fallback means new buttons LOOK samey on vincent/catherine/
 kirby until their v2 sheets are generated (frames-manifest `layout:'v2'` +
 `moves6` is the pattern — Yulia is the template).
 
-MVP live at https://drmbt.github.io/martian-kombat/
-(repo now public per user; NOTE: `assets/character-inspo/` photos of real
+Live at https://drmbt.github.io/martian-kombat/
+(repo public per user; NOTE: `assets/character-inspo/` photos of real
 people are therefore public too — flag to the user if that ever needs
-revisiting). Only unchecked box: human playtest. Redeploy recipe: `npm run
-build && cd dist && git init -q && git checkout -qb gh-pages && git add -A &&
-git commit -qm deploy && git push -f
-https://github.com/drmbt/martian-kombat.git gh-pages:gh-pages && cd .. && rm
--rf dist/.git`. **Next (post-MVP, pick from Icebox):** remaining roster
-(Flo/Freeman/Gene/Marzipan — canonical art already exists, just needs
-manifest flavors + JSONs + grunts), motion inputs, throws, CPU opponent.
+revisiting).
 **Gotchas:** `.env` in repo root (gitignored), all
 four keys live. Frame-gen: ALWAYS `gemini-3-pro-image`; keying: `chromakey`
 ~0.15, never despill (bleaches Yulia's bandana/hair); transparent sheet PNGs
 look navy in previews — composite over grey before judging keying. Cell order
 in `tools/frames-manifest.mjs` is a contract with `FightScene.actionToCell` —
 append only. Character JSONs cast through `unknown` (no runtime validation).
-Stun `Action.frame` counts DOWN; attack/knockdown/getup count UP. Chip damage
-and throws intentionally absent until Sprint 4. Preview-browser tabs throttle
+Stun `Action.frame` counts DOWN; attack/knockdown/getup count UP. Universal
+throws still absent (near-term roadmap); command grabs exist. Preview-browser
+tabs throttle
 rAF — step the loop via `window.__game.loop.step(t)` when verifying headless.

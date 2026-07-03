@@ -5,8 +5,8 @@ import { STAGE_H, STAGE_W } from '../engine';
 import { ROSTER } from '../data/roster';
 import { characters } from '../data/characters';
 import { STAGES } from '../data/stages';
-import { initMusic, setMusicVolume } from '../audio/music';
-import { getSettings } from '../settings';
+import { initMusic } from '../audio/music';
+import { applyMusicVolume, effectiveSfxVolume } from '../audio/volume';
 
 const CELL_W = 288;
 const CELL_H = 384;
@@ -67,14 +67,15 @@ export class BootScene extends Phaser.Scene {
 
   create(): void {
     initMusic(); // fetches music/manifest.json; playback degrades to silence if absent
-    setMusicVolume(getSettings().musicVolume);
+    applyMusicVolume();
+    this.scene.launch('Volume'); // persistent quick-volume overlay, above every scene
     this.scene.start('Menu');
   }
 }
 
 /** Play a sound if it loaded; silently skip if the asset doesn't exist.
- *  `volume` is per-sound emphasis, scaled by the user's SFX volume setting. */
+ *  `volume` is per-sound emphasis, scaled by master+SFX settings (and mute). */
 export function play(scene: Phaser.Scene, key: string, volume = 0.8): void {
-  const v = volume * getSettings().sfxVolume;
+  const v = volume * effectiveSfxVolume();
   if (v > 0 && scene.cache.audio.exists(key)) scene.sound.play(key, { volume: v });
 }
