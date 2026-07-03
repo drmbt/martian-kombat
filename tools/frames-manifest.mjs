@@ -599,7 +599,7 @@ export const CHARACTERS = {
         'volga-piledriver': {
           startup: 'lunging forward low with both arms spread wide open for a grapple, fingers splayed, red rage aura flaring',
           active: 'mid-leap spinning piledriver — airborne, body corkscrewed, arms locked in a grappling hold, red aura spiraling around her',
-          recovery: 'landing in a deep crouch from the slam, one fist on the ground, dust and embers rising',
+          recovery: 'crouched low in a deep squat after the slam, one fist punched straight down onto the ground, the other fist raised in guard, red aura fading — a small tight puff of dust and a few embers around the grounded fist, the dust kept compact and well away from every edge of the frame',
         },
         'braid-lariat': {
           startup: 'arms rising out to her sides, beginning to spin, her braid lifting with the rotation',

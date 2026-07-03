@@ -463,6 +463,17 @@ victory song: a `victorySong` attribute in the character JSON names a track in
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-03 · assets · yulia frame QA + new-roster inspo batch** — yulia:
+  re-rolled `51-backbend-guillotine-active` and `55-volga-piledriver-recovery`
+  (volga recovery prompt in `frames-manifest.mjs` tightened: compact dust puff
+  kept away from the frame edges) and repacked her 8×7 sheet. Character-inspo:
+  12 new candidate-fighter photos added (bodhi, cat, chebel, earl, haidai,
+  katana, lyosha, rapha, seva, vanessa, xiao-chen, ygor + lyosha/ygor/seva
+  face shots); the two unnamed MARS-PASSPORT jpgs were replaced by their
+  named equivalents. Work from the parallel session, committed on user
+  request. NOTE: the repo is public — these are photos of real people, same
+  standing caveat as the original eight. — Claude
+
 - **2026-07-03 · verify+assets · Sprint 16: gamepad path verified end-to-end +
   juice/VFX demo recorded** — synthetic standard-mapping pad injected into the
   preview browser (`navigator.getGamepads` monkeypatch; GOTCHA: Phaser's
