@@ -12,6 +12,25 @@ import { LaunchData, rememberDevLaunch } from './devLaunch';
 
 const devWindow = window as unknown as { __mkScenePatch?: boolean; __game?: Phaser.Game };
 
+if (import.meta.env.DEV) {
+  // dev-only: paint uncaught errors on screen — a crashed rAF loop otherwise
+  // looks like "the game froze" with no clue why
+  const showError = (msg: string): void => {
+    let el = document.getElementById('mk-error');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'mk-error';
+      el.style.cssText =
+        'position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#7a1010;' +
+        'color:#fff;font:12px monospace;padding:6px 10px;white-space:pre-wrap;';
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+  };
+  window.addEventListener('error', (e) => showError(`⚠ ${e.message}\n${e.filename}:${e.lineno}`));
+  window.addEventListener('unhandledrejection', (e) => showError(`⚠ unhandled rejection: ${String(e.reason)}`));
+}
+
 if (import.meta.env.DEV && !devWindow.__mkScenePatch) {
   devWindow.__mkScenePatch = true;
   const start = Phaser.Scenes.ScenePlugin.prototype.start;
@@ -36,7 +55,12 @@ const game = new Phaser.Game({
   width: STAGE_W,
   height: STAGE_H,
   backgroundColor: '#0c0910',
-  input: { gamepad: true },
+  // Phaser's gamepad plugin is OFF on purpose: its per-scene wrapper array is
+  // sparse (keyed by controller index) and stopListeners() crashes on the
+  // holes during scene shutdown when a pad sits at index > 0, killing every
+  // scene transition. All pad input reads navigator.getGamepads() directly
+  // (src/input/keyboard.ts + src/input/menu-nav.ts).
+  input: { gamepad: false },
   scene: [BootScene, MenuScene, SelectScene, VersusScene, FightScene, SettingsScene, ControlsScene, VolumeOverlayScene],
   scale: {
     mode: Phaser.Scale.FIT,

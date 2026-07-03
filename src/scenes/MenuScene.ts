@@ -4,6 +4,7 @@ import { play } from './BootScene';
 import { playMusic } from '../audio/music';
 import { ROSTER } from '../data/roster';
 import { STAGES } from '../data/stages';
+import { menuNav, navDefer, attackKeyCodes } from '../input/menu-nav';
 
 /** idle this long on the title -> CPU-vs-CPU attract-mode demo */
 const ATTRACT_AFTER_MS = 20_000;
@@ -11,9 +12,13 @@ const ATTRACT_AFTER_MS = 20_000;
 export class MenuScene extends Phaser.Scene {
   private idleMs = 0;
   private menuReady = false;
-  private menuReadyAt = -1;
   private menuItems: (Phaser.GameObjects.Rectangle | Phaser.GameObjects.Text)[] = [];
   private coinText!: Phaser.GameObjects.Text;
+  // keyboard/gamepad selection cursor over the menu buttons (mouse hover overrides)
+  private buttons: { bg: Phaser.GameObjects.Rectangle; label: Phaser.GameObjects.Text; act: () => void }[] = [];
+  private selIdx = 0;
+  /** when the menu was revealed — the revealing press must not also select */
+  private revealedAt = -1;
 
   constructor() {
     super('Menu');
@@ -23,8 +28,10 @@ export class MenuScene extends Phaser.Scene {
     playMusic('menu');
     this.idleMs = 0;
     this.menuReady = false;
-    this.menuReadyAt = -1;
     this.menuItems = [];
+    this.buttons = [];
+    this.selIdx = 0;
+    this.revealedAt = -1;
     // any human sign of life postpones the attract demo; the first key/click
     // on the title reveals the menu instead of immediately choosing an item.
     this.input.keyboard!.on('keydown', () => this.notePresence());
@@ -75,14 +82,17 @@ export class MenuScene extends Phaser.Scene {
         })
         .setOrigin(0.5);
       this.menuItems.push(bg, label);
-      bg.on('pointerover', () => { bg.setFillStyle(0x3a2b40, 0.95).setStrokeStyle(2, 0xffb347); label.setColor('#ffd24a'); });
-      bg.on('pointerout', () => { bg.setFillStyle(0x241b2e, 0.85).setStrokeStyle(2, 0x7a6a86); label.setColor('#f5ead9'); });
+      this.buttons.push({ bg, label, act: o.act });
+      // mouse hover moves the shared cursor here so mouse + pad agree
+      bg.on('pointerover', () => { this.selIdx = i; this.highlight(); });
       bg.on('pointerdown', () => {
         if (!this.menuReady) return;
+        this.selIdx = i;
         o.act();
       });
     });
     for (const item of this.menuItems) item.setVisible(false);
+    this.highlight();
 
     this.coinText = this.add
       .text(STAGE_W / 2, 430, 'INSERT COIN', {
@@ -100,16 +110,50 @@ export class MenuScene extends Phaser.Scene {
     this.input.keyboard!.on('keydown-TWO', () => { if (this.canChoose()) go(false); });
     this.input.keyboard!.on('keydown-THREE', () => { if (this.canChoose()) go(false, true); });
     this.input.keyboard!.on('keydown-FOUR', () => { if (this.canChoose()) toSettings(); });
-    this.input.keyboard!.on('keydown-ENTER', () => { if (this.canChoose()) go(false); });
+    // arrow / W-S cursor nav mirrors the gamepad; ENTER/SPACE activate the cursor
+    for (const k of ['UP', 'W']) this.input.keyboard!.on(`keydown-${k}`, () => this.moveCursor(-1));
+    for (const k of ['DOWN', 'S']) this.input.keyboard!.on(`keydown-${k}`, () => this.moveCursor(1));
+    for (const k of ['ENTER', 'SPACE']) this.input.keyboard!.on(`keydown-${k}`, () => this.activate());
+    // any bound punch/kick key also selects the highlighted item
+    const atk = attackKeyCodes();
+    this.input.keyboard!.on('keydown', (e: KeyboardEvent) => { if (atk.has(e.keyCode)) this.activate(); });
+  }
+
+  /** Move the selection cursor; the first press just wakes the menu. */
+  private moveCursor(d: number): void {
+    if (!this.menuReady) { this.notePresence(); return; }
+    this.idleMs = 0;
+    this.selIdx = (this.selIdx + d + this.buttons.length) % this.buttons.length;
+    this.highlight();
+    play(this, 's-blip', 0.4);
+  }
+
+  /** Activate the highlighted item (ENTER / pad confirm). */
+  private activate(): void {
+    if (!this.canChoose()) { this.notePresence(); return; }
+    this.buttons[this.selIdx]?.act();
+  }
+
+  private highlight(): void {
+    this.buttons.forEach(({ bg, label }, i) => {
+      const on = i === this.selIdx;
+      bg.setFillStyle(on ? 0x3a2b40 : 0x241b2e, on ? 0.95 : 0.85).setStrokeStyle(2, on ? 0xffb347 : 0x7a6a86);
+      label.setColor(on ? '#ffd24a' : '#f5ead9');
+    });
   }
 
   update(_time: number, delta: number): void {
-    // gamepad activity counts as presence too (poll: sticks don't emit events)
-    for (const pad of this.input.gamepad?.gamepads ?? []) {
-      if (!pad) continue;
-      if (pad.buttons.some((b) => b.pressed) || Math.abs(pad.leftStick.x) > 0.5 || Math.abs(pad.leftStick.y) > 0.5) {
-        this.notePresence();
-      }
+    // gamepad drives the menu: the first press is the coin drop (reveal only),
+    // then dpad/stick moves the cursor and any attack/Start selects.
+    const n = menuNav.poll();
+    if (n.anyHeld) this.idleMs = 0; // pad activity postpones the attract demo
+    if (!this.menuReady) {
+      if (n.up || n.down || n.left || n.right || n.confirm || n.start || n.menu) this.notePresence();
+    } else {
+      if (n.up) this.moveCursor(-1);
+      if (n.down) this.moveCursor(1);
+      // scene transitions must fire OUTSIDE update() — see navDefer
+      if (n.confirm || n.start) navDefer(this, () => this.activate());
     }
     this.idleMs += delta;
     if (this.idleMs >= ATTRACT_AFTER_MS) this.startAttractDemo();
@@ -122,14 +166,16 @@ export class MenuScene extends Phaser.Scene {
 
   private revealMenu(): void {
     this.menuReady = true;
-    this.menuReadyAt = this.time.now;
+    this.revealedAt = this.time.now;
     this.coinText.setVisible(false);
     for (const item of this.menuItems) item.setVisible(true);
     play(this, 's-blip', 0.45);
   }
 
   private canChoose(): boolean {
-    return this.menuReady && this.time.now > this.menuReadyAt;
+    // the physical press that revealed the menu also fires the number/ENTER
+    // handlers on the same tick — require a later tick so it can't double-act
+    return this.menuReady && this.time.now > this.revealedAt;
   }
 
   /** Arcade attract mode: two random fighters demo the game on a random stage

@@ -8,6 +8,7 @@ import { characters } from '../data/characters';
 import { ROSTER } from '../data/roster';
 import { stageById } from '../data/stages';
 import { hasTracks, playMusic } from '../audio/music';
+import { menuNav, navDefer } from '../input/menu-nav';
 
 const HOLD_MS = 3400; // hold when there's no versus clip to pace the screen
 const MAX_HOLD_MS = 20000; // safety net if audio is blocked and never ends
@@ -89,6 +90,12 @@ export class VersusScene extends Phaser.Scene {
 
     this.input.keyboard!.once('keydown', () => this.startFight());
     this.input.once('pointerdown', () => this.startFight());
+  }
+
+  update(): void {
+    // pad presses fire no DOM events — poll so the controller can skip the splash
+    const n = menuNav.poll();
+    if (n.confirm || n.start || n.menu) navDefer(this, () => this.startFight());
   }
 
   /** Portrait in a framed box sliding in from its side, name plate below. */

@@ -21,6 +21,7 @@ import {
 import { characters } from '../data/characters';
 import { stageById } from '../data/stages';
 import { KeyboardSource } from '../input/keyboard';
+import { menuNav, navDefer } from '../input/menu-nav';
 import { CpuDriver } from '../ai/bot';
 import { play } from './BootScene';
 import { nextTrack, playMusic } from '../audio/music';
@@ -169,6 +170,10 @@ export class FightScene extends Phaser.Scene {
   private paused = false;
   private pauseOverlay!: Phaser.GameObjects.Container;
   private pauseScroll: { txt: Phaser.GameObjects.Text; top: number; maxScroll: number; scroll: number }[] = [];
+  // pause-menu button navigation (keyboard/gamepad); mouse hover overrides
+  private pauseButtons: { bg: Phaser.GameObjects.Rectangle; label: Phaser.GameObjects.Text; act: () => void }[] = [];
+  private pauseSel = 0;
+  private endNavArmedAt = 0; // guard: ignore pad "advance" for a beat after matchEnd
   private cpu = false;
   private training = false;
   private demo = false;
@@ -213,6 +218,8 @@ export class FightScene extends Phaser.Scene {
     // scene instances are reused across matches — reset transient UI state so a
     // match entered from a *paused* one doesn't start frozen
     this.paused = false;
+    this.pauseButtons = [];
+    this.pauseSel = 0;
   }
 
   create(): void {
@@ -427,7 +434,8 @@ export class FightScene extends Phaser.Scene {
         if (e.key !== '`') this.toMainMenu();
       });
       this.input.on('pointerdown', () => this.toMainMenu());
-      this.input.gamepad?.on('down', () => this.toMainMenu());
+      // (pad exit handled by polling in padMenuFrame — Phaser's per-scene pad
+      // events can drop input after scene changes; see src/input/menu-nav.ts)
       return; // none of the human-match keybinds below apply to the demo
     }
 
@@ -462,6 +470,58 @@ export class FightScene extends Phaser.Scene {
   private togglePause(): void {
     this.paused = !this.paused;
     this.pauseOverlay.setVisible(this.paused);
+    if (this.paused) { this.pauseSel = 0; this.highlightPause(); }
+  }
+
+  /** Gamepad handling for everything that isn't the fight itself: the attract
+   *  demo, the pause dialog, the win screen, and Start/Select opening the
+   *  pause menu mid-match. */
+  private padMenuFrame(): void {
+    const n = menuNav.poll();
+    if (this.demo) {
+      // attract mode: any fresh pad input returns to the title
+      if (n.confirm || n.start || n.menu || n.up || n.down || n.left || n.right) {
+        navDefer(this, () => this.toMainMenu());
+      }
+      return;
+    }
+    if (this.paused) {
+      if (n.left || n.up) this.movePause(-1);
+      if (n.right || n.down) this.movePause(1);
+      if (n.confirm) {
+        play(this, 's-blip', 0.5);
+        // the button may restart / change scenes — defer, see navDefer
+        navDefer(this, () => this.pauseButtons[this.pauseSel]?.act());
+        return;
+      }
+      if (n.start || n.menu) this.togglePause(); // Start/Select resumes
+      return;
+    }
+    if (this.state.phase === 'matchEnd') {
+      // Select brings up the full menu (rematch / char select / main menu)
+      if (n.menu) { this.togglePause(); return; }
+      if (this.time.now < this.endNavArmedAt) return;
+      if (n.confirm || n.start) navDefer(this, () => this.toCharacterSelect()); // any attack advances
+      return;
+    }
+    // live match: Start or Select opens the pause menu
+    if (n.start || n.menu) this.togglePause();
+  }
+
+  private movePause(d: number): void {
+    const n = this.pauseButtons.length;
+    if (!n) return;
+    this.pauseSel = (this.pauseSel + d + n) % n;
+    play(this, 's-blip', 0.4);
+    this.highlightPause();
+  }
+
+  private highlightPause(): void {
+    this.pauseButtons.forEach(({ bg, label }, i) => {
+      const on = i === this.pauseSel;
+      bg.setFillStyle(on ? 0x3a2b40 : 0x241b2e).setStrokeStyle(2, on ? 0xffb347 : 0x7a6a86);
+      label.setColor(on ? '#ffd24a' : '#f5ead9');
+    });
   }
 
   private restartMatch(): void {
@@ -477,6 +537,7 @@ export class FightScene extends Phaser.Scene {
   }
 
   update(_time: number, deltaMs: number): void {
+    this.padMenuFrame();
     if (this.paused) {
       this.accumulator = 0;
       return;
@@ -560,6 +621,8 @@ export class FightScene extends Phaser.Scene {
       s.roundWinner !== null
     ) {
       play(this, `ann-${s.fighters[s.roundWinner].charId}`, 1);
+      // don't let the KO-causing punch (still held) instantly skip the win screen
+      this.endNavArmedAt = this.time.now + 700;
       this.time.delayedCall(900, () => play(this, 'ann-victory', 1));
       // victory theme plays once over the win-quote screen, then the game
       // returns to character select (any click/ENTER skips ahead, R rematches)
@@ -1385,7 +1448,7 @@ export class FightScene extends Phaser.Scene {
       case 'matchEnd': {
         const name = characters[s.fighters[s.roundWinner ?? 0].charId].name;
         const fatal = s.fatality ? '\nFATALITY' : '';
-        return `${name} WINS${fatal}\nR rematch · ENTER select`;
+        return `${name} WINS${fatal}\nENTER / attack continue · R rematch · ESC / SELECT menu`;
       }
       default:
         return '';
@@ -1467,9 +1530,10 @@ export class FightScene extends Phaser.Scene {
       const label = this.add
         .text(bx, btnY, mi.label, { ...font, fontSize: '14px', fontStyle: 'bold' })
         .setOrigin(0.5);
-      bg.on('pointerover', () => bg.setFillStyle(0x3a2b40).setStrokeStyle(2, 0xffb347));
-      bg.on('pointerout', () => bg.setFillStyle(0x241b2e).setStrokeStyle(2, 0x7a6a86));
+      // mouse hover moves the shared cursor so pad + mouse stay in sync
+      bg.on('pointerover', () => { this.pauseSel = i; this.highlightPause(); });
       bg.on('pointerdown', () => { play(this, 's-blip', 0.5); mi.act(); });
+      this.pauseButtons.push({ bg, label, act: mi.act });
       items.push(bg, label);
     });
 
@@ -1512,7 +1576,7 @@ export class FightScene extends Phaser.Scene {
 
     items.push(
       this.add
-        .text(STAGE_W / 2, py + PH - 20, 'ESC resume · F1 hitboxes · F2 move log · F3 stage guide · ` perf · click a button above', {
+        .text(STAGE_W / 2, py + PH - 20, 'ESC/START resume · ◄► choose, attack confirms · F1 hitboxes · F2 move log · F3 stage guide · ` perf', {
           ...font, fontSize: '11px', color: '#9a8fa8',
         })
         .setOrigin(0.5),

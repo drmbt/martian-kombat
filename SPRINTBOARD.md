@@ -389,11 +389,17 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
 
 ### Sprint 16 — Smoothness & playability (planned 2026-07-04)
 Goal: the game we have, but it *feels* great — juice, VFX, attract mode, controls.
-- [ ] **Controller playtest** (user + real gamepad) — keyboard-in-browser isn't
-      fun; fix top feel complaints. *The code path is pre-verified end-to-end
-      with a synthetic pad (see 2026-07-03 changelog): registration, dpad +
-      stick movement, all six buttons, analog-trigger threshold, dpad motion
-      specials, press-to-bind rebinding — what's owed is the human feel pass*
+- [x] **Controller playtest** (user + real gamepad) — found and fixed three
+      real bugs the synthetic-pad harness had missed (see 2026-07-03 changelog):
+      Phaser's per-scene gamepad plugin dropping stale-timestamp pad snapshots
+      after every scene change, pad-triggered scene transitions queued
+      mid-`update()` never applying, and a Phaser `stopListeners()` crash on
+      sparse pad-wrapper arrays (pad at index >0) that killed the game loop on
+      every scene shutdown. All pad reads now bypass Phaser's plugin entirely
+      (`navigator.getGamepads()` direct); the plugin is disabled in `main.ts`.
+      Menu/select/settings/pause/win-screen navigation is fully wired: any
+      punch/kick confirms, Start confirms, Select/Back opens the menu
+      everywhere (title → pause → win screen).
 - [x] **Impact VFX system**: composited hit-overlay sprites separate from the
       fighter sheets — hit sparks on every connecting normal, bigger
       explosions/smoke/shockwaves on specials that land (e.g. Yulia's Volga
@@ -462,6 +468,58 @@ victory song: a `victorySong` attribute in the character JSON names a track in
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-03 · input+scenes: gamepad menu navigation, three real controller
+  bugs fixed** — the earlier "gamepad verified end-to-end" pass only exercised
+  the *in-match* input path; menus, character select, settings, pause, and the
+  win screen had zero pad wiring. Added `src/input/menu-nav.ts` (`MenuNav` +
+  shared `menuNav` singleton): dpad/stick navigates, any punch or kick button
+  (read from live bindings) or Start confirms, Select/Back opens the
+  menu/backs out — wired into `MenuScene`, `SelectScene` (fighter grid +
+  stage dialog), `SettingsScene`, `ControlsScene`, `VersusScene`, and
+  `FightScene` (pause dialog, win screen, Start-to-pause mid-match). Also
+  fixed the gamepad-only autoplay-unlock gap in `src/audio/music.ts` (browsers
+  gate `<audio>` playback on a user gesture; only `pointerdown`/`keydown` were
+  listened for, so a controller-only session never heard music — added a
+  gamepad-press poll with re-arm-on-rejection).
+  User playtesting surfaced three real bugs the synthetic-pad harness had
+  missed, root-caused by reading Phaser source directly (not guessing):
+  (1) **Phaser's per-scene `GamepadPlugin` drops stale-timestamp pads** —
+  `Gamepad.update()` ignores any snapshot whose `timestamp < this._created`,
+  and every scene start creates a fresh wrapper stamped "now"; Chrome only
+  bumps a pad's timestamp on state *change*, so input froze after the first
+  scene transition. Fix: read `navigator.getGamepads()` directly everywhere,
+  never `scene.input.gamepad`. (2) **pad-triggered `scene.start()` calls
+  queued inside `update()` sometimes never applied** on real hardware (the
+  selection registered — confirmed via the `devLaunch` dev replay hook — but
+  the next scene never rendered); keyboard/mouse escape this because their
+  handlers run in Phaser's input phase, same-frame. Fix: `navDefer()` fires
+  every pad-triggered scene transition from a macrotask between frames (a
+  scene-active guard skips it if a double-press already queued two). (3)
+  **`GamepadPlugin.stopListeners()` crashes on every scene shutdown** when a
+  controller sits at a browser gamepad index > 0 (common after Bluetooth
+  reconnects) — its wrapper array is sparse and indexed by controller index,
+  so `this.gamepads[0].removeAllListeners()` throws on the hole, uncaught,
+  killing the whole game loop mid-transition. This was the actual root cause
+  of "select once, then stuck" and explains every earlier symptom. Fix: the
+  gamepad plugin is now fully disabled (`input: { gamepad: false }` in
+  `main.ts`); the one remaining Phaser-plugin consumer (`KeyboardSource` in
+  `src/input/keyboard.ts`, the in-match fight input) now reads
+  `navigator.getGamepads()` directly too, with pads compacted by connection
+  order (first connected pad → P1, second → P2) instead of raw browser index.
+  Added a dev-only on-screen error banner (`main.ts`, `window.onerror` +
+  `unhandledrejection`) so a future silent freeze surfaces its stack instead
+  of just "the game is stuck" — this is what caught bug (3).
+  Verification: 9 new unit tests in `src/input/menu-nav.test.ts` (rising-edge
+  seeding kills phantom presses from a button already held on load, buttons
+  never auto-repeat, directions do, Start/Select vs. confirm mapping, a press
+  held across a scene transition fires exactly once). In-browser: scripted a
+  real-time (real `requestAnimationFrame`, non-deterministic-timing) synthetic
+  pad through the full loop — title → menu → character select (both slots) →
+  stage dialog → versus splash → fight → pause → settings — under the user's
+  exact failure condition (pad at gamepad index 1, index 0 empty); zero
+  errors, every transition landed. User confirmed fixed on real hardware.
+  81/81 vitest, `tsc --noEmit` clean. — Claude
 
 - **2026-07-03 · assets · yulia frame QA + new-roster inspo batch** — yulia:
   re-rolled `51-backbend-guillotine-active` and `55-volga-piledriver-recovery`

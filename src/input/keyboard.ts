@@ -2,13 +2,32 @@
 // Bindings come from settings (Settings → Controls, press-to-bind); defaults:
 // P1: WASD moves · R/T/Y = LP/MP/HP · F/G/H = LK/MK/HK
 // P2: arrows move · U/I/O = LP/MP/HP · J/K/L = LK/MK/HK
-// Pads (slot order): remappable button indices (default dpad moves ·
-// X/Y/RB = punches · A/B/RT = kicks); the left stick always moves.
-// Keyboard and pad are OR-merged so either works at any moment.
+// Pads (first connected pad = P1, second = P2): remappable button indices
+// (default dpad moves · X/Y/RB = punches · A/B/RT = kicks); the left stick
+// always moves. Keyboard and pad are OR-merged so either works at any moment.
 // Specials are motion inputs (QCF+punch), resolved inside the engine.
+//
+// Pads are read from navigator.getGamepads() DIRECTLY, never Phaser's gamepad
+// plugin — the plugin keeps a SPARSE wrapper array keyed by controller index,
+// and its stopListeners() crashes on the holes during every scene shutdown
+// when a pad sits at index > 0 (common on macOS/Bluetooth), killing the game
+// loop mid scene-transition. See src/input/menu-nav.ts for the same story.
 import Phaser from 'phaser';
 import type { InputFrame } from '../engine';
 import { BIND_ACTIONS, getSettings, PlayerBindings } from '../settings';
+
+/** Nth connected pad, compacted — a lone pad at browser index 1 still drives P1. */
+function padForPlayer(player: 0 | 1): Gamepad | null {
+  if (typeof navigator === 'undefined' || !navigator.getGamepads) return null;
+  let seen = 0;
+  for (const p of navigator.getGamepads()) {
+    if (p && p.connected) {
+      if (seen === player) return p;
+      seen++;
+    }
+  }
+  return null;
+}
 
 export interface InputSource {
   poll(player: 0 | 1): InputFrame;
@@ -19,10 +38,8 @@ type KeyMap = Record<keyof InputFrame, Phaser.Input.Keyboard.Key>;
 export class KeyboardSource implements InputSource {
   private maps: [KeyMap, KeyMap];
   private pads: [PlayerBindings['pad'], PlayerBindings['pad']];
-  private scene: Phaser.Scene;
 
   constructor(scene: Phaser.Scene) {
-    this.scene = scene;
     const kb = scene.input.keyboard!;
     const bindings = getSettings().bindings;
     const bind = (b: PlayerBindings): KeyMap => {
@@ -53,18 +70,19 @@ export class KeyboardSource implements InputSource {
       hk: m.hk.isDown,
     };
 
-    const pad = this.scene.input.gamepad?.gamepads[player];
+    const pad = padForPlayer(player);
     if (pad) {
       const b = this.pads[player];
       const btn = (i: number): boolean => {
         const bt = pad.buttons[i];
         return !!bt && (bt.pressed || bt.value > 0.4);
       };
-      const stick = pad.leftStick;
-      frame.left ||= btn(b.left) || stick.x < -0.5;
-      frame.right ||= btn(b.right) || stick.x > 0.5;
-      frame.up ||= btn(b.up) || stick.y < -0.5;
-      frame.down ||= btn(b.down) || stick.y > 0.5;
+      const sx = pad.axes[0] ?? 0;
+      const sy = pad.axes[1] ?? 0;
+      frame.left ||= btn(b.left) || sx < -0.5;
+      frame.right ||= btn(b.right) || sx > 0.5;
+      frame.up ||= btn(b.up) || sy < -0.5;
+      frame.down ||= btn(b.down) || sy > 0.5;
       frame.lp ||= btn(b.lp);
       frame.mp ||= btn(b.mp);
       frame.hp ||= btn(b.hp);

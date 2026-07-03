@@ -5,6 +5,7 @@
 import Phaser from 'phaser';
 import { STAGE_H, STAGE_W } from '../engine';
 import { play } from './BootScene';
+import { menuNav, navDefer } from '../input/menu-nav';
 import {
   BIND_ACTIONS,
   BindAction,
@@ -164,8 +165,11 @@ export class ControlsScene extends Phaser.Scene {
   }
 
   private pressedPadButtons(): Set<string> {
+    // read the browser API directly — Phaser's per-scene pad wrappers drop
+    // updates whose timestamp predates the wrapper (see src/input/menu-nav.ts)
     const down = new Set<string>();
-    (this.input.gamepad?.gamepads ?? []).forEach((pad, p) => {
+    const pads = typeof navigator !== 'undefined' && navigator.getGamepads ? navigator.getGamepads() : [];
+    pads.forEach((pad, p) => {
       pad?.buttons.forEach((b, i) => {
         if (b.pressed || b.value > 0.4) down.add(`${p}:${i}`);
       });
@@ -190,6 +194,13 @@ export class ControlsScene extends Phaser.Scene {
   }
 
   update(): void {
+    // poll every frame so the shared tracker's held-state stays fresh, but only
+    // act on Select when no cell is armed — armed presses are bind material
+    const n = menuNav.poll();
+    if (!this.armed && n.menu) {
+      navDefer(this, () => this.scene.start('Settings'));
+      return;
+    }
     // pad rebinding: the first FRESH button press (not held while arming) wins
     if (this.armed?.device !== 'pad') return;
     for (const entry of this.pressedPadButtons()) {

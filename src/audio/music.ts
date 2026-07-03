@@ -167,20 +167,42 @@ function start(ctx: string, file: string, opts: PlayOpts): void {
 }
 
 /** Browsers block audio before the first gesture; retry the pending track once
- *  the user clicks or presses a key. */
+ *  the user clicks, presses a key, OR presses a gamepad button. Gamepad input
+ *  fires no DOM event, so we poll for it while armed — otherwise a player who
+ *  only ever touches the controller would never hear music. */
 function armUnlock(): void {
   if (unlockArmed) return;
   unlockArmed = true;
+  let raf = 0;
+  const anyPadDown = (): boolean => {
+    const pads = typeof navigator !== 'undefined' && navigator.getGamepads ? navigator.getGamepads() : [];
+    for (const p of pads) {
+      if (p && p.buttons.some((b) => b.pressed || b.value > 0.4)) return true;
+    }
+    return false;
+  };
   const unlock = (): void => {
     window.removeEventListener('pointerdown', unlock);
     window.removeEventListener('keydown', unlock);
+    if (raf) cancelAnimationFrame(raf);
     unlockArmed = false;
     if (current && current.el.paused) {
-      current.el.play().then(() => current && fadeIn(current.el), () => undefined);
+      // a pad press may not count as an activation gesture — re-arm and wait
+      // for the next gesture instead of giving up on music for the session
+      current.el.play().then(() => current && fadeIn(current.el), () => armUnlock());
     }
   };
   window.addEventListener('pointerdown', unlock);
   window.addEventListener('keydown', unlock);
+  let padWasDown = anyPadDown(); // only a FRESH press unlocks (not a held one)
+  const pollPad = (): void => {
+    if (!unlockArmed) return;
+    const down = anyPadDown();
+    if (down && !padWasDown) { unlock(); return; }
+    padWasDown = down;
+    raf = requestAnimationFrame(pollPad);
+  };
+  raf = requestAnimationFrame(pollPad);
 }
 
 function fadeIn(el: HTMLAudioElement, ms = FADE_MS): void {

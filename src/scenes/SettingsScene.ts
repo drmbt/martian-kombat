@@ -8,6 +8,7 @@ import Phaser from 'phaser';
 import { STAGE_H, STAGE_W } from '../engine';
 import { play } from './BootScene';
 import { applyMusicVolume } from '../audio/volume';
+import { menuNav, navDefer } from '../input/menu-nav';
 import {
   getSettings,
   resetSettings,
@@ -216,23 +217,25 @@ export class SettingsScene extends Phaser.Scene {
     });
 
     this.add
-      .text(CX, STAGE_H - 26, 'drag faders/values · W/S row · A/D change · ESC back', {
+      .text(CX, STAGE_H - 26, 'drag · W/S+pad rows · A/D+pad change · ESC/SELECT back', {
         fontFamily: 'monospace', fontSize: '14px', color: '#9a8fa8', stroke: '#000', strokeThickness: 3,
       })
       .setOrigin(0.5);
 
     const kb = this.input.keyboard!;
-    const move = (d: number) => {
-      this.rowIdx = (this.rowIdx + d + this.rows.length) % this.rows.length;
-      play(this, 's-blip', 0.4);
-      this.redraw();
-    };
+    const move = this.moveRow.bind(this);
     for (const k of ['W', 'UP']) kb.on(`keydown-${k}`, () => move(-1));
     for (const k of ['S', 'DOWN']) kb.on(`keydown-${k}`, () => move(1));
     for (const k of ['A', 'LEFT']) kb.on(`keydown-${k}`, () => this.adjust(-1));
     for (const k of ['D', 'RIGHT']) kb.on(`keydown-${k}`, () => this.adjust(1));
     for (const k of ['ESC', 'ENTER']) kb.on(`keydown-${k}`, () => this.scene.start('Menu'));
 
+    this.redraw();
+  }
+
+  private moveRow(d: number): void {
+    this.rowIdx = (this.rowIdx + d + this.rows.length) % this.rows.length;
+    play(this, 's-blip', 0.4);
     this.redraw();
   }
 
@@ -253,6 +256,19 @@ export class SettingsScene extends Phaser.Scene {
   }
 
   update(): void {
+    // gamepad: dpad up/down picks a row, left/right (or any attack) changes it,
+    // Select backs out to the menu.
+    const n = menuNav.poll();
+    if (n.up) this.moveRow(-1);
+    if (n.down) this.moveRow(1);
+    // adjust can start the Controls scene (REBIND row) — defer, see navDefer
+    if (n.left) navDefer(this, () => this.adjust(-1));
+    if (n.right || n.confirm || n.start) navDefer(this, () => this.adjust(1));
+    if (n.menu) {
+      play(this, 's-blip', 0.5);
+      navDefer(this, () => this.scene.start('Menu'));
+      return;
+    }
     // settings can change under us (the quick-volume overlay); text updates
     // are no-ops when nothing changed, so a per-frame redraw stays cheap
     this.redraw();

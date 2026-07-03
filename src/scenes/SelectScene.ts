@@ -9,6 +9,10 @@ import { characters } from '../data/characters';
 import { STAGES, stageOwner } from '../data/stages';
 import { play } from './BootScene';
 import { playMusic } from '../audio/music';
+import { menuNav, navDefer } from '../input/menu-nav';
+import { BindAction, getSettings } from '../settings';
+
+const ATTACK_ACTIONS: BindAction[] = ['lp', 'mp', 'hp', 'lk', 'mk', 'hk'];
 
 const COLS = 4;
 const CELL = 150;
@@ -118,25 +122,32 @@ export class SelectScene extends Phaser.Scene {
     }
 
     const kb = this.input.keyboard!;
-    // in CPU mode, P1's keys drive the P2 cursor after P1 has locked in
-    const slotForP1 = (): 0 | 1 => ((this.cpu || this.training) && this.confirmed[0] ? 1 : 0);
-    const move = (p: 0 | 1, d: number) => {
-      if (this.confirmed[p] || this.starting) return;
-      const n = ROSTER.length;
-      this.idx[p] = ((this.idx[p] + d) % n + n) % n;
-      play(this, 's-blip', 0.5);
-    };
+    const slotForP1 = this.slotForP1.bind(this);
+    const move = this.moveGrid.bind(this);
     kb.on('keydown-A', () => (this.stageMode ? this.stageMove(-1) : move(slotForP1(), -1)));
     kb.on('keydown-D', () => (this.stageMode ? this.stageMove(1) : move(slotForP1(), 1)));
     kb.on('keydown-W', () => (this.stageMode ? this.stageMove(-this.scols) : move(slotForP1(), -COLS)));
     kb.on('keydown-S', () => (this.stageMode ? this.stageMove(this.scols) : move(slotForP1(), COLS)));
-    kb.on('keydown-F', () => (this.stageMode ? this.confirmStage() : this.confirm(slotForP1())));
-    // arrows/K always work in the stage dialog — it's a shared pick
+    // any of P1's bound attack keys confirms P1's slot; any of P2's confirms
+    // P2's (in the stage dialog either side confirms the shared pick)
+    const bindings = getSettings().bindings;
+    const atkSet = (slot: 0 | 1): Set<number> => new Set(ATTACK_ACTIONS.map((a) => bindings[slot].keys[a]));
+    const atk1 = atkSet(0);
+    const atk2 = atkSet(1);
+    kb.on('keydown', (e: KeyboardEvent) => {
+      if (this.starting) return;
+      if (this.stageMode) {
+        if (atk1.has(e.keyCode) || atk2.has(e.keyCode)) this.confirmStage();
+        return;
+      }
+      if (atk1.has(e.keyCode)) this.confirm(this.slotForP1());
+      else if (atk2.has(e.keyCode) && !this.cpu && !this.training) this.confirm(1);
+    });
+    // arrows always work in the stage dialog — it's a shared pick
     kb.on('keydown-LEFT', () => this.stageMode && this.stageMove(-1));
     kb.on('keydown-RIGHT', () => this.stageMode && this.stageMove(1));
     kb.on('keydown-UP', () => this.stageMode && this.stageMove(-this.scols));
     kb.on('keydown-DOWN', () => this.stageMode && this.stageMove(this.scols));
-    kb.on('keydown-K', () => this.stageMode && this.confirmStage());
     // ENTER confirms in sequence: P1's pick, then P2's, then the stage
     kb.on('keydown-ENTER', () => {
       if (this.stageMode) this.confirmStage();
@@ -147,7 +158,6 @@ export class SelectScene extends Phaser.Scene {
       kb.on('keydown-RIGHT', () => !this.stageMode && move(1, 1));
       kb.on('keydown-UP', () => !this.stageMode && move(1, -COLS));
       kb.on('keydown-DOWN', () => !this.stageMode && move(1, COLS));
-      kb.on('keydown-K', () => !this.stageMode && this.confirm(1));
     }
     // ESC backs out: stage dialog -> character pick, character pick -> main menu
     kb.on('keydown-ESC', () => {
@@ -158,12 +168,24 @@ export class SelectScene extends Phaser.Scene {
     });
 
     this.add
-      .text(STAGE_W / 2, STAGE_H - 20, 'ESC · back', {
+      .text(STAGE_W / 2, STAGE_H - 20, 'ESC / SELECT · menu', {
         fontFamily: 'monospace', fontSize: '13px', color: '#9a8fa8', stroke: '#000', strokeThickness: 3,
       })
       .setOrigin(0.5);
 
     this.redraw();
+  }
+
+  /** Which slot the shared keyboard/pad drives: P1 until it locks, then P2. */
+  private slotForP1(): 0 | 1 {
+    return (this.cpu || this.training) && this.confirmed[0] ? 1 : 0;
+  }
+
+  private moveGrid(p: 0 | 1, d: number): void {
+    if (this.confirmed[p] || this.starting) return;
+    const n = ROSTER.length;
+    this.idx[p] = ((this.idx[p] + d) % n + n) % n;
+    play(this, 's-blip', 0.5);
   }
 
   private cellXY(i: number): { x: number; y: number } {
@@ -273,7 +295,7 @@ export class SelectScene extends Phaser.Scene {
         .setDepth(12);
     });
     this.add
-      .text(STAGE_W / 2, STAGE_H - 18, 'MOVE: WASD / ARROWS · CONFIRM: F / K', {
+      .text(STAGE_W / 2, STAGE_H - 18, 'MOVE: WASD / ARROWS / D-PAD · CONFIRM: any attack or ENTER', {
         ...font, fontSize: '12px', color: '#e8dcc8',
       })
       .setOrigin(0.5)
@@ -317,8 +339,45 @@ export class SelectScene extends Phaser.Scene {
   }
 
   update(): void {
+    this.padFrame();
     if (this.stageMode) this.redrawStage();
     else this.redraw();
+  }
+
+  /** Gamepad drives the same picks the keyboard does (shared cursor). A single
+   *  pad fills the first still-open slot (P1, then P2 / the CPU / the dummy). */
+  private padSlot(): 0 | 1 {
+    return this.confirmed[0] ? 1 : 0;
+  }
+
+  private padFrame(): void {
+    if (this.starting) return;
+    const n = menuNav.poll();
+    if (this.stageMode) {
+      if (n.up) this.stageMove(-this.scols);
+      if (n.down) this.stageMove(this.scols);
+      if (n.left) this.stageMove(-1);
+      if (n.right) this.stageMove(1);
+      // confirm/back re-check state at fire time — see navDefer
+      if (n.confirm || n.start) navDefer(this, () => { if (this.stageMode) this.confirmStage(); });
+      // Select backs out of the stage dialog to the character grid
+      if (n.menu) {
+        play(this, 's-blip', 0.5);
+        navDefer(this, () => this.scene.restart({ cpu: this.cpu, training: this.training }));
+      }
+      return;
+    }
+    const p = this.padSlot();
+    if (n.up) this.moveGrid(p, -COLS);
+    if (n.down) this.moveGrid(p, COLS);
+    if (n.left) this.moveGrid(p, -1);
+    if (n.right) this.moveGrid(p, 1);
+    if (n.confirm || n.start) navDefer(this, () => { if (!this.stageMode) this.confirm(this.padSlot()); });
+    // Select brings up the main menu (matches ESC)
+    if (n.menu) {
+      play(this, 's-blip', 0.5);
+      navDefer(this, () => this.scene.start('Menu'));
+    }
   }
 
   private redraw(): void {
