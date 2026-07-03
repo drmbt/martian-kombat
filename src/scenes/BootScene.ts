@@ -37,8 +37,9 @@ export class BootScene extends Phaser.Scene {
     for (const st of STAGES) {
       this.load.image(`bg-stage-${st.id}`, st.file);
       if (st.layers?.sky) this.load.image(`bg-stage-${st.id}-sky`, st.layers.sky.file);
-      if (st.layers?.back) this.load.image(`bg-stage-${st.id}-back`, st.layers.back.file);
-      if (st.layers?.stage) this.load.image(`bg-stage-${st.id}-stage`, st.layers.stage.file);
+      if (st.layers?.far) this.load.image(`bg-stage-${st.id}-far`, st.layers.far.file);
+      if (st.layers?.near) this.load.image(`bg-stage-${st.id}-near`, st.layers.near.file);
+      if (st.layers?.floor) this.load.image(`bg-stage-${st.id}-floor`, st.layers.floor.file);
     }
     for (const { id } of ROSTER) {
       this.load.spritesheet(`sheet-${id}`, `assets/sprites/${id}/sheet.png`, {

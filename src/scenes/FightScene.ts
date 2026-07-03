@@ -36,6 +36,8 @@ const CELL_W = 288;
 const CELL_H = 384;
 const SHADOW_W = 96;
 const SHADOW_H = 36;
+const SHADOW_PAD = 8;
+const SPRITE_FOOT_OFFSET_Y = 16;
 const PHASE_NAME = ['startup', 'active', 'recovery'] as const;
 // per-special projectile draw size (square px); default 72
 const PROJ_SIZE: Record<string, number> = {
@@ -58,7 +60,7 @@ const LEGACY_BUTTON: Record<string, string> = {
 
 const BAR_W = 320;
 const BAR_X1 = 100;
-const DEFAULT_LAYER_FACTORS = { sky: 0.15, back: 0.4, stage: 1.0 } as const;
+const DEFAULT_LAYER_FACTORS = { sky: 0.15, far: 0.35, near: 0.7, floor: 1.0 } as const;
 
 interface Spark {
   x: number;
@@ -252,8 +254,9 @@ export class FightScene extends Phaser.Scene {
     if (layerDefs) {
       const ordered = [
         ['sky', layerDefs.sky],
-        ['back', layerDefs.back],
-        ['stage', layerDefs.stage],
+        ['far', layerDefs.far],
+        ['near', layerDefs.near],
+        ['floor', layerDefs.floor],
       ] as const;
       for (const [name, layer] of ordered) {
         if (!layer) continue;
@@ -855,31 +858,60 @@ export class FightScene extends Phaser.Scene {
     for (const w of weights) max = Math.max(max, w);
     if (max <= 0) return null;
 
+    const maskW = SHADOW_W + SHADOW_PAD * 2;
+    const maskH = SHADOW_H + SHADOW_PAD * 2;
+    const mask = document.createElement('canvas');
+    mask.width = maskW;
+    mask.height = maskH;
+    const maskCtx = mask.getContext('2d');
+    if (!maskCtx) return null;
     const out = document.createElement('canvas');
-    out.width = SHADOW_W;
-    out.height = SHADOW_H;
+    out.width = maskW;
+    out.height = maskH;
     const ctx = out.getContext('2d');
     if (!ctx) return null;
-    const img = ctx.createImageData(SHADOW_W, SHADOW_H);
-    const cy = SHADOW_H * 0.54;
-    for (let y = 0; y < SHADOW_H; y++) {
-      const dy = (y - cy) / (SHADOW_H * 0.52);
+    const img = maskCtx.createImageData(maskW, maskH);
+    const cy = SHADOW_PAD + SHADOW_H * 0.56;
+    for (let y = SHADOW_PAD; y < SHADOW_PAD + SHADOW_H; y++) {
+      const dy = Math.abs((y - cy) / (SHADOW_H * 0.5));
       const rowSoft = Math.max(0, 1 - dy * dy);
-      for (let x = 0; x < SHADOW_W; x++) {
-        const col = weights[x] / max;
+      const rowTaper = Math.sqrt(rowSoft);
+      for (let x = SHADOW_PAD; x < SHADOW_PAD + SHADOW_W; x++) {
+        const sx = x - SHADOW_PAD;
+        const nx = Math.abs((sx - SHADOW_W / 2) / (SHADOW_W / 2));
+        const edgeSoft = Math.max(0, 1 - Math.pow(nx, 4) * 0.72);
+        const col = weights[sx] / max;
         const soft =
           col * 0.55 +
-          ((weights[Math.max(0, x - 2)] + weights[Math.min(SHADOW_W - 1, x + 2)]) / (max * 2)) * 0.28 +
-          ((weights[Math.max(0, x - 6)] + weights[Math.min(SHADOW_W - 1, x + 6)]) / (max * 2)) * 0.17;
-        const a = Math.round(245 * Math.min(1, soft) * rowSoft);
-        const i = (y * SHADOW_W + x) * 4;
+          ((weights[Math.max(0, sx - 2)] + weights[Math.min(SHADOW_W - 1, sx + 2)]) / (max * 2)) * 0.28 +
+          ((weights[Math.max(0, sx - 6)] + weights[Math.min(SHADOW_W - 1, sx + 6)]) / (max * 2)) * 0.17;
+        const a = Math.round(250 * Math.min(1, soft) * rowSoft * rowTaper * edgeSoft);
+        const i = (y * maskW + x) * 4;
         img.data[i] = 0;
         img.data[i + 1] = 0;
         img.data[i + 2] = 0;
         img.data[i + 3] = a;
       }
     }
-    ctx.putImageData(img, 0, 0);
+    maskCtx.putImageData(img, 0, 0);
+    ctx.filter = 'blur(8px)';
+    ctx.drawImage(mask, 0, 0);
+    ctx.filter = 'none';
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.42)';
+    for (let band = 0; band < 6; band++) {
+      const y = CELL_H - 1 - band * 5;
+      for (let x = 0; x < CELL_W; x += 4) {
+        const alpha = pixels[(y * CELL_W + x) * 4 + 3];
+        if (alpha < 44) continue;
+        const nx = (x - CELL_W / 2) / (CELL_W / 2);
+        const cx = SHADOW_PAD + ((nx * 0.9 + 1) / 2) * SHADOW_W;
+        const cy2 = SHADOW_PAD + SHADOW_H * 0.58;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy2, 4.2, 2.1, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
     this.textures.addCanvas(key, out);
     return key;
   }
@@ -903,9 +935,9 @@ export class FightScene extends Phaser.Scene {
     const crouch = k === 'crouch' || f.action.guard === 'crouch' || (k === 'attack' && f.action.moveId?.startsWith('c'));
     const down = k === 'knockdown' || k === 'getup' || (k === 'ko' && f.y >= FLOOR_Y);
     const artW = (def.hurtStand.h * 1.32 * CELL_W) / CELL_H;
-    const width = artW * (down ? 1.68 : crouch ? 1.5 : 1.42) * (air ? Math.max(0.6, 1 - dist / 460) : 1);
-    const height = (down ? 42 : crouch ? 37 : 35) * (air ? Math.max(0.58, 1 - dist / 540) : 1);
-    const alpha = (down ? 0.58 : 0.68) * (air ? Math.max(0.24, 1 - dist / 280) : 1);
+    const width = artW * (down ? 1.78 : crouch ? 1.58 : 1.5) * (air ? Math.max(0.6, 1 - dist / 460) : 1);
+    const height = (down ? 39 : crouch ? 34 : 32) * (air ? Math.max(0.58, 1 - dist / 540) : 1);
+    const alpha = (down ? 0.64 : 0.74) * (air ? Math.max(0.24, 1 - dist / 280) : 1);
     shadow
       .setTexture(key)
       .setVisible(alpha > 0.04)
@@ -996,7 +1028,7 @@ export class FightScene extends Phaser.Scene {
         sprite.setVisible(true);
         const h = def.hurtStand.h * 1.32; // art has margin around the body
         sprite.setDisplaySize((h * CELL_W) / CELL_H, h);
-        sprite.setPosition(f.x, f.y + 6);
+        sprite.setPosition(f.x, f.y + SPRITE_FOOT_OFFSET_Y);
         sprite.setFlipX(f.facing === -1);
         sprite.setRotation(0);
         const frame = this.actionToCell(slot, f);

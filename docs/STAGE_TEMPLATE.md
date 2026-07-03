@@ -56,40 +56,43 @@ Put stage landmarks in the middle distance above the fighter strip.
 ## Optional Parallax Layers
 
 Current stages are single flattened images. For stronger depth, use optional
-per-stage layer files with the same `1680x720` canvas. Keep the floor on the
-nearest layer that it visually blends into; do not force a separate floor layer
-when it would create a visible seam.
+per-stage layer files with the same `1680x720` canvas. Keep seam-sensitive art
+together when needed, but stages can use all four layers when the masks are
+properly prepared.
 
 ```text
 public/assets/backgrounds/stages/<id>/
-  sky.png       # optional far sky / mountains, slowest x movement
-  back.png      # optional distant structures / horizon objects
-  stage.png     # required main layer: floor + anything that must seam with it
+  sky.png       # far sky / mountains, slowest x movement
+  far.png       # distant structures / horizon objects
+  near.png      # near set pieces behind fighters
+  floor.png     # walkable floor plane, frontmost stage layer
 ```
 
 Allowed variants:
 
-- `sky + back + stage`: best case for outdoor scenes with clean depth bands.
-- `sky + stage`: good when floor, midground, and landmarks are visually linked.
-- `stage`: flattened fallback, equivalent to the current single-image stages.
+- `sky + far + near + floor`: best case when transparent masks are clean.
+- `sky + far + floor`: useful when near set pieces seam into the floor.
+- `sky + floor`: useful when most art is seam-sensitive.
+- flattened `jpg`: fallback, equivalent to the current single-image stages.
 
 Recommended scroll factors relative to the current fighter-midpoint parallax:
 
 | Layer | Factor | Content |
 | --- | ---: | --- |
 | `sky` | 0.15 | sky, sun, far mountains, clouds |
-| `back` | 0.40 | distant structures, horizon landmarks |
-| `stage` | 1.00 | walkable floor, near props, anything touching the fighter strip |
+| `far` | 0.35 | distant structures, horizon landmarks |
+| `near` | 0.70 | near set pieces behind fighters |
+| `floor` | 1.00 | walkable floor, rails/props that must stay aligned to feet |
 
-The `stage` layer owns the exact floor contract from this document. `sky` and
-`back` should not contain opaque pixels in the fighter strip unless those pixels
-are fully hidden by `stage`.
+The `floor` layer owns the exact floor contract from this document. `sky`,
+`far`, and `near` should not contain opaque pixels in the fighter strip unless
+those pixels are fully hidden by `floor` or are intentionally behind it.
 
 Implementation shape:
 
 - Keep the existing flat `bg-stage-<id>` path as the default.
-- If layer files exist, preload them as `bg-stage-<id>-sky`, `-back`, and
-  `-stage`.
+- If layer files exist, preload them as `bg-stage-<id>-sky`, `-far`, `-near`,
+  and `-floor`.
 - In `FightScene`, draw the layers at the same display size as current stage
   art, but apply `bgOverhang * factor` for each layer.
 - Allow each stage to override the default parallax factors in `src/data/stages.ts`.

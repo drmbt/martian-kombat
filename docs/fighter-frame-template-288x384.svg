@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="288" height="384" viewBox="0 0 288 384">
+  <rect width="288" height="384" fill="#10131a"/>
+
+  <rect x="0" y="0" width="288" height="304" fill="#1b2430"/>
+  <rect x="0" y="304" width="288" height="80" fill="#3a2b24"/>
+  <rect x="0" y="350" width="288" height="34" fill="#5b362f" opacity="0.95"/>
+
+  <line x1="144" y1="0" x2="144" y2="384" stroke="#58e6d9" stroke-width="2" stroke-dasharray="8 6"/>
+  <line x1="0" y1="365" x2="288" y2="365" stroke="#ffffff" stroke-width="4"/>
+  <line x1="0" y1="352" x2="288" y2="352" stroke="#ffd166" stroke-width="2" stroke-dasharray="8 5"/>
+  <line x1="0" y1="374" x2="288" y2="374" stroke="#ff8a5c" stroke-width="2" stroke-dasharray="8 5"/>
+  <line x1="0" y1="384" x2="288" y2="384" stroke="#ff5a48" stroke-width="4"/>
+
+  <ellipse cx="144" cy="368" rx="98" ry="12" fill="#000000" opacity="0.28"/>
+  <ellipse cx="96" cy="366" rx="28" ry="7" fill="#000000" opacity="0.38"/>
+  <ellipse cx="192" cy="366" rx="28" ry="7" fill="#000000" opacity="0.38"/>
+
+  <rect x="12" y="10" width="264" height="112" fill="#05070c" opacity="0.82" rx="6"/>
+  <text x="24" y="34" font-family="monospace" font-size="14" font-weight="700" fill="#ffffff">FIGHTER FRAME GUIDE</text>
+  <text x="24" y="56" font-family="monospace" font-size="11" fill="#d8e7ff">cell: 288x384</text>
+  <text x="24" y="74" font-family="monospace" font-size="11" fill="#ffffff">white y=365: soles/contact line</text>
+  <text x="24" y="92" font-family="monospace" font-size="11" fill="#ffd166">yellow y=352: ankle/contact band top</text>
+  <text x="24" y="110" font-family="monospace" font-size="11" fill="#ff8a5c">orange y=374: contact band bottom</text>
+
+  <text x="16" y="345" font-family="monospace" font-size="11" fill="#ffd166">feet should live in this band</text>
+  <text x="16" y="363" font-family="monospace" font-size="11" fill="#ffffff">lowest sole pixels touch y=365</text>
+  <text x="16" y="382" font-family="monospace" font-size="10" fill="#ffb0a0">keep transparent padding below; do not crop into soles</text>
+
+  <text x="151" y="202" font-family="monospace" font-size="10" fill="#58e6d9" transform="rotate(90 151 202)">center x=144</text>
+</svg>

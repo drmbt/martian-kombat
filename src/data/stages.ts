@@ -9,11 +9,12 @@ export interface StageEntry {
   name: string;
   /** path under public/, relative to the page (matches BootScene loads) */
   file: string;
-  /** Optional parallax layers. `stage` is the near layer and owns the floor. */
+  /** Optional parallax layers, ordered back-to-front by the renderer. */
   layers?: {
     sky?: { file: string; factor?: number };
-    back?: { file: string; factor?: number };
-    stage: { file: string; factor?: number };
+    far?: { file: string; factor?: number };
+    near?: { file: string; factor?: number };
+    floor?: { file: string; factor?: number };
   };
 }
 
@@ -32,9 +33,10 @@ export const STAGES: StageEntry[] = [
   {
     ...stage('chiba-roof', 'CHIBA ROOF'),
     layers: {
-      sky: { file: 'assets/backgrounds/stages/chiba-roof/sky.png', factor: 0.16 },
-      back: { file: 'assets/backgrounds/stages/chiba-roof/back.png', factor: 0.42 },
-      stage: { file: 'assets/backgrounds/stages/chiba-roof/stage.png', factor: 1.0 },
+      sky: { file: 'assets/backgrounds/stages/chiba-roof/sky.png', factor: 0.14 },
+      far: { file: 'assets/backgrounds/stages/chiba-roof/far.png', factor: 0.34 },
+      near: { file: 'assets/backgrounds/stages/chiba-roof/near.png', factor: 0.68 },
+      floor: { file: 'assets/backgrounds/stages/chiba-roof/floor.png', factor: 1.0 },
     },
   },
   stage('dodecahedron', 'DODECAHEDRON'),
