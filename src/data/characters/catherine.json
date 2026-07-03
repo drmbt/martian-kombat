@@ -6,7 +6,8 @@
   "winQuotes": [
     "You came to my kitchen underseasoned.",
     "Order up. One knockout, plated hot.",
-    "Jazzper had you. I just watched."
+    "Jazzper had you. I just watched.",
+    "I'm done with you. Jazzper gets the scraps."
   ],
   "health": 1000,
   "walkSpeed": 4.7,
@@ -487,6 +488,26 @@
           }
         }
       }
+    },
+    "throw": {
+      "name": "Throw",
+      "input": {
+        "button": "LPLK"
+      },
+      "startup": 4,
+      "active": 2,
+      "recovery": 20,
+      "damage": 85,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 9,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 105
+      },
+      "techable": true
     }
   },
   "fatality": {

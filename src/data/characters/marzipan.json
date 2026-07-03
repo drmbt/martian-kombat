@@ -6,7 +6,9 @@
   "winQuotes": [
     "Everything composts eventually. You just went first.",
     "I don't fight. I cultivate. You were the weeds.",
-    "Rooted, grounded, and still standing. Namaste."
+    "Rooted, grounded, and still standing. Namaste.",
+    "I hope you'll still collaborate with me.",
+    "Cyanobacteria invented oxygen. I just invented your defeat."
   ],
   "fatality": {
     "id": "compost",
@@ -474,6 +476,26 @@
           }
         }
       }
+    },
+    "throw": {
+      "name": "Throw",
+      "input": {
+        "button": "LPLK"
+      },
+      "startup": 4,
+      "active": 2,
+      "recovery": 20,
+      "damage": 85,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 9,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 105
+      },
+      "techable": true
     }
   }
 }

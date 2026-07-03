@@ -5,8 +5,10 @@
   "stage": "chiba",
   "winQuotes": [
     "The cursor blinks. Your session has ended.",
-    "Water does not strike. It arrives where you are not.",
-    "I redirected everything you had. It was never much."
+    "I took everything you had. It was never much.",
+    "Offense can't be given, only taken. You took plenty.",
+    "I am the signal. You were noise.",
+    "The mirror reflects the truth, and the truth reflects your weakness."
   ],
   "health": 1000,
   "walkSpeed": 5.0,
@@ -485,6 +487,26 @@
           "recovery": 16
         }
       }
+    },
+    "throw": {
+      "name": "Throw",
+      "input": {
+        "button": "LPLK"
+      },
+      "startup": 4,
+      "active": 2,
+      "recovery": 20,
+      "damage": 85,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 9,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 105
+      },
+      "techable": true
     }
   },
   "fatality": {

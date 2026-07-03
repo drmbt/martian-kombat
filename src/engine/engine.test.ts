@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DIZZY_TICKS,
   EMPTY_INPUT,
   FLOOR_Y,
   GameState,
@@ -8,6 +9,7 @@ import {
   HITSTOP_SPECIAL,
   InputFrame,
   ROUND_TICKS,
+  STUN_THRESHOLD,
   initialState,
   resolveMove,
   step,
@@ -1024,5 +1026,198 @@ describe('hitstop', () => {
     run(s, 400); // freeze + roundEnd beat + reset
     expect(s.phase).not.toBe('roundEnd');
     expect(s.hitstop).toBe(0);
+  });
+});
+
+describe('universal throw (LP+LK)', () => {
+  const chord = inp({ lp: true, lk: true });
+
+  it('LP+LK on the same tick picks the throw, not a normal', () => {
+    const s = fresh();
+    closeRange(s);
+    step(s, [chord, inp()], characters);
+    expect(s.fighters[0].action.moveId).toBe('throw');
+  });
+
+  it('staggered LP then LP+LK upgrades the jab into the throw', () => {
+    const s = fresh();
+    closeRange(s);
+    step(s, [inp({ lp: true }), inp()], characters);
+    expect(s.fighters[0].action.moveId).toBe('lp');
+    step(s, [chord, inp()], characters);
+    expect(s.fighters[0].action.moveId).toBe('throw');
+  });
+
+  it('throws through block: unblockable damage + knockdown', () => {
+    const s = fresh();
+    closeRange(s);
+    // crouch-block: guards everything blockable without walking backward
+    // (a back-WALKING blocker legitimately retreats out of throw range)
+    const guard = inp({ right: true, down: true });
+    step(s, [chord, guard], characters);
+    run(s, 45, inp(), guard);
+    expect(s.fighters[1].health).toBe(
+      characters[P2].health - characters[P1].moves.throw.damage,
+    );
+    expect(['airHit', 'knockdown', 'getup']).toContain(s.fighters[1].action.kind);
+  });
+
+  it('whiffs at full-screen range', () => {
+    const s = fresh();
+    step(s, [chord, inp()], characters);
+    run(s, 40);
+    expect(s.pendingThrow).toBeNull();
+    expect(s.fighters[1].health).toBe(characters[P2].health);
+  });
+
+  it('whiffs against an airborne opponent', () => {
+    const s = fresh();
+    closeRange(s);
+    run(s, 6, inp(), inp({ up: true })); // P2 leaves the ground
+    expect(s.fighters[1].y).toBeLessThan(FLOOR_Y);
+    step(s, [chord, inp()], characters);
+    run(s, 10);
+    expect(s.pendingThrow).toBeNull();
+    expect(s.fighters[1].health).toBe(characters[P2].health);
+  });
+
+  it('whiffs against a victim already in hitstun', () => {
+    const s = fresh();
+    closeRange(s);
+    s.fighters[1].action = { kind: 'hitstun', frame: 40 };
+    step(s, [chord, inp()], characters);
+    run(s, 12);
+    expect(s.pendingThrow).toBeNull();
+    expect(s.fighters[1].health).toBe(characters[P2].health);
+  });
+
+  it('victim LP+LK inside the window techs: no damage, both bounce apart', () => {
+    const s = fresh();
+    closeRange(s);
+    for (let i = 0; i < 12 && !s.pendingThrow; i++) step(s, [chord, inp()], characters);
+    expect(s.pendingThrow).not.toBeNull();
+    const x0 = s.fighters[0].x;
+    const x1 = s.fighters[1].x;
+    // victim mashes the chord (press/release alternating beats holding)
+    for (let i = 0; i < 20 && s.pendingThrow; i++) {
+      step(s, [inp(), i % 2 ? inp() : chord], characters);
+    }
+    expect(s.pendingThrow).toBeNull();
+    run(s, 15);
+    expect(s.fighters[0].health).toBe(characters[P1].health);
+    expect(s.fighters[1].health).toBe(characters[P2].health);
+    expect(s.fighters[0].x).toBeLessThan(x0); // attacker bounced back
+    expect(s.fighters[1].x).toBeGreaterThan(x1); // victim pushed away
+  });
+
+  it('no tech input: the window expires and the throw lands', () => {
+    const s = fresh();
+    closeRange(s);
+    for (let i = 0; i < 12 && !s.pendingThrow; i++) step(s, [chord, inp()], characters);
+    expect(s.pendingThrow).not.toBeNull();
+    run(s, 40);
+    expect(s.pendingThrow).toBeNull();
+    expect(s.fighters[1].health).toBeLessThan(characters[P2].health);
+  });
+
+  it('throw inputs are deterministic: same script → identical states', () => {
+    const script = (t: number): [InputFrame, InputFrame] => [
+      inp({
+        right: t % 50 < 20,
+        lp: t % 23 === 0 || t % 23 === 1,
+        lk: t % 23 === 1 || t % 29 === 0,
+      }),
+      inp({
+        left: t % 40 < 15,
+        lp: t % 31 === 0,
+        lk: t % 31 === 0,
+        down: t % 77 < 6,
+      }),
+    ];
+    const a = initialState(P1, P2, characters);
+    const b = initialState(P1, P2, characters);
+    const snapA: string[] = [];
+    const snapB: string[] = [];
+    for (let t = 0; t < 1500; t++) {
+      step(a, script(t), characters);
+      if (t % 100 === 0) snapA.push(JSON.stringify(a));
+    }
+    for (let t = 0; t < 1500; t++) {
+      step(b, script(t), characters);
+      if (t % 100 === 0) snapB.push(JSON.stringify(b));
+    }
+    expect(snapA).toEqual(snapB);
+  });
+});
+
+describe('dizzy/stun', () => {
+  it('connecting hits build stun; blocked hits do not', () => {
+    const s = fresh();
+    closeRange(s);
+    step(s, [inp({ lp: true }), inp()], characters);
+    run(s, 8);
+    expect(s.fighters[1].stun).toBeGreaterThan(0);
+
+    const s2 = fresh();
+    closeRange(s2);
+    const guard = inp({ right: true });
+    step(s2, [inp({ lp: true }), guard], characters);
+    run(s2, 8, inp(), guard);
+    expect(s2.fighters[1].stun).toBe(0);
+  });
+
+  it('stun decays back to zero over time', () => {
+    const s = fresh();
+    closeRange(s);
+    step(s, [inp({ lp: true }), inp()], characters);
+    run(s, 8);
+    const peak = s.fighters[1].stun;
+    run(s, 60);
+    expect(s.fighters[1].stun).toBeLessThan(peak);
+    run(s, 200);
+    expect(s.fighters[1].stun).toBe(0);
+  });
+
+  it('crossing the threshold dizzies when the reel ends; the daze expires and resets stun', () => {
+    const s = fresh();
+    closeRange(s);
+    s.fighters[1].stun = STUN_THRESHOLD; // one jab from dizzy
+    step(s, [inp({ lp: true }), inp()], characters);
+    run(s, 25); // hitstun runs out inside this
+    expect(s.fighters[1].action.kind).toBe('dazed');
+    run(s, DIZZY_TICKS + 5);
+    expect(s.fighters[1].action.kind).toBe('idle');
+    expect(s.fighters[1].stun).toBe(0);
+  });
+
+  it('a dazed fighter cannot block and the punish ends the dizzy without re-triggering', () => {
+    const s = fresh();
+    closeRange(s);
+    s.fighters[1].action = { kind: 'dazed', frame: 0 };
+    s.fighters[1].stun = STUN_THRESHOLD + 50; // stale meter from the trigger
+    const hp = s.fighters[1].health;
+    const guard = inp({ right: true }); // held back does nothing while dazed
+    step(s, [inp({ lp: true }), guard], characters);
+    run(s, 10, inp(), guard);
+    expect(s.fighters[1].health).toBeLessThan(hp); // fully vulnerable
+    expect(s.fighters[1].stun).toBe(0); // the punish resets the meter
+    run(s, 30);
+    expect(s.fighters[1].action.kind).toBe('idle'); // no instant second dizzy
+  });
+
+  it('a dizzied opponent can be thrown (the dizzy punish path)', () => {
+    const s = fresh();
+    closeRange(s);
+    s.fighters[1].action = { kind: 'dazed', frame: 0 };
+    s.fighters[1].stun = STUN_THRESHOLD + 50;
+    const chord = inp({ lp: true, lk: true });
+    for (let i = 0; i < 12 && !s.pendingThrow; i++) step(s, [chord, inp()], characters);
+    expect(s.pendingThrow).not.toBeNull();
+    run(s, 40);
+    expect(s.fighters[1].health).toBe(
+      characters[P2].health - characters[P1].moves.throw.damage,
+    );
+    run(s, 80); // land + knockdown + getup
+    expect(s.fighters[1].action.kind).not.toBe('dazed'); // stun was reset by the throw
   });
 });

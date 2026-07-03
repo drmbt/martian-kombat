@@ -17,8 +17,15 @@ const ANNOUNCER = [
   'double-ko', 'perfect', 'victory', 'finish-them', 'fatality',
   ...ROSTER.map((r) => r.id),
 ];
-// kiai+hurt for every playable fighter (missing files 404 harmlessly)
-const VOICES = ROSTER.filter((r) => r.playable).flatMap((r) => [`${r.id}-kiai`, `${r.id}-hurt`]);
+// several numbered variants per category so combat/win-screen audio doesn't
+// loop the same clip every hit; missing files 404 harmlessly, so characters
+// with fewer generated lines than the count just degrade to repeats.
+export const VOICE_COUNTS = { kiai: 6, hurt: 6, victory: 4 } as const;
+const VOICES = ROSTER.filter((r) => r.playable).flatMap((r) =>
+  (Object.keys(VOICE_COUNTS) as (keyof typeof VOICE_COUNTS)[]).flatMap((cat) =>
+    Array.from({ length: VOICE_COUNTS[cat] }, (_, i) => `${r.id}-${cat}-${i + 1}`)
+  )
+);
 const SFX = ['hit', 'block', 'whoosh', 'jump', 'projectile', 'blip'];
 
 export class BootScene extends Phaser.Scene {
@@ -53,7 +60,8 @@ export class BootScene extends Phaser.Scene {
       this.load.image(`portrait-ko-${id}`, `assets/portraits/${id}-ko.png`);
     }
     // generic impact sparks (greyscale, tinted per character at spawn)
-    for (const v of ['spark-hit', 'spark-heavy', 'spark-block']) {
+    // + the circling dizzy-stars loop drawn over a dazed fighter's head
+    for (const v of ['spark-hit', 'spark-heavy', 'spark-block', 'dizzy']) {
       this.load.image(`vfx-${v}`, `assets/vfx/${v}.png`);
     }
     // fatality cutscene panels + per-special projectile art + per-move VFX
@@ -98,4 +106,16 @@ export class BootScene extends Phaser.Scene {
 export function play(scene: Phaser.Scene, key: string, volume = 0.8): void {
   const v = volume * effectiveSfxVolume();
   if (v > 0 && scene.cache.audio.exists(key)) scene.sound.play(key, { volume: v });
+}
+
+/** Play a random numbered variant of a character voice line (kiai/hurt/victory)
+ *  so combat and the win screen don't loop the same clip every time. */
+export function playVoice(
+  scene: Phaser.Scene,
+  charId: string,
+  category: keyof typeof VOICE_COUNTS,
+  volume = 0.8
+): void {
+  const n = Phaser.Math.Between(1, VOICE_COUNTS[category]);
+  play(scene, `v-${charId}-${category}-${n}`, volume);
 }

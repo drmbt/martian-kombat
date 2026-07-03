@@ -6,7 +6,9 @@
   "winQuotes": [
     "Oh, we are absolutely telling everyone about this.",
     "You fold better than a lawn chair, darling.",
-    "I bend, you break — now sit down and cool off."
+    "I bend, you break \u2014 now sit down and cool off.",
+    "Don't worry, I'll tell everyone you tried.",
+    "I heard you were tough. Someone lied to me."
   ],
   "fatality": {
     "id": "hot-yoga",
@@ -481,6 +483,26 @@
           }
         }
       }
+    },
+    "throw": {
+      "name": "Throw",
+      "input": {
+        "button": "LPLK"
+      },
+      "startup": 4,
+      "active": 2,
+      "recovery": 20,
+      "damage": 85,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 9,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 105
+      },
+      "techable": true
     }
   }
 }

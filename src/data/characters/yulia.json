@@ -6,7 +6,9 @@
   "winQuotes": [
     "Was that your rage? I did not feel it.",
     "Stand up. Or don't. It changes nothing.",
-    "I have already forgotten your name."
+    "I have already forgotten your name.",
+    "Я даже не вспотела.\n(I did not even sweat.)",
+    "Слабость — это выбор.\n(Weakness is a choice.)"
   ],
   "fatality": {
     "id": "heart-breaker",
@@ -465,6 +467,26 @@
       },
       "height": "mid",
       "projImmune": true
+    },
+    "throw": {
+      "name": "Throw",
+      "input": {
+        "button": "LPLK"
+      },
+      "startup": 4,
+      "active": 2,
+      "recovery": 20,
+      "damage": 100,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 9,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 115
+      },
+      "techable": true
     }
   }
 }

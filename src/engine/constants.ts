@@ -27,6 +27,19 @@ export const GROUND_FRICTION = 0.85; // knockback slide decay per tick
 export const INPUT_BUFFER_LEN = 15;
 export const CHARGE_TICKS = 35; // hold ↓ this long to bank a charge motion
 
+// universal throw (LP+LK): the victim is held for the tech window; their own
+// LP+LK inside it escapes the throw and bounces both fighters apart
+export const THROW_TECH_TICKS = 12;
+export const THROW_TECH_PUSH = 6;
+export const THROW_TECH_RECOIL = 10; // both unactionable for a beat after a tech
+
+// dizzy/stun: connecting hits (never blocks) feed a per-fighter accumulator
+// that decays every tick; crossing the threshold forces a helpless 'dazed'
+// spell once the current reel/getup finishes
+export const STUN_THRESHOLD = 250;
+export const STUN_DECAY = 0.5; // per tick (binary-exact, so decay stays deterministic)
+export const DIZZY_TICKS = 180; // ~3s helpless
+
 // hitstop: whole-world freeze frames on contact, scaled by button strength
 export const HITSTOP_LIGHT = 3;
 export const HITSTOP_MEDIUM = 5;

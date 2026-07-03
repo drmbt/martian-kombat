@@ -106,8 +106,9 @@ export interface SpecialInput {
   /** omitted for pure button-combo moves (3P lariats etc.) */
   motion?: Motion;
   /** button class that finishes the motion; PPP/KKK = 2+ of the class
-   *  pressed together (practical keyboard-friendly "all buttons") */
-  button: 'punch' | 'kick' | 'PPP' | 'KKK';
+   *  pressed together (practical keyboard-friendly "all buttons");
+   *  LPLK = the universal-throw chord, LP+LK pressed together */
+  button: 'punch' | 'kick' | 'PPP' | 'KKK' | 'LPLK';
 }
 
 /** L/M/H strength of the button that triggered a special. */
@@ -157,6 +158,10 @@ export interface MoveDef {
   grab?: { range: number };
   /** backward hop applied to the ATTACKER when a grab connects (86'd) */
   grabRecoil?: number;
+  /** universal throw: the grab holds the victim for a short window in which
+   *  their own LP+LK escapes it (both bounce back, no damage); also whiffs
+   *  against victims already reeling (hitstun/blockstun/airHit) */
+  techable?: boolean;
   /** health restored to the ATTACKER when a grab connects, capped at max
    *  (Symbiosis kudzu drain) */
   heal?: number;
@@ -230,7 +235,9 @@ export type ActionKind =
   | 'knockdown'
   | 'getup'
   | 'ko'
-  /** standing defeated during the finisher window, waiting for the fatality */
+  /** helpless: dizzy from stun buildup (fight phase, times out after
+   *  DIZZY_TICKS), or standing defeated in the finisher window waiting for
+   *  the fatality (never times out — updateFighter skips the loser there) */
   | 'dazed';
 
 export interface Action {
@@ -262,6 +269,18 @@ export interface FighterState {
   /** consecutive-ish ticks holding down (decays fast on release) — fuels
    *  charge motions ('du') without stretching the input buffer */
   charge: number;
+  /** dizzy accumulator: connecting hits add their damage, decays every tick,
+   *  crossing STUN_THRESHOLD forces 'dazed' when the current reel ends */
+  stun: number;
+}
+
+/** A techable throw mid-hold: the victim is frozen while this counts down.
+ *  Their own LP+LK inside the window techs it; expiry lands the throw. */
+export interface PendingThrow {
+  attacker: 0 | 1;
+  moveId: string;
+  strength?: Strength;
+  ticksLeft: number;
 }
 
 export interface Projectile {
@@ -322,4 +341,6 @@ export interface GameState {
   fatality: { owner: 0 | 1; id: string } | null;
   /** remaining freeze ticks from the last connected hit (inputs still buffer) */
   hitstop: number;
+  /** a universal throw holding its victim through the tech window */
+  pendingThrow: PendingThrow | null;
 }

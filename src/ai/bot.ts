@@ -50,8 +50,9 @@ export class CpuDriver {
       if (s.roundWinner === this.slot && def.fatality) {
         const range = (def.fatality.range ?? 280) - 60;
         if (dist > range) return { [toward]: true };
-        if (s.phaseFrame > 30 && def.fatality.input.motion && def.fatality.input.button !== 'PPP' && def.fatality.input.button !== 'KKK') {
-          this.enqueueMotion(def.fatality.input.motion, def.fatality.input.button, f.facing);
+        const fb = def.fatality.input.button;
+        if (s.phaseFrame > 30 && def.fatality.input.motion && (fb === 'punch' || fb === 'kick')) {
+          this.enqueueMotion(def.fatality.input.motion, fb, f.facing);
         }
       }
       return {};

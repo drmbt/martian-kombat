@@ -6,10 +6,13 @@
 > Unchecked boxes in the active sprint = the backlog. Do not silently add scope;
 > new ideas go to the Icebox.
 
-**Current sprint: 16** · MVP shipped 2026-07-02 (8/8 fighters playable, 19
-stages, full music loop, fatalities, CPU + training modes, settings). Focus now:
-smoothness and playability — game feel, impact VFX, attract mode, control
-remapping. Long-term RFEs live in their own roadmap section below.
+**Current sprint: 18 — input forgiveness + hit feedback** · MVP shipped
+2026-07-02 (8/8 fighters playable, 19 stages, full music loop, fatalities,
+CPU + training modes, settings). Sprint 17 (universal throws + dizzy/stun)
+shipped 2026-07-03 (frames approved, sitting in the working tree). Sprints
+18–20 planned 2026-07-03 from the game-feel review: input forgiveness →
+cancels/chains → personality specials + Flo fatality rework. Long-term RFEs
+live in their own roadmap section below.
 
 ---
 
@@ -423,22 +426,172 @@ Goal: the game we have, but it *feels* great — juice, VFX, attract mode, contr
       drain (SF2 ghost bar, renderer-side), KO slow-motion on the
       round-ending hit (renderer-side ~⅓ speed, sim ticks unchanged)
 
-### Near-term roadmap (approved 2026-07-03, order TBD)
-**Combat depth — closer to SF2:**
-- [ ] Better combo logic: chains/cancels (normal→normal target combos,
-      special-cancel windows on normals) so combos are deliberate, not
-      accidental
-- [ ] Better blocking mechanics (proximity guard, block-release timing feel)
-- [ ] Throws + throw teching (deferred since Sprint 1; command-grab plumbing
-      exists — this is the universal throw)
-- [ ] Dizzy/stun state: stun accumulation on hits, birds-circling dizzy
-      animation, classic comeback moment
+### Sprint 17 — Universal throws + dizzy/stun state (planned 2026-07-03)
+Goal: two SF2-standard mechanics that have been "deferred since Sprint 1."
+Both ride entirely on existing engine/renderer primitives — no new plumbing
+classes, just new state + new named-cell art. Sprite gen for both is front-
+loaded so art can be reviewed by eye while the engine/renderer work lands;
+**no iterative QA/re-roll loop** — generate once, pack once, leave frame QA
+(anatomy, keying, wrong pose) to a manual human pass, same as any other
+in-flight character work.
+
+**Universal throw** — every character gets a bespoke throw pose (matches how
+every other special already works — nothing in this codebase shares generic
+move art across the roster). This is NEW and separate from existing
+command-grab specials (86'd, Volga Piledriver, Symbiosis, ENOUGH.) — those
+keep their motion inputs and mechanics untouched.
+- [x] Design lock: input = **LP+LK pressed together** (new cross-class chord
+      — `comboPress`/`PPP`/`KKK` in `step.ts` already detects same-class
+      chords; this needs the same idea across punch+kick), close range only,
+      unblockable, grounded-vs-grounded only (no air throws), knocks the
+      victim down. **Throw teching**: if the grabbed player presses their
+      own LP+LK within a short window after being grabbed, both bounce back
+      neutral, no damage — reuses the grab/`grabRecoil` shape already in
+      `MoveDef`.
+- [x] Victim reaction reuses existing `hit`/`knockdown`/`fall` cells — **no
+      new shared cell**, so this never touches the fixed `CELLS` array in
+      `frames-manifest.mjs` (inserting there would reindex every character's
+      button cells — see 2026-07-03 spritesheet-conventions discussion).
+      Only the ATTACKER needs new art: `throw-startup/-active/-recovery`,
+      appended as an ordinary named special at the tail of each character's
+      `moves6.specials` — the same additive-safe pattern every special has
+      always used.
+- [x] `throw` `MoveDef` + JSON wiring for all 8 characters (`grab` block,
+      `input: {button:'LPLK'}` + `techable: true`, dmg 85 / range 105 — Yulia
+      100/115; declared LAST in each JSON so motion specials keep priority)
+- [x] Engine tests: chord detection, unblockable-vs-block, whiffs on
+      airborne/already-hitstunned victims, tech window success/failure,
+      determinism (same inputs → same state) — 9 new tests, 95/95 green
+- [x] `docs/MOVES.md` gains the throw spec; roster's `always`-invariant props
+      (Catherine's staff, Marzipan's barefoot look, etc.) still apply
+
+**Dizzy/stun state** — cheaper than it sounds: `'dazed'` is *already* a
+recognized `Action.kind` in `FightScene.actionToCell` (falls back to the
+plain `hit` cell today), so this ships with placeholder rendering for free
+before any art exists.
+- [x] Engine: `stun` accumulator on `FighterState`, gains on every connecting
+      hit (not on block), decays slowly over time so poking isn't free
+      stun-lock, crosses a threshold → forces `dazed` for a fixed duration
+      (classic ~3s), fully vulnerable / can't act or block while dazed, stun
+      resets to 0 when the daze period ends
+- [x] Visual: **VFX-overlay first, not new body-pose art** — a circling
+      stars/birds loop drawn above the head during `dazed`, generated once
+      via the existing `tools/gen-vfx.mjs` generic-asset pattern (like
+      `spark-hit.png`) and reused by the whole roster. Zero new manifest
+      cells, zero reindex risk, fast to generate, matches how impact VFX
+      already layers over the character sheet without touching it. A
+      dedicated per-character dazed body pose is an explicit stretch goal,
+      NOT required for this sprint — only pursue it if there's time left
+      after the above, and it must append (never insert) to a character's
+      cell list if attempted.
+- [x] Engine tests: stun accumulation, decay, threshold trigger, daze
+      duration + reset, no-stun-while-already-dazed (no double-trigger)
+
+**Both features:**
+- [x] Full roster asset gen kicked off FIRST and in the background/parallel
+      with engine work (`gen:frames`/`gen:pack` are per-character +
+      `--concurrency`-poolable; `gen:vfx` is independent and fast) — don't
+      block engine/renderer work on art finishing
+- [x] SPRINTBOARD checkboxes + changelog + handoff notes updated before any
+      commit; leave raw/packed assets staged but **do not commit or push**
+      without the user's explicit review pass over the new frames first
+      (nothing committed — everything sits in the working tree for review)
+
+### Sprint 18 — Input forgiveness + hit feedback (planned 2026-07-03)
+Goal: the "special sauce" pass from the 2026-07-03 game-feel review (industry-
+conventions list audited against the engine — most of it we already have; these
+are the gaps). Sim stays strict, controls get forgiving, hits get legible.
+All engine work; every item ships with vitest coverage.
+- [ ] **Action input buffering + reversal buffer** — the #1 gap: a button
+      press only registers on an actionable tick today (`freshPress` is an
+      exact-tick check), so presses during recovery/hitstun/blockstun/getup/
+      prejump/landing are silently dropped. Buffer presses ~6–8 ticks with a
+      consumed flag (one press never fires twice); the first actionable frame
+      executes the buffered action. Covers wakeup reversals + landing buffer
+      in the same change.
+- [ ] **Counterhits** — defender hit during their own attack's startup or
+      recovery: bonus hitstun (+25–50%), +2–4 hitstop, distinct spark tint +
+      sharper sound (renderer side via state-diff, like all VFX)
+- [ ] **Landing recovery** — 2–4 tick generic jump landing, 4–8 ticks after
+      a whiffed air normal (landing currently cancels straight to idle,
+      making jumps consequence-free)
+- [ ] **Per-fighter (asymmetric) hitstop** — split `GameState.hitstop` into
+      per-fighter freeze counters: projectile hits freeze the VICTIM only
+      (today the global freeze stops the shooter too — SF fireballs don't);
+      melee keeps both frozen, trades keep the longest. Opens the attacker/
+      defender asymmetry lever for counterhits and heavies.
+- [ ] **Ground-impact bounce** — SF-style bounce off the floor on knockdowns
+      and throws (small vy rebound + dust-puff VFX) instead of the flat stick
+- [ ] Feel-tuning playtest alongside the above: consider raising base hitstop
+      (L4 / M6 / H9, specials 10–12)
+
+### Sprint 19 — Cancels & chains (planned 2026-07-03)
+Goal: combos become deliberate, not accidental (moved up from the near-term
+roadmap by the feel review; Sprint 18's buffering makes cancels land naturally).
+- [ ] Chain rules: lights chain into lights (light→medium where a kit wants
+      it) — data-driven flags on moves, not engine special cases
+- [ ] Special-cancel windows: medium/heavy normals cancel into specials on
+      hit or block during a cancel window
 - [ ] Combo damage scaling (later hits in a combo do less)
+- [ ] Engine tests: chain windows, cancel-on-hit vs -on-block vs whiff (no
+      cancel), scaling math, determinism
+
+### Sprint 20 — Personality specials + Flo fatality rework (planned 2026-07-03)
+Goal: one signature "that's SO them" move per fighter + Flo's new fatality.
+Asset gen front-loaded/parallel like Sprint 17; cells append-only as always.
+New engine primitives called out — everything else rides existing plumbing.
+- [ ] **Gene — Mana Burst**: projectile stamped with the Eden Art Labs logo
+      (existing projectile primitives)
+- [ ] **Marzipan — vine spear** ("get over here"): projectile that DRAGS the
+      opponent to Marzipan on hit, becomes a knockdown throw if unblocked —
+      NEW pull-projectile primitive
+- [ ] **Yulia — spinning star kick** (Chun-Li spinning bird kick — existing
+      leap/forwardVel primitives)
+- [ ] **Flo — blunt smoke puff**: blows a smoke projectile (existing
+      primitives)
+- [ ] **Kirby — cat scratch**: mash-punch rapid attack (Chun-Li lightning
+      legs) — NEW mash-motion input type, promoted from the Sprint 8
+      deferred list
+- [ ] **Vincent — matrix teleport**: dissolves into green digital runes,
+      reappears behind the opponent — `teleport:'behind'` already exists
+      (Gene's Diffusion); this is art/VFX + wiring
+- [ ] **Freeman — yoga float**: Dhalsim-style high jump with slow held-pose
+      descent — NEW slow-fall/float mobility primitive
+- [ ] **Flo fatality replaced — "Burn One"**: lighter ignites the husk →
+      grinds the ash → rolls it into a cigarette → smokes it. 4 panels via
+      `gen-fatality.mjs` (replaces rm -rf /); fatality block in flo.json
+      updated
+- [ ] docs/CHARACTERS.md + docs/MOVES.md updated with the new moves; engine
+      tests for the two new primitives
+
+### Near-term roadmap (approved 2026-07-03; updated same day by the feel
+review — chains/cancels/scaling promoted to Sprint 19)
+**Combat depth — closer to SF2:**
+- [ ] Better blocking mechanics (proximity guard, block-release timing feel)
+- [ ] Per-move hurtbox overrides: optional `hurtbox` on `MoveDef` (extend
+      along a kick, pull the head back on a punch, low-profile sweeps/
+      slides) — defenders currently always use the static stand/crouch
+      boxes, so attacking limbs are invincible and pokes feel samey
+- [ ] Post-stun throw protection: a few ticks of throw-invuln after leaving
+      hitstun/blockstun so throw loops don't feel cheap (wakeup is already
+      covered — knockdown/getup are fully invulnerable)
 - [ ] CPU difficulty levels (easy/medium/hard bot — feeds arcade mode and
       makes attract-mode demos look better)
-**Presentation:**
+**Presentation / UX:**
 - [ ] Round-intro animations (fighters walk in / strike a pose before
       "ROUND 1… FIGHT!") + in-fight victory pose at round end
+- [ ] Character height normalization: per-character scale + vertical offset
+      (Vincent reads small and floats slightly off the ground); auto-derive
+      the ground baseline at pack time (lowest non-alpha pixel → offset in
+      meta.json) and scale bounding boxes to match
+- [ ] Post-fatality flow: the cutscene exits straight to the victory/win
+      screen instead of resolving back through the fight screen first
+- [ ] Attract-mode blink cleanup: "INSERT COIN" and "DEMO — PRESS ANY KEY"
+      blink out of phase — merge onto one line, sync them, or drop one
+- [ ] Sound priority + cooldowns (multi-hit/rehit clouds stack into mush
+      today) + the Sprint 18 counterhit sound
+- [ ] Clash/tech feedback: projectile clashes currently delete both
+      projectiles silently — add spark + sound; throw tech gets its own flash
 - [ ] CRT/scanline filter toggle in Settings (post-process; leans into the
       16-bit pixel-art stages)
 
@@ -455,19 +608,112 @@ Goal: the game we have, but it *feels* great — juice, VFX, attract mode, contr
 
 ### Icebox (do not start)
 New characters (pipeline is proven; the roster bible has room) · super
-meter/EX moves · stage interactables · rage meter + ENOUGH., armored/vault
-dashes, backdash i-frames, mash motions (Sprint 8 deferred list) · real
-counter/armor primitives (Freeman's Presence/Breathwork upgrades) · bonus
-stage (car-smash homage) · gamepad rumble · fullscreen button + scaling ·
-RANDOM tile on character select · persistent win/loss stats · per-character
-victory song: a `victorySong` attribute in the character JSON names a track in
-`music/victory/` that overrides the random pick when that fighter wins.
+meter/EX moves (super freeze/flash ships with them when they land) · stage
+interactables · rage meter + ENOUGH., armored/vault dashes, backdash
+i-frames (Sprint 8 deferred list; mash motions PROMOTED to Sprint 20 —
+Kirby's cat scratch) · real counter/armor primitives (Freeman's
+Presence/Breathwork upgrades) · bonus stage (car-smash homage) · gamepad
+rumble · fullscreen button + scaling · RANDOM tile on character select ·
+persistent win/loss stats · per-character victory song: a `victorySong`
+attribute in the character JSON names a track in `music/victory/` that
+overrides the random pick when that fighter wins · proximity normals
+(close/far button variants — declined 2026-07-03 feel review: high art cost
+across 8 rosters for marginal gain) · camera zoom/deadzone (declined —
+fixed-screen SF2 framing is intentional).
 
 ---
 
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-03 · docs · Sprints 18–20 planned from the game-feel review** —
+  audited an industry-conventions "special sauce" list (36 items), a
+  time-freeze follow-up, and the user's personal fix list against the engine
+  and FightScene. Already covered (no action): hitstop, KO slow-mo, motion
+  leniency, hit/hurt/push box separation, pushback + corner transfer,
+  auto-facing, pre-jump frames, attack heights/block triangle,
+  snap-to-ground, screen shake, per-type sparks, round/menu flow,
+  fatality-as-cinematic. Biggest gap found: **action input buffering** —
+  `freshPress` is an exact-tick check, so presses during recovery/hitstun/
+  getup are silently dropped. Also found: global hitstop freezes a
+  projectile's SHOOTER on hit (SF fireballs freeze the victim only).
+  Planned **Sprint 18** (action buffering + reversal buffer, counterhits,
+  landing recovery, per-fighter asymmetric hitstop, ground-impact bounce,
+  hitstop-tuning playtest), **Sprint 19** (chains, special-cancel windows,
+  combo damage scaling — promoted off the near-term roadmap), **Sprint 20**
+  (seven personality specials — two NEW primitives: pull-projectile for
+  Marzipan's vine spear, slow-fall float for Freeman; mash motion promoted
+  from the S8 deferred list for Kirby's cat scratch; Vincent's matrix
+  teleport reuses Gene's `teleport:'behind'` — plus Flo's fatality reworked
+  to "Burn One"). Near-term roadmap gained: per-move hurtbox overrides,
+  post-stun throw protection, height normalization + pack-time ground-
+  baseline autodetect, post-fatality→victory-screen flow, attract-mode
+  blink cleanup, sound priority/cooldowns, projectile-clash + throw-tech
+  feedback. Icebox: proximity normals and camera zoom declined; super
+  freeze rides the future super meter. Header advanced to Sprint 18
+  (S17 shipped earlier today in a parallel session). No code changed.
+  — Claude
+
+- **2026-07-03 · audio+tools+scenes · voice-variant depth: 6 kiai / 6 hurt /
+  4 victory per fighter** — `VOICE_COUNTS` in BootScene bumped from 4/4/3;
+  `gen-audio.mjs` line lists expanded to match (incl. requested lines: Flo
+  "Genau"/"Ah, OK", Gene "Mana Blast"/"Yeah"/"Oh yeah", Yulia "Fantastic",
+  Marzipan "Please, collaborate with me"); all 128 numbered clips generated
+  via ElevenLabs into `public/assets/audio/voice/`; deleted the 16 orphaned
+  unnumbered `<char>-kiai/-hurt.mp3` clips (loader only requests numbered
+  files). Slot counts are a BootScene↔gen-audio contract — noted in both
+  files. *(Claude)*
+
+- **2026-07-03 · engine+scenes+data+assets · Sprint 17 shipped: universal
+  throws (LP+LK, techable) + dizzy/stun** — code complete, frames reviewed &
+  APPROVED by the user (two re-roll rounds + manual raw edits, sheets packed
+  from the approved raws), sitting in the working tree ready to commit.
+  Engine: new `LPLK` cross-class chord
+  (`throwChord` in step.ts, mirrors `comboPress`; staggered LP→LP+LK upgrades
+  the jab via the existing early-chord kara rule), `throw` rides the existing
+  `grab` plumbing plus a new `techable` flag — on connect the victim is held
+  (`pendingThrow` on GameState, 12-tick window) and their own LP+LK techs it
+  (both bounce apart through a 10-tick recoil, zero damage); expiry lands an
+  unblockable knockdown. Throws whiff on airborne/hitstun/blockstun/airHit
+  victims. Dizzy: `stun` accumulator on FighterState (gains = damage on clean
+  hits only, decays 0.5/tick, threshold 250 → forced `dazed` ~3s once the
+  reel/getup ends, resets on daze end or on the punish landing — no
+  double-trigger). `dazed` REMOVED from `isInvulnerable` (dizzied fighters are
+  fully vulnerable; safe because the finisher phase never resolves attacks).
+  Renderer: circling-stars `vfx-dizzy` overlay (new generic in gen-vfx.mjs,
+  one asset roster-wide) drawn above a dazed fighter's head; grab-thunk SFX on
+  hold start; LP+LK shown in move log + pause move list. Data: `throw`
+  MoveDef appended to all 8 JSONs (dmg 85/range 105; Yulia 100/115). Art: 24
+  throw cells generated + packed (gen once → user review found opponent-
+  bleed/edge-cropping in most startup/active frames → prompts rewritten to
+  solo-mime "reaching" poses + a new global FRAME_RULES edge-margin rule in
+  gen-frames.mjs → 15 cells re-rolled via `--cells`, Gene's originals kept;
+  round 2: all 7 non-Gene `throw-active` cells re-rolled again as an active
+  forward air-grab — arms extended toward the frame edge, hands clutching
+  empty air behind a small impact flash).
+  9 throw + 5 dizzy vitest cases; 95/95 green, tsc + build clean; verified
+  live in the browser (throw hold→knockdown sequence, dazed + overlay).
+  docs/MOVES.md §1.2/§1.3 updated with both specs. — Claude
+
+- **2026-07-03 · docs · Sprint 17 planned: universal throws + dizzy/stun** —
+  investigated the sprite-sheet pipeline's actual regeneration/reindex risk
+  (traced `tools/pack-sheet.mjs` + `tools/frames-manifest.mjs` + `FightScene`
+  cell resolution) to confirm append-only cell additions are 100% safe (no
+  regen, no mapping breakage) while inserting into the shared `CELLS` array
+  would reindex every character's button cells roster-wide — that finding
+  shaped the Sprint 17 design: universal throw art is a per-character named
+  special appended the normal way (attacker only; the victim reuses existing
+  hit/knockdown cells, so zero new shared cells), and dizzy/stun ships via a
+  VFX overlay (one generic asset, like the existing impact-spark system)
+  rather than new body-pose art, since `dazed` is already a recognized
+  `Action.kind` that renders today via the `hit`-cell fallback. Locked the
+  throw input (LP+LK chord, close/grounded/unblockable, with teching) and
+  scoped sprite gen to run first/in-background so art lands for review while
+  engine work proceeds — explicitly no iterative frame QA/re-roll loop this
+  sprint, that's a manual human pass. Sprint 16 closed out fully (all 5 boxes);
+  pulled throws + dizzy off the near-term roadmap into their own sprint. No
+  code changed. — Claude
 
 - **2026-07-03 · input+scenes: gamepad menu navigation, three real controller
   bugs fixed** — the earlier "gamepad verified end-to-end" pass only exercised
@@ -954,24 +1200,56 @@ victory song: a `victorySong` attribute in the character JSON names a track in
 
 *(overwrite this section each handoff — what's mid-flight, gotchas, next action)*
 
-**State (2026-07-03, post-Sprint-16 build-out):** 8/8 fighters playable with
-fatalities, 20 stages, full music loop, settings + controls pages, CPU +
-training + attract modes, VS screen, win-quote screen. **Sprint 16 code items
-all landed** (four commits: juice bundle → impact VFX → attract mode →
-control remapping, each verified in-browser; see changelog): hitstop is
-engine state, ghost bars + KO slow-mo renderer-side; `gen-vfx.mjs` pipeline +
-overlay sparks/per-move VFX; idle title → CPU-vs-CPU demo; per-player
-keyboard+pad rebinding UI. `juice-vfx-demo.mp4` (repo root) shows the juice.
-**The one open Sprint 16 box is the USER's controller playtest** — the pad
-code path is pre-verified end-to-end with a synthetic pad, bindings are at
-defaults, plug in a pad and play; capture feel complaints as new items.
-NOTE: a parallel session works this repo simultaneously (MIMOS stage landed
-mid-sprint; new inspo photos for possible new fighters lyosha/ygor are in the
-working tree) — commit with explicit paths only. **Next after the playtest:**
-approved near-term roadmap — combo chains/cancels, blocking feel,
-throws+teching, dizzy, damage scaling, CPU difficulty levels, round
-intros/victory poses, CRT toggle. Long-term RFEs: character designer dialog,
-online multiplayer, arcade story mode, Veo motion smoothing. docs/MOVES.md is
+**State (2026-07-03, Sprint 17 CODE-COMPLETE, NOTHING COMMITTED):** 8/8
+fighters playable with fatalities, 20 stages, full music loop, settings +
+controls pages, CPU + training + attract modes, VS screen, win-quote screen.
+**Sprint 17 (universal throws + dizzy/stun) is fully implemented, tested
+(95/95 vitest, tsc + build clean), and verified live in the browser — but
+the ENTIRE sprint sits uncommitted in the working tree awaiting the user's
+frame-review pass.** What's in flight for whoever picks this up:
+- **Throw frames are APPROVED (2026-07-03)** after two re-roll rounds plus
+  the user's own manual edits to the raws; sheets re-packed from the edited
+  raws and render-verified in-game (throw plays cells 59/60/61 =
+  startup/active/recovery by name). Re-roll history, for the record:
+  (1) prompts rewritten to solo-mime "reaching" poses (no opponent/clothes
+  in frame) + a global FRAME_RULES rule that nothing may touch the frame
+  edges (edge-cropped content shows a hard line in-game); Gene's 3 originals
+  and all non-Kirby recoveries kept. (2) every `throw-active` except Gene's
+  re-rolled again as an ACTIVE forward grab: arms fully extended toward the
+  right frame edge, hands actively clutching the empty air, a small impact
+  flash obscuring the hands (per-character flavor color). Targeted re-rolls
+  stay cheap: `node tools/gen-frames.mjs --char X --cells throw-active`
+  (force-regens only the named cells), then `npm run gen:pack -- --char X`.
+- **Next action: commit** (mind the parallel-session note below — explicit
+  paths). Scoped commits fine — engine/scenes/data/docs are one logical
+  change; sheets + raw prompt sidecars ride along. NOTE: `gen:pack` re-runs
+  also byte-churn the `projectile-*.png` files (ffmpeg re-encode noise) —
+  harmless, commit or checkout, either is fine.
+- **Where the code landed:** engine — `throwChord`/`LPLK` chord + pendingThrow
+  tech window + `techable` flag in step.ts/types.ts/constants.ts (constants:
+  THROW_TECH_TICKS 12, THROW_TECH_PUSH 6, THROW_TECH_RECOIL 10,
+  STUN_THRESHOLD 250, STUN_DECAY 0.5/tick, DIZZY_TICKS 180). `dazed` was
+  REMOVED from `isInvulnerable` — deliberate, dizzied fighters must be
+  punishable; the finisher-window daze is unaffected (that phase never calls
+  resolveAttacks, and updateFighter never runs for the loser there, which is
+  also why the dazed case's new frame-count/timeout can't end a finisher
+  daze). Renderer — persistent `dizzySprites` overlay pair in FightScene
+  (hidden on fatality/win-screen early-return paths — remember those if you
+  add more overlays), `pendingThrow` added to TickSnapshot for the grab SFX.
+- **Gotchas hit this sprint:** (1) a back-WALKING blocker legitimately
+  retreats out of throw range — body push settles fighters at ~(wA+wB)/2 ≈
+  80-88px apart, so throw range must clear ~88 to ever connect vs big-body
+  crouchers (hence 105/115, still under every command grab's 110-150).
+  (2) On tech, do NOT drop both fighters to `idle` — the victim's still-held
+  chord would fire an instant counter-throw the same tick; they get a
+  10-tick blockstun-shaped recoil instead. (3) Marzipan's prompts use "he"
+  — the sprint brief's throw prompt said "her"; fixed in the manifest.
+NOTE: a parallel session may work this repo simultaneously — commit with
+explicit paths only if that's still true when you pick this up.
+**After Sprint 17:** remaining near-term roadmap — combo chains/cancels,
+blocking feel, damage scaling, CPU difficulty levels, round intros/victory
+poses, CRT toggle. Long-term RFEs: character designer dialog, online
+multiplayer, arcade story mode, Veo motion smoothing. docs/MOVES.md is
 the living move spec (checkboxes = implementation state); edit it and re-run
 the buildout. **DEPLOY RECIPE:** just push to main —
 the `deploy` workflow builds and publishes (do NOT force-push gh-pages
@@ -1003,7 +1281,7 @@ four keys live. Frame-gen: ALWAYS `gemini-3-pro-image`; keying: `chromakey`
 look navy in previews — composite over grey before judging keying. Cell order
 in `tools/frames-manifest.mjs` is a contract with `FightScene.actionToCell` —
 append only. Character JSONs cast through `unknown` (no runtime validation).
-Stun `Action.frame` counts DOWN; attack/knockdown/getup count UP. Universal
-throws still absent (near-term roadmap); command grabs exist. Preview-browser
-tabs throttle
+Stun `Action.frame` counts DOWN; attack/knockdown/getup count UP (and `dazed`
+now counts UP to DIZZY_TICKS). Universal throws exist (LP+LK, `techable`
+grab); command grabs untouched. Preview-browser tabs throttle
 rAF — step the loop via `window.__game.loop.step(t)` when verifying headless.

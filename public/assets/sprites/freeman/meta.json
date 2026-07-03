@@ -2,7 +2,7 @@
   "cellW": 288,
   "cellH": 384,
   "cols": 8,
-  "rows": 7,
+  "rows": 8,
   "frames": [
     "idle-a",
     "idle-b",
@@ -59,6 +59,9 @@
     "breathwork-recovery",
     "sun-salutation-startup",
     "sun-salutation-active",
-    "sun-salutation-recovery"
+    "sun-salutation-recovery",
+    "throw-startup",
+    "throw-active",
+    "throw-recovery"
   ]
 }

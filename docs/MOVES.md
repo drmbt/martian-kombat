@@ -30,7 +30,26 @@ button's strength selects the patch).
   brief low-invulnerability. *(exists as a slide; ⚙ NEW: i-frames)*
 - **Jump-back**: up-back already works; some characters get modified jumps
   (float, high arc, wall jump) noted per character.
-- Throws: still unassigned (see Icebox); grapplers get command grabs instead.
+- **Universal throw** (*✅ implemented, Sprint 17*): **LP+LK pressed together**
+  (a cross-class chord; staggered presses within a few ticks upgrade the lone
+  jab/short into the throw, same kara rule as PPP/KKK). Close range only,
+  **unblockable**, grounded-vs-grounded only — whiffs on airborne, hitstunned,
+  blockstunned, or launched victims (no throw loops, no ticking a reeling
+  opponent). Knocks down. **Teching:** the grabbed player pressing their own
+  LP+LK inside a ~12-tick window escapes it — both bounce apart through a
+  short recoil, nobody takes damage. Damage sits between a medium and a heavy
+  (85 base; Yulia 100 — grappler tax) with range ~105 (Yulia 115), well under
+  every command grab: it's a guard-mixup tool, not a combo starter. Victim
+  art reuses hit/fall/down cells; only the attacker has bespoke
+  `throw-startup/-active/-recovery` cells. In the JSON it's an ordinary
+  `MoveDef` named `throw`: `input: {button:'LPLK'}` + `grab: {range}` +
+  `techable: true`, declared LAST so motion specials keep pick priority.
+- **Dizzy/stun** (*✅ implemented, Sprint 17*): every **connecting** hit (never
+  a block) adds its damage to the victim's `stun` meter, which decays 0.5/tick;
+  crossing 250 forces a helpless `dazed` spell (~3s, fully vulnerable, can't
+  act or block, circling-stars overlay) once the current reel/knockdown ends.
+  The meter resets when the daze expires or the punish lands — no
+  double-dizzies. Throwing a dizzied victim is the intended punish path.
 
 ### 1.3 Input vocabulary
 | Notation | Meaning | Engine status |
@@ -43,6 +62,7 @@ button's strength selects the patch).
 | charge b,f / charge d,u | hold 2s, then opposite + button | ⚙ NEW |
 | 360 | full circle + button | ✅ exists (simplified: ↓+←+→ inside the window — the practical "270") |
 | 3P / 3K | all three punches / kicks together | ✅ exists (2+ of the class pressed together) |
+| LP+LK | universal throw chord (cross-class) | ✅ exists (`input.button: 'LPLK'`) |
 | mash P/K | repeated presses sustain the move | ⚙ NEW |
 
 ### 1.4 Move role taxonomy (cover these per character)

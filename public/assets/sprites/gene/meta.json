@@ -62,6 +62,9 @@
     "rate-limit-recovery",
     "hallucination-startup",
     "hallucination-active",
-    "hallucination-recovery"
+    "hallucination-recovery",
+    "throw-startup",
+    "throw-active",
+    "throw-recovery"
   ]
 }

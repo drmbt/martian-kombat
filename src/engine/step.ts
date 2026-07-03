@@ -16,6 +16,7 @@ import {
 } from './types';
 import {
   CHARGE_TICKS,
+  DIZZY_TICKS,
   FATALITY_RANGE,
   FATALITY_TICKS,
   FINISHER_TICKS,
@@ -35,6 +36,11 @@ import {
   STAGE_MAX_X,
   STAGE_MIN_X,
   STAGE_W,
+  STUN_DECAY,
+  STUN_THRESHOLD,
+  THROW_TECH_PUSH,
+  THROW_TECH_RECOIL,
+  THROW_TECH_TICKS,
   WINS_NEEDED,
 } from './constants';
 
@@ -54,6 +60,7 @@ function initFighter(charId: string, def: CharacterDef, slot: 0 | 1): FighterSta
     action: { kind: 'idle', frame: 0 },
     inputBuffer: [],
     charge: 0,
+    stun: 0,
   };
 }
 
@@ -80,6 +87,7 @@ export function initialState(
     roundWinner: null,
     fatality: null,
     hitstop: 0,
+    pendingThrow: null,
   };
 }
 
@@ -93,6 +101,7 @@ function resetRound(s: GameState, defs: Defs): void {
   s.phase = 'intro';
   s.phaseFrame = 0;
   s.hitstop = 0;
+  s.pendingThrow = null;
 }
 
 // ---------- geometry ----------
@@ -228,6 +237,26 @@ function comboPress(f: FighterState, cls: 'punch' | 'kick'): boolean {
   return recent >= 2;
 }
 
+/** The universal-throw chord: LP AND LK held now, both pressed recently
+ *  (same recent-press rule as comboPress, across the punch/kick classes). */
+function throwChord(f: FighterState): boolean {
+  const buf = f.inputBuffer;
+  const cur = buf[buf.length - 1] ?? 0;
+  if (!(cur & BIT.lp) || !(cur & BIT.lk)) return false;
+  for (const bit of [BIT.lp, BIT.lk]) {
+    let recent = false;
+    for (let i = buf.length - 6; i < buf.length - 1; i++) {
+      // frames before the buffer began count as released
+      if (i < 0 || !(buf[i] & bit)) {
+        recent = true;
+        break;
+      }
+    }
+    if (!recent) return false;
+  }
+  return true;
+}
+
 /** Effective move for an action: base numbers + the strength's variant patch.
  *  Exported — the renderer uses the same timings for animation phases. */
 export function resolveMove(base: MoveDef, strength?: Strength): MoveDef {
@@ -282,7 +311,9 @@ function isInvulnerable(f: FighterState): boolean {
   const a = f.action;
   if (a.kind === 'attack' && (a.invuln ?? 0) > a.frame) return true; // reversal i-frames
   const k = a.kind;
-  return k === 'knockdown' || k === 'getup' || k === 'ko' || k === 'dazed';
+  // 'dazed' is NOT here: a dizzied fighter is fully vulnerable (the finisher-
+  // window daze doesn't care — nothing resolves attacks in that phase)
+  return k === 'knockdown' || k === 'getup' || k === 'ko';
 }
 
 function grounded(f: FighterState): boolean {
@@ -317,9 +348,14 @@ function pickAttack(
   // strength (L/M/H) selects the variant
   for (const [id, m] of Object.entries(def.moves)) {
     if (!m.input) continue;
-    const cls = m.input.button === 'PPP' ? 'punch' : m.input.button === 'KKK' ? 'kick' : m.input.button;
-    const combo = m.input.button === 'PPP' || m.input.button === 'KKK';
-    const strength = combo ? (comboPress(f, cls) ? 'm' : null) : freshStrength(f, cls);
+    let strength: Strength | null;
+    if (m.input.button === 'LPLK') {
+      strength = throwChord(f) ? 'l' : null;
+    } else {
+      const cls = m.input.button === 'PPP' ? 'punch' : m.input.button === 'KKK' ? 'kick' : m.input.button;
+      const combo = m.input.button === 'PPP' || m.input.button === 'KKK';
+      strength = combo ? (comboPress(f, cls) ? 'm' : null) : freshStrength(f, cls);
+    }
     if (!strength) continue;
     if (m.input.motion && !motionDone(f, m.input.motion)) continue;
     if (m.projectile && !m.projectile.field && ownsLiveProjectile(s, slot)) continue;
@@ -351,20 +387,24 @@ function updateFighter(
   switch (a.kind) {
     case 'attack': {
       // early chord upgrade: a lone button that becomes a 2-button chord
-      // within the first few frames kara-cancels into the PPP/KKK special
-      // (nobody can hit two keys on the same 60hz tick). Single-button
-      // SPECIALS upgrade too — dp+2P lands one tick apart and the qcf-tail
-      // special would otherwise steal the input (Gene's Diffusion vs
-      // Hallucination) — but chord specials themselves never re-upgrade.
+      // within the first few frames kara-cancels into the PPP/KKK/LPLK
+      // special (nobody can hit two keys on the same 60hz tick).
+      // Single-button SPECIALS upgrade too — dp+2P lands one tick apart and
+      // the qcf-tail special would otherwise steal the input (Gene's
+      // Diffusion vs Hallucination) — but chord specials never re-upgrade.
       const cur = def.moves[a.moveId!];
-      const curIsChord = cur.input?.button === 'PPP' || cur.input?.button === 'KKK';
+      const curIsChord =
+        cur.input?.button === 'PPP' || cur.input?.button === 'KKK' || cur.input?.button === 'LPLK';
       if (!curIsChord && a.frame < 4) {
         for (const [id, mv] of Object.entries(def.moves)) {
-          if (!mv.input || (mv.input.button !== 'PPP' && mv.input.button !== 'KKK')) continue;
-          if (!comboPress(f, mv.input.button === 'PPP' ? 'punch' : 'kick')) continue;
-          if (mv.input.motion && !motionDone(f, mv.input.motion)) continue;
-          const up = resolveMove(mv, 'm');
-          f.action = { kind: 'attack', frame: 0, moveId: id, strength: 'm', hasHit: false, invuln: up.invuln ?? 0 };
+          const btn = mv.input?.button;
+          if (btn !== 'PPP' && btn !== 'KKK' && btn !== 'LPLK') continue;
+          const chord = btn === 'LPLK' ? throwChord(f) : comboPress(f, btn === 'PPP' ? 'punch' : 'kick');
+          if (!chord) continue;
+          if (mv.input!.motion && !motionDone(f, mv.input!.motion)) continue;
+          const str: Strength = btn === 'LPLK' ? 'l' : 'm';
+          const up = resolveMove(mv, str);
+          f.action = { kind: 'attack', frame: 0, moveId: id, strength: str, hasHit: false, invuln: up.invuln ?? 0 };
           break;
         }
       }
@@ -491,7 +531,13 @@ function updateFighter(
     case 'hitstun':
     case 'blockstun': {
       a.frame--;
-      if (a.frame <= 0) f.action = { kind: 'idle', frame: 0 };
+      if (a.frame <= 0) {
+        // stun past the threshold converts the reel into a dizzy (never off a block)
+        f.action =
+          a.kind === 'hitstun' && f.stun >= STUN_THRESHOLD
+            ? { kind: 'dazed', frame: 0 }
+            : { kind: 'idle', frame: 0 };
+      }
       break;
     }
     case 'knockdown': {
@@ -501,11 +547,20 @@ function updateFighter(
     }
     case 'getup': {
       a.frame++;
-      if (a.frame >= GETUP_TICKS) f.action = { kind: 'idle', frame: 0 };
+      if (a.frame >= GETUP_TICKS) {
+        f.action =
+          f.stun >= STUN_THRESHOLD ? { kind: 'dazed', frame: 0 } : { kind: 'idle', frame: 0 };
+      }
       break;
     }
     case 'dazed': {
-      // standing defeated, swaying, waiting for the finisher window to resolve
+      // dizzy: helpless, counting up to recovery. (The finisher-window daze
+      // never reaches here — updateFighter isn't called for the loser then.)
+      a.frame++;
+      if (a.frame >= DIZZY_TICKS) {
+        f.stun = 0;
+        f.action = { kind: 'idle', frame: 0 };
+      }
       break;
     }
     case 'ko': {
@@ -631,6 +686,10 @@ function applyHit(
     if (hit.chip > 0) d.health = Math.max(1, d.health - hit.chip); // chip can't KO
   } else {
     d.health = Math.max(0, d.health - hit.damage);
+    // stun feeds on clean hits only; the punish that lands on a dizzied
+    // fighter ends the dizzy instead of stacking toward the next one
+    if (d.action.kind === 'dazed') d.stun = 0;
+    else d.stun += hit.damage;
     if (!grounded(d)) {
       d.action = { kind: 'airHit', frame: 0 };
       d.vx = attackerFacing * hit.knockback * 0.6;
@@ -667,8 +726,33 @@ function resolveAttacks(s: GameState, defs: Defs, inputs: [InputFrame, InputFram
 
     // command grabs: unblockable, range-based, grounded targets only
     if (m.grab) {
+      // universal throws also whiff on victims already reeling — throwing a
+      // hitstunned/blockstunned/launched opponent would be a free loop
+      if (
+        m.techable &&
+        (s.pendingThrow ||
+          d.action.kind === 'hitstun' ||
+          d.action.kind === 'blockstun' ||
+          d.action.kind === 'airHit')
+      ) {
+        continue;
+      }
       if (grounded(d) && Math.abs(f.x - d.x) <= m.grab.range) {
         a.hasHit = true;
+        if (m.techable) {
+          // hold the victim through the tech window; damage waits for expiry
+          if (d.action.kind === 'dazed') d.stun = 0; // the throw is the dizzy punish
+          s.pendingThrow = {
+            attacker: slot,
+            moveId: a.moveId!,
+            strength: a.strength,
+            ticksLeft: THROW_TECH_TICKS,
+          };
+          d.action = { kind: 'hitstun', frame: THROW_TECH_TICKS + 2 };
+          d.vx = 0;
+          s.hitstop = Math.max(s.hitstop, HITSTOP_LIGHT);
+          continue;
+        }
         applyHit(s, defSlot, f.facing, {
           damage: m.damage,
           hitstun: m.hitstun,
@@ -991,6 +1075,50 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
 
   // --- phase: fight ---
   const [f1, f2] = s.fighters;
+
+  // universal throw mid-hold: the victim's own LP+LK inside the window techs
+  // it (both bounce back, no damage); expiry lands the unblockable knockdown
+  if (s.pendingThrow) {
+    const pt = s.pendingThrow;
+    const atk = s.fighters[pt.attacker];
+    const vicSlot = pt.attacker === 0 ? 1 : 0;
+    const vic = s.fighters[vicSlot];
+    if (atk.action.kind !== 'attack' || atk.action.moveId !== pt.moveId) {
+      // attacker interrupted mid-throw (stray projectile) — release the victim
+      vic.action = { kind: 'idle', frame: 0 };
+      s.pendingThrow = null;
+    } else if (throwChord(vic)) {
+      // teched: both bounce apart, nobody takes damage. The brief recoil
+      // (blockstun shape) stops the victim's still-held chord from firing an
+      // instant counter-throw on this very tick
+      vic.action = { kind: 'blockstun', frame: THROW_TECH_RECOIL, guard: 'stand' };
+      atk.action = { kind: 'blockstun', frame: THROW_TECH_RECOIL, guard: 'stand' };
+      vic.vx = atk.facing * THROW_TECH_PUSH;
+      atk.vx = -atk.facing * THROW_TECH_PUSH;
+      s.pendingThrow = null;
+    } else if (--pt.ticksLeft <= 0) {
+      const m = resolveMove(defs[atk.charId].moves[pt.moveId], pt.strength);
+      applyHit(s, vicSlot, atk.facing, {
+        damage: m.damage,
+        hitstun: m.hitstun,
+        blockstun: m.blockstun,
+        knockback: m.knockback,
+        height: m.height,
+        knockdown: true,
+        chip: 0,
+        hitstop: hitstopFor(pt.moveId, m),
+        unblockable: true,
+      }, inputs[vicSlot]);
+      if (m.grabRecoil) atk.vx = -atk.facing * m.grabRecoil;
+      if (m.heal) atk.health = Math.min(defs[atk.charId].health, atk.health + m.heal);
+      s.pendingThrow = null;
+    }
+  }
+
+  // dizzy meter bleeds off a little every live tick (poking can't stun-lock)
+  for (const f of s.fighters) {
+    if (f.stun > 0 && f.action.kind !== 'dazed') f.stun = Math.max(0, f.stun - STUN_DECAY);
+  }
 
   updateFighter(s, 0, defs[f1.charId], inputs[0]);
   updateFighter(s, 1, defs[f2.charId], inputs[1]);

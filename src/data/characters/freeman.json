@@ -4,9 +4,9 @@
   "color": "#f0e0a0",
   "stage": "institute",
   "winQuotes": [
-    "The still point does not move. You did.",
-    "I met your fury with breath. Breath won.",
-    "No enemy here. Only a lesson. Sit."
+    "This isn't violence; it's alignment.",
+    "Prosperity finds the still. You found the floor.",
+    "I anchored my root chakra. You anchored the dirt."
   ],
   "fatality": {
     "id": "ego-death",
@@ -452,6 +452,26 @@
           "recovery": 24
         }
       }
+    },
+    "throw": {
+      "name": "Throw",
+      "input": {
+        "button": "LPLK"
+      },
+      "startup": 4,
+      "active": 2,
+      "recovery": 20,
+      "damage": 85,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 9,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 105
+      },
+      "techable": true
     }
   }
 }

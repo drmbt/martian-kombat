@@ -62,6 +62,9 @@
     "staff-vault-recovery",
     "eighty-sixed-startup",
     "eighty-sixed-active",
-    "eighty-sixed-recovery"
+    "eighty-sixed-recovery",
+    "throw-startup",
+    "throw-active",
+    "throw-recovery"
   ]
 }

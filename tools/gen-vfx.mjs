@@ -28,6 +28,7 @@ const GENERICS = {
   'spark-hit': `${GREYSCALE} A small sharp impact spark burst: a bright 4-point star flash with a few short radiating shard lines, like a light punch connecting in a 90s arcade fighter.`,
   'spark-heavy': `${GREYSCALE} A BIG violent impact explosion burst: jagged radiating star shards, concentric shock ring, debris flecks flying outward — a heavy blow landing in a 90s arcade fighter, roughly twice the visual energy of a jab spark.`,
   'spark-block': `${GREYSCALE} A flat defensive block ripple: a shallow curved shield-arc of light with small rectangular deflection sparks glancing off it sideways, like an attack being parried in a 90s arcade fighter.`,
+  dizzy: `${GREYSCALE} A cartoon dizzy-stun halo: a ring of five small 5-point stars and two tiny cartoon birds orbiting in a flat ellipse viewed at a slight angle, with faint circular motion-trail arcs connecting them — the classic circling-stars daze effect hovering over a stunned fighter's head in a 90s arcade fighter. Wider than tall.`,
 };
 
 /** class (b): per-move art living with the move, like projectile-<move>.png */

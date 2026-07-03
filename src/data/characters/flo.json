@@ -6,7 +6,10 @@
   "winQuotes": [
     "Works on my machine. Not on your face.",
     "Segmentation fault. That was you.",
-    "I have logged this loss. Read the trace yourself."
+    "I have logged this loss. Read the trace yourself.",
+    "I seem to have shpoilt your guten tag.",
+    "Ach, du scheiße — for you, not me.",
+    "Root access requested. Your ass, denied."
   ],
   "fatality": {
     "id": "rm-rf",
@@ -530,6 +533,26 @@
           }
         }
       }
+    },
+    "throw": {
+      "name": "Throw",
+      "input": {
+        "button": "LPLK"
+      },
+      "startup": 4,
+      "active": 2,
+      "recovery": 20,
+      "damage": 85,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 9,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 105
+      },
+      "techable": true
     }
   }
 }

@@ -23,7 +23,7 @@ import { stageById } from '../data/stages';
 import { KeyboardSource } from '../input/keyboard';
 import { menuNav, navDefer } from '../input/menu-nav';
 import { CpuDriver } from '../ai/bot';
-import { play } from './BootScene';
+import { play, playVoice } from './BootScene';
 import { nextTrack, playMusic } from '../audio/music';
 import { getSettings } from '../settings';
 
@@ -86,6 +86,7 @@ interface TickSnapshot {
   moveIds: [string | undefined, string | undefined];
   healths: [number, number];
   projectiles: number;
+  pendingThrow: boolean;
 }
 
 interface BgLayer {
@@ -164,6 +165,8 @@ export class FightScene extends Phaser.Scene {
   private stageGuide = false;
   private sparks: Spark[] = [];
   private vfx: VfxSprite[] = [];
+  /** persistent circling-stars overlay per fighter, shown while dazed */
+  private dizzySprites: [Phaser.GameObjects.Image | null, Phaser.GameObjects.Image | null] = [null, null];
   private comboHits = 0;
   private comboTicks = 0;
   private cellMaps: [Map<string, number>, Map<string, number>] = [new Map(), new Map()];
@@ -237,6 +240,7 @@ export class FightScene extends Phaser.Scene {
     this.winScreen = null; // rebuilt lazily on matchEnd (scene.restart destroys it)
     this.sparks = [];
     this.vfx = []; // scene.restart destroyed the old images with the scene
+    this.dizzySprites = [null, null];
     this.accumulator = 0;
     this.comboHits = 0;
     this.comboTicks = 0;
@@ -589,6 +593,7 @@ export class FightScene extends Phaser.Scene {
       moveIds: [a.action.moveId, b.action.moveId],
       healths: [a.health, b.health],
       projectiles: this.state.projectiles.length,
+      pendingThrow: this.state.pendingThrow !== null,
     };
   }
 
@@ -660,7 +665,7 @@ export class FightScene extends Phaser.Scene {
       if (f.health < prev.healths[slot]) {
         this.ghostHoldUntil[slot] = s.tick + 32; // ghost bar hangs, then drains
         play(this, 's-hit');
-        play(this, `v-${f.charId}-hurt`, 0.7);
+        playVoice(this, f.charId, 'hurt', 0.7);
         this.spawnHitVfx(slot, prev.healths[slot] - f.health);
         this.cameras.main.shake(60, 0.004);
         // combo: consecutive hits while the defender never left stun
@@ -680,13 +685,17 @@ export class FightScene extends Phaser.Scene {
         (was !== kind || prev.moveIds[slot] !== f.action.moveId)
       ) {
         play(this, 's-whoosh', 0.4);
-        if (characters[f.charId].moves[f.action.moveId!]?.input) play(this, `v-${f.charId}-kiai`, 0.8);
+        if (characters[f.charId].moves[f.action.moveId!]?.input) playVoice(this, f.charId, 'kiai', 0.8);
         this.logMove(slot);
       }
       if (kind === 'air' && was === 'prejump') play(this, 's-jump', 0.35);
     }
 
     if (s.projectiles.length > prev.projectiles) play(this, 's-projectile', 0.6);
+
+    // universal throw connecting (the hold starting) gets its grab thunk now —
+    // the damage (and its own hit sound) only lands when the tech window closes
+    if (s.pendingThrow && !prev.pendingThrow) play(this, 's-hit', 0.8);
 
     if (this.comboTicks > 0 && --this.comboTicks === 0) this.comboHits = 0;
   }
@@ -773,7 +782,11 @@ export class FightScene extends Phaser.Scene {
         qcf: '↓↘→', qcb: '↓↙←', bf: '←→', dp: '→↓↘', hcb: '→↓←', hcf: '←↓→', '360': '360°',
       };
       const inp = def.input.motion ? M[def.input.motion] : '';
-      const btn = def.input.button === 'punch' ? 'P' : def.input.button === 'kick' ? 'K' : def.input.button;
+      const btn =
+        def.input.button === 'punch' ? 'P'
+        : def.input.button === 'kick' ? 'K'
+        : def.input.button === 'LPLK' ? 'LP+LK'
+        : def.input.button;
       label = `${def.name ?? id}${str} · ${inp}${inp ? '+' : ''}${btn}`;
     } else if (id.startsWith('c')) label = `cr.${id.slice(1).toUpperCase()}`;
     else if (id.startsWith('j')) label = `j.${id.slice(1).toUpperCase()}`;
@@ -1037,6 +1050,7 @@ export class FightScene extends Phaser.Scene {
 
     if (s.phase === 'fatality' && s.fatality) {
       for (const sh of this.fighterShadows) sh?.setVisible(false);
+      for (const dz of this.dizzySprites) dz?.setVisible(false);
       this.drawFatality();
       perf.cutscene = performance.now() - sectionStart;
       perf.draw = performance.now() - drawStart;
@@ -1051,6 +1065,7 @@ export class FightScene extends Phaser.Scene {
     // portrait taunts the beaten loser portrait with a quote (SFII win screen).
     if (s.phase === 'matchEnd' && s.roundWinner !== null && s.phaseFrame > 72) {
       for (const sh of this.fighterShadows) sh?.setVisible(false);
+      for (const dz of this.dizzySprites) dz?.setVisible(false);
       this.showWinScreen(s.roundWinner);
       perf.cutscene = performance.now() - sectionStart;
       perf.draw = performance.now() - drawStart;
@@ -1084,6 +1099,22 @@ export class FightScene extends Phaser.Scene {
     for (const slot of [0, 1] as const) {
       const f = s.fighters[slot];
       const def = characters[f.charId];
+
+      // circling dizzy stars over a dazed fighter's head (fight-phase dizzy
+      // and the finisher-window daze both read as "helpless")
+      if (f.action.kind === 'dazed' && this.textures.exists('vfx-dizzy')) {
+        let dz = this.dizzySprites[slot];
+        if (!dz) {
+          dz = this.add.image(0, 0, 'vfx-dizzy').setDepth(4);
+          this.dizzySprites[slot] = dz;
+        }
+        dz.setVisible(true)
+          .setPosition(f.x, f.y - def.hurtStand.h - 22 + Math.sin(s.tick / 7) * 3)
+          .setDisplaySize(120, 72)
+          .setFlipX(((s.tick >> 4) & 1) === 1); // cheap orbit shimmer
+      } else {
+        this.dizzySprites[slot]?.setVisible(false);
+      }
 
       const sprite = this.fighterSprites[slot];
       if (sprite) {
@@ -1256,6 +1287,7 @@ export class FightScene extends Phaser.Scene {
     const winDef = characters[winId];
     const quotes = winDef.winQuotes ?? [];
     const quote = quotes.length ? Phaser.Utils.Array.GetRandom(quotes) : '...';
+    playVoice(this, winId, 'victory', 0.85);
     const font = { fontFamily: 'monospace', color: '#f5ead9' };
 
     const c = this.add.container(0, 0).setDepth(20);
@@ -1470,7 +1502,11 @@ export class FightScene extends Phaser.Scene {
       const M: Record<string, string> = {
         qcf: '↓↘→', qcb: '↓↙←', bf: '← →', dp: '→↓↘', hcb: '→↓←', hcf: '←↓→', '360': '360°',
       };
-      const btn = input.button === 'punch' ? 'P' : input.button === 'kick' ? 'K' : input.button;
+      const btn =
+        input.button === 'punch' ? 'P'
+        : input.button === 'kick' ? 'K'
+        : input.button === 'LPLK' ? 'LP+LK'
+        : input.button;
       return `${input.motion ? M[input.motion] + '+' : ''}${btn}`;
     };
     const specials = Object.values(m)

@@ -62,6 +62,9 @@
     "rising-glyph-recovery",
     "redirect-startup",
     "redirect-active",
-    "redirect-recovery"
+    "redirect-recovery",
+    "throw-startup",
+    "throw-active",
+    "throw-recovery"
   ]
 }

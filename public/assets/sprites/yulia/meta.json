@@ -62,6 +62,9 @@
     "volga-piledriver-recovery",
     "braid-lariat-startup",
     "braid-lariat-active",
-    "braid-lariat-recovery"
+    "braid-lariat-recovery",
+    "throw-startup",
+    "throw-active",
+    "throw-recovery"
   ]
 }

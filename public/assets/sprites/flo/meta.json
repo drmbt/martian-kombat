@@ -62,6 +62,9 @@
     "root-access-recovery",
     "sudo-kill-startup",
     "sudo-kill-active",
-    "sudo-kill-recovery"
+    "sudo-kill-recovery",
+    "throw-startup",
+    "throw-active",
+    "throw-recovery"
   ]
 }

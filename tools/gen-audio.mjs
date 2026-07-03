@@ -66,22 +66,79 @@ const announcerLines = {
   fatality: 'FATALITY!',
 };
 
-const grunts = [
-  ['vincent-kiai', VOICE_M, 'Hyah!'],
-  ['vincent-hurt', VOICE_M, 'Ugh!'],
-  ['yulia-kiai', VOICE_F, 'Hyaaa!'],
-  ['yulia-hurt', VOICE_F, 'Agh!'],
-  ['catherine-kiai', VOICE_CATH, 'Order up!'],
-  ['catherine-hurt', VOICE_CATH, 'Agh!'],
-  ['kirby-kiai', VOICE_KIRBY, 'Hyah!'],
-  ['kirby-hurt', VOICE_KIRBY, 'Oof!'],
+// Voice line takes an id, a voice, then per-category line lists so combat and
+// the win screen can pick a random variant instead of looping one clip.
+// kiai: attack grunts. hurt: pain reactions. victory: win-screen callouts
+// (spoken alongside the winQuotes text on the post-match screen).
+const VOICE_GENE = VOICE_M; // no dedicated ElevenLabs voice picked yet; reuse Harry
+const VOICE_MARZ = VOICE_F; // ditto, reuse Sarah
+
+// Slot counts are a contract with VOICE_COUNTS in src/scenes/BootScene.ts:
+// 6 kiai / 6 hurt / 4 victory per character. Keep the arrays exactly that
+// long — the loader requests that many numbered files.
+const voiceLines = {
+  vincent: {
+    voice: VOICE_M,
+    kiai: ['Hyah!', 'Ha!', 'Feel the flow!', 'Witness!', 'Redirect!', 'Sha!'],
+    hurt: ['Ugh!', 'Argh!', 'Tch!', 'Hnh!', 'Gah!', 'Nngh!'],
+    victory: ['Balance restored.', 'The circuit is complete.', 'As it was written.', 'You were only noise.'],
+  },
+  yulia: {
+    voice: VOICE_F,
+    kiai: ['Hyaaa!', 'Ha!', 'Yes!', 'Come on!', 'Davai!', 'Opa!'],
+    hurt: ['Agh!', 'Ah!', 'Ow!', 'Hmph!', 'Nyet!', 'Tss!'],
+    victory: ['Fantastic!', 'Too easy.', 'Breathe, and win.', 'Weakness is a choice.'],
+  },
+  catherine: {
+    voice: VOICE_CATH,
+    kiai: ['Order up!', 'Hyah!', 'Coming through!', 'Special of the day!', 'Jazzper, go!', 'Yes, chef!'],
+    hurt: ['Agh!', 'Ow!', 'Ouch!', 'Hey!', 'My apron!', 'Watch it!'],
+    victory: ["Table for one — the loser's!", 'Check, please!', "That's how we plate it!", 'Compliments to the chef!'],
+  },
+  kirby: {
+    voice: VOICE_KIRBY,
+    kiai: ['Hyah!', 'Ha!', 'Watch this!', 'Whoo!', 'Flambé!', 'Ta-da!'],
+    hurt: ['Oof!', 'Ow!', 'Ugh!', 'Hey!', 'Rude!', 'My hair!'],
+    victory: ['Too flexible for you!', 'Stick the landing!', 'Encore?', 'Darling, please.'],
+  },
   // Flo speaks German; low stability + max style = angry, not read-aloud
-  ['flo-kiai', VOICE_FLO, 'Verdammt!', 1.0, 0.25],
-  ['flo-hurt', VOICE_FLO, 'Ah! Scheiße!', 1.0, 0.25],
+  flo: {
+    voice: VOICE_FLO,
+    style: 1.0,
+    stability: 0.25,
+    kiai: ['Verdammt!', 'Genau!', 'Ha!', 'Root access!', 'Los!', 'Sudo!'],
+    hurt: ['Ah! Scheiße!', 'Ah, OK!', 'Argh!', 'Verdammt nochmal!', 'Mist!', 'Ey!'],
+    victory: ['Genau. Predictable.', 'Ah, OK — pwned.', 'Root access granted.', 'Works on my machine.'],
+  },
   // Freeman is a serene warrior yogi; high stability + low style = calm/centered
-  ['freeman-kiai', VOICE_M, 'Hmm... hah!', 0.3, 0.7],
-  ['freeman-hurt', VOICE_M, 'Hmph!', 0.3, 0.65],
-];
+  freeman: {
+    voice: VOICE_M,
+    style: 0.3,
+    stability: 0.7,
+    kiai: ['Hmm... hah!', 'Ha.', 'Be still.', 'Hah!', 'Breathe.', 'Release.'],
+    hurt: ['Hmph!', 'Mm.', 'Hnh.', '...ah.', 'Unmoved.', 'Hm!'],
+    victory: ['Peace, achieved.', 'The mind bends steel.', 'Namaste... now leave.', 'Stillness prevails.'],
+  },
+  gene: {
+    voice: VOICE_GENE,
+    kiai: ['Ship it!', 'Mana Blast!', 'Yeah!', 'Oh yeah!', 'Deploy!', 'Zero-shot!'],
+    hurt: ['Ow!', 'Ugh, 429.', 'Nope!', 'Rate limited!', 'Segfault!', 'Bad output!'],
+    victory: ['Yeah! Shipped it.', "Oh yeah — that's a merge.", 'Mana Blast secured.', 'Your context window just closed.'],
+  },
+  marzipan: {
+    voice: VOICE_MARZ,
+    kiai: ['Grow!', 'Bloom!', 'Ha!', 'Symbiosis!', 'Photosynthesize!', 'Take root!'],
+    hurt: ['Oh!', 'Ow!', 'Ugh!', 'Hey now!', 'Aah!', 'My roots!'],
+    victory: ['Please, collaborate with me.', 'Nature always wins.', 'Grow with me, or don\'t.', 'Everything composts eventually.'],
+  },
+};
+
+const grunts = Object.entries(voiceLines).flatMap(([id, def]) =>
+  Object.entries({ kiai: def.kiai, hurt: def.hurt, victory: def.victory }).flatMap(
+    ([category, lines]) =>
+      lines.map((text, i) => [`${id}-${category}-${i + 1}`, def.voice, text, def.style, def.stability])
+  )
+);
 
 const sounds = [
   ['hit', 'a single punchy fighting game punch impact, meaty thwack, very short', 1],
