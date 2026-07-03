@@ -276,6 +276,34 @@ Goal: itch.io-able build; roster pipeline proven repeatable.
 - [ ] In-browser TRAINING verification for flo + marzipan (Chrome
       extension still disconnected)
 
+### Sprint 13 — Gene ✅ (art unblocked after spend-cap raise)
+- [x] Engine: `teleport` (behind/retreat blink at first active frame, pairs
+      with `invuln` i-frames), `slowFactor` fields (enemy projectiles crawl
+      at vx×factor inside, enemy ground impulses damped), dormant
+      projectiles now CLASH (doc: Hallucination "clashes with real
+      projectiles"; also makes Fork Bomb interceptable)
+- [x] Kara-cancel upgrade extended: single-button SPECIALS can chord-upgrade
+      to PPP/KKK specials within 4 frames (dp+2P lands one tick apart — the
+      qcf-tail special stole the input) + chord upgrades now check the
+      motion (was missing; braid-lariat never noticed, it has no motion)
+- [x] gene.json: Hallucination (qcf+P fake clone = fuse/detonate walker),
+      Rate Limit (qcb+P slow field, L/M/H size), Diffusion dp+3P behind /
+      dp+3K corner retreat. Deferred: Prompt Injection input-reversal grab,
+      glitch-float, blink backdash. 58 tests green, build clean
+- [x] Grunts: gene-kiai "Ship it!" / gene-hurt (Chris voice). Fatality
+      "404" def + panel prompts staged in gen-fatality.mjs
+- [x] tools/lib.mjs: fal.ai nano-banana-pro fallback wired into geminiImage
+      (auto on spend-cap 429); gen-frames projectile art can now reference
+      the canonical (`useCanonical` — Hallucination clone likeness)
+- [x] Gene art complete (user raised the Gemini spend cap): canonical
+      (amber AR glasses, magenta pixel-sort arm), 59-cell sheet packed +
+      keying verified, 3 projectiles (glitch clone via `useCanonical`,
+      clone-burst, 429 barrier), 404 fatality panels QA'd. Only 3 QA
+      regens (geometric CELLS rules + wave-1 anchor fix carrying their
+      weight — best first-pass rate yet). NOTE: FAL_KEY in .env is still
+      dead (401, looks truncated) — fallback route is wired but untested
+      end-to-end; replace the key when convenient
+
 ### Icebox (post-MVP, do not start)
 Remaining roster (Flo, Freeman, Gene, Marzipan) · new characters · single-player
 arcade mode + CPU opponent · super meter/EX moves · stage interactables ·
@@ -287,6 +315,19 @@ rollback netplay (engine determinism already paid for) · training mode · fatal
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-03 · assets · Sprint 13 closeout: Gene art landed** — user
+  raised the Gemini cap; canonical + 59 cells + 3 projectiles + 404
+  panels generated, packed, keyed; 3 QA regens only. Roster 7/8 with
+  full art. FAL_KEY still dead in .env (fallback wired, untested).
+  *(Claude)*
+
+- **2026-07-03 · engine+data+tools · Sprint 13: Gene engine-complete, art
+  blocked** — teleports, slow fields, clashing dormant projectiles, chord
+  kara-cancel from single-button specials (+ missing motion check found);
+  gene.json + roster unlock + grunts; fal.ai fallback route finally wired
+  in lib.mjs but the stored FAL_KEY 401s and Gemini is over its monthly
+  cap — Gene is a capsule until a key works. 58 tests green. *(Claude)*
 
 - **2026-07-03 · engine+data+assets+tools · Sprint 12: Marzipan playable,
   gen pipeline parallel** — 4-wide two-wave pool in gen-frames (anchor cell

@@ -95,6 +95,8 @@ async function genChar(charId) {
         apiKey: env.GEMINI_API_KEY,
         model: MODEL,
         prompt: proj.prompt,
+        // clone-style art (Gene's Hallucination) needs the character likeness
+        referencePaths: proj.useCanonical ? [canonical] : [],
         aspectRatio: '1:1',
       });
       saveAsset(out, buf, proj.prompt);

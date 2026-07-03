@@ -16,6 +16,7 @@ const VOICE_CATH = 'cgSgspJ2msm6clMCkdW9'; // Jessica — playful bright (Cather
 const VOICE_KIRBY = 'FGY2WhTYpPnrIDTdsKH5'; // Laura — sassy (Kirby)
 const VOICE_FLO = 'onwK4e9ZLuTAKqWW03F9'; // Daniel — deep gruff (Flo)
 const VOICE_MARZ = 'pqHfZKP75CvOlQylNhV4'; // Bill — weathered old-timer (Marzipan)
+const VOICE_GENE = 'iP95p4xoKVk53GoZ742B'; // Chris — casual energetic (Gene)
 
 async function tts(voiceId, text, style = 0.7, stability = 0.4) {
   const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
@@ -79,6 +80,8 @@ const grunts = [
   ['flo-hurt', VOICE_FLO, 'Ah! Scheiße!', 1.0, 0.25],
   ['marzipan-kiai', VOICE_MARZ, 'Grow!', 0.9, 0.35],
   ['marzipan-hurt', VOICE_MARZ, 'Oh!', 0.9, 0.35],
+  ['gene-kiai', VOICE_GENE, 'Ship it!', 1.0, 0.3],
+  ['gene-hurt', VOICE_GENE, 'Ow!', 1.0, 0.3],
 ];
 
 const sounds = [

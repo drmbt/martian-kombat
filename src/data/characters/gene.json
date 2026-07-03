@@ -1,0 +1,488 @@
+{
+  "id": "gene",
+  "name": "GENE",
+  "color": "#ff4fd8",
+  "stage": "neptune",
+  "fatality": {
+    "id": "four-oh-four",
+    "name": "404",
+    "input": {
+      "motion": "qcb",
+      "button": "punch"
+    },
+    "panels": 4
+  },
+  "health": 960,
+  "walkSpeed": 4.2,
+  "backSpeed": 3.4,
+  "jumpVel": 18.5,
+  "gravity": 0.95,
+  "prejumpFrames": 4,
+  "bodyBox": {
+    "x": -44,
+    "y": -238,
+    "w": 88,
+    "h": 238
+  },
+  "hurtStand": {
+    "x": -54,
+    "y": -252,
+    "w": 108,
+    "h": 252
+  },
+  "hurtCrouch": {
+    "x": -54,
+    "y": -160,
+    "w": 108,
+    "h": 160
+  },
+  "moves": {
+    "lp": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 10,
+      "damage": 46,
+      "hitstun": 15,
+      "blockstun": 10,
+      "knockback": 7,
+      "hitbox": {
+        "x": 40,
+        "y": -220,
+        "w": 104,
+        "h": 40
+      },
+      "height": "mid"
+    },
+    "mp": {
+      "startup": 8,
+      "active": 3,
+      "recovery": 14,
+      "damage": 72,
+      "hitstun": 19,
+      "blockstun": 12,
+      "knockback": 9,
+      "hitbox": {
+        "x": 42,
+        "y": -224,
+        "w": 114,
+        "h": 44
+      },
+      "height": "mid"
+    },
+    "hp": {
+      "startup": 11,
+      "active": 4,
+      "recovery": 19,
+      "damage": 100,
+      "hitstun": 24,
+      "blockstun": 15,
+      "knockback": 12,
+      "hitbox": {
+        "x": 44,
+        "y": -232,
+        "w": 124,
+        "h": 56
+      },
+      "height": "mid",
+      "knockdown": true
+    },
+    "lk": {
+      "startup": 4,
+      "active": 3,
+      "recovery": 9,
+      "damage": 44,
+      "hitstun": 14,
+      "blockstun": 9,
+      "knockback": 6,
+      "hitbox": {
+        "x": 38,
+        "y": -80,
+        "w": 106,
+        "h": 36
+      },
+      "height": "mid"
+    },
+    "mk": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 16,
+      "damage": 78,
+      "hitstun": 20,
+      "blockstun": 13,
+      "knockback": 10,
+      "hitbox": {
+        "x": 42,
+        "y": -184,
+        "w": 120,
+        "h": 48
+      },
+      "height": "mid"
+    },
+    "hk": {
+      "startup": 12,
+      "active": 4,
+      "recovery": 20,
+      "damage": 106,
+      "hitstun": 26,
+      "blockstun": 15,
+      "knockback": 13,
+      "hitbox": {
+        "x": 44,
+        "y": -242,
+        "w": 126,
+        "h": 72
+      },
+      "height": "mid",
+      "knockdown": true
+    },
+    "clp": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 9,
+      "damage": 42,
+      "hitstun": 14,
+      "blockstun": 9,
+      "knockback": 6,
+      "hitbox": {
+        "x": 36,
+        "y": -130,
+        "w": 96,
+        "h": 36
+      },
+      "height": "mid"
+    },
+    "cmp": {
+      "startup": 7,
+      "active": 4,
+      "recovery": 14,
+      "damage": 68,
+      "hitstun": 18,
+      "blockstun": 11,
+      "knockback": 8,
+      "hitbox": {
+        "x": 30,
+        "y": -190,
+        "w": 84,
+        "h": 100
+      },
+      "height": "mid"
+    },
+    "chp": {
+      "startup": 10,
+      "active": 5,
+      "recovery": 19,
+      "damage": 92,
+      "hitstun": 24,
+      "blockstun": 14,
+      "knockback": 10,
+      "hitbox": {
+        "x": 24,
+        "y": -252,
+        "w": 84,
+        "h": 150
+      },
+      "height": "mid",
+      "knockdown": true
+    },
+    "clk": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 10,
+      "damage": 42,
+      "hitstun": 14,
+      "blockstun": 9,
+      "knockback": 6,
+      "hitbox": {
+        "x": 36,
+        "y": -32,
+        "w": 102,
+        "h": 32
+      },
+      "height": "low"
+    },
+    "cmk": {
+      "startup": 8,
+      "active": 4,
+      "recovery": 16,
+      "damage": 72,
+      "hitstun": 19,
+      "blockstun": 12,
+      "knockback": 9,
+      "hitbox": {
+        "x": 40,
+        "y": -34,
+        "w": 128,
+        "h": 34
+      },
+      "height": "low"
+    },
+    "chk": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 20,
+      "damage": 62,
+      "hitstun": 20,
+      "blockstun": 12,
+      "knockback": 8,
+      "hitbox": {
+        "x": 28,
+        "y": -36,
+        "w": 144,
+        "h": 36
+      },
+      "height": "low",
+      "knockdown": true
+    },
+    "jlp": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 8,
+      "damage": 44,
+      "hitstun": 15,
+      "blockstun": 10,
+      "knockback": 6,
+      "hitbox": {
+        "x": 26,
+        "y": -150,
+        "w": 84,
+        "h": 48
+      },
+      "height": "high"
+    },
+    "jmp": {
+      "startup": 6,
+      "active": 6,
+      "recovery": 10,
+      "damage": 68,
+      "hitstun": 18,
+      "blockstun": 12,
+      "knockback": 8,
+      "hitbox": {
+        "x": 28,
+        "y": -140,
+        "w": 94,
+        "h": 56
+      },
+      "height": "high"
+    },
+    "jhp": {
+      "startup": 8,
+      "active": 7,
+      "recovery": 12,
+      "damage": 92,
+      "hitstun": 22,
+      "blockstun": 14,
+      "knockback": 10,
+      "hitbox": {
+        "x": 26,
+        "y": -150,
+        "w": 100,
+        "h": 66
+      },
+      "height": "high"
+    },
+    "jlk": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 8,
+      "damage": 42,
+      "hitstun": 14,
+      "blockstun": 10,
+      "knockback": 6,
+      "hitbox": {
+        "x": 28,
+        "y": -120,
+        "w": 86,
+        "h": 50
+      },
+      "height": "high"
+    },
+    "jmk": {
+      "startup": 6,
+      "active": 7,
+      "recovery": 10,
+      "damage": 72,
+      "hitstun": 19,
+      "blockstun": 12,
+      "knockback": 9,
+      "hitbox": {
+        "x": 30,
+        "y": -130,
+        "w": 96,
+        "h": 58
+      },
+      "height": "high"
+    },
+    "jhk": {
+      "startup": 9,
+      "active": 7,
+      "recovery": 12,
+      "damage": 96,
+      "hitstun": 23,
+      "blockstun": 14,
+      "knockback": 12,
+      "hitbox": {
+        "x": 32,
+        "y": -140,
+        "w": 110,
+        "h": 62
+      },
+      "height": "high"
+    },
+    "diffusion-strike": {
+      "name": "Diffusion (in)",
+      "input": {
+        "motion": "dp",
+        "button": "PPP"
+      },
+      "startup": 14,
+      "active": 2,
+      "recovery": 12,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "invuln": 16,
+      "teleport": {
+        "mode": "behind"
+      }
+    },
+    "diffusion-escape": {
+      "name": "Diffusion (out)",
+      "input": {
+        "motion": "dp",
+        "button": "KKK"
+      },
+      "startup": 12,
+      "active": 2,
+      "recovery": 10,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "invuln": 14,
+      "teleport": {
+        "mode": "retreat"
+      }
+    },
+    "rate-limit": {
+      "name": "Rate Limit",
+      "input": {
+        "motion": "qcb",
+        "button": "punch"
+      },
+      "startup": 14,
+      "active": 2,
+      "recovery": 20,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "projectile": {
+        "vx": 0,
+        "spawnX": 180,
+        "spawnY": -120,
+        "box": {
+          "x": -90,
+          "y": -110,
+          "w": 180,
+          "h": 220
+        },
+        "damage": 0,
+        "hitstun": 0,
+        "blockstun": 0,
+        "knockback": 0,
+        "ttl": 180,
+        "field": true,
+        "slowFactor": 0.35
+      },
+      "variants": {
+        "l": {
+          "projectile": {
+            "box": {
+              "x": -60,
+              "y": -90,
+              "w": 120,
+              "h": 180
+            },
+            "ttl": 140
+          }
+        },
+        "h": {
+          "projectile": {
+            "box": {
+              "x": -120,
+              "y": -130,
+              "w": 240,
+              "h": 260
+            },
+            "ttl": 220
+          }
+        }
+      }
+    },
+    "hallucination": {
+      "name": "Hallucination",
+      "input": {
+        "motion": "qcf",
+        "button": "punch"
+      },
+      "startup": 13,
+      "active": 2,
+      "recovery": 20,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "projectile": {
+        "vx": 2.5,
+        "spawnX": 60,
+        "spawnY": 0,
+        "box": {
+          "x": -30,
+          "y": -240,
+          "w": 60,
+          "h": 240
+        },
+        "damage": 0,
+        "hitstun": 0,
+        "blockstun": 0,
+        "knockback": 0,
+        "fuse": 55,
+        "detonate": {
+          "box": {
+            "x": -60,
+            "y": -200,
+            "w": 120,
+            "h": 200
+          },
+          "damage": 60,
+          "hitstun": 20,
+          "blockstun": 12,
+          "knockback": 8,
+          "ttl": 10
+        }
+      },
+      "variants": {
+        "l": {
+          "projectile": {
+            "vx": 1.5
+          }
+        },
+        "h": {
+          "projectile": {
+            "vx": 5
+          }
+        }
+      }
+    }
+  }
+}

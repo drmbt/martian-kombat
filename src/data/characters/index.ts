@@ -9,6 +9,7 @@ import catherine from './catherine.json';
 import kirby from './kirby.json';
 import flo from './flo.json';
 import marzipan from './marzipan.json';
+import gene from './gene.json';
 
 export const characters: Defs = {
   vincent: vincent as unknown as CharacterDef,
@@ -17,4 +18,5 @@ export const characters: Defs = {
   kirby: kirby as unknown as CharacterDef,
   flo: flo as unknown as CharacterDef,
   marzipan: marzipan as unknown as CharacterDef,
+  gene: gene as unknown as CharacterDef,
 };

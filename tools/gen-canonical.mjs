@@ -30,7 +30,9 @@ const FLAVOR = {
   // (same lesson as Vincent's teal rune)
   flo: `Character flavor: "Kernel Panic" — a very tall, lanky, permanently annoyed German hacker. Keep his scowl. A thin smoking spliff hangs from the corner of his mouth, and faint glowing AMBER-ORANGE terminal-code glyphs float around one clenched fist (never green glyphs).`,
   freeman: `Character flavor: "The Still Point" — a serene warrior yogi. Loose comfortable clothes, mala beads around the neck or wrist, barefoot, calm centered half-smile, weight perfectly balanced in a meditative fighting stance.`,
-  gene: `Character flavor: "Prompt Injection" — an AI-startup hacker. Keep his outfit from the photo; add subtle AR glasses with a faint HUD glow and glitchy digital pixel artifacts trailing from one open hand.`,
+  // glitch pixels must be MAGENTA/AMBER, never green or teal — cool colors on
+  // the green screen die in the chroma key (Vincent rune / Flo glyph lesson)
+  gene: `Character flavor: "Prompt Injection" — an AI-startup hacker. Keep his outfit from the photo; add subtle AR glasses with a faint warm amber HUD glow and glitchy digital pixel-sorting artifacts in MAGENTA, HOT PINK and AMBER trailing from one open hand (never green or teal glitches).`,
   kirby: `Character flavor: "Spill the Tea" — a flexible fire-breathing yogi gossip. One hand balances a steaming teacup effortlessly; a faint ember glow flickers at the lips. Relaxed, smug, dangerous.`,
   // vines must be DARK OLIVE, never bright green — green-on-green dies in the
   // chroma key (same lesson as Vincent's rune and Flo's glyphs)

@@ -92,6 +92,9 @@ export interface ProjectileDef {
   /** ticks between hits for lingering tick-damage clouds; the projectile
    *  survives its hits instead of dying on contact (Spore Bloom) */
   rehit?: number;
+  /** field only: enemy projectiles inside the box move at vx*slowFactor and
+   *  enemy ground impulses decay faster (Rate Limit) */
+  slowFactor?: number;
 }
 
 /** Fighting-game convention motions: quarter-circles, back-forward,
@@ -162,6 +165,9 @@ export interface MoveDef {
   projImmune?: boolean;
   /** at first active frame, launch into the air with this velocity (vaults) */
   vault?: { vx: number; vy: number };
+  /** at first active frame, blink: 'behind' crosses to the far side of the
+   *  opponent, 'retreat' snaps back to own corner (Diffusion) */
+  teleport?: { mode: 'behind' | 'retreat' };
   /** SFII Turbo L/M/H button variants, merged over the base numbers */
   variants?: { l?: VariantPatch; m?: VariantPatch; h?: VariantPatch };
 }
@@ -274,6 +280,8 @@ export interface Projectile {
   rehit: number;
   /** ticks until this lingering projectile may hit again */
   hitCooldown: number;
+  /** field slow strength; 0 = no slow */
+  slowFactor: number;
 }
 
 export type Phase = 'intro' | 'fight' | 'roundEnd' | 'finisher' | 'fatality' | 'matchEnd';

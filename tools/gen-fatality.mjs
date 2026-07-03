@@ -47,6 +47,16 @@ const FATALITIES = {
       `The man turning away exhaling a long stream of spliff smoke, casually flicking the amber terminal window closed behind him with two fingers, as the very last scrolling amber text lines of the husk fade to nothing. He does not look back.`,
     ],
   },
+  gene: {
+    id: 'four-oh-four',
+    canonical: 'assets/raw/canonical/gene.png',
+    panels: [
+      `The man from the reference image (AR glasses with amber HUD glow, startup tee under a blazer) snapping his fingers with a smug grin, as ${HUSK} begins to COMPRESS — its body deforming into large blocky JPEG compression macroblocks, edges pixelating in magenta and amber. Low dramatic angle.`,
+      `${HUSK} half-collapsed into a chunky mosaic of corrupted JPEG artifact blocks in magenta, hot pink and amber, its silhouette barely recognizable, compression tearing across it in horizontal bands, while the man watches with arms crossed. Side angle.`,
+      `Where the husk stood: only a floating retro OS error dialog box, translucent amber with a hot-pink border, reading exactly "fighter not found" with a single OK button, a few last JPEG blocks raining to the ground. The man leans in to look at it, amused.`,
+      `Extreme close-up: the man's finger casually CLICKING the OK button on the floating dialog, the box mid-dissolve into magenta pixels, his AR glasses reflecting the amber glow, total indifference on his face.`,
+    ],
+  },
   marzipan: {
     id: 'compost',
     canonical: 'assets/raw/canonical/marzipan.png',

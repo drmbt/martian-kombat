@@ -413,6 +413,119 @@ export const CHARACTERS = {
       },
     },
   },
+  gene: {
+    canonical: 'assets/raw/canonical/gene.png',
+    layout: 'v2',
+    always:
+      'Any glitch effects, pixel-sorting artifacts or holographic UI around him are MAGENTA, HOT PINK and AMBER — never green, never teal. His AR glasses have a faint warm amber HUD glow.',
+    moves6: {
+      stand: {
+        lp: {
+          startup: 'chambering a quick loose jab, shoulders relaxed, smirking',
+          active: 'quick jab extended at head height, a few magenta glitch pixels trailing the fist',
+          recovery: 'retracting the jab, hand flicking as if dismissing a popup',
+        },
+        mp: {
+          startup: 'winding up a straight palm, amber HUD elements flickering around the hand',
+          active: 'straight palm strike extended at chest height, a burst of hot-pink pixel artifacts on impact point',
+          recovery: 'drawing the palm back, glitch pixels dissolving',
+        },
+        hp: {
+          startup: 'both hands raised, fingers spread, magenta glitch energy gathering between them',
+          active: 'double-palm blast pushed forward at chest height, a shower of magenta and amber pixel-sorting streaks',
+          recovery: 'lowering the hands, the last pixels fizzling out',
+        },
+        lk: {
+          startup: 'front knee lifting for a quick low kick, hands loose',
+          active: 'quick snapping kick at shin height, sneaker sole forward',
+          recovery: 'the foot returning to a springy stance',
+        },
+        mk: {
+          startup: 'hips turning, one leg chambering across the body',
+          active: 'roundhouse kick extended at chest height — exactly ONE foot planted firmly on the ground, NOT jumping',
+          recovery: 'the leg swinging back down into stance',
+        },
+        hk: {
+          startup: 'balancing on his left leg only, RIGHT knee chambered high, arms counterbalanced',
+          active: 'tall side kick fully extended at head height, his RIGHT leg (clearly attached at the hip) driven out, magenta glitch trail off the heel — exactly ONE foot on the ground',
+          recovery: 'the kicking leg lowering, settling back into the smirking stance',
+        },
+      },
+      crouch: {
+        lp: {
+          active: 'short jab snapped out at waist height from the squat',
+          recovery: 'jab arm pulled back in, still compact in the squat',
+        },
+        mp: {
+          active: 'rising palm thrust angled upward out of the squat, amber HUD ring flickering',
+          recovery: 'the arm settling down, weight sinking back into the squat',
+        },
+        hp: {
+          active: 'both palms thrust powerfully straight upward out of the squat, a column of magenta glitch pixels above them (anti-air)',
+          recovery: 'arms lowering from overhead, settling back into the squat',
+        },
+        lk: {
+          active: 'squatting on his left leg while his RIGHT leg (clearly attached at the hip) snaps a quick kick forward at ankle height',
+          recovery: 'the kicking leg pulled back beneath him, both feet planted in the squat',
+        },
+        mk: {
+          active: 'squatting on his bent left leg while his RIGHT leg (clearly attached at the hip) is fully extended forward along the ground in a long low kick',
+          recovery: 'sliding the extended leg back beneath him into a compact squat',
+        },
+        hk: {
+          active: 'low spinning leg sweep fully extended along the ground, glitch pixels scattering off the shoe',
+          recovery: 'rising from the sweep back toward stance',
+        },
+      },
+      air: {
+        lp: 'throwing a quick short downward-angled jab',
+        mp: 'a straight punch driven at a 45-degree downward angle, pink pixel trail',
+        hp: 'a double-fist overhead hammer blow swung downward, magenta glitch burst',
+        lk: 'a sharp knee strike raised toward the opponent',
+        mk: 'a side kick extended at a downward angle, body tilted',
+        hk: 'a flying kick — RIGHT leg fully extended with a magenta glitch trail, LEFT leg tucked beneath him, both legs clearly attached',
+      },
+      specials: {
+        'diffusion-strike': {
+          startup: 'his whole body beginning to DISSOLVE into coarse magenta-and-amber denoising static, edges crumbling into pixels, grinning',
+          active: 'body half-rematerializing from a cloud of magenta pixel static, one palm already extended forward, eyes glowing amber',
+          recovery: 'the last static pixels snapping into place, body fully solid again, adjusting his AR glasses',
+        },
+        'diffusion-escape': {
+          startup: 'his whole body beginning to DISSOLVE into coarse magenta-and-amber denoising static, leaning backward, edges crumbling into pixels',
+          active: 'body mostly gone — just a person-shaped cloud of magenta and amber static pixels streaming backward',
+          recovery: 'rematerializing from static in a relaxed backward-leaning stance, dusting pixel fragments off his t-shirt sleeve',
+        },
+        'rate-limit': {
+          startup: 'both hands raised typing rapidly on a floating translucent amber holographic panel, magenta warning glyphs flashing',
+          active: 'one arm thrust forward deploying a large translucent amber holographic barrier pane in front of him, hot-pink border, hand splayed',
+          recovery: 'lowering the arm, the last amber interface fragments dissolving around his fingers',
+        },
+        hallucination: {
+          startup: 'one hand raised snapping his fingers, a person-shaped cloud of magenta static beginning to form in front of him',
+          active: 'arm extended presenting forward as a glitchy static-filled human silhouette strides away from his open hand, magenta and amber pixels trailing',
+          recovery: 'crossing his arms with a smug grin, a few last pink pixels drifting off his sleeve',
+        },
+      },
+    },
+    extra: {
+      projectiles: {
+        hallucination: {
+          useCanonical: true,
+          prompt:
+            'A glitchy corrupted half-rendered CLONE of the person in the reference image, same outfit and face, walking forward mid-stride, large parts of the body dissolving into coarse MAGENTA, HOT PINK and AMBER pixel-sorting static and scanline artifacts, semi-transparent in places, painted cel-shaded anime style, full body, facing right, on solid flat chroma-key green background #00B140, exactly one figure, no text, no watermark.',
+        },
+        'hallucination-burst': {
+          prompt:
+            'A human-silhouette-shaped explosion of MAGENTA, HOT PINK and AMBER glitch pixels and scanline fragments bursting outward, no recognizable person left, painted cel-shaded anime style, centered, on solid flat chroma-key green background #00B140, no character, no text, no watermark.',
+        },
+        'rate-limit': {
+          prompt:
+            'A large translucent AMBER holographic rectangular barrier pane floating upright, hot-pink glowing border, subtle scanlines, the number "429" glowing large in the center in a blocky digital font, painted cel-shaded anime style, centered, on solid flat chroma-key green background #00B140, no character, no other text, no watermark.',
+        },
+      },
+    },
+  },
   marzipan: {
     canonical: 'assets/raw/canonical/marzipan.png',
     layout: 'v2',
