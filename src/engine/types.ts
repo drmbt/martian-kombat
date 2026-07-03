@@ -316,4 +316,6 @@ export interface GameState {
   roundWinner: 0 | 1 | null;
   /** set while a fatality cutscene is playing */
   fatality: { owner: 0 | 1; id: string } | null;
+  /** remaining freeze ticks from the last connected hit (inputs still buffer) */
+  hitstop: number;
 }

@@ -22,6 +22,10 @@ import {
   FLOOR_Y,
   GETUP_TICKS,
   GROUND_FRICTION,
+  HITSTOP_HEAVY,
+  HITSTOP_LIGHT,
+  HITSTOP_MEDIUM,
+  HITSTOP_SPECIAL,
   INPUT_BUFFER_LEN,
   INTRO_TICKS,
   KNOCKDOWN_TICKS,
@@ -75,6 +79,7 @@ export function initialState(
     wins: [0, 0],
     roundWinner: null,
     fatality: null,
+    hitstop: 0,
   };
 }
 
@@ -87,6 +92,7 @@ function resetRound(s: GameState, defs: Defs): void {
   s.roundWinner = null;
   s.phase = 'intro';
   s.phaseFrame = 0;
+  s.hitstop = 0;
 }
 
 // ---------- geometry ----------
@@ -587,12 +593,22 @@ interface HitPayload {
   knockdown: boolean;
   /** damage dealt through block (heavies/specials); can never KO */
   chip: number;
+  /** whole-world freeze ticks this contact buys (L short, H long, specials most) */
+  hitstop: number;
   /** command grabs ignore blocking entirely */
   unblockable?: boolean;
 }
 
 /** lights are chipless; everything meatier shaves 10% through block */
 const CHIPLESS = new Set(['lp', 'lk', 'clp', 'clk', 'jlp', 'jlk']);
+
+/** Freeze frames for a connecting move: specials hit hardest, otherwise the
+ *  button strength embedded in the move id ('lp'/'cmk'/'jhk') decides. */
+function hitstopFor(moveId: string, m: MoveDef): number {
+  if (m.input) return HITSTOP_SPECIAL;
+  const strength = moveId.match(/([lmh])[pk]$/)?.[1];
+  return strength === 'h' ? HITSTOP_HEAVY : strength === 'm' ? HITSTOP_MEDIUM : HITSTOP_LIGHT;
+}
 
 /** Apply a connected hit or block. attackerFacing pushes the defender. */
 function applyHit(
@@ -604,6 +620,9 @@ function applyHit(
 ): void {
   const d = s.fighters[defSlot];
   const atkSlot = defSlot === 0 ? 1 : 0;
+
+  // contact freezes the whole world for a beat (trades keep the longest)
+  s.hitstop = Math.max(s.hitstop, hit.hitstop);
 
   if (!hit.unblockable && isBlocking(d, defInput, hit.height)) {
     const guard = d.action.kind === 'crouch' || defInput.down ? 'crouch' : 'stand';
@@ -658,6 +677,7 @@ function resolveAttacks(s: GameState, defs: Defs, inputs: [InputFrame, InputFram
           height: m.height,
           knockdown: true,
           chip: 0,
+          hitstop: hitstopFor(a.moveId!, m),
           unblockable: true,
         }, inputs[defSlot]);
         if (m.grabRecoil) f.vx = -f.facing * m.grabRecoil; // 86'd bounce-away
@@ -678,6 +698,7 @@ function resolveAttacks(s: GameState, defs: Defs, inputs: [InputFrame, InputFram
         height: m.height,
         knockdown: !!m.knockdown,
         chip: CHIPLESS.has(a.moveId!) ? 0 : Math.floor(m.damage * 0.1),
+        hitstop: hitstopFor(a.moveId!, m),
       }, inputs[defSlot]);
     }
   }
@@ -790,6 +811,9 @@ function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputF
         knockback: p.knockback,
         height: p.height,
         knockdown: p.knockdown,
+        // projectiles are special-born; lingering tick-clouds stay light so
+        // rehit damage doesn't stutter the whole match
+        hitstop: p.rehit > 0 ? HITSTOP_LIGHT : HITSTOP_SPECIAL,
         chip: Math.floor(p.damage * 0.1),
       }, inputs[defSlot]);
       // lingering clouds survive their hits and re-hit on a cooldown
@@ -866,6 +890,14 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
     // bank charge while holding down; bleed it fast on release (short grace
     // window to flick ↓→↑ without losing the charge)
     f.charge = inputs[slot].down ? Math.min(f.charge + 1, 600) : Math.max(0, f.charge - 8);
+  }
+
+  // hitstop: the whole world freezes for a beat on contact — fighters, timer,
+  // projectiles, even a fresh KO's roundEnd. Inputs keep buffering (above) so
+  // motions finished during the freeze still come out.
+  if (s.hitstop > 0) {
+    s.hitstop--;
+    return s;
   }
 
   if (s.phase === 'intro') {

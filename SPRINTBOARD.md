@@ -405,10 +405,11 @@ Goal: the game we have, but it *feels* great — juice, VFX, attract mode, contr
 - [ ] **Control remapping in Settings**: per-player key AND gamepad-button
       mapping UI (press-to-bind rows), persisted to localStorage via
       `src/settings.ts`; defaults = current bindings; reset row
-- [ ] **Game-feel juice bundle** (pairs with the VFX work):
-      hitstop (3–8 tick freeze on contact, deterministic in-engine),
-      delayed red health drain (SF2 ghost bar), KO slow-motion on the
-      round-ending hit
+- [x] **Game-feel juice bundle** (pairs with the VFX work):
+      hitstop (3–8 tick freeze on contact, deterministic in-engine, scaled by
+      button strength — L 3 / M 5 / H 7 / specials 8), delayed red health
+      drain (SF2 ghost bar, renderer-side), KO slow-motion on the
+      round-ending hit (renderer-side ~⅓ speed, sim ticks unchanged)
 
 ### Near-term roadmap (approved 2026-07-03, order TBD)
 **Combat depth — closer to SF2:**
@@ -455,6 +456,26 @@ victory song: a `victorySong` attribute in the character JSON names a track in
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-03 · engine+scenes · Sprint 16: game-feel juice bundle** — hitstop:
+  connecting hits freeze the whole world (fighters, projectiles, clock) for a
+  beat, deterministic in-engine (`GameState.hitstop`, set in `applyHit`, gated
+  at the top of `step()` AFTER input buffering so motions finished during the
+  freeze still come out); scaled by button strength (L 3 / M 5 / H 7 ticks),
+  specials + their projectiles hit hardest (8), lingering rehit clouds stay
+  light (3) so tick damage doesn't stutter the match; blocked contact freezes
+  too; trades keep the longest freeze; a KO's freeze carries into roundEnd
+  before the bodies fly. Delayed red health drain: SF2 ghost bar in
+  `drawHud` — lost health lingers red behind the live bar for ~half a second,
+  then drains toward it (snaps up on refill/round reset); renderer-only. KO
+  slow-motion: the round-ending hit plays at ~⅓ speed for the first 55
+  phaseFrames of roundEnd/finisher (accumulator scaling in `update` — pure
+  presentation, the tick sequence is identical). 72 tests green (4 new
+  hitstop specs: strength scaling, world freeze incl. timer, special-via-
+  projectile hardest, block freeze + round-reset clear). Verified live
+  in-browser via a probed CPU fight: maxHitstop 8, ghost gap 160hp draining,
+  tick rate 60→<21/s in the KO window, full intro→fight→finisher→fatality
+  flow clean. — Claude
 
 - **2026-07-03 · assets+data · MIMOS stage** — generated the MIMOS café-lounge
   stage from `assets/stage-inspo/MIMOS/` (orange-red pallet-rack lounge, pink

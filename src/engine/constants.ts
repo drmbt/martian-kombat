@@ -26,3 +26,9 @@ export const FATALITY_RANGE = 280; // default max distance to the dazed loser
 export const GROUND_FRICTION = 0.85; // knockback slide decay per tick
 export const INPUT_BUFFER_LEN = 15;
 export const CHARGE_TICKS = 35; // hold ↓ this long to bank a charge motion
+
+// hitstop: whole-world freeze frames on contact, scaled by button strength
+export const HITSTOP_LIGHT = 3;
+export const HITSTOP_MEDIUM = 5;
+export const HITSTOP_HEAVY = 7;
+export const HITSTOP_SPECIAL = 8; // specials (and their projectiles) hit hardest

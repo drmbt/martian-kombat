@@ -109,6 +109,9 @@ export class FightScene extends Phaser.Scene {
   private inputHistTexts: Phaser.GameObjects.Text[] = [];
   private prevInputs: [InputFrame, InputFrame] = [{ ...EMPTY_INPUT }, { ...EMPTY_INPUT }];
   private lastDamageTick: [number, number] = [0, 0];
+  /** SF2 ghost bar: trails real health, holds a beat, then drains in red */
+  private ghostHealth: [number, number] = [0, 0];
+  private ghostHoldUntil: [number, number] = [0, 0];
 
   constructor() {
     super('Fight');
@@ -143,6 +146,8 @@ export class FightScene extends Phaser.Scene {
     this.accumulator = 0;
     this.comboHits = 0;
     this.comboTicks = 0;
+    this.ghostHealth = [characters[this.chars[0]].health, characters[this.chars[1]].health];
+    this.ghostHoldUntil = [0, 0];
 
     // per-stage fight music; a rematch on the same stage keeps the track going
     playMusic([`stages/${this.stageId}`, 'stages/default']);
@@ -287,8 +292,15 @@ export class FightScene extends Phaser.Scene {
       this.accumulator = 0;
       return;
     }
-    // fixed timestep: rendering fps may vary, simulation never does
-    this.accumulator += Math.min(deltaMs, 100);
+    // fixed timestep: rendering fps may vary, simulation never does.
+    // KO slow-motion: the round-ending hit plays out at ~1/3 speed (pure
+    // presentation — ticks still advance identically, just spaced out)
+    const s = this.state;
+    const koSlow =
+      (s.phase === 'roundEnd' || s.phase === 'finisher') &&
+      s.phaseFrame < 55 &&
+      s.fighters.some((f) => f.health <= 0);
+    this.accumulator += Math.min(deltaMs, 100) * (koSlow ? 0.35 : 1);
     while (this.accumulator >= TICK_MS) {
       const snap = this.snapshot();
       const p1 = this.inputs.poll(0);
@@ -371,6 +383,7 @@ export class FightScene extends Phaser.Scene {
       const other = slot === 0 ? 1 : 0;
 
       if (f.health < prev.healths[slot]) {
+        this.ghostHoldUntil[slot] = s.tick + 32; // ghost bar hangs, then drains
         play(this, 's-hit');
         play(this, `v-${f.charId}-hurt`, 0.7);
         this.sparks.push({ x: f.x + f.facing * -20, y: f.y - 150, life: 12, color: 0xfff06e });
@@ -808,6 +821,15 @@ export class FightScene extends Phaser.Scene {
       const px = slot === 0 ? 68 : STAGE_W - 68;
       g.lineStyle(2, 0x594566, 1).strokeRect(px - 25, 21, 50, 50);
       g.fillStyle(0x14101a, 0.9).fillRect(x - 2, 26, BAR_W + 4, 22);
+      // SF2 ghost bar: recently lost health lingers in red behind the live
+      // bar, then drains toward it (snaps up instantly on refill/round reset)
+      const gh = this.ghostHealth;
+      if (gh[slot] < f.health) gh[slot] = f.health;
+      else if (gh[slot] > f.health && s.tick >= this.ghostHoldUntil[slot]) {
+        gh[slot] = Math.max(f.health, gh[slot] - def.health * 0.008);
+      }
+      const ghostW = BAR_W * Math.max(0, gh[slot] / def.health);
+      g.fillStyle(0xb3271b, 1).fillRect(slot === 0 ? x + BAR_W - ghostW : x, 28, ghostW, 18);
       const fillW = BAR_W * ratio;
       const color = ratio > 0.5 ? 0x7ee06e : ratio > 0.25 ? 0xffd24a : 0xff5a48;
       g.fillStyle(color, 1).fillRect(slot === 0 ? x + BAR_W - fillW : x, 28, fillW, 18);

@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { EMPTY_INPUT, FLOOR_Y, GameState, InputFrame, ROUND_TICKS, initialState, resolveMove, step } from './index';
+import {
+  EMPTY_INPUT,
+  FLOOR_Y,
+  GameState,
+  HITSTOP_HEAVY,
+  HITSTOP_LIGHT,
+  HITSTOP_SPECIAL,
+  InputFrame,
+  ROUND_TICKS,
+  initialState,
+  resolveMove,
+  step,
+} from './index';
 import { characters } from '../data/characters';
 
 const P1 = 'vincent';
@@ -933,5 +945,84 @@ describe('gene: prompt injection kit (teleports, slow field, fake clone)', () =>
     // both died in the clash: clone never popped, bolt never reached gene
     expect(s.projectiles).toHaveLength(0);
     expect(s.fighters[0].health).toBe(characters.gene.health);
+  });
+});
+
+describe('hitstop', () => {
+  /** step until the defender's health drops; returns ticks waited */
+  function stepUntilContact(s: GameState, p1: InputFrame = inp()): number {
+    const before = s.fighters[1].health;
+    for (let t = 0; t < 60; t++) {
+      step(s, [p1, inp()], characters);
+      if (s.fighters[1].health < before) return t;
+    }
+    throw new Error('no contact within 60 ticks');
+  }
+
+  it('a light hit freezes the whole world for HITSTOP_LIGHT ticks', () => {
+    const s = fresh();
+    closeRange(s);
+    step(s, [inp({ lp: true }), inp()], characters);
+    stepUntilContact(s);
+    expect(s.hitstop).toBe(HITSTOP_LIGHT);
+
+    // frozen: nobody moves, stun doesn't tick down, the clock holds
+    const x0 = s.fighters[0].x;
+    const stun = s.fighters[1].action.frame;
+    const timer = s.timer;
+    step(s, [inp({ right: true }), inp()], characters); // held walk is ignored
+    expect(s.fighters[0].x).toBe(x0);
+    expect(s.fighters[1].action.frame).toBe(stun);
+    expect(s.timer).toBe(timer);
+    expect(s.hitstop).toBe(HITSTOP_LIGHT - 1);
+
+    // thaw: the world resumes (stun ticks again)
+    run(s, HITSTOP_LIGHT - 1);
+    expect(s.hitstop).toBe(0);
+    step(s, [inp(), inp()], characters);
+    expect(s.fighters[1].action.frame).toBe(stun - 1);
+  });
+
+  it('scales with button strength: heavy freezes longer than light', () => {
+    const s = fresh();
+    closeRange(s);
+    step(s, [inp({ hp: true }), inp()], characters);
+    stepUntilContact(s);
+    expect(s.hitstop).toBe(HITSTOP_HEAVY);
+    expect(HITSTOP_HEAVY).toBeGreaterThan(HITSTOP_LIGHT);
+  });
+
+  it('specials hit hardest — even off a light button (projectile contact)', () => {
+    const s = fresh();
+    closeRange(s);
+    fireSpecial(s); // vincent qcf+LP -> sigil bolt
+    stepUntilContact(s);
+    expect(s.hitstop).toBe(HITSTOP_SPECIAL);
+    expect(HITSTOP_SPECIAL).toBeGreaterThan(HITSTOP_HEAVY);
+  });
+
+  it('blocked contact freezes too, and resetRound clears any leftover freeze', () => {
+    const s = fresh();
+    closeRange(s);
+    const guard = inp({ right: true }); // P2 faces left: back = right
+    step(s, [inp({ hp: true }), guard], characters);
+    for (let t = 0; t < 60 && s.fighters[1].action.kind !== 'blockstun'; t++) {
+      step(s, [inp(), guard], characters);
+    }
+    expect(s.fighters[1].action.kind).toBe('blockstun');
+    expect(s.hitstop).toBe(HITSTOP_HEAVY);
+
+    // KO into round reset: the next round starts unfrozen
+    run(s, 40); // let the freeze + blockstun + pushback settle
+    closeRange(s);
+    s.fighters[1].health = 1;
+    s.hitstop = 0;
+    step(s, [inp({ hp: true }), inp()], characters);
+    stepUntilContact(s);
+    expect(s.phase).toBe('roundEnd');
+    expect(s.hitstop).toBe(HITSTOP_HEAVY); // the KO hit still lands its freeze
+    run(s, 400); // freeze + roundEnd beat + reset
+    expect(s.phase).not.toBe('roundEnd');
+    expect(s.hitstop).toBe(0);
   });
 });
