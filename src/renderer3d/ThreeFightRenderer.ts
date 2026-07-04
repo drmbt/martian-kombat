@@ -68,6 +68,8 @@ export class ThreeFightRenderer {
     // honest while depth-staggered stage layers parallax for real
     this.persp = new THREE.PerspectiveCamera(20, STAGE_W / STAGE_H, 0.1, 80);
     this.ortho = new THREE.OrthographicCamera(-viewW / 2, viewW / 2, viewH / 2, -viewH / 2, 0.1, 80);
+    this.persp.layers.enable(1); // FX layer — see threeAssets.FX_LAYER
+    this.ortho.layers.enable(1);
     this.camera = this.persp;
     this.applyCameraPreset('default');
 
@@ -224,8 +226,14 @@ export class ThreeFightRenderer {
     // TSL chain: each mul/add returns a fresh vec4 node; type as base Node
     let color: THREE.Node = scenePass.getTextureNode('output');
     if (s.aoEnabled) {
-      scenePass.setMRT(mrt({ output, normal: normalView }));
-      const aoPass = ao(scenePass.getTextureNode('depth'), scenePass.getTextureNode('normal'), this.camera);
+      // AO gets its own solid-only G-pass: transparent FX quads (layer 1)
+      // otherwise stamp the normal attachment and GTAO darkens their whole
+      // rect — the "black square around smoke/projectiles" artifact
+      const solidOnly = new THREE.Layers(); // defaults to layer 0 only
+      const gPass = pass(this.scene, this.camera);
+      gPass.setLayers(solidOnly);
+      gPass.setMRT(mrt({ output, normal: normalView }));
+      const aoPass = ao(gPass.getTextureNode('depth'), gPass.getTextureNode('normal'), this.camera);
       color = (color as ReturnType<typeof vec4>).mul(vec4(vec3(aoPass.getTextureNode().r), 1));
     }
     if (s.bloomEnabled) {

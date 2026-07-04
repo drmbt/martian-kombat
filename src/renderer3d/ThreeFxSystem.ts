@@ -8,7 +8,7 @@ import type { CharacterDef, GameState, Projectile } from '../engine';
 import { FLOOR_Y } from '../engine';
 import type { Defs } from '../engine';
 import { engineToWorld, WORLD_SCALE } from './threeCoordinates';
-import { radialTexture } from './threeAssets';
+import { FX_LAYER, radialTexture } from './threeAssets';
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -76,6 +76,7 @@ export class ThreeFxSystem {
     this.blood.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.blood.count = 0;
     this.blood.frustumCulled = false;
+    this.blood.layers.set(FX_LAYER);
     for (let i = 0; i < BLOOD_CAP; i++) this.drops.push({ alive: false, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, size: 0 });
 
     const splatGeo = new THREE.CircleGeometry(0.5, 8);
@@ -84,6 +85,7 @@ export class ThreeFxSystem {
     this.splats.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.splats.count = 0;
     this.splats.frustumCulled = false;
+    this.splats.layers.set(FX_LAYER);
     this.splatLives = new Array(SPLAT_CAP).fill(0);
 
     this.group.add(this.blood, this.splats);
@@ -149,6 +151,7 @@ export class ThreeFxSystem {
     mesh.position.set(x, y, 0.25);
     mesh.scale.set(opts.flip ? -size : size, size, 1);
     mesh.renderOrder = 20;
+    mesh.layers.set(FX_LAYER);
     this.group.add(mesh);
     this.billboards.push({ mesh, mat, life: 14, max: 14, grow: size * 0.04 });
   }
@@ -324,6 +327,7 @@ export class ThreeFxSystem {
       });
       const sprite = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
       sprite.renderOrder = 15;
+      sprite.layers.set(FX_LAYER);
       const glowMat = new THREE.MeshBasicMaterial({
         map: this.glowTexture,
         transparent: true,
@@ -332,6 +336,7 @@ export class ThreeFxSystem {
       });
       const glow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), glowMat);
       glow.renderOrder = 14;
+      glow.layers.set(FX_LAYER);
       // the light is what makes the bolt illuminate street + fighters
       const light = new THREE.PointLight(0xffffff, 0, 7, 1.8);
       sprite.add(light);
@@ -383,10 +388,12 @@ export class ThreeFxSystem {
           map: tex,
           transparent: true,
           depthWrite: false,
-          blending: THREE.AdditiveBlending,
+          // normal blending: additive + bloom blew the quad out into a
+          // white rectangle; the png has proper alpha, let it composite
         });
         mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9), mat);
         mesh.renderOrder = 21;
+        mesh.layers.set(FX_LAYER);
         this.group.add(mesh);
         this.dizzy[slot] = mesh;
       }

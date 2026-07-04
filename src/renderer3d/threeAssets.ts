@@ -5,6 +5,11 @@ import { GLTFLoader, type GLTF } from 'three/addons/loaders/GLTFLoader.js';
 
 const loader = new GLTFLoader();
 
+/** Layer for unlit additive FX (beams, glows, steam, blood, projectiles).
+ *  The AO G-pass renders solid layer 0 only — transparent quads otherwise
+ *  stamp the MRT normal attachment and GTAO darkens their whole rectangle. */
+export const FX_LAYER = 1;
+
 /** procedural radial falloff — glow halos, light pools, lamp heads */
 export function radialTexture(stops: [number, string][] = [
   [0, 'rgba(255,255,255,1)'],

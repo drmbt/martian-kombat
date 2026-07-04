@@ -12,7 +12,7 @@ import * as THREE from 'three/webgpu';
 import { cameraPosition, color, normalWorld, positionWorld, uv } from 'three/tsl';
 import { STAGE_W } from '../engine';
 import { WORLD_SCALE } from './threeCoordinates';
-import { loadGlb, radialTexture, stageGlbUrl } from './threeAssets';
+import { FX_LAYER, loadGlb, radialTexture, stageGlbUrl } from './threeAssets';
 
 /** Cheap fake-volumetric beam (TSL): additive cone whose opacity peaks when
  *  the surface faces the camera and dies at the silhouette — soft shaft, no
@@ -213,6 +213,7 @@ export class ThreeStageView {
       }),
     );
     moonGlow.position.set(-9, 13, -33.4);
+    moonGlow.layers.set(FX_LAYER);
     g.add(sky, moon, moonGlow);
 
     // backlot ground under all building rows — kills the void "holes" that
@@ -272,6 +273,7 @@ export class ThreeStageView {
             }),
           );
           uplight.position.set(x, 0.7, row.z + (2 + r * 2) / 2 + 0.015);
+          uplight.layers.set(FX_LAYER);
           g.add(uplight);
         }
         // sparse lit windows on the two near rows (cheap, sells "city at night")
@@ -310,6 +312,7 @@ export class ThreeStageView {
           );
           signGlow.position.copy(sign.position);
           signGlow.position.z += 0.03;
+          signGlow.layers.set(FX_LAYER);
           g.add(sign, signGlow);
         }
       }
@@ -411,6 +414,7 @@ export class ThreeStageView {
       // fake-volumetric shaft matching the SpotLight frustum exactly
       const beam = new THREE.Group();
       const cone = new THREE.Mesh(new THREE.ConeGeometry(1, 1, 24, 1, true), beamMaterial(0xffb765, 0.2));
+      cone.layers.set(FX_LAYER);
       cone.scale.set(baseR, HEAD_Y, baseR);
       cone.position.set(0, HEAD_Y / 2 + 0.02, 0);
       beam.add(cone);
@@ -427,6 +431,7 @@ export class ThreeStageView {
         }),
       );
       headGlow.position.set(0, HEAD_Y, 1.62);
+      headGlow.layers.set(FX_LAYER);
       // subtle pool decal sized to the beam footprint (the real pool now
       // comes from the SpotLight itself)
       const pool = new THREE.Mesh(
@@ -444,6 +449,7 @@ export class ThreeStageView {
       );
       pool.rotation.x = -Math.PI / 2;
       pool.position.set(0, 0.004, 1.6);
+      pool.layers.set(FX_LAYER);
       lamp.add(pole, arm, head, light, target, beam, headGlow, pool);
       lamp.position.set(x, 0, -1.6);
       g.add(lamp);
@@ -534,6 +540,7 @@ export class ThreeStageView {
       });
       const puff = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
       puff.renderOrder = 25; // after beams/pools so it never darkens them
+      puff.layers.set(FX_LAYER);
       puff.position.set(-2.2, 0.3, 1.8);
       g.add(puff);
       this.steam.push({ mesh: puff, mat, phase: si * 80 });
@@ -556,6 +563,7 @@ export class ThreeStageView {
         fog: false,
       });
       const sheet = new THREE.Mesh(new THREE.PlaneGeometry(26, 5), hazeMat);
+      sheet.layers.set(FX_LAYER);
       sheet.position.set(0, hy, hz);
       g.add(sheet);
       this.haze.push(sheet);
