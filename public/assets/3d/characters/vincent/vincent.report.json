@@ -3,7 +3,7 @@
  "meshes": 1,
  "basecolorApplied": false,
  "hips": "mixamorig:Hips",
- "verticalChannel": 0,
+ "verticalChannel": 1,
  "clips": [
   {
    "name": "idle",
@@ -11,7 +11,7 @@
    "frames": 143,
    "seconds": 4.767,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -21,7 +21,7 @@
    "frames": 34,
    "seconds": 1.133,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -31,7 +31,7 @@
    "frames": 30,
    "seconds": 1,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -41,7 +41,7 @@
    "frames": 28,
    "seconds": 0.933,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -51,7 +51,7 @@
    "frames": 47,
    "seconds": 1.567,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -61,7 +61,7 @@
    "frames": 30,
    "seconds": 1,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -71,7 +71,7 @@
    "frames": 41,
    "seconds": 1.367,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -81,7 +81,7 @@
    "frames": 30,
    "seconds": 1,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -91,8 +91,8 @@
    "frames": 25,
    "seconds": 0.833,
    "rootStripped": [
-    "Xv",
-    "Y",
+    "X",
+    "Yv",
     "Z"
    ]
   },
@@ -102,7 +102,7 @@
    "frames": 21,
    "seconds": 0.7,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -112,8 +112,8 @@
    "frames": 60,
    "seconds": 2,
    "rootStripped": [
-    "Xv",
-    "Y",
+    "X",
+    "Yv",
     "Z"
    ]
   },
@@ -123,7 +123,7 @@
    "frames": 45,
    "seconds": 1.5,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -133,7 +133,7 @@
    "frames": 43,
    "seconds": 1.433,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -143,7 +143,7 @@
    "frames": 32,
    "seconds": 1.067,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -153,7 +153,7 @@
    "frames": 50,
    "seconds": 1.667,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -163,7 +163,7 @@
    "frames": 36,
    "seconds": 1.2,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -173,7 +173,7 @@
    "frames": 15,
    "seconds": 0.5,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -183,7 +183,7 @@
    "frames": 38,
    "seconds": 1.267,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -193,7 +193,7 @@
    "frames": 41,
    "seconds": 1.367,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -203,7 +203,7 @@
    "frames": 29,
    "seconds": 0.967,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -213,7 +213,7 @@
    "frames": 73,
    "seconds": 2.433,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -223,7 +223,7 @@
    "frames": 50,
    "seconds": 1.667,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -233,7 +233,7 @@
    "frames": 41,
    "seconds": 1.367,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -243,7 +243,7 @@
    "frames": 42,
    "seconds": 1.4,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -253,7 +253,7 @@
    "frames": 30,
    "seconds": 1,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -263,7 +263,7 @@
    "frames": 40,
    "seconds": 1.333,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -273,7 +273,7 @@
    "frames": 66,
    "seconds": 2.2,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -283,7 +283,7 @@
    "frames": 69,
    "seconds": 2.3,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -293,7 +293,7 @@
    "frames": 45,
    "seconds": 1.5,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -303,7 +303,7 @@
    "frames": 109,
    "seconds": 3.633,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -313,7 +313,7 @@
    "frames": 110,
    "seconds": 3.667,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -323,7 +323,7 @@
    "frames": 49,
    "seconds": 1.633,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -333,7 +333,7 @@
    "frames": 135,
    "seconds": 4.5,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -343,7 +343,7 @@
    "frames": 82,
    "seconds": 2.733,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -353,7 +353,7 @@
    "frames": 42,
    "seconds": 1.4,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -363,7 +363,7 @@
    "frames": 250,
    "seconds": 8.333,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -373,7 +373,7 @@
    "frames": 171,
    "seconds": 5.7,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -383,7 +383,7 @@
    "frames": 31,
    "seconds": 1.033,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -393,7 +393,7 @@
    "frames": 68,
    "seconds": 2.267,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -403,7 +403,7 @@
    "frames": 59,
    "seconds": 1.967,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -413,7 +413,7 @@
    "frames": 41,
    "seconds": 1.367,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -423,8 +423,8 @@
    "frames": 74,
    "seconds": 2.467,
    "rootStripped": [
-    "Xv",
-    "Y",
+    "X",
+    "Yv",
     "Z"
    ]
   },
@@ -434,7 +434,7 @@
    "frames": 37,
    "seconds": 1.233,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -444,7 +444,7 @@
    "frames": 54,
    "seconds": 1.8,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -454,7 +454,7 @@
    "frames": 55,
    "seconds": 1.833,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -464,7 +464,7 @@
    "frames": 26,
    "seconds": 0.867,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -474,7 +474,7 @@
    "frames": 33,
    "seconds": 1.1,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -484,7 +484,7 @@
    "frames": 68,
    "seconds": 2.267,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -494,7 +494,7 @@
    "frames": 40,
    "seconds": 1.333,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -504,7 +504,7 @@
    "frames": 67,
    "seconds": 2.233,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -514,7 +514,7 @@
    "frames": 69,
    "seconds": 2.3,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -524,7 +524,7 @@
    "frames": 81,
    "seconds": 2.7,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -534,8 +534,8 @@
    "frames": 33,
    "seconds": 1.1,
    "rootStripped": [
-    "Xv",
-    "Y",
+    "X",
+    "Yv",
     "Z"
    ]
   },
@@ -545,7 +545,7 @@
    "frames": 65,
    "seconds": 2.167,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   }

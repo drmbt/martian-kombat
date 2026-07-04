@@ -14,6 +14,9 @@ export interface ViewContext {
   intro?: boolean;
   /** taunt button held recently: play a taunt gesture while idle */
   taunt?: boolean;
+  /** matchEnd: winner strikes the victory pose, defeated loser stays down */
+  victor?: boolean;
+  defeated?: boolean;
 }
 import { engineToWorld, WORLD_SCALE } from './threeCoordinates';
 import { characterGlbUrl, loadGlb } from './threeAssets';
@@ -70,10 +73,21 @@ class ClipPlayer {
   }
 
   update(tick: number, f: FighterState, def: CharacterDef, ctx: ViewContext = {}): void {
-    // presentation-only overrides while the engine idles: intro bow, taunts.
-    // The engine keeps its idle hitboxes — these are pure gestures (V1).
-    const override =
-      f.action.kind === 'idle' ? (ctx.intro ? 'intro' : ctx.taunt ? 'taunt' : null) : null;
+    // presentation-only overrides: intro bow / taunt while the engine idles,
+    // victory pose and collapsed loser on matchEnd (the engine leaves the
+    // loser 'dazed' after a mercy finisher — looping the stun reel forever).
+    // Engine hitboxes are untouched — pure gestures (V1).
+    const override = ctx.defeated
+      ? 'ko'
+      : ctx.victor && f.action.kind === 'idle'
+        ? 'win'
+        : f.action.kind === 'idle'
+          ? ctx.intro
+            ? 'intro'
+            : ctx.taunt
+              ? 'taunt'
+              : null
+          : null;
     const key = override ?? `${f.action.kind}/${f.action.moveId ?? ''}`;
     // RESTART detection (T30): the same action re-triggering (lp lp lp
     // mashing, a fresh reel while already reeling) keeps the key identical
@@ -149,7 +163,11 @@ class ClipPlayer {
 
   private transitionTo(resolved: ResolvedClip, tick: number, f: FighterState, def: CharacterDef): void {
     if (this.previous) this.previous.action.stop(); // 3-deep pileup: drop the oldest
-    this.previous = this.current;
+    const nextAction = this.actions.get(resolved.name)!;
+    // same-clip restart: crossfading an action AGAINST ITSELF splits its own
+    // weight below 1 and the remainder blends toward the BIND POSE — the
+    // T-pose flash on jab mashing. Hard-cut instead.
+    this.previous = this.current && this.current.action !== nextAction ? this.current : null;
     this.fadeStart = tick;
     this.fadeTicks = this.previous ? fadeTicksFor(this.previous.name, resolved.name) : 0;
 
@@ -161,9 +179,8 @@ class ClipPlayer {
       windowTicks = m.startup + m.active + m.recovery;
       startupTicks = m.startup;
     }
-    const action = this.actions.get(resolved.name)!;
-    action.reset().play();
-    this.current = { ...resolved, action, windowTicks, startupTicks };
+    nextAction.reset().play();
+    this.current = { ...resolved, action: nextAction, windowTicks, startupTicks };
   }
 }
 
@@ -247,7 +264,8 @@ export class ThreeFighterView {
     const gltf = await loadGlb(characterGlbUrl(this.def.id));
     if (!gltf) return;
 
-    // scale so standing height matches the gameplay hurtbox, feet at Y=0 (V9)
+    // each consumer gets a fresh parse from the byte cache (see threeAssets)
+    // — fresh meshes, fresh materials, no cross-fighter effect bleed
     const model = gltf.scene;
     const box = new THREE.Box3().setFromObject(model);
     const rawH = box.max.y - box.min.y;

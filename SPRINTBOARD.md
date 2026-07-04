@@ -658,6 +658,21 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-04 · renderer3d+tools · animation stabilization sweep** — root
+  motion actually dead now: (1) vertical-axis detection went through
+  matrix_world (FBX leaves the armature rotated -90°, so armature-space "up"
+  kept a HORIZONTAL hips channel — the sideways drift in bows, reactions,
+  victory wobble); (2) object-level location AND rotation fcurves stripped
+  (some Mixamo clips animate the armature object itself — Z-slides, sideways
+  punches). T-pose flash fixed (same-clip restart crossfaded an action
+  against itself → bind-pose bleed; hard cut now). Dizzy stars: texture
+  late-binds (white-square bug). matchEnd poses: winner plays win clip,
+  loser lies in ko (engine leaves mercy-path losers 'dazed' → stun loop
+  looked like looping death). GLB byte-cache kills the capsule blink on
+  rematch (re-parse per consumer — SkeletonUtils.clone builds WebGL-class
+  skeletons the WebGPU renderer silently skips: invisible fighters). HUD:
+  dash pips inline with round stars, flush to the bar's outer end. — Claude
+
 - **2026-07-04 · engine+renderer3d · dash stocks, taunts, variants, entry
   bow, directional/heavy/body hit reactions** — dash double-tap impulse now
   gated by a 2-stock pool (150-tick regen, engine + 4 vitests, HUD pips w/

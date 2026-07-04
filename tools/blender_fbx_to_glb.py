@@ -64,8 +64,11 @@ def ensure_basecolor(meshes, image_path):
 
 
 def vertical_channel(arm, hips_name):
-    """Bone-local axis index whose armature-space direction is most vertical."""
-    m = arm.data.bones[hips_name].matrix_local
+    """Bone-local axis index whose WORLD direction is most vertical.
+    Must go through matrix_world: FBX imports leave the armature object
+    rotated -90°, so armature-space 'up' is not world up — the old
+    armature-space test kept a horizontal channel (bows slid sideways)."""
+    m = (arm.matrix_world @ arm.data.bones[hips_name].matrix_local).to_3x3()
     return max(range(3), key=lambda i: abs(m[2][i]))
 
 
@@ -105,6 +108,15 @@ def strip_root_motion(action, hips_name, vert_idx, strip_y):
         if horizontal or strip_y:
             stripped.append(f"{'XYZ'[fc.array_index]}{'v' if not horizontal else ''}")
             action.fcurves.remove(fc)
+    # OBJECT-level root motion: some Mixamo clips (bows, kicks, steps) animate
+    # the armature object's own transform instead of (or on top of) the hips
+    # bone — that slid models along the stage-depth axis (location) and turned
+    # punches sideways (rotation) in game. The engine owns translation and the
+    # renderer owns facing, so object-level transform channels die wholesale.
+    OBJ_PATHS = ('location', 'rotation_euler', 'rotation_quaternion')
+    for fc in [f for f in action.fcurves if f.data_path in OBJ_PATHS]:
+        stripped.append(f'obj.{fc.data_path}[{fc.array_index}]')
+        action.fcurves.remove(fc)
     return stripped
 
 

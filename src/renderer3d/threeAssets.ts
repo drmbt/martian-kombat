@@ -34,20 +34,42 @@ export function stageGlbUrl(stageId: string): string {
   return `${import.meta.env.BASE_URL}assets/3d/stages/${stageId}/stage.glb`;
 }
 
-/** Resolve to null when the asset doesn't exist (or fails to parse). */
-export async function loadGlb(url: string): Promise<GLTF | null> {
-  // probe first: GLTFLoader treats vite's HTML 404 page as a corrupt GLB
+/** Session-lived BYTE cache: scene restarts (rematch, round flow) skip the
+ *  fetch and re-parse from memory — kills the capsule blink on restart.
+ *  We deliberately re-parse per consumer instead of SkeletonUtils-cloning a
+ *  parsed scene: the addons clone builds Skeletons from the WebGL-build
+ *  classes and the WebGPU renderer silently skips those skinned meshes. */
+const glbBytes = new Map<string, Promise<ArrayBuffer | null>>();
+
+async function fetchGlbBytes(url: string): Promise<ArrayBuffer | null> {
   try {
-    const head = await fetch(url, { method: 'HEAD' });
-    if (!head.ok || !(head.headers.get('content-type') ?? '').includes('gltf-binary')) {
+    const res = await fetch(url);
+    if (!res.ok || !(res.headers.get('content-type') ?? '').includes('gltf-binary')) {
       console.info(`[3d] no asset at ${url} — placeholder stays`);
       return null;
     }
-    const gltf = await loader.loadAsync(url);
-    console.info(`[3d] loaded ${url} (${gltf.animations.length} clips)`);
+    return await res.arrayBuffer();
+  } catch (err) {
+    console.warn(`[3d] failed to fetch ${url}:`, err);
+    return null;
+  }
+}
+
+/** Resolve to null when the asset doesn't exist (or fails to parse). */
+export async function loadGlb(url: string): Promise<GLTF | null> {
+  let bytes = glbBytes.get(url);
+  if (!bytes) {
+    bytes = fetchGlbBytes(url);
+    glbBytes.set(url, bytes);
+  }
+  const buffer = await bytes;
+  if (!buffer) return null;
+  try {
+    const gltf = await new Promise<GLTF>((resolve, reject) => loader.parse(buffer, '', resolve, reject));
+    console.info(`[3d] parsed ${url} (${gltf.animations.length} clips)`);
     return gltf;
   } catch (err) {
-    console.warn(`[3d] failed to load ${url}:`, err);
+    console.warn(`[3d] failed to parse ${url}:`, err);
     return null;
   }
 }

@@ -412,9 +412,7 @@ export class ThreeFxSystem {
       const dazed = f.action.kind === 'dazed';
       let mesh = this.dizzy[slot];
       if (dazed && !mesh) {
-        const tex = this.texture(`${BASE}assets/vfx/dizzy.png`);
         const mat = new THREE.MeshBasicMaterial({
-          map: tex,
           transparent: true,
           depthWrite: false,
           // normal blending: additive + bloom blew the quad out into a
@@ -427,7 +425,14 @@ export class ThreeFxSystem {
         this.dizzy[slot] = mesh;
       }
       if (!mesh) continue;
-      mesh.visible = dazed;
+      // late-bind the texture: the loader resolves async, and a mapless
+      // white quad must never show (the "rotating white square" bug)
+      const mat = mesh.material as THREE.MeshBasicMaterial;
+      if (!mat.map) {
+        mat.map = this.texture(`${BASE}assets/vfx/dizzy.png`);
+        if (mat.map) mat.needsUpdate = true;
+      }
+      mesh.visible = dazed && mat.map !== null;
       if (dazed) {
         const def = this.defs[f.charId];
         const [x, y] = engineToWorld(f.x, f.y - def.hurtStand.h - 18);

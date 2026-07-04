@@ -69,16 +69,20 @@ export class FightHud {
       bar.style.cssText =
         `position:absolute;top:0;${slot === 0 ? 'right' : 'left'}:0;height:100%;width:100%;background:#e8c832;`;
       barOuter.append(ghost, bar);
+      // stars sit at the inner edge, dash pips flush to the bar's outer end
+      const subRow = document.createElement('div');
+      subRow.style.cssText =
+        `display:flex;align-items:center;justify-content:space-between;` +
+        `${slot === 1 ? 'flex-direction:row-reverse;' : ''}`;
       const wins = document.createElement('span');
       wins.style.cssText =
-        `display:block;color:#ffd75e;font-size:20px;line-height:1.2;letter-spacing:3px;` +
-        `text-shadow:0 1px 3px #000;${slot === 1 ? 'text-align:right;' : ''}`;
+        'color:#ffd75e;font-size:20px;line-height:1.2;letter-spacing:3px;text-shadow:0 1px 3px #000;';
       const dash = document.createElement('span');
       dash.style.cssText =
-        `display:block;color:#7fd0ff;font-size:13px;letter-spacing:2px;` +
-        `text-shadow:0 1px 2px #000;${slot === 1 ? 'text-align:right;' : ''}`;
+        'color:#7fd0ff;font-size:13px;letter-spacing:2px;text-shadow:0 1px 2px #000;';
       dash.title = 'dash stocks (double-tap ←/→)';
-      col.append(name, barOuter, wins, dash);
+      subRow.append(wins, dash);
+      col.append(name, barOuter, subRow);
       wrap.append(img, col);
       this.root.appendChild(wrap);
       return { bar, ghost, wins, dash };
