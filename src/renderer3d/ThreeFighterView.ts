@@ -208,6 +208,7 @@ export class ThreeFighterView {
   private player: ClipPlayer | null = null;
   private skeleton: THREE.SkeletonHelper | null = null;
   private bones: THREE.Bone[] = [];
+  private skinnedMeshes: THREE.SkinnedMesh[] = [];
   private modelBaseY = 0;
   private modelScale = 1;
   private v = new THREE.Vector3();
@@ -302,6 +303,7 @@ export class ThreeFighterView {
       if (o instanceof THREE.Mesh) {
         o.castShadow = true;
         o.frustumCulled = false; // skinned bounds lag the pose; never blink
+        if ((o as THREE.SkinnedMesh).isSkinnedMesh) this.skinnedMeshes.push(o as THREE.SkinnedMesh);
         const mats = Array.isArray(o.material) ? o.material : [o.material];
         for (const m of mats) {
           if (m instanceof THREE.MeshStandardMaterial) {

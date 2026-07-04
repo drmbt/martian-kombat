@@ -79,7 +79,7 @@ export const MESHES = {
     },
   },
   flo: {
-    rig: 'flo-20k-tripo-mixamo-base-rig.fbx',
+    rig: 'human+character+3d+model.fbx',
     basecolor: 'flo-20k-tripo-unrigged/flo-20k-tripo-unrigged_basecolor.PNG',
     clips: {
       ...BASE_CLIPS,
