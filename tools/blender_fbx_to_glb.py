@@ -49,16 +49,25 @@ def ensure_basecolor(meshes, image_path):
                 continue
             mat.use_nodes = True
             nodes = mat.node_tree.nodes
-            if any(n.type == 'TEX_IMAGE' and n.image for n in nodes):
-                continue
             principled = next((n for n in nodes if n.type == 'BSDF_PRINCIPLED'), None)
             if principled is None:
                 continue
+            # only trust an image that is ACTUALLY wired into Base Color —
+            # stray/empty tex nodes made us skip while the exporter sampled
+            # nothing (yulia-v2 shipped white)
+            base = principled.inputs['Base Color']
+            has_base_tex = any(
+                l.from_node.type == 'TEX_IMAGE' and l.from_node.image for l in base.links
+            )
+            if has_base_tex:
+                continue
+            for l in list(base.links):
+                mat.node_tree.links.remove(l)
             if img is None:
                 img = bpy.data.images.load(image_path)
             tex = nodes.new('ShaderNodeTexImage')
             tex.image = img
-            mat.node_tree.links.new(tex.outputs['Color'], principled.inputs['Base Color'])
+            mat.node_tree.links.new(tex.outputs['Color'], base)
             applied = True
     return applied
 
@@ -168,6 +177,14 @@ def main():
     # normalize authored forward to +X: rigs facing +Z get a world-yaw bake
     if job.get('forward') == 'z':
         arm.rotation_euler.rotate_axis('Z', -1.5707963)
+    # some rigs (meter-scale skin verts under cm nodes) only render correctly
+    # in three when the exporter BAKES the armature transform into the skin.
+    # The -90 local-Z forces that path; the +90 local-Y stands the rig back
+    # upright (net effect verified per-rig in game — see manifest flags)
+    if job.get('bakeTransform'):
+        arm.rotation_euler.rotate_axis('Z', -1.5707963)
+        arm.rotation_euler.rotate_axis('Y', -1.5707963)
+        arm.rotation_euler.rotate_axis('Z', 3.14159265)
     bpy.context.view_layer.update()
 
     rig_bones = {b.name for b in arm.data.bones}

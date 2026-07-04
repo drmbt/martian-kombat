@@ -106,6 +106,7 @@ writeFileSync(
       targetHeight: (charJson.hurtStand.h / 100) * 0.95,
       // rigs authored facing +Z get a baked -90 yaw so every GLB faces +X
       forward: cfg.forward ?? 'x',
+      bakeTransform: cfg.bakeTransform === true,
     },
     null,
     1,

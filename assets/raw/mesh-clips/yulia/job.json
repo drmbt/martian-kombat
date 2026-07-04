@@ -1,5 +1,5 @@
 {
- "rig": "/Users/flo/work/code/martian-kombat/public/assets/meshes/yulia/yulia-20k-tripo-mixamo-base-rig.fbx",
+ "rig": "/Users/flo/work/code/martian-kombat/public/assets/meshes/yulia/yulia-v2.fbx",
  "basecolor": "/Users/flo/work/code/martian-kombat/public/assets/meshes/yulia/yulia-20k-tripo-unrigged/yulia-20k-tripo-unrigged_basecolor.PNG",
  "out": "/Users/flo/work/code/martian-kombat/public/assets/3d/characters/yulia/yulia.glb",
  "report": "/Users/flo/work/code/martian-kombat/public/assets/3d/characters/yulia/yulia.report.json",
@@ -291,5 +291,6 @@
   }
  ],
  "targetHeight": 2.375,
- "forward": "z"
+ "forward": "x",
+ "bakeTransform": true
 }

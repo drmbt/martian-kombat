@@ -1,11 +1,11 @@
 {
- "bones": 41,
+ "bones": 57,
  "meshes": 1,
  "basecolorApplied": false,
  "hips": "mixamorig:Hips",
- "verticalChannel": 0,
- "restSpan": 0.01,
- "scaleFactor": 237.9648,
+ "verticalChannel": 1,
+ "restSpan": 0.998,
+ "scaleFactor": 2.3796,
  "clips": [
   {
    "name": "idle",
@@ -13,7 +13,7 @@
    "frames": 143,
    "seconds": 4.767,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -23,7 +23,7 @@
    "frames": 34,
    "seconds": 1.133,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -33,7 +33,7 @@
    "frames": 30,
    "seconds": 1,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -43,7 +43,7 @@
    "frames": 30,
    "seconds": 1,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -53,7 +53,7 @@
    "frames": 28,
    "seconds": 0.933,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -63,7 +63,7 @@
    "frames": 47,
    "seconds": 1.567,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -73,7 +73,7 @@
    "frames": 41,
    "seconds": 1.367,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -83,8 +83,8 @@
    "frames": 25,
    "seconds": 0.833,
    "rootStripped": [
-    "Xv",
-    "Y",
+    "X",
+    "Yv",
     "Z"
    ]
   },
@@ -94,8 +94,8 @@
    "frames": 25,
    "seconds": 0.833,
    "rootStripped": [
-    "Xv",
-    "Y",
+    "X",
+    "Yv",
     "Z"
    ]
   },
@@ -105,7 +105,7 @@
    "frames": 21,
    "seconds": 0.7,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -115,8 +115,8 @@
    "frames": 33,
    "seconds": 1.1,
    "rootStripped": [
-    "Xv",
-    "Y",
+    "X",
+    "Yv",
     "Z"
    ]
   },
@@ -126,7 +126,7 @@
    "frames": 45,
    "seconds": 1.5,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -136,7 +136,7 @@
    "frames": 43,
    "seconds": 1.433,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -146,7 +146,7 @@
    "frames": 32,
    "seconds": 1.067,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -156,7 +156,7 @@
    "frames": 50,
    "seconds": 1.667,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -166,7 +166,7 @@
    "frames": 36,
    "seconds": 1.2,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -176,7 +176,7 @@
    "frames": 15,
    "seconds": 0.5,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -186,7 +186,7 @@
    "frames": 38,
    "seconds": 1.267,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -196,7 +196,7 @@
    "frames": 41,
    "seconds": 1.367,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -206,7 +206,7 @@
    "frames": 29,
    "seconds": 0.967,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -216,7 +216,7 @@
    "frames": 73,
    "seconds": 2.433,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -226,7 +226,7 @@
    "frames": 50,
    "seconds": 1.667,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -236,7 +236,7 @@
    "frames": 91,
    "seconds": 3.033,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -246,7 +246,7 @@
    "frames": 42,
    "seconds": 1.4,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -256,7 +256,7 @@
    "frames": 30,
    "seconds": 1,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -266,7 +266,7 @@
    "frames": 40,
    "seconds": 1.333,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -276,7 +276,7 @@
    "frames": 66,
    "seconds": 2.2,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -286,7 +286,7 @@
    "frames": 69,
    "seconds": 2.3,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -296,7 +296,7 @@
    "frames": 45,
    "seconds": 1.5,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -306,7 +306,7 @@
    "frames": 109,
    "seconds": 3.633,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -316,7 +316,7 @@
    "frames": 110,
    "seconds": 3.667,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -326,7 +326,7 @@
    "frames": 49,
    "seconds": 1.633,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -336,7 +336,7 @@
    "frames": 135,
    "seconds": 4.5,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -346,7 +346,7 @@
    "frames": 171,
    "seconds": 5.7,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -356,7 +356,7 @@
    "frames": 250,
    "seconds": 8.333,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -366,7 +366,7 @@
    "frames": 42,
    "seconds": 1.4,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -376,7 +376,7 @@
    "frames": 42,
    "seconds": 1.4,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -386,7 +386,7 @@
    "frames": 250,
    "seconds": 8.333,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -396,7 +396,7 @@
    "frames": 171,
    "seconds": 5.7,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -406,7 +406,7 @@
    "frames": 31,
    "seconds": 1.033,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -416,8 +416,8 @@
    "frames": 74,
    "seconds": 2.467,
    "rootStripped": [
-    "Xv",
-    "Y",
+    "X",
+    "Yv",
     "Z"
    ]
   },
@@ -427,7 +427,7 @@
    "frames": 37,
    "seconds": 1.233,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -437,7 +437,7 @@
    "frames": 54,
    "seconds": 1.8,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -447,7 +447,7 @@
    "frames": 55,
    "seconds": 1.833,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -457,7 +457,7 @@
    "frames": 26,
    "seconds": 0.867,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -467,7 +467,7 @@
    "frames": 33,
    "seconds": 1.1,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -477,7 +477,7 @@
    "frames": 68,
    "seconds": 2.267,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -487,7 +487,7 @@
    "frames": 40,
    "seconds": 1.333,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -497,7 +497,7 @@
    "frames": 68,
    "seconds": 2.267,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -507,7 +507,7 @@
    "frames": 59,
    "seconds": 1.967,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -517,7 +517,7 @@
    "frames": 41,
    "seconds": 1.367,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -527,7 +527,7 @@
    "frames": 67,
    "seconds": 2.233,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -537,8 +537,8 @@
    "frames": 175,
    "seconds": 5.833,
    "rootStripped": [
-    "Xv",
-    "Y",
+    "X",
+    "Yv",
     "Z"
    ]
   },
@@ -548,7 +548,7 @@
    "frames": 41,
    "seconds": 1.367,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -558,7 +558,7 @@
    "frames": 67,
    "seconds": 2.233,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -568,7 +568,7 @@
    "frames": 33,
    "seconds": 1.1,
    "rootStripped": [
-    "Y",
+    "X",
     "Z"
    ]
   },
@@ -578,70 +578,32 @@
    "frames": 74,
    "seconds": 2.467,
    "rootStripped": [
-    "Xv",
-    "Y",
+    "X",
+    "Yv",
     "Z"
    ]
   }
  ],
  "warnings": [
-  "idle: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "walk-forward: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "walk-back: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "dash-forward: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
-  "dash-forward#2: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
-  "dash-back: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "crouch: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "prejump: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "jump: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "fall: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "landing: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "getup: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "hit: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "hit#2: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "hit#3: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "hit-front: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "hit-front#2: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "hit-back: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "hit-front-heavy: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "hit-front-heavy#2: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "hit-front-heavy#3: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
-  "hit-back-heavy: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "hit-air: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "hit-body: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
-  "hit-body#2: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
-  "hit-body#3: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
-  "hit-body-heavy: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
-  "block-stand: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "knockdown: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "ko: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "ko-forward: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "dazed: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "win: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
-  "intro: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
-  "intro#2: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
-  "intro#3: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
-  "taunt: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
-  "taunt#2: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
-  "taunt#3: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
-  "attack-generic: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "attack-air: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "attack/lp: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "attack/lp#2: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "attack/lp#3: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "attack/mp: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "attack/mp#2: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "attack/hp: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "attack/hp#2: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "attack/lk: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
-  "attack/mk: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
-  "attack/hk: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
-  "attack/throw: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "attack/cossack-spiral: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
-  "attack/backbend-guillotine: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
-  "attack/volga-piledriver: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "attack/braid-lariat: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
-  "attack/spinning-star-kick: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']"
+  "dash-forward: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "dash-forward#2: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "hit-front-heavy#3: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "hit-body: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "hit-body#2: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "hit-body#3: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "hit-body-heavy: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "win: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "intro: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "intro#2: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "intro#3: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "taunt: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "taunt#2: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "taunt#3: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "attack/lk: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "attack/mk: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "attack/hk: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "attack/cossack-spiral: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "attack/backbend-guillotine: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']"
  ],
  "coverage": {
   "mapped": [

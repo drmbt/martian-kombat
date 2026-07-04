@@ -91,8 +91,8 @@ export const MESHES = {
     },
   },
   yulia: {
-    rig: 'yulia-20k-tripo-mixamo-base-rig.fbx',
-    forward: 'z', // authored facing +Z (Mixamo default) — tool bakes the -90 yaw
+    rig: 'yulia-v2.fbx',
+    bakeTransform: true, // meter-vert export: force the exporter's skin-bake path
     basecolor: 'yulia-20k-tripo-unrigged/yulia-20k-tripo-unrigged_basecolor.PNG',
     clips: {
       ...BASE_CLIPS,
