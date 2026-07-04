@@ -166,7 +166,7 @@ export class ThreeFighterView {
     const active = tick < this.flashUntil;
     for (const m of this.materials) {
       m.emissive.copy(active ? this.flashColor : BLACK);
-      m.emissiveIntensity = active ? 0.9 : 0;
+      m.emissiveIntensity = active ? 0.45 : 0;
     }
   }
 

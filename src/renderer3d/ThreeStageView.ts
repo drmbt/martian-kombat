@@ -9,9 +9,28 @@
 // parallax — the 3D answer to the 2D layer factors (sky .14 / far .34 /
 // near .68 / floor 1).
 import * as THREE from 'three/webgpu';
+import { cameraPosition, color, normalWorld, positionWorld, uv } from 'three/tsl';
 import { STAGE_W } from '../engine';
 import { WORLD_SCALE } from './threeCoordinates';
-import { loadGlb, stageGlbUrl } from './threeAssets';
+import { loadGlb, radialTexture, stageGlbUrl } from './threeAssets';
+
+/** Cheap fake-volumetric beam (TSL): additive cone whose opacity peaks when
+ *  the surface faces the camera and dies at the silhouette — soft shaft, no
+ *  hard triangle edges — with a vertical gradient toward the lamp head. */
+function beamMaterial(beamColor: number, strength: number): THREE.MeshBasicNodeMaterial {
+  const m = new THREE.MeshBasicNodeMaterial({
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide,
+    fog: false,
+  });
+  const viewDir = cameraPosition.sub(positionWorld).normalize();
+  const facing = normalWorld.dot(viewDir).abs(); // 1 face-on, 0 edge-on
+  m.colorNode = color(beamColor);
+  m.opacityNode = facing.pow(1.6).mul(uv().y.pow(1.5)).mul(strength);
+  return m;
+}
 
 function hash01(seed: number): number {
   let h = (seed | 0) * 2654435761;
@@ -54,13 +73,50 @@ export class ThreeStageView {
       g.add(dash);
     }
 
-    // building rows at staggered depths — the parallax layers
+    // gradient night sky + low moon behind everything
+    const skyCanvas = document.createElement('canvas');
+    skyCanvas.width = 4;
+    skyCanvas.height = 128;
+    const skyCtx = skyCanvas.getContext('2d')!;
+    const skyGrad = skyCtx.createLinearGradient(0, 0, 0, 128);
+    skyGrad.addColorStop(0, '#05070f');
+    skyGrad.addColorStop(0.62, '#101527');
+    skyGrad.addColorStop(1, '#2a2438'); // faint warm city-glow horizon
+    skyCtx.fillStyle = skyGrad;
+    skyCtx.fillRect(0, 0, 4, 128);
+    const sky = new THREE.Mesh(
+      new THREE.PlaneGeometry(stageW + 110, 40),
+      new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(skyCanvas), fog: false }),
+    );
+    sky.position.set(0, 16, -34);
+    const moon = new THREE.Mesh(
+      new THREE.CircleGeometry(1.6, 24),
+      new THREE.MeshBasicMaterial({ color: 0xe8ecff, fog: false }),
+    );
+    moon.position.set(-9, 13, -33.5);
+    const moonGlow = new THREE.Mesh(
+      new THREE.PlaneGeometry(9, 9),
+      new THREE.MeshBasicMaterial({
+        map: radialTexture(),
+        color: 0x9aa6d8,
+        transparent: true,
+        opacity: 0.5,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        fog: false,
+      }),
+    );
+    moonGlow.position.set(-9, 13, -33.4);
+    g.add(sky, moon, moonGlow);
+
+    // building rows at staggered depths — the parallax layers (near → skyline)
     const rows: { z: number; h: [number, number]; color: number; count: number; span: number }[] = [
       { z: -8.5, h: [3, 7], color: 0x363b49, count: 9, span: stageW + 26 },
       { z: -15, h: [6, 12], color: 0x252936, count: 11, span: stageW + 40 },
       { z: -24, h: [10, 20], color: 0x181b26, count: 13, span: stageW + 60 },
+      { z: -31, h: [14, 26], color: 0x0e1119, count: 15, span: stageW + 80 },
     ];
-    const windowMat = new THREE.MeshBasicMaterial({ color: 0xc9a35e });
+    const windowMat = new THREE.MeshBasicMaterial({ color: 0x8f7443 });
     for (const [ri, row] of rows.entries()) {
       for (let i = 0; i < row.count; i++) {
         const r = hash01(ri * 131 + i * 17);
@@ -73,11 +129,11 @@ export class ThreeStageView {
         );
         b.position.set(x, h / 2, row.z);
         g.add(b);
-        // sparse lit windows on the near row only (cheap, sells "city at night")
-        if (ri === 0) {
+        // sparse lit windows on the two near rows (cheap, sells "city at night")
+        if (ri <= 1) {
           const winCount = 2 + Math.floor(r * 4);
           for (let wi = 0; wi < winCount; wi++) {
-            const win = new THREE.Mesh(new THREE.PlaneGeometry(0.28, 0.4), windowMat);
+            const win = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.3), windowMat);
             win.position.set(
               x + (hash01(i * 97 + wi * 31) - 0.5) * (w * 0.7),
               0.8 + hash01(i * 61 + wi * 43) * (h - 1.6),
@@ -86,23 +142,72 @@ export class ThreeStageView {
             g.add(win);
           }
         }
+        // a few neon signs on the near row for cozy color depth
+        if (ri === 0 && hash01(i * 613) > 0.55) {
+          const neonColor = [0xff4d6d, 0x39d0ff, 0x9dff5e, 0xffb347][Math.floor(hash01(i * 271) * 4)];
+          const sign = new THREE.Mesh(
+            new THREE.PlaneGeometry(0.22, 1.1 + hash01(i * 331) * 0.8),
+            new THREE.MeshBasicMaterial({ color: neonColor }),
+          );
+          sign.position.set(x + (hash01(i * 449) - 0.5) * w * 0.6, 1.6 + hash01(i * 523) * 2, row.z + (2 + r * 2) / 2 + 0.02);
+          const signGlow = new THREE.Mesh(
+            new THREE.PlaneGeometry(1.4, 2.6),
+            new THREE.MeshBasicMaterial({
+              map: radialTexture(),
+              color: neonColor,
+              transparent: true,
+              opacity: 0.35,
+              blending: THREE.AdditiveBlending,
+              depthWrite: false,
+            }),
+          );
+          signGlow.position.copy(sign.position);
+          signGlow.position.z += 0.03;
+          g.add(sign, signGlow);
+        }
       }
+    }
+
+    // sagging power cables across the street — cheap lines, lots of depth
+    const cableMat = new THREE.LineBasicMaterial({ color: 0x05060a });
+    for (const [x1, x2, y, zc] of [
+      [-14, -2, 4.6, -3.5],
+      [-3, 12, 4.9, -3.2],
+      [-10, 6, 5.4, -7.8],
+    ] as const) {
+      const mid = new THREE.Vector3((x1 + x2) / 2, y - 0.7, zc);
+      const curve = new THREE.QuadraticBezierCurve3(
+        new THREE.Vector3(x1, y, zc),
+        mid,
+        new THREE.Vector3(x2, y + 0.2, zc),
+      );
+      const cable = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(curve.getPoints(24)),
+        cableMat,
+      );
+      g.add(cable);
+    }
+
+    // foreground silhouettes (bollards + low wall chunks) at the frame edges —
+    // the fast-moving parallax layer in front of the lane
+    const fgMat = new THREE.MeshStandardMaterial({ color: 0x07080d, roughness: 1 });
+    for (const [x, w, h] of [
+      [-8.5, 2.6, 0.9],
+      [7.8, 3.2, 0.7],
+    ] as const) {
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.5), fgMat);
+      wall.position.set(x, h / 2, 5.6);
+      g.add(wall);
+    }
+    for (const x of [-6.4, -5.4, 5, 6]) {
+      const bollard = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.75, 8), fgMat);
+      bollard.position.set(x, 0.375, 5.4);
+      g.add(bollard);
     }
 
     // street lamps along the sidewalk — warm pools, the secondary lights
     const poleMat = new THREE.MeshStandardMaterial({ color: 0x1c1e24, roughness: 0.6, metalness: 0.4 });
     const headMat = new THREE.MeshBasicMaterial({ color: 0xffc37a });
-    // fake-volumetric cone: additive, vertex-alpha-free translucent shell that
-    // fades toward the ground — reads as light in haze without real scattering
-    const coneMat = new THREE.MeshBasicMaterial({
-      color: 0xffb765,
-      transparent: true,
-      opacity: 0.07,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide,
-      fog: false,
-    });
     // poles stand on the sidewalk edge but the arm hangs the head OVER the
     // combat lane (z=0) so fighters stand inside the light pools; two lamps,
     // both shadow casters (point-light shadows are 6 cube faces each — the
@@ -122,20 +227,41 @@ export class ThreeStageView {
       light.castShadow = true;
       light.shadow.mapSize.set(1024, 1024);
       light.shadow.bias = -0.002;
-      // stacked open cones under the head sell the volume without scattering
+      // fake-volumetric shaft: fresnel-faded additive cone (see beamMaterial)
       const beam = new THREE.Group();
-      for (const [rBot, h, o] of [
-        [1.1, 3.5, 0.09],
-        [1.7, 3.5, 0.05],
-      ] as const) {
-        const cone = new THREE.Mesh(new THREE.ConeGeometry(1, 1, 20, 1, true), coneMat.clone());
-        (cone.material as THREE.MeshBasicMaterial).opacity = o;
-        cone.scale.set(rBot, h, rBot);
-        cone.position.set(0, h / 2 + 0.02, 0);
-        beam.add(cone);
-      }
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(1, 1, 24, 1, true), beamMaterial(0xffb765, 0.22));
+      cone.scale.set(1.0, 3.5, 1.0);
+      cone.position.set(0, 3.5 / 2 + 0.02, 0);
+      beam.add(cone);
       beam.position.set(0, 0, 1.6);
-      lamp.add(pole, arm, head, light, beam);
+      const headGlow = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.5, 1.5),
+        new THREE.MeshBasicMaterial({
+          map: radialTexture(),
+          color: 0xffc37a,
+          transparent: true,
+          opacity: 0.8,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        }),
+      );
+      headGlow.position.set(0, 3.5, 1.62);
+      const pool = new THREE.Mesh(
+        new THREE.PlaneGeometry(4.6, 3.2),
+        new THREE.MeshBasicMaterial({
+          map: radialTexture([
+            [0, 'rgba(255,205,140,0.34)'],
+            [0.55, 'rgba(255,190,120,0.13)'],
+            [1, 'rgba(255,190,120,0)'],
+          ]),
+          transparent: true,
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+        }),
+      );
+      pool.rotation.x = -Math.PI / 2;
+      pool.position.set(0, 0.004, 1.6);
+      lamp.add(pole, arm, head, light, beam, headGlow, pool);
       lamp.position.set(x, 0, -1.6);
       g.add(lamp);
     }

@@ -8,6 +8,7 @@ import type { CharacterDef, GameState, Projectile } from '../engine';
 import { FLOOR_Y } from '../engine';
 import type { Defs } from '../engine';
 import { engineToWorld, WORLD_SCALE } from './threeCoordinates';
+import { radialTexture } from './threeAssets';
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -86,18 +87,7 @@ export class ThreeFxSystem {
     this.splatLives = new Array(SPLAT_CAP).fill(0);
 
     this.group.add(this.blood, this.splats);
-
-    // procedural radial falloff for projectile glow halos
-    const c = document.createElement('canvas');
-    c.width = c.height = 64;
-    const ctx = c.getContext('2d')!;
-    const grad = ctx.createRadialGradient(32, 32, 2, 32, 32, 32);
-    grad.addColorStop(0, 'rgba(255,255,255,1)');
-    grad.addColorStop(0.4, 'rgba(255,255,255,0.35)');
-    grad.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 64, 64);
-    this.glowTexture = new THREE.CanvasTexture(c);
+    this.glowTexture = radialTexture();
   }
 
   // ---------- textures ----------
@@ -241,9 +231,9 @@ export class ThreeFxSystem {
       d.vy = 0.8 + r2 * 3.4;
       d.vz = (r3 - 0.5) * 1.8;
       // mostly droplets, occasional fat blob that lobs out slower
-      d.size = 0.035 + r3 * r3 * 0.12;
-      if (r2 > 0.86) {
-        d.size *= 2.4;
+      d.size = 0.028 + r3 * r3 * 0.075;
+      if (r2 > 0.9) {
+        d.size *= 2;
         d.vx *= 0.55;
         d.vy *= 0.8;
       }
@@ -264,7 +254,7 @@ export class ThreeFxSystem {
       if (d.y <= 0) {
         d.alive = false;
         // only fat drops leave a mark — light hits shouldn't repaint the street
-        if (d.size > 0.055 || hash01((d.x * 977 + d.z * 389) | 0) < 0.22) {
+        if (d.size > 0.06 || hash01((d.x * 977 + d.z * 389) | 0) < 0.14) {
           this.addSplat(d.x, d.z, d.size);
         }
         continue;
@@ -274,7 +264,10 @@ export class ThreeFxSystem {
       const speed = Math.hypot(d.vx, d.vy);
       this.dummy.position.set(d.x, d.y, d.z);
       this.dummy.scale.set(d.size * Math.min(1 + speed * 0.12, 1.6), d.size, 1);
-      this.dummy.rotation.z = Math.atan2(d.vy, d.vx);
+      // full reset: the shared dummy still carries the floor-splat's X-flip
+      // otherwise, which laid mid-flight drops flat (the "facing up" bug).
+      // 0,0,z keeps the quad camera-facing on the +Z view axis.
+      this.dummy.rotation.set(0, 0, Math.atan2(d.vy, d.vx));
       this.dummy.updateMatrix();
       this.blood.setMatrixAt(count++, this.dummy.matrix);
     }
@@ -288,7 +281,7 @@ export class ThreeFxSystem {
     this.splatLives[i] = 240; // ~4s
     this.dummy.position.set(x, 0.002, z);
     this.dummy.rotation.set(-Math.PI / 2, 0, 0);
-    const s = size * (1.7 + hash01(i * 97) * 1.6);
+    const s = size * (1.3 + hash01(i * 97) * 1.1);
     this.dummy.scale.set(s * 1.15, s, 1);
     this.dummy.updateMatrix();
     this.splats.setMatrixAt(i, this.dummy.matrix);

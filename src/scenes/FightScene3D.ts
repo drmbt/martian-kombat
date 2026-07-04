@@ -279,7 +279,7 @@ export class FightScene3D extends Phaser.Scene {
             // KO gush — MK vibes (SPEC V16)
             const loser = e.winner === 0 ? 1 : 0;
             const lf = s.fighters[loser];
-            r?.fx.spawnBlood(lf.x, lf.y - 140, s.fighters[e.winner].facing, 140, s.tick);
+            r?.fx.spawnBlood(lf.x, lf.y - 140, s.fighters[e.winner].facing, 70, s.tick);
             r?.shake(s.tick, 20, 0.06);
           }
           break;
@@ -304,8 +304,9 @@ export class FightScene3D extends Phaser.Scene {
           playVoice(this, f.charId, 'hurt', 0.7);
           this.ghostHoldUntil[e.slot] = s.tick + 32;
           r?.fx.spawnHitFx(s, e.slot, e.counter, e.heavy);
-          // blood along the impact velocity: attacker facing, more when it hurts
-          const amount = Math.min(Math.round(8 + e.damage * (e.heavy || e.counter ? 1.6 : 0.9)), 90);
+          // blood along the impact velocity — tiered: a whiff of red on light
+          // hits, moderate on solid ones, restrained even at the top end
+          const amount = Math.min(Math.round(3 + e.damage * (e.heavy || e.counter ? 0.75 : 0.45)), 42);
           r?.fx.spawnBlood(f.x - f.facing * 20, f.y - 150, atk.facing, amount, s.tick);
           r?.flashFighter(e.slot, s.tick, e.counter ? 8 : 4, e.counter ? 0xff2a1a : 0xffffff);
           r?.shake(s.tick, e.counter ? 8 : 5, e.counter ? 0.05 : 0.03);
