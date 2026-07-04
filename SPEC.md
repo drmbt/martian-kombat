@@ -80,6 +80,11 @@ T26|x|clip `impactNorm` piecewise warp in `clipTimeSec` + vitest; per-clip value
 T27|x|fatality + win parity: fatality phase → DOM panel overlay cycling `assets/fatalities/<char>/<id>-<n>.jpg` (count = char JSON `fatality.panels`); matchEnd → win overlay (winner portrait, loser `-ko.png`, random `winQuotes`); dizzy stars billboard|V15
 T24|x|parallax + mood: perspective cam follow (x=midpoint lerp, dolly ∝ separation, clamp) replicating 2D layer-factor feel via real depth; night street placeholder stage (building rows @ staggered depth, street lamps w/ warm pools, dim key/ambient); projectile glow quad + light illuminate env+chars; bloom default on (V8 fps watch)|V10,V8,V16
 
+T28|x|directional hit reactions: hitstun clip picked by attacker side vs victim facing (hit-front/hit-back + fallbacks), pure fn + vitest; GLB gains React From Front/Back clips|V12,V13
+T29|x|HUD componentization: `src/renderer3d/hud/` — FightHud, WinOverlay, FatalityOverlay classes (build/update/dispose), FightScene3D keeps wiring only|V15
+T30|x|blend-glitch pass: action RESTART detection (same moveId re-trigger resets elapsed via frame counter direction), ⊥ mid-fade pops|V13
+T31|.|uppercut: waiting on `Uppercut.fbx` from Mixamo in `animations/` → remap `attack/rising-glyph` + regen|V12
+
 ## §B
 
 id|date|cause|fix

@@ -108,6 +108,46 @@
    ]
   },
   {
+   "name": "hit-front",
+   "source": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing React Small From Front.fbx",
+   "frames": 36,
+   "seconds": 1.2,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit-back",
+   "source": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing React Small From Back.fbx",
+   "frames": 38,
+   "seconds": 1.267,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit-front-heavy",
+   "source": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing React Large From Front.fbx",
+   "frames": 41,
+   "seconds": 1.367,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit-back-heavy",
+   "source": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing React Large From Back.fbx",
+   "frames": 50,
+   "seconds": 1.667,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
    "name": "hit-air",
    "source": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing React Large From Front.fbx",
    "frames": 41,
@@ -293,6 +333,8 @@
    "landing",
    "getup",
    "hit",
+   "hit-front",
+   "hit-back",
    "hit-air",
    "block-stand",
    "knockdown",
@@ -300,6 +342,8 @@
    "ko-forward",
    "dazed",
    "win",
+   "hit-front-heavy",
+   "hit-back-heavy",
    "attack/lp",
    "attack/mp",
    "attack/hp",

@@ -55,6 +55,26 @@
    "stripY": false
   },
   {
+   "name": "hit-front",
+   "file": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing React Small From Front.fbx",
+   "stripY": false
+  },
+  {
+   "name": "hit-back",
+   "file": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing React Small From Back.fbx",
+   "stripY": false
+  },
+  {
+   "name": "hit-front-heavy",
+   "file": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing React Large From Front.fbx",
+   "stripY": false
+  },
+  {
+   "name": "hit-back-heavy",
+   "file": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing React Large From Back.fbx",
+   "stripY": false
+  },
+  {
    "name": "hit-air",
    "file": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing React Large From Front.fbx",
    "stripY": false

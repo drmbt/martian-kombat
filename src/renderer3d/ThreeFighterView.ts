@@ -39,6 +39,8 @@ class ClipPlayer {
   private elapsed = 0;
   private actionKey = '';
   private lastTick = -1;
+  private lastActionFrame = -1;
+  private heavyReel = false;
 
   constructor(root: THREE.Object3D, clips: THREE.AnimationClip[]) {
     this.mixer = new THREE.AnimationMixer(root);
@@ -55,20 +57,35 @@ class ClipPlayer {
     return this.current ?? { name: '-', placeholder: false };
   }
 
-  update(tick: number, f: FighterState, def: CharacterDef): void {
+  update(tick: number, f: FighterState, def: CharacterDef, opponent?: FighterState): void {
     const key = `${f.action.kind}/${f.action.moveId ?? ''}`;
-    if (key !== this.actionKey) {
+    // RESTART detection (T30): the same action re-triggering (lp lp lp
+    // mashing, a fresh reel while already reeling) keeps the key identical
+    // but snaps the engine frame counter backwards (up-counters) or upwards
+    // (hitstun counts DOWN). Without this the clip keeps playing mid-way —
+    // the "fast glitch" where repeats show only clip tails.
+    const kind = f.action.kind;
+    const countsDown = kind === 'hitstun' || kind === 'blockstun';
+    const restarted =
+      key === this.actionKey &&
+      this.lastActionFrame >= 0 &&
+      (countsDown ? f.action.frame > this.lastActionFrame : f.action.frame < this.lastActionFrame);
+    if (key !== this.actionKey || restarted) {
       this.actionKey = key;
-      this.elapsed = 0;
+      this.elapsed = countsDown ? 0 : f.action.frame;
+      // latch reel weight at the moment of impact: long stun or counter =
+      // heavy reaction; frame counts down so this can't be derived later
+      this.heavyReel = kind === 'hitstun' && (f.action.frame >= 20 || f.action.counter === true);
     } else if (this.lastTick >= 0 && f.hitstop <= 0) {
       // hitstop freezes the engine action — freeze the clip with it
       this.elapsed += Math.max(tick - this.lastTick, 0);
     }
     this.lastTick = tick;
+    this.lastActionFrame = f.action.frame;
 
-    const want = actionToClipName(f);
+    const want = actionToClipName(f, opponent, this.heavyReel);
     const resolved = resolveClipName(this.available, want);
-    if (!this.current || this.current.name !== resolved.name) {
+    if (!this.current || this.current.name !== resolved.name || restarted) {
       this.transitionTo(resolved, tick, f, def);
     }
     const cur = this.current!;
@@ -254,7 +271,7 @@ export class ThreeFighterView {
     this.model.position.y -= worldDelta / scale;
   }
 
-  update(tick: number, f: FighterState): void {
+  update(tick: number, f: FighterState, opponent?: FighterState): void {
     const [x, y] = engineToWorld(f.x, f.y);
     this.group.position.set(x, y, 0);
 
@@ -262,7 +279,7 @@ export class ThreeFighterView {
       // our Blender FBX->GLB export lands the model facing +X (verified
       // empirically via spawn screenshot) — 0 for right, 180 for left
       this.modelWrapper.rotation.y = f.facing === 1 ? 0 : Math.PI;
-      this.player.update(tick, f, this.def);
+      this.player.update(tick, f, this.def, opponent);
       this.snapFeetToGround(f);
       this.applyFlash(tick);
       return;

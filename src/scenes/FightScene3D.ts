@@ -17,26 +17,9 @@ import { diffTick, snapTick, type FightEvent } from '../presentation/tickEvents'
 // dynamically in create() so the production 2D bundle never ships it
 import type { ThreeFightRenderer } from '../renderer3d/ThreeFightRenderer';
 import { createSettingsPanel, DEFAULT_SETTINGS } from '../renderer3d/threeRenderSettings';
-
-const PHASE_LABEL: Record<GameState['phase'], string> = {
-  intro: 'ROUND',
-  fight: '',
-  roundEnd: 'KO',
-  finisher: 'FINISH THEM',
-  fatality: 'FATALITY',
-  matchEnd: 'MATCH OVER — F9 REMATCH',
-};
-
-interface HudRefs {
-  root: HTMLDivElement;
-  bars: [HTMLDivElement, HTMLDivElement];
-  ghosts: [HTMLDivElement, HTMLDivElement];
-  wins: [HTMLSpanElement, HTMLSpanElement];
-  timer: HTMLDivElement;
-  label: HTMLDivElement;
-  combo: HTMLDivElement;
-  info: HTMLDivElement;
-}
+import { FightHud } from '../renderer3d/hud/FightHud';
+import { FatalityOverlay } from '../renderer3d/hud/FatalityOverlay';
+import { WinOverlay } from '../renderer3d/hud/WinOverlay';
 
 export class FightScene3D extends Phaser.Scene {
   private chars: [string, string] = ['vincent', 'vincent'];
@@ -47,7 +30,9 @@ export class FightScene3D extends Phaser.Scene {
   private bot: CpuDriver | null = null;
   private accumulator = 0;
   private renderer3d: ThreeFightRenderer | null = null;
-  private hud: HudRefs | null = null;
+  private hud: FightHud | null = null;
+  private fatalityOverlay: FatalityOverlay | null = null;
+  private winOverlay: WinOverlay | null = null;
   private skeletonOn = false;
   private settings = { ...DEFAULT_SETTINGS };
   private panel: ReturnType<typeof createSettingsPanel> | null = null;
@@ -56,9 +41,6 @@ export class FightScene3D extends Phaser.Scene {
   private comboTicks = 0;
   private ghostHealth: [number, number] = [0, 0];
   private ghostHoldUntil: [number, number] = [0, 0];
-  private fatalityEl: HTMLDivElement | null = null;
-  private fatalityImgs: HTMLImageElement[] = [];
-  private winEl: HTMLDivElement | null = null;
 
   constructor() {
     super('Fight3D');
@@ -110,15 +92,14 @@ export class FightScene3D extends Phaser.Scene {
       this.scale.off('resize', this.layoutDom, this);
       this.renderer3d?.dispose();
       this.renderer3d = null;
-      this.hud?.root.remove();
+      this.hud?.dispose();
       this.hud = null;
+      this.fatalityOverlay?.dispose();
+      this.fatalityOverlay = null;
+      this.winOverlay?.dispose();
+      this.winOverlay = null;
       this.panel?.el.remove();
       this.panel = null;
-      this.fatalityEl?.remove();
-      this.fatalityEl = null;
-      this.fatalityImgs = [];
-      this.winEl?.remove();
-      this.winEl = null;
     });
   }
 
@@ -142,86 +123,19 @@ export class FightScene3D extends Phaser.Scene {
     renderer.applySettings(this.settings);
   }
 
-  // ---------- DOM (Three canvas + HUD reusing 2D art assets — SPEC T19) ----------
+  // ---------- DOM (Three canvas + HUD components — SPEC T19/T29) ----------
 
   private mountDom(canvas: HTMLCanvasElement): void {
     const parent = this.game.canvas.parentElement ?? document.body;
     if (getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
     canvas.style.cssText = 'position:absolute;pointer-events:none;';
     parent.appendChild(canvas);
-    this.hud = this.buildHud(parent);
+    this.hud = new FightHud(parent, this.chars, characters);
+    this.fatalityOverlay = new FatalityOverlay(parent, characters, this.hud.root);
+    this.winOverlay = new WinOverlay(parent, characters, this.hud.root);
     this.layoutDom();
   }
 
-  private buildHud(parent: HTMLElement): HudRefs {
-    const root = document.createElement('div');
-    root.style.cssText =
-      'position:absolute;pointer-events:none;color:#e8e4d8;font:12px monospace;' +
-      'text-shadow:0 1px 2px #000;overflow:hidden;';
-
-    const side = (slot: 0 | 1): { wrap: HTMLDivElement; bar: HTMLDivElement; ghost: HTMLDivElement; wins: HTMLSpanElement } => {
-      const id = this.chars[slot];
-      const wrap = document.createElement('div');
-      wrap.style.cssText =
-        `position:absolute;top:10px;${slot === 0 ? 'left' : 'right'}:12px;width:42%;` +
-        `display:flex;gap:8px;align-items:flex-start;${slot === 1 ? 'flex-direction:row-reverse;' : ''}`;
-      const img = document.createElement('img');
-      img.src = `${import.meta.env.BASE_URL}assets/portraits/${id}.png`;
-      img.style.cssText = 'width:52px;height:52px;object-fit:cover;border:2px solid #d8d2c0;background:#222;';
-      img.onerror = () => (img.style.display = 'none');
-      const col = document.createElement('div');
-      col.style.cssText = 'flex:1;';
-      const name = document.createElement('div');
-      name.textContent = id.toUpperCase();
-      name.style.cssText = `margin-bottom:3px;${slot === 1 ? 'text-align:right;' : ''}`;
-      const barOuter = document.createElement('div');
-      barOuter.style.cssText =
-        'position:relative;height:14px;background:#3a1010;border:2px solid #d8d2c0;overflow:hidden;';
-      const ghost = document.createElement('div');
-      ghost.style.cssText =
-        `position:absolute;top:0;${slot === 0 ? 'right' : 'left'}:0;height:100%;width:100%;background:#c8452c;`;
-      const bar = document.createElement('div');
-      bar.style.cssText =
-        `position:absolute;top:0;${slot === 0 ? 'right' : 'left'}:0;height:100%;width:100%;background:#e8c832;`;
-      barOuter.append(ghost, bar);
-      const wins = document.createElement('span');
-      wins.style.cssText =
-        `display:block;color:#ffd75e;font-size:20px;line-height:1.2;letter-spacing:3px;` +
-        `text-shadow:0 1px 3px #000;${slot === 1 ? 'text-align:right;' : ''}`;
-      col.append(name, barOuter, wins);
-      wrap.append(img, col);
-      root.appendChild(wrap);
-      return { wrap, bar, ghost, wins };
-    };
-
-    const left = side(0);
-    const right = side(1);
-
-    const timer = document.createElement('div');
-    timer.style.cssText =
-      'position:absolute;top:14px;left:50%;transform:translateX(-50%);font-size:28px;font-weight:bold;';
-    const label = document.createElement('div');
-    label.style.cssText =
-      'position:absolute;top:52px;left:50%;transform:translateX(-50%);font-size:16px;color:#ff5e4a;white-space:nowrap;';
-    const combo = document.createElement('div');
-    combo.style.cssText =
-      'position:absolute;top:34%;left:18%;font-size:22px;font-weight:bold;color:#ffd75e;display:none;';
-    const info = document.createElement('div');
-    info.style.cssText = 'position:absolute;left:12px;bottom:8px;white-space:pre;opacity:.8;';
-    root.append(timer, label, combo, info);
-    parent.appendChild(root);
-
-    return {
-      root,
-      bars: [left.bar, right.bar],
-      ghosts: [left.ghost, right.ghost],
-      wins: [left.wins, right.wins],
-      timer,
-      label,
-      combo,
-      info,
-    };
-  }
 
   private layoutDom(): void {
     const r3d = this.renderer3d;
@@ -245,129 +159,18 @@ export class FightScene3D extends Phaser.Scene {
 
   private drawHud(): void {
     if (!this.hud) return;
-    const s = this.state;
-    const c = this.hudCache;
-    for (const slot of [0, 1] as const) {
-      const f = s.fighters[slot];
-      const max = characters[f.charId].health;
-      const barW = Math.max(0, Math.round((f.health / max) * 1000) / 10);
-      if (c[`bar${slot}`] !== barW) {
-        c[`bar${slot}`] = barW;
-        this.hud.bars[slot].style.width = `${barW}%`;
-      }
-      const ghostW = Math.max(0, Math.round((this.ghostHealth[slot] / max) * 1000) / 10);
-      if (c[`ghost${slot}`] !== ghostW) {
-        c[`ghost${slot}`] = ghostW;
-        this.hud.ghosts[slot].style.width = `${ghostW}%`;
-      }
-      if (c[`wins${slot}`] !== s.wins[slot]) {
-        c[`wins${slot}`] = s.wins[slot];
-        const empty = Math.max(0, s.rules.winsNeeded - s.wins[slot]);
-        this.hud.wins[slot].innerHTML =
-          '★'.repeat(s.wins[slot]) + (empty ? `<span style="color:#5d5748;">${'☆'.repeat(empty)}</span>` : '');
-      }
-    }
-    const timer = s.rules.roundTicks ? String(Math.max(0, Math.ceil(s.timer / 60))) : '∞';
-    if (c.timer !== timer) {
-      c.timer = timer;
-      this.hud.timer.textContent = timer;
-    }
-    const label = s.phase === 'intro' ? `ROUND ${s.roundNumber}` : PHASE_LABEL[s.phase];
-    if (c.label !== label) {
-      c.label = label;
-      this.hud.label.textContent = label;
-    }
-    const combo = this.comboHits >= 2 && this.comboTicks > 0 ? `${this.comboHits} HITS` : '';
-    if (c.combo !== combo) {
-      c.combo = combo;
-      this.hud.combo.style.display = combo ? 'block' : 'none';
-      if (combo) this.hud.combo.textContent = combo;
-    }
     const clip = (slot: 0 | 1): string => {
       const ci = this.renderer3d?.clipInfo(slot);
       return ci ? `${ci.name}${ci.placeholder ? ' *PLACEHOLDER*' : ''}` : '…';
     };
-    const info =
-      `[F1] hitboxes  [F2] skeleton  [F3] inspector  [F4] settings  [F9] rematch  [ESC] menu\n` +
-      `clips: ${clip(0)} | ${clip(1)}`;
-    if (c.info !== info) {
-      c.info = info;
-      this.hud.info.textContent = info;
-    }
+    this.hud.update(this.state, {
+      ghost: this.ghostHealth,
+      combo: this.comboHits >= 2 && this.comboTicks > 0 ? `${this.comboHits} HITS` : '',
+      clips: [clip(0), clip(1)],
+    });
   }
 
-  // ---------- fatality panels + win screen (SPEC T27, reusing 2D art) ----------
 
-  /** Full-bleed panel slideshow driven by phaseFrame — same jpgs as 2D. */
-  private syncFatalityOverlay(): void {
-    const s = this.state;
-    const parent = this.hud?.root.parentElement;
-    if (s.phase !== 'fatality' || !s.fatality || !parent) {
-      if (this.fatalityEl) this.fatalityEl.style.display = 'none';
-      return;
-    }
-    const owner = s.fighters[s.fatality.owner];
-    const def = characters[owner.charId];
-    const panels = def.fatality?.panels ?? 0;
-    if (!panels) return;
-    if (!this.fatalityEl) {
-      const el = document.createElement('div');
-      el.style.cssText = 'position:absolute;inset:0;background:#000;pointer-events:none;z-index:3;';
-      for (let n = 1; n <= panels; n++) {
-        const img = document.createElement('img');
-        img.src = `${import.meta.env.BASE_URL}assets/fatalities/${owner.charId}/${s.fatality.id}-${n}.jpg`;
-        img.style.cssText =
-          'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .25s;';
-        el.appendChild(img);
-        this.fatalityImgs.push(img);
-      }
-      // layout: pin over the game canvas like the HUD
-      const hudStyle = this.hud!.root.style;
-      el.style.left = hudStyle.left;
-      el.style.top = hudStyle.top;
-      el.style.width = hudStyle.width;
-      el.style.height = hudStyle.height;
-      el.style.inset = '';
-      parent.appendChild(el);
-      this.fatalityEl = el;
-    }
-    this.fatalityEl.style.display = 'block';
-    const idx = Math.min(Math.floor(s.phaseFrame / (460 / panels)), panels - 1);
-    this.fatalityImgs.forEach((img, i) => (img.style.opacity = i === idx ? '1' : '0'));
-  }
-
-  /** Win-quote screen: winner portrait, beaten loser bust, random taunt. */
-  private syncWinOverlay(): void {
-    const s = this.state;
-    const parent = this.hud?.root.parentElement;
-    if (s.phase !== 'matchEnd' || s.roundWinner === null || !parent) {
-      if (this.winEl) this.winEl.style.display = 'none';
-      return;
-    }
-    if (this.winEl) return; // built once; stays until rematch/exit
-    const winner = s.fighters[s.roundWinner];
-    const loser = s.fighters[s.roundWinner === 0 ? 1 : 0];
-    const wDef = characters[winner.charId];
-    const quotes = wDef.winQuotes ?? ['...'];
-    const quote = quotes[s.tick % quotes.length];
-    const base = import.meta.env.BASE_URL;
-    const el = document.createElement('div');
-    const hudStyle = this.hud!.root.style;
-    el.style.cssText =
-      `position:absolute;left:${hudStyle.left};top:${hudStyle.top};width:${hudStyle.width};height:${hudStyle.height};` +
-      'background:rgba(5,6,12,.82);color:#e8e4d8;font:14px monospace;pointer-events:none;z-index:4;' +
-      'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;';
-    el.innerHTML =
-      `<div style="display:flex;gap:40px;align-items:flex-end;">` +
-      `<img src="${base}assets/portraits/${winner.charId}.png" style="width:130px;border:3px solid #e8c832;background:#222;">` +
-      `<img src="${base}assets/portraits/${loser.charId}-ko.png" onerror="this.src='${base}assets/portraits/${loser.charId}.png';this.style.filter='grayscale(1)'" style="width:110px;border:3px solid #555;background:#222;">` +
-      `</div>` +
-      `<div style="font-size:20px;color:#ffd75e;">${wDef.name.toUpperCase()} WINS</div>` +
-      `<div style="max-width:70%;">“${quote}”</div>` +
-      `<div style="opacity:.6;">[F9] rematch · [ESC] menu</div>`;
-    parent.appendChild(el);
-    this.winEl = el;
-  }
 
   // ---------- presentation events (SPEC T18/T20/T21/T22) ----------
 
@@ -487,8 +290,8 @@ export class FightScene3D extends Phaser.Scene {
     }
     this.renderer3d?.render(this.state);
     this.drawHud();
-    this.syncFatalityOverlay();
-    this.syncWinOverlay();
+    this.fatalityOverlay?.sync(this.state);
+    this.winOverlay?.sync(this.state);
     this.panel?.setFps(this.game.loop.actualFps, deltaMs);
   }
 }

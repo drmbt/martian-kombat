@@ -40,8 +40,13 @@ export function attackClipTime(
   return impactSec + p * (end - impactSec);
 }
 
-/** engine action -> the clip the renderer WANTS (before fallback) */
-export function actionToClipName(f: FighterState): string {
+/** engine action -> the clip the renderer WANTS (before fallback).
+ *  `opponent` picks the reaction side: a hit from the side the victim FACES
+ *  plays hit-front, from behind plays hit-back. `heavyReel` (latched by the
+ *  player at reel START — hitstun counts down, so it can't be re-derived
+ *  mid-reel without the clip switching underneath) upgrades to the Large
+ *  reaction variants (T28 + heavy reactions). */
+export function actionToClipName(f: FighterState, opponent?: FighterState, heavyReel = false): string {
   const a: Action = f.action;
   switch (a.kind) {
     case 'idle':
@@ -59,8 +64,12 @@ export function actionToClipName(f: FighterState): string {
     case 'attack':
     case 'airAttack':
       return `attack/${a.moveId}`;
-    case 'hitstun':
-      return 'hit';
+    case 'hitstun': {
+      if (!opponent) return 'hit';
+      const fromFront = (opponent.x - f.x) * f.facing >= 0;
+      const base = fromFront ? 'hit-front' : 'hit-back';
+      return heavyReel ? `${base}-heavy` : base;
+    }
     case 'airHit':
       return 'hit-air';
     case 'blockstun':

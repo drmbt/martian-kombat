@@ -22,6 +22,17 @@ describe('actionToClipName', () => {
     expect(actionToClipName(fighter('air', {}, 3))).toBe('fall');
   });
 
+  it('picks the reaction side from the attacker position vs victim facing', () => {
+    const victim = { ...fighter('hitstun'), x: 400, facing: 1 } as FighterState;
+    const inFront = { x: 500 } as FighterState;
+    const behind = { x: 300 } as FighterState;
+    expect(actionToClipName(victim, inFront)).toBe('hit-front');
+    expect(actionToClipName(victim, behind)).toBe('hit-back');
+    // heavy latch upgrades to the Large reaction variants
+    expect(actionToClipName(victim, inFront, true)).toBe('hit-front-heavy');
+    expect(actionToClipName(victim, behind, true)).toBe('hit-back-heavy');
+  });
+
   it('routes attacks to their move id and blocks to the guard stance', () => {
     expect(actionToClipName(fighter('attack', { moveId: 'sigil-bolt' }))).toBe('attack/sigil-bolt');
     expect(actionToClipName(fighter('blockstun', { guard: 'crouch' }))).toBe('block-crouch');

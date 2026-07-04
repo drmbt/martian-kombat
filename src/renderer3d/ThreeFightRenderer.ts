@@ -250,8 +250,8 @@ export class ThreeFightRenderer {
 
   render(state: GameState): void {
     if (!this.ready || this.disposed) return;
-    this.fighters[0].update(state.tick, state.fighters[0]);
-    this.fighters[1].update(state.tick, state.fighters[1]);
+    this.fighters[0].update(state.tick, state.fighters[0], state.fighters[1]);
+    this.fighters[1].update(state.tick, state.fighters[1], state.fighters[0]);
     this.hitboxes.update(state, this.defs);
     const dtTicks = this.lastFxTick < 0 ? 0 : Math.max(state.tick - this.lastFxTick, 0);
     this.lastFxTick = state.tick;
