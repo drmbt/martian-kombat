@@ -92,10 +92,15 @@ export class MenuScene extends Phaser.Scene {
       { label: '4 · TRAINING', act: () => go(false, true) },
       { label: '5 · SETTINGS', act: toSettings },
     ];
+    // fit the whole list on-screen regardless of item count (STAGE_H=540):
+    // pack the block below the subtitle down to a bottom margin
+    const top = 336;
+    const step = Math.min(52, Math.floor((STAGE_H - top - 16) / opts.length));
+    const rectH = Math.min(46, step - 4);
     opts.forEach((o, i) => {
-      const y = 352 + i * 52;
+      const y = top + i * step + step / 2;
       const bg = this.add
-        .rectangle(STAGE_W / 2, y, 340, 46, 0x241b2e, 0.85)
+        .rectangle(STAGE_W / 2, y, 340, rectH, 0x241b2e, 0.85)
         .setStrokeStyle(2, 0x7a6a86)
         .setInteractive({ useHandCursor: true });
       const label = this.add
