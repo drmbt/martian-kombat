@@ -325,3 +325,34 @@ or the package's addon barrel export. Do not guess this path.
   https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/jsm/loaders/GLTFLoader.js
 - Official Three WebGPU examples index:
   https://threejs.org/examples/?q=webgpu
+
+## Post-spike decision: shared fight-loop / presentation events (T13)
+
+Spike verdict — the shape works. What FightScene3D duplicated from
+FightScene, and what that says about extraction:
+
+1. **Fixed-timestep loop (accumulator + input poll + step)**: ~25 lines
+   duplicated. Worth extracting into a small `FightLoop` helper (owns
+   accumulator, KO slow-mo factor, per-tick input polling from
+   KeyboardSource/CpuDriver). Low risk, pure win — both scenes shrink.
+2. **Presentation events**: FightScene's `presentTick(snapshot)` diffs
+   pre/post tick state into sounds, sparks, combo bookkeeping. The 3D scene
+   will need the exact same diffing for SFX/VFX parity. Extract a
+   `diffTick(prev, next): FightEvent[]` pure function (hits, blocks, KOs,
+   projectile spawns/deaths, throws, dizzy) that both presenters consume.
+   The 2D scene keeps its Phaser reactions; the 3D scene maps the same
+   events to Three effects.
+3. **Do NOT extract yet.** FightScene is 1,645 lines and Sprint 19
+   (cancels & chains) is about to touch the same code. Sequence the
+   extraction AFTER Sprint 19 lands, as its own commit, with the 3D scene
+   as the second consumer proving the seam.
+
+What still hurts (candidate work if the spike graduates):
+- Attack clips play linearly across startup+active+recovery; per-clip
+  `impactNorm` time-warp (already spec'd in clipContract) would snap
+  impact frames to engine active frames for authored-feel attacks.
+- Walk-speed sync uses a heuristic (3 px/tick baseline); measuring real
+  clip stride in gen-mesh and storing it in the GLB report would make
+  foot-slide exact.
+- Yulia (and the rest of the roster) need the Tripo -> Mixamo -> gen-mesh
+  pass; the pipeline is one command per character once the rig FBX exists.
