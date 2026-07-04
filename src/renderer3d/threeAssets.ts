@@ -43,7 +43,8 @@ const glbBytes = new Map<string, Promise<ArrayBuffer | null>>();
 
 async function fetchGlbBytes(url: string): Promise<ArrayBuffer | null> {
   try {
-    const res = await fetch(url);
+    // no-cache: regenerated GLBs must never be served stale from HTTP cache
+    const res = await fetch(url, { cache: 'no-cache' });
     if (!res.ok || !(res.headers.get('content-type') ?? '').includes('gltf-binary')) {
       console.info(`[3d] no asset at ${url} — placeholder stays`);
       return null;

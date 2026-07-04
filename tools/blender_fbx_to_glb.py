@@ -36,6 +36,26 @@ def find_armature(objs):
     return None
 
 
+def sanitize_materials(meshes):
+    """Force OPAQUE: newer Mixamo exports wire a texture into the material's
+    Alpha and mark it BLEND — three then renders the whole character as a
+    transparent object (no depth-write, self-sorting chaos: see-through
+    limbs, garbled faces). Fighters are opaque; kill the alpha path."""
+    for mesh in meshes:
+        for slot in mesh.material_slots:
+            m = slot.material
+            if m is None:
+                continue
+            m.blend_method = 'OPAQUE'
+            if m.use_nodes:
+                for n in m.node_tree.nodes:
+                    if n.type == 'BSDF_PRINCIPLED':
+                        alpha = n.inputs['Alpha']
+                        for l in list(alpha.links):
+                            m.node_tree.links.remove(l)
+                        alpha.default_value = 1.0
+
+
 def ensure_basecolor(meshes, image_path):
     """Give untextured materials a Principled+basecolor so the GLB isn't grey."""
     if not image_path:
@@ -151,16 +171,7 @@ def main():
                 print(f"BLENDER-NOTE: dropping unskinned mesh '{m.name}'")
                 bpy.data.objects.remove(m, do_unlink=True)
         meshes = skinned
-    # Tripo meshes ship INCONSISTENT normals (mixed inward/outward faces —
-    # see-through patches, garbled faces). Recalculate consistently outward
-    # for every rig; harmless when already consistent (vincent).
-    for m in meshes:
-        bpy.context.view_layer.objects.active = m
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.select_all(action='SELECT')
-        bpy.ops.mesh.normals_make_consistent(inside=False)
-        bpy.ops.object.mode_set(mode='OBJECT')
-
+    sanitize_materials(meshes)
     textured = ensure_basecolor(meshes, job.get('basecolor'))
 
     # normalize world height by SETTING the armature object scale (never
