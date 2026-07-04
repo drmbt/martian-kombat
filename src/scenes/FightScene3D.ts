@@ -343,6 +343,17 @@ export class FightScene3D extends Phaser.Scene {
 
   // ---------- presentation events (SPEC T18/T20/T21/T22) ----------
 
+  /** play() gated on focus: a blurred window suspends the audio context but
+   *  the sim keeps stepping — un-gated sounds queue up in the suspended
+   *  context and ALL fire at once on refocus. */
+  private snd(key: string, volume?: number): void {
+    if (document.hasFocus()) play(this, key, volume);
+  }
+
+  private voice(charId: string, kind: 'hurt' | 'kiai', volume: number): void {
+    if (document.hasFocus()) playVoice(this, charId, kind, volume);
+  }
+
   private handleEvents(events: FightEvent[]): void {
     const s = this.state;
     const r = this.renderer3d;

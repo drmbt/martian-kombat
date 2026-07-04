@@ -499,10 +499,14 @@ export class ThreeStageView {
     mh.beginPath();
     mh.arc(64, 64, 5, 0, Math.PI * 2);
     mh.fill();
+    // CanvasTexture defaults to linear — without sRGB tagging the dark greys
+    // decode ~4x brighter and the cover reads near-white under the lamp
+    const mhTex = new THREE.CanvasTexture(mhCanvas);
+    mhTex.colorSpace = THREE.SRGBColorSpace;
     const grate = new THREE.Mesh(
       new THREE.CircleGeometry(0.5, 20),
       new THREE.MeshStandardMaterial({
-        map: new THREE.CanvasTexture(mhCanvas),
+        map: mhTex,
         transparent: true,
         roughness: 0.85,
         metalness: 0.05,

@@ -71,7 +71,12 @@
   },
   {
    "name": "ko",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Knocked Out.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Standing React Death Backward.fbx",
+   "stripY": false
+  },
+  {
+   "name": "ko-forward",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Standing React Death Forward.fbx",
    "stripY": false
   },
   {

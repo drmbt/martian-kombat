@@ -15,6 +15,7 @@
     "block-crouch": { "class": "loop" },
     "knockdown": { "class": "loop" },
     "ko": { "class": "oneshot" },
+    "ko-forward": { "class": "oneshot" },
     "dazed": { "class": "loop" },
     "win": { "class": "loop" },
     "attack-generic": { "class": "window" },
@@ -31,6 +32,7 @@
     "block-stand": ["hit"],
     "knockdown": ["ko"],
     "ko": ["knockdown"],
+    "ko-forward": ["ko", "knockdown"],
     "dazed": ["hit"],
     "win": ["idle"]
   },

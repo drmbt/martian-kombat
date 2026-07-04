@@ -139,9 +139,19 @@
   },
   {
    "name": "ko",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Knocked Out.fbx",
-   "frames": 148,
-   "seconds": 4.933,
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Standing React Death Backward.fbx",
+   "frames": 109,
+   "seconds": 3.633,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
+   "name": "ko-forward",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Standing React Death Forward.fbx",
+   "frames": 110,
+   "seconds": 3.667,
    "rootStripped": [
     "Y",
     "Z"
@@ -287,6 +297,7 @@
    "block-stand",
    "knockdown",
    "ko",
+   "ko-forward",
    "dazed",
    "win",
    "attack/lp",
