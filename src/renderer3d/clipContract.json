@@ -34,6 +34,18 @@
     "dazed": ["hit"],
     "win": ["idle"]
   },
+  "impactNorm": {
+    "attack-generic": 0.35,
+    "attack-air": 0.45,
+    "attack/lp": 0.3,
+    "attack/mp": 0.35,
+    "attack/hp": 0.4,
+    "attack/throw": 0.4,
+    "attack/sigil-bolt": 0.5,
+    "attack/cloud-hands": 0.5,
+    "attack/rising-glyph": 0.45,
+    "attack/redirect": 0.55
+  },
   "fadeTicks": {
     "default": 5,
     "locomotion": 8,

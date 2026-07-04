@@ -368,6 +368,39 @@ export class ThreeFxSystem {
     });
   }
 
+  // ---------- dizzy stars (parity with the 2D vfx-dizzy overlay) ----------
+
+  private dizzy: [THREE.Mesh | null, THREE.Mesh | null] = [null, null];
+
+  private syncDizzy(state: GameState): void {
+    for (const slot of [0, 1] as const) {
+      const f = state.fighters[slot];
+      const dazed = f.action.kind === 'dazed';
+      let mesh = this.dizzy[slot];
+      if (dazed && !mesh) {
+        const tex = this.texture(`${BASE}assets/vfx/dizzy.png`);
+        const mat = new THREE.MeshBasicMaterial({
+          map: tex,
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        });
+        mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9), mat);
+        mesh.renderOrder = 21;
+        this.group.add(mesh);
+        this.dizzy[slot] = mesh;
+      }
+      if (!mesh) continue;
+      mesh.visible = dazed;
+      if (dazed) {
+        const def = this.defs[f.charId];
+        const [x, y] = engineToWorld(f.x, f.y - def.hurtStand.h - 18);
+        mesh.position.set(x, y, 0.2);
+        mesh.rotation.z = state.tick * 0.12; // lazy orbit spin
+      }
+    }
+  }
+
   // ---------- per-frame ----------
 
   update(dtTicks: number, state: GameState): void {
@@ -391,5 +424,6 @@ export class ThreeFxSystem {
     this.simBlood(dtTicks);
     this.simSplats(dtTicks);
     this.syncProjectiles(state);
+    this.syncDizzy(state);
   }
 }

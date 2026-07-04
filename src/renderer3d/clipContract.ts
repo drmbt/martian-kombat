@@ -10,6 +10,35 @@ export type ClipClass = 'loop' | 'oneshot' | 'window';
 const CLIPS = contract.clips as Record<string, { class: ClipClass; syncToWalkSpeed?: boolean }>;
 const FALLBACKS = contract.fallbacks as Record<string, string[]>;
 const FADES = contract.fadeTicks;
+const IMPACT_NORM = contract.impactNorm as Record<string, number>;
+
+/** where in the authored clip the hit visually lands (0..1), if declared */
+export function impactNorm(name: string): number | undefined {
+  return IMPACT_NORM[name];
+}
+
+/**
+ * Piecewise time-warp for attack clips (SPEC V13/V5): the clip's pre-impact
+ * span plays across the move's STARTUP ticks and the rest across
+ * active+recovery — the authored impact frame lands exactly when the engine's
+ * active window opens, regardless of clip pacing.
+ */
+export function attackClipTime(
+  actionFrame: number,
+  startupTicks: number,
+  windowTicks: number,
+  clipDuration: number,
+  norm: number,
+): number {
+  const end = Math.max(clipDuration - 1e-4, 0);
+  const impactSec = norm * end;
+  if (startupTicks > 0 && actionFrame < startupTicks) {
+    return (actionFrame / startupTicks) * impactSec;
+  }
+  const rest = Math.max(windowTicks - startupTicks, 1);
+  const p = Math.min((actionFrame - startupTicks) / rest, 1);
+  return impactSec + p * (end - impactSec);
+}
 
 /** engine action -> the clip the renderer WANTS (before fallback) */
 export function actionToClipName(f: FighterState): string {

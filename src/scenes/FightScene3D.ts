@@ -56,6 +56,9 @@ export class FightScene3D extends Phaser.Scene {
   private comboTicks = 0;
   private ghostHealth: [number, number] = [0, 0];
   private ghostHoldUntil: [number, number] = [0, 0];
+  private fatalityEl: HTMLDivElement | null = null;
+  private fatalityImgs: HTMLImageElement[] = [];
+  private winEl: HTMLDivElement | null = null;
 
   constructor() {
     super('Fight3D');
@@ -111,6 +114,11 @@ export class FightScene3D extends Phaser.Scene {
       this.hud = null;
       this.panel?.el.remove();
       this.panel = null;
+      this.fatalityEl?.remove();
+      this.fatalityEl = null;
+      this.fatalityImgs = [];
+      this.winEl?.remove();
+      this.winEl = null;
     });
   }
 
@@ -256,6 +264,79 @@ export class FightScene3D extends Phaser.Scene {
       `clips: ${clip(0)} | ${clip(1)}`;
   }
 
+  // ---------- fatality panels + win screen (SPEC T27, reusing 2D art) ----------
+
+  /** Full-bleed panel slideshow driven by phaseFrame — same jpgs as 2D. */
+  private syncFatalityOverlay(): void {
+    const s = this.state;
+    const parent = this.hud?.root.parentElement;
+    if (s.phase !== 'fatality' || !s.fatality || !parent) {
+      if (this.fatalityEl) this.fatalityEl.style.display = 'none';
+      return;
+    }
+    const owner = s.fighters[s.fatality.owner];
+    const def = characters[owner.charId];
+    const panels = def.fatality?.panels ?? 0;
+    if (!panels) return;
+    if (!this.fatalityEl) {
+      const el = document.createElement('div');
+      el.style.cssText = 'position:absolute;inset:0;background:#000;pointer-events:none;z-index:3;';
+      for (let n = 1; n <= panels; n++) {
+        const img = document.createElement('img');
+        img.src = `${import.meta.env.BASE_URL}assets/fatalities/${owner.charId}/${s.fatality.id}-${n}.jpg`;
+        img.style.cssText =
+          'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .25s;';
+        el.appendChild(img);
+        this.fatalityImgs.push(img);
+      }
+      // layout: pin over the game canvas like the HUD
+      const hudStyle = this.hud!.root.style;
+      el.style.left = hudStyle.left;
+      el.style.top = hudStyle.top;
+      el.style.width = hudStyle.width;
+      el.style.height = hudStyle.height;
+      el.style.inset = '';
+      parent.appendChild(el);
+      this.fatalityEl = el;
+    }
+    this.fatalityEl.style.display = 'block';
+    const idx = Math.min(Math.floor(s.phaseFrame / (460 / panels)), panels - 1);
+    this.fatalityImgs.forEach((img, i) => (img.style.opacity = i === idx ? '1' : '0'));
+  }
+
+  /** Win-quote screen: winner portrait, beaten loser bust, random taunt. */
+  private syncWinOverlay(): void {
+    const s = this.state;
+    const parent = this.hud?.root.parentElement;
+    if (s.phase !== 'matchEnd' || s.roundWinner === null || !parent) {
+      if (this.winEl) this.winEl.style.display = 'none';
+      return;
+    }
+    if (this.winEl) return; // built once; stays until rematch/exit
+    const winner = s.fighters[s.roundWinner];
+    const loser = s.fighters[s.roundWinner === 0 ? 1 : 0];
+    const wDef = characters[winner.charId];
+    const quotes = wDef.winQuotes ?? ['...'];
+    const quote = quotes[s.tick % quotes.length];
+    const base = import.meta.env.BASE_URL;
+    const el = document.createElement('div');
+    const hudStyle = this.hud!.root.style;
+    el.style.cssText =
+      `position:absolute;left:${hudStyle.left};top:${hudStyle.top};width:${hudStyle.width};height:${hudStyle.height};` +
+      'background:rgba(5,6,12,.82);color:#e8e4d8;font:14px monospace;pointer-events:none;z-index:4;' +
+      'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;';
+    el.innerHTML =
+      `<div style="display:flex;gap:40px;align-items:flex-end;">` +
+      `<img src="${base}assets/portraits/${winner.charId}.png" style="width:130px;border:3px solid #e8c832;">` +
+      `<img src="${base}assets/portraits/${loser.charId}-ko.png" onerror="this.src='${base}assets/portraits/${loser.charId}.png';this.style.filter='grayscale(1)'" style="width:110px;border:3px solid #555;">` +
+      `</div>` +
+      `<div style="font-size:20px;color:#ffd75e;">${wDef.name.toUpperCase()} WINS</div>` +
+      `<div style="max-width:70%;">“${quote}”</div>` +
+      `<div style="opacity:.6;">[F9] rematch · [ESC] menu</div>`;
+    parent.appendChild(el);
+    this.winEl = el;
+  }
+
   // ---------- presentation events (SPEC T18/T20/T21/T22) ----------
 
   private handleEvents(events: FightEvent[]): void {
@@ -363,6 +444,8 @@ export class FightScene3D extends Phaser.Scene {
     }
     this.renderer3d?.render(this.state);
     this.drawHud();
+    this.syncFatalityOverlay();
+    this.syncWinOverlay();
     this.panel?.setFps(this.game.loop.actualFps, deltaMs);
   }
 }

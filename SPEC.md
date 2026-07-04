@@ -76,8 +76,8 @@ T21|x|mesh impact feedback: victim emissive flash (counter = red, longer) + came
 T22|x|blood: instanced particle spray per hit — cone toward impact velocity, gravity, floor kill; volume ∝ damage; KO gush|V16
 T23|x|3D projectiles: billboard pool from `proj-*` textures (moveId→texture fallback like 2D), additive glow + PointLight, driven by `state.projectiles`|V15
 T25|x|fps audit w/ full stack (AO+bloom+2 shadow lamps) via CDP `game.loop.actualFps`; document; degrade defaults if <60|V8
-T26|.|clip `impactNorm` piecewise warp in `clipTimeSec` + vitest; per-clip values in clipContract.json for vincent attack clips|V13,V5
-T27|.|fatality + win parity: fatality phase → DOM panel overlay cycling `assets/fatalities/<char>/<id>-<n>.jpg` (count = char JSON `fatality.panels`); matchEnd → win overlay (winner portrait, loser `-ko.png`, random `winQuotes`); dizzy stars billboard|V15
+T26|x|clip `impactNorm` piecewise warp in `clipTimeSec` + vitest; per-clip values in clipContract.json for vincent attack clips|V13,V5
+T27|x|fatality + win parity: fatality phase → DOM panel overlay cycling `assets/fatalities/<char>/<id>-<n>.jpg` (count = char JSON `fatality.panels`); matchEnd → win overlay (winner portrait, loser `-ko.png`, random `winQuotes`); dizzy stars billboard|V15
 T24|x|parallax + mood: perspective cam follow (x=midpoint lerp, dolly ∝ separation, clamp) replicating 2D layer-factor feel via real depth; night street placeholder stage (building rows @ staggered depth, street lamps w/ warm pools, dim key/ambient); projectile glow quad + light illuminate env+chars; bloom default on (V8 fps watch)|V10,V8,V16
 
 ## §B

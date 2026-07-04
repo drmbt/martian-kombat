@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   actionToClipName,
+  attackClipTime,
   clipTimeSec,
   fadeTicksFor,
   fallbackChain,
@@ -67,6 +68,18 @@ describe('clipTimeSec (V4/V13 time mapping)', () => {
     // plays the middle of the clip, and the window end pins the clip end
     expect(clipTimeSec('window', 15, 2, 30)).toBeCloseTo(1, 3);
     expect(clipTimeSec('window', 30, 2, 30)).toBeCloseTo(2, 3);
+  });
+});
+
+describe('attackClipTime (V5 impactNorm warp)', () => {
+  // 2s clip, impact authored at 50%; move: 6 startup + 24 active+recovery
+  it('lands the authored impact frame exactly at the first active tick', () => {
+    expect(attackClipTime(6, 6, 30, 2, 0.5)).toBeCloseTo(1, 3);
+  });
+
+  it('stretches pre-impact across startup and the rest across the window end', () => {
+    expect(attackClipTime(3, 6, 30, 2, 0.5)).toBeCloseTo(0.5, 2); // mid-startup
+    expect(attackClipTime(30, 6, 30, 2, 0.5)).toBeCloseTo(2, 2); // window end
   });
 });
 

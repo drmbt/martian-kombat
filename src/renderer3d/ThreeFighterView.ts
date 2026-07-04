@@ -9,9 +9,11 @@ import { engineToWorld, WORLD_SCALE } from './threeCoordinates';
 import { characterGlbUrl, loadGlb } from './threeAssets';
 import {
   actionToClipName,
+  attackClipTime,
   clipClass,
   clipTimeSec,
   fadeTicksFor,
+  impactNorm,
   resolveClipName,
   syncToWalkSpeed,
   type ResolvedClip,
@@ -20,6 +22,7 @@ import {
 interface ActiveClip extends ResolvedClip {
   action: THREE.AnimationAction;
   windowTicks?: number;
+  startupTicks?: number;
 }
 
 /** Tick-sampled clip playback with class-based crossfades (SPEC V13). */
@@ -70,14 +73,21 @@ class ClipPlayer {
     }
     const cur = this.current!;
 
-    // clip time from tick state (V4/V13) — walk loops scale with walk speed
+    // clip time from tick state (V4/V13) — walk loops scale with walk speed;
+    // attacks with a declared impactNorm warp so the authored hit frame lands
+    // exactly when the engine's active window opens (V5)
     const dur = cur.action.getClip().duration;
-    let ticks = this.elapsed;
-    if (syncToWalkSpeed(cur.name)) {
-      const speed = f.action.kind === 'walkB' ? def.backSpeed : def.walkSpeed;
-      ticks *= speed / 3; // ~3px/tick reads as a natural stride at 1x
+    const norm = impactNorm(cur.name);
+    if (cur.windowTicks && cur.startupTicks !== undefined && norm !== undefined) {
+      cur.action.time = attackClipTime(this.elapsed, cur.startupTicks, cur.windowTicks, dur, norm);
+    } else {
+      let ticks = this.elapsed;
+      if (syncToWalkSpeed(cur.name)) {
+        const speed = f.action.kind === 'walkB' ? def.backSpeed : def.walkSpeed;
+        ticks *= speed / 3; // ~3px/tick reads as a natural stride at 1x
+      }
+      cur.action.time = clipTimeSec(clipClass(cur.name), ticks, dur, cur.windowTicks);
     }
-    cur.action.time = clipTimeSec(clipClass(cur.name), ticks, dur, cur.windowTicks);
 
     // crossfade weights, tick-derived (V13)
     let w = 1;
@@ -100,14 +110,16 @@ class ClipPlayer {
     this.fadeTicks = this.previous ? fadeTicksFor(this.previous.name, resolved.name) : 0;
 
     let windowTicks: number | undefined;
+    let startupTicks: number | undefined;
     const a = f.action;
     if ((a.kind === 'attack' || a.kind === 'airAttack') && a.moveId && def.moves[a.moveId]) {
       const m = resolveMove(def.moves[a.moveId], a.strength);
       windowTicks = m.startup + m.active + m.recovery;
+      startupTicks = m.startup;
     }
     const action = this.actions.get(resolved.name)!;
     action.reset().play();
-    this.current = { ...resolved, action, windowTicks };
+    this.current = { ...resolved, action, windowTicks, startupTicks };
   }
 }
 
