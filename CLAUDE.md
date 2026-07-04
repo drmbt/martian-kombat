@@ -169,6 +169,21 @@ All gen scripts are idempotent (skip existing files; `--force` regens,
 `--all` for every character). `gen:frames` and `gen-audio` run concurrently
 (`--concurrency N`, default 6 / 4).
 
+## Lore source — the Martian Lore sheet
+
+The public **Martian Lore** Google Sheet is the canonical source of lore for
+future characters and stages — reference it whenever designing a new fighter,
+stage, win quotes, or VO:
+<https://docs.google.com/spreadsheets/d/1C8Kr5BJAopZXzsWJTcOvaySBvmEcQqPJgyXZ76Uohgo/>
+The **Mars People** tab maps each Martian to discord handle, caption, bio,
+lore, links, and media references (photo/voice-sample folders). Bios and
+running jokes there should drive archetypes, move names, quotes and VO so each
+fighter reads as *the actual person*, not a generic trope.
+**HARD RULE: respect the "privacy opt out" column.** Anyone marked
+"NO AI PLEASE" (as of 2026-07: Maya Luna, Peter, Roarke, Summer) must never be
+scaffolded as a fighter, generated as an asset, or referenced by name in game
+content. Re-check that column before starting any new character.
+
 ## The roster
 
 All eight fighters are fully built and playable, each with a six-button kit,

@@ -1,0 +1,6 @@
+Transform the person in the reference photo into a full-body 2D fighting game character.
+CRITICAL: preserve their real facial features, hairstyle, skin tone, body type and the outfit they are wearing in the photo — it must be recognizably the same person.
+Pose: dynamic side-on martial-arts fighting stance facing right, knees bent, hands up ready to fight, full body visible head to toe with a small margin, centered.
+Background: solid flat chroma-key green (#00B140), completely uniform, no shadows cast on the background, no floor, no text, no watermark, no border.
+Art style: hand-painted cel-shaded 2D anime fighter (modern Capcom / Arc System Works aesthetic). Bold clean line art, painterly cel shading, confident silhouette, slightly heroic proportions while keeping the person recognizable.
+Character flavor: "The Spirit Deck" — a Brazilian mystic kick-fighter. Keep her brown crop top, oxblood red shorts, strap sandals and long dark hair mid-whip from the photo. One leg chambered for a high kick; her other hand fans out glowing golden tarot cards, a faint translucent PURPLE-GOLD jaguar spirit curling behind her (never green).

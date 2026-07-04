@@ -498,6 +498,40 @@
       "height": "mid",
       "projImmune": true
     },
+    "spinning-star-kick": {
+      "name": "Spinning Star Kick",
+      "input": {
+        "motion": "du",
+        "button": "kick"
+      },
+      "startup": 10,
+      "active": 24,
+      "recovery": 18,
+      "damage": 40,
+      "hitstun": 16,
+      "blockstun": 10,
+      "knockback": 5,
+      "hitbox": {
+        "x": 10,
+        "y": -170,
+        "w": 110,
+        "h": 120
+      },
+      "height": "mid",
+      "forwardVel": 7,
+      "rehit": 8,
+      "variants": {
+        "l": {
+          "forwardVel": 4,
+          "active": 16
+        },
+        "h": {
+          "forwardVel": 9,
+          "active": 30,
+          "recovery": 22
+        }
+      }
+    },
     "throw": {
       "name": "Throw",
       "input": {

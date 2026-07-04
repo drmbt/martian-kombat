@@ -1,0 +1,404 @@
+{
+  "id": "bodhi",
+  "name": "BODHI",
+  "color": "#e6b84f",
+  "stage": "dome",
+  "winQuotes": [
+    "Your chart said this would happen.",
+    "That tension you were holding? Released.",
+    "Book a follow-up. You have deep-rooted issues.",
+    "You carry so much tension.",
+    "The stars predicted this outcome."
+  ],
+  "fatality": {
+    "id": "full-realignment",
+    "name": "Full Realignment",
+    "input": {
+      "motion": "hcb",
+      "button": "kick"
+    },
+    "panels": 4
+  },
+  "health": 1120,
+  "walkSpeed": 4.7,
+  "backSpeed": 3.4,
+  "jumpVel": 18,
+  "gravity": 0.95,
+  "prejumpFrames": 4,
+  "bodyBox": {
+    "x": -44,
+    "y": -244,
+    "w": 88,
+    "h": 244
+  },
+  "hurtStand": {
+    "x": -54,
+    "y": -258,
+    "w": 108,
+    "h": 258
+  },
+  "hurtCrouch": {
+    "x": -54,
+    "y": -162,
+    "w": 108,
+    "h": 162
+  },
+  "moves": {
+    "lp": {
+      "startup": 4,
+      "active": 3,
+      "recovery": 10,
+      "damage": 48,
+      "hitstun": 15,
+      "blockstun": 10,
+      "knockback": 7,
+      "hitbox": { "x": 38, "y": -224, "w": 100, "h": 40 },
+      "height": "mid",
+      "chains": ["lp", "lk", "clp", "clk"]
+    },
+    "mp": {
+      "startup": 7,
+      "active": 3,
+      "recovery": 14,
+      "damage": 74,
+      "hitstun": 19,
+      "blockstun": 12,
+      "knockback": 9,
+      "hitbox": { "x": 40, "y": -226, "w": 112, "h": 44 },
+      "height": "mid",
+      "cancel": true
+    },
+    "hp": {
+      "startup": 11,
+      "active": 4,
+      "recovery": 20,
+      "damage": 104,
+      "hitstun": 24,
+      "blockstun": 15,
+      "knockback": 12,
+      "hitbox": { "x": 40, "y": -232, "w": 120, "h": 58 },
+      "height": "mid",
+      "knockdown": true
+    },
+    "lk": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 10,
+      "damage": 46,
+      "hitstun": 14,
+      "blockstun": 9,
+      "knockback": 6,
+      "hitbox": { "x": 40, "y": -84, "w": 110, "h": 36 },
+      "height": "mid",
+      "chains": ["lp", "lk", "clp", "clk"]
+    },
+    "mk": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 16,
+      "damage": 78,
+      "hitstun": 20,
+      "blockstun": 13,
+      "knockback": 11,
+      "hitbox": { "x": 44, "y": -190, "w": 124, "h": 46 },
+      "height": "mid",
+      "cancel": true
+    },
+    "hk": {
+      "startup": 13,
+      "active": 4,
+      "recovery": 21,
+      "damage": 106,
+      "hitstun": 26,
+      "blockstun": 15,
+      "knockback": 13,
+      "hitbox": { "x": 44, "y": -244, "w": 126, "h": 72 },
+      "height": "mid",
+      "knockdown": true
+    },
+    "clp": {
+      "startup": 4,
+      "active": 3,
+      "recovery": 10,
+      "damage": 44,
+      "hitstun": 14,
+      "blockstun": 9,
+      "knockback": 6,
+      "hitbox": { "x": 38, "y": -134, "w": 100, "h": 36 },
+      "height": "mid",
+      "chains": ["lp", "lk", "clp", "clk"]
+    },
+    "cmp": {
+      "startup": 8,
+      "active": 4,
+      "recovery": 15,
+      "damage": 68,
+      "hitstun": 18,
+      "blockstun": 11,
+      "knockback": 8,
+      "hitbox": { "x": 30, "y": -196, "w": 86, "h": 104 },
+      "height": "mid",
+      "cancel": true
+    },
+    "chp": {
+      "startup": 10,
+      "active": 5,
+      "recovery": 20,
+      "damage": 92,
+      "hitstun": 24,
+      "blockstun": 14,
+      "knockback": 10,
+      "hitbox": { "x": 22, "y": -256, "w": 86, "h": 150 },
+      "height": "mid",
+      "knockdown": true
+    },
+    "clk": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 11,
+      "damage": 42,
+      "hitstun": 14,
+      "blockstun": 9,
+      "knockback": 6,
+      "hitbox": { "x": 38, "y": -32, "w": 110, "h": 32 },
+      "height": "low",
+      "chains": ["lp", "lk", "clp", "clk"]
+    },
+    "cmk": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 17,
+      "damage": 74,
+      "hitstun": 19,
+      "blockstun": 12,
+      "knockback": 9,
+      "hitbox": { "x": 42, "y": -34, "w": 140, "h": 34 },
+      "height": "low",
+      "cancel": true
+    },
+    "chk": {
+      "startup": 10,
+      "active": 4,
+      "recovery": 21,
+      "damage": 62,
+      "hitstun": 20,
+      "blockstun": 12,
+      "knockback": 8,
+      "hitbox": { "x": 28, "y": -36, "w": 150, "h": 36 },
+      "height": "low",
+      "knockdown": true
+    },
+    "jlp": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 8,
+      "damage": 46,
+      "hitstun": 15,
+      "blockstun": 10,
+      "knockback": 6,
+      "hitbox": { "x": 26, "y": -154, "w": 90, "h": 48 },
+      "height": "high"
+    },
+    "jmp": {
+      "startup": 6,
+      "active": 6,
+      "recovery": 10,
+      "damage": 70,
+      "hitstun": 18,
+      "blockstun": 12,
+      "knockback": 8,
+      "hitbox": { "x": 28, "y": -144, "w": 98, "h": 56 },
+      "height": "high"
+    },
+    "jhp": {
+      "startup": 8,
+      "active": 7,
+      "recovery": 12,
+      "damage": 94,
+      "hitstun": 22,
+      "blockstun": 14,
+      "knockback": 10,
+      "hitbox": { "x": 26, "y": -154, "w": 106, "h": 66 },
+      "height": "high"
+    },
+    "jlk": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 8,
+      "damage": 44,
+      "hitstun": 14,
+      "blockstun": 10,
+      "knockback": 6,
+      "hitbox": { "x": 28, "y": -124, "w": 88, "h": 50 },
+      "height": "high"
+    },
+    "jmk": {
+      "startup": 6,
+      "active": 7,
+      "recovery": 10,
+      "damage": 76,
+      "hitstun": 19,
+      "blockstun": 12,
+      "knockback": 9,
+      "hitbox": { "x": 30, "y": -134, "w": 104, "h": 58 },
+      "height": "high"
+    },
+    "jhk": {
+      "startup": 9,
+      "active": 7,
+      "recovery": 12,
+      "damage": 98,
+      "hitstun": 23,
+      "blockstun": 14,
+      "knockback": 12,
+      "hitbox": { "x": 32, "y": -144, "w": 116, "h": 62 },
+      "height": "high"
+    },
+    "deep-tissue": {
+      "name": "Deep Tissue",
+      "input": {
+        "motion": "360",
+        "button": "punch"
+      },
+      "startup": 6,
+      "active": 4,
+      "recovery": 28,
+      "damage": 172,
+      "hitstun": 34,
+      "blockstun": 0,
+      "knockback": 6,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": { "range": 120 },
+      "variants": {
+        "l": {
+          "damage": 150,
+          "startup": 5,
+          "grab": { "range": 100 }
+        },
+        "h": {
+          "damage": 192,
+          "startup": 8,
+          "recovery": 32,
+          "grab": { "range": 150 }
+        }
+      },
+      "vfx": { "size": 240, "anchor": "ground" }
+    },
+    "table-work": {
+      "name": "Table Work",
+      "input": {
+        "motion": "qcb",
+        "button": "kick"
+      },
+      "startup": 7,
+      "active": 3,
+      "recovery": 24,
+      "damage": 118,
+      "hitstun": 28,
+      "blockstun": 0,
+      "knockback": 7,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": { "range": 95 },
+      "variants": {
+        "l": {
+          "startup": 6,
+          "damage": 104,
+          "grab": { "range": 82 }
+        },
+        "h": {
+          "startup": 9,
+          "damage": 132,
+          "recovery": 26,
+          "grab": { "range": 108 }
+        }
+      }
+    },
+    "ascendant": {
+      "name": "Ascendant",
+      "input": {
+        "motion": "dp",
+        "button": "punch"
+      },
+      "startup": 5,
+      "active": 8,
+      "recovery": 26,
+      "damage": 98,
+      "hitstun": 26,
+      "blockstun": 15,
+      "knockback": 9,
+      "hitbox": { "x": 20, "y": -300, "w": 112, "h": 190 },
+      "height": "high",
+      "knockdown": true,
+      "invuln": 8,
+      "leap": { "vx": 4, "vy": 17 },
+      "variants": {
+        "l": {
+          "invuln": 6,
+          "damage": 84,
+          "leap": { "vx": 3, "vy": 15 }
+        },
+        "h": {
+          "invuln": 10,
+          "damage": 110,
+          "recovery": 28,
+          "leap": { "vx": 5, "vy": 19 }
+        }
+      }
+    },
+    "retrograde": {
+      "name": "Retrograde",
+      "input": {
+        "motion": "qcf",
+        "button": "kick"
+      },
+      "startup": 9,
+      "active": 8,
+      "recovery": 20,
+      "damage": 82,
+      "hitstun": 22,
+      "blockstun": 13,
+      "knockback": 9,
+      "hitbox": { "x": 16, "y": -74, "w": 120, "h": 74 },
+      "height": "low",
+      "knockdown": true,
+      "forwardVel": 15,
+      "variants": {
+        "l": {
+          "forwardVel": 20,
+          "damage": 66,
+          "startup": 7,
+          "recovery": 16
+        },
+        "h": {
+          "forwardVel": 8,
+          "damage": 108,
+          "knockback": 12,
+          "startup": 11,
+          "recovery": 24
+        }
+      }
+    },
+    "throw": {
+      "name": "Throw",
+      "input": {
+        "button": "LPLK"
+      },
+      "startup": 4,
+      "active": 2,
+      "recovery": 20,
+      "damage": 95,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 9,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": { "range": 110 },
+      "techable": true
+    }
+  }
+}

@@ -19,6 +19,7 @@
     },
     "panels": 4
   },
+  "spriteOffsetY": 8,
   "health": 1050,
   "walkSpeed": 3.4,
   "backSpeed": 3.0,
@@ -501,6 +502,52 @@
         "h": {
           "projectile": {
             "ttl": 210
+          }
+        }
+      }
+    },
+    "vine-spear": {
+      "name": "Vine Spear",
+      "input": {
+        "motion": "bf",
+        "button": "punch"
+      },
+      "startup": 14,
+      "active": 2,
+      "recovery": 28,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "projectile": {
+        "vx": 13,
+        "spawnX": 80,
+        "spawnY": -160,
+        "box": {
+          "x": -26,
+          "y": -14,
+          "w": 52,
+          "h": 28
+        },
+        "damage": 65,
+        "hitstun": 22,
+        "blockstun": 12,
+        "knockback": 4,
+        "ttl": 45,
+        "knockdown": true,
+        "pull": true
+      },
+      "variants": {
+        "l": {
+          "projectile": {
+            "ttl": 28
+          }
+        },
+        "h": {
+          "projectile": {
+            "vx": 16
           }
         }
       }

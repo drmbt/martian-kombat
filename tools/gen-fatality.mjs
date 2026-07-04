@@ -40,13 +40,13 @@ const FATALITIES = {
     ],
   },
   flo: {
-    id: 'rm-rf',
+    id: 'burn-one',
     canonical: 'assets/raw/canonical/flo.png',
     panels: [
-      `The man from the reference image (very tall and lanky, long blond hair, reddish beard, thin spliff in the corner of his mouth, black t-shirt, brown cargo pants) conjuring an ENORMOUS translucent amber holographic terminal window in the air with one raised hand, while ${HUSK} stands frozen before him. Low dramatic angle, amber glow washing over everything.`,
-      `Extreme close-up of the man's hands typing FURIOUSLY on the floating amber holographic terminal, grey spliff smoke curling through the amber light, glowing glyphs reflected in his narrowed scowling eyes, the terminal cursor blazing at the end of a typed line of unreadable glyphs.`,
-      `${HUSK} dissolving from the feet UPWARD into cascading waterfalls of amber directory-listing text — dense unreadable file-tree lines streaming down and scrolling away — while the man's finger hovers over one final glowing key. Side angle, high contrast.`,
-      `The man turning away exhaling a long stream of spliff smoke, casually flicking the amber terminal window closed behind him with two fingers, as the very last scrolling amber text lines of the husk fade to nothing. He does not look back.`,
+      `The man from the reference image (very tall and lanky, long blond hair, reddish beard, black t-shirt, brown cargo pants) flicking open a battered brass lighter with one hand, the flame catching, while ${HUSK} stands frozen before him. Low dramatic angle, the tiny flame the only warm light source, his scowling face underlit.`,
+      `${HUSK} fully ABLAZE in a roaring column of orange fire, collapsing in on itself into a neat cone of fine grey ash, while the man watches unimpressed with his arms crossed, firelight flickering across his face. Side angle, embers spiraling upward.`,
+      `Extreme close-up of the man's hands expertly rolling the fine grey ash into a giant cigarette with king-size rolling paper, tongue at the corner of his mouth in concentration, the last embers of the ash pile glowing between his fingers. Warm low light.`,
+      `The man leaning back taking a long satisfied drag of the enormous ash cigarette, exhaling a thick mushroom cloud of grey smoke that curls into a skull shape above him, eyes closed in bliss. He does not look back at the small scorch mark where the husk stood.`,
     ],
   },
   yulia: {
@@ -77,6 +77,26 @@ const FATALITIES = {
       `Extreme close-up of the woman's face as she UNLEASHES a colossal torrent of roaring orange-and-red fire from her mouth, cheeks full, a raging inferno erupting forward and engulfing the frame, ${HUSK} a black silhouette swallowed in the blaze. Maximum contrast, radial firelight streaks.`,
       `The woman from the reference image cartwheeling gracefully THROUGH a swirling firestorm, body inverted mid-handspring, legs whipping overhead, as ${HUSK} curls and blackens, coming apart into a rising vortex of orange cinders and ash around her. Dynamic dutch angle, embers everywhere.`,
       `The woman from the reference image landing serene in a one-handed bridge pose amid smoldering embers, blowing a single wisp of smoke off a fingertip with a smug smile, as the last cinders of the husk scatter into the dark behind her. She does not look back. Warm dying-ember glow, quiet and final.`,
+    ],
+  },
+  cat: {
+    id: 'still-life',
+    canonical: 'assets/raw/canonical/cat.png',
+    panels: [
+      `The woman from the reference image (long dark wavy hair, white sundress splashed with vivid orange, magenta and blue paint, barefoot) flinging a huge sweeping arc of living orange-magenta-blue paint from her fingertips that splashes across and engulfs ${HUSK} frozen before her. Dynamic side angle, ribbons of wet paint trailing in streaks, no green paint.`,
+      `${HUSK} pinned spread-eagle and dripping against an enormous blank white canvas, thick wet orange, magenta and blue paint running down it, while the woman from the reference image steps up brandishing a loaded paintbrush and a wooden palette, one eye narrowed appraising her subject. Low dramatic angle.`,
+      `Extreme close-up of the woman painting FURIOUSLY, brush a blur, as ${HUSK} dissolves brushstroke by brushstroke into swirling wet smears of orange, magenta and blue paint — half charred figure, half melting portrait — streaming off the canvas. Maximum contrast, radial paint-streak motion lines.`,
+      `The woman from the reference image standing beside a finished framed portrait on a wooden easel — a deliberately unflattering, lumpy caricature of the defeated fighter in bright paint — signing the bottom corner with a flourish and blowing a kiss to camera, while only a small paint-splattered scorch mark remains where the husk stood. She does not look at it. Bright, smug, final.`,
+    ],
+  },
+  bodhi: {
+    id: 'full-realignment',
+    canonical: 'assets/raw/canonical/bodhi.png',
+    panels: [
+      `The man from the reference image (bearded, maroon knit beanie, open mustard-yellow fur-hooded parka over a tan tank top, yellow shorts, black high-top sneakers) calmly rolling his shoulders and spreading two strong open hands, cracking his knuckles, as warm GOLD zodiac constellations of star-dots and thin lines blaze into being in a ring around him, while ${HUSK} stands frozen before him. Low dramatic angle, warm gold starlight washing over everything, never any green.`,
+      `The man from the reference image having seized ${HUSK} in a full-body bear-hug from behind and bending it backward into an impossibly deep spinal backbend, the charred figure's spine arching far past the breaking point, bursts of GOLD sparks popping at every cracking joint, his own face serene and focused. Dynamic side angle, embers and gold star-motes spiraling upward.`,
+      `Extreme close-up as the man presses one final calm adjustment with both palms, folding ${HUSK} into an impossible knotted pretzel of charred limbs — the burnt figure contorted into a neat geometric knot — while an enormous GOLD constellation flare radiates outward from his hands. Maximum contrast, radial gold star-streak motion lines, his expression utterly peaceful.`,
+      `The man from the reference image wiping his palms together and studying a small glowing circular astrologer's ephemeris wheel of amber zodiac constellations and star-symbols hovering above one open hand — a delicate wheel of stars, NOT a coin, NO text, NO letters, NO words anywhere — nodding once with quiet professional satisfaction, while the defeated fighter is left as a neatly folded impossible knot of char on the cracked desert ground beside him. He does not look back. Calm, warm amber starlight fading, final.`,
     ],
   },
 };

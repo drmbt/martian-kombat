@@ -101,6 +101,8 @@ async function genChar(charId) {
         apiKey: env.GEMINI_API_KEY,
         model: MODEL,
         prompt: proj.prompt,
+        // optional repo-relative reference images (logo marks etc.)
+        referencePaths: (proj.refPaths ?? []).map((p) => join(ROOT, p)),
         aspectRatio: '1:1',
       });
       saveAsset(out, buf, proj.prompt);

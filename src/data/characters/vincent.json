@@ -10,6 +10,8 @@
     "I am the signal. You were noise.",
     "The mirror reflects the truth, and the truth reflects your weakness."
   ],
+  "spriteScale": 1.08,
+  "spriteOffsetY": 20,
   "health": 1000,
   "walkSpeed": 5.0,
   "backSpeed": 3.7,
@@ -517,6 +519,26 @@
           "recovery": 16
         }
       }
+    },
+    "matrix-teleport": {
+      "name": "Matrix Teleport",
+      "input": {
+        "motion": "qcf",
+        "button": "kick"
+      },
+      "startup": 14,
+      "active": 2,
+      "recovery": 10,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "teleport": {
+        "mode": "behind"
+      },
+      "invuln": 14
     },
     "throw": {
       "name": "Throw",

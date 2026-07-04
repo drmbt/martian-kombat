@@ -10,6 +10,29 @@
       ],
       "port": 5173,
       "autoPort": true
+    },
+    {
+      "name": "martian-kombat-preview",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "preview"
+      ],
+      "port": 4173,
+      "autoPort": true
+    },
+    {
+      "name": "martian-kombat-static",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4180",
+        "--directory",
+        "dist"
+      ],
+      "port": 4180,
+      "autoPort": true
     }
   ]
 }

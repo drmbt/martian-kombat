@@ -515,6 +515,35 @@
         }
       }
     },
+    "cat-scratch": {
+      "name": "Cat Scratch",
+      "input": {
+        "button": "punch",
+        "mash": 5
+      },
+      "startup": 5,
+      "active": 26,
+      "recovery": 12,
+      "damage": 30,
+      "hitstun": 14,
+      "blockstun": 9,
+      "knockback": 3,
+      "hitbox": {
+        "x": 30,
+        "y": -190,
+        "w": 95,
+        "h": 80
+      },
+      "height": "mid",
+      "forwardVel": 1,
+      "rehit": 7,
+      "variants": {
+        "h": {
+          "active": 33,
+          "damage": 34
+        }
+      }
+    },
     "throw": {
       "name": "Throw",
       "input": {

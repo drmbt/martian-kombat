@@ -30,6 +30,12 @@ const STYLE = `Art style: hand-painted cel-shaded 2D anime fighter (modern Capco
 const DEFEAT = `Head-and-shoulders BUST portrait of the same person as the reference (preserve their real face, hairstyle, skin tone and outfit), but they have just LOST a brutal fight: face bruised and swollen, blackened puffy eye, split bleeding lip, a trickle of blood down the cheek, sweat-matted hair, dirt smudges, dazed and downcast defeated expression with the head tilted slightly down. Head and shoulders only, centered, filling the frame.
 Background: solid flat chroma-key green (#00B140), completely uniform, no shadows on the background, no floor, no text, no watermark, no border.`;
 
+// gemini's IMAGE_SAFETY filter sometimes rejects DEFEAT (first seen: cat,
+// 2026-07-04) — this softer variant is the automatic fallback so the batch
+// still gets a usable loser portrait instead of aborting.
+const DEFEAT_SOFT = `Head-and-shoulders BUST portrait of the same person as the reference (preserve their real face, hairstyle, skin tone and outfit), but they have just lost a cartoon martial-arts match: exhausted and dazed, comic swirl of dizziness, messy sweat-matted hair, a small bruise on the cheek, dirt smudges, defeated downcast expression with the head tilted slightly down. No blood. Head and shoulders only, centered, filling the frame.
+Background: solid flat chroma-key green (#00B140), completely uniform, no shadows on the background, no floor, no text, no watermark, no border.`;
+
 const FLAVOR = {
   catherine: `Character flavor: "The Chef de Guerre" — a warrior chef. She holds a wooden bo staff in a ready grip and wears a chef's apron over her outfit with a bandolier of kitchen knives across the chest. Her small scruffy dog Jazzper stands alert at her feet, also facing right.`,
   // glyphs must be AMBER, never green — green-on-green dies in the chroma key
@@ -39,12 +45,33 @@ const FLAVOR = {
   gene: `Character flavor: "Prompt Injection" — an AI-startup hacker. Keep his outfit from the photo; add subtle AR glasses with a faint HUD glow and glitchy digital pixel artifacts trailing from one open hand.`,
   kirby: `Character flavor: "Firebreather" — an extremely flexible, acrobatic fire-breathing yogi. Barefoot in fitted athletic yoga wear, lithe and limber, with a smug confident smile. She holds NO teacup and has NOTHING in her mouth (no cup, no match, no cigarette) — instead a faint orange ember heat-shimmer flickers at her lips. Poised, playful, dangerous.`,
   marzipan: `Character flavor: "Photosynthesizer" — a dreadlocked vegan biologist druid. Keep the long dreads; earth-tone clothes, barefoot, a small seed pouch on the belt, and thin green vines with tiny leaves curling around both forearms.`,
+  // Wave 2 (2026-07-04). Effects stay AMBER/MAGENTA/GOLD/etc — NEVER green
+  // (chroma lesson); wardrobe greens/teals are fine (chromakey, not despill).
+  bodhi: `Character flavor: "The Alignment" — a Thai-bodywork master grappler. Keep the mustard-yellow parka with fur-trimmed hood worn open over the tan tank top, yellow shorts, maroon knit beanie and black high-top sneakers from the photo. Relaxed confident grin, strong open hands ready to grab, faint glowing warm golden-orange zodiac constellations — abstract star-dots joined by thin lines, strictly no letters or words — arcing behind one shoulder (never green).`,
+  cat: `Character flavor: "Wet Paint" — a barefoot painter-dancer trickster. Keep her white sundress but splashed with vivid wet ORANGE, MAGENTA and BLUE paint (no green paint), long dark wavy hair in motion, barefoot with a dancer's poise mid-step, one hand flinging an arc of colorful paint droplets.`,
+  chebel: `Character flavor: "The Spirit Deck" — a Brazilian mystic kick-fighter. Keep her brown crop top, oxblood red shorts, strap sandals and long dark hair mid-whip from the photo. One leg chambered for a high kick; her other hand fans out glowing golden tarot cards, a faint translucent PURPLE-GOLD jaguar spirit curling behind her (never green).`,
+  earl: `Character flavor: "The Madd Wikkid" — a psychedelic sound wizard. Keep the enormous silver-grey afro, paisley patterned shirt, grey goatee and heart-shaped sunglasses from the photo. Visible AMBER-ORANGE sine-wave sound ripples radiate from one raised hand (never green), the afro caught mid-groove.`,
+  haidai: `Character flavor: "The Vibration Priest" — a serene Balinese priest counter-fighter. Keep the crisp white shirt, long black skirt and the black-and-white checkered poleng sash tied at the waist, long grey-black hair half-tied. Calm receiving stance with one open palm forward, faint WHITE-GOLD vibration rings emanating from the palm (never green).`,
+  // Tubs (his robot) is deliberately NOT in the canonical — he's a separate
+  // assist entity generated as his own chroma cell (Jazzper pattern), and
+  // overlapping the fighter in the reference hurts frame-gen leg anatomy.
+  rapha: `Character flavor: "The TabBastard" — a laconic toymaker puppet-fighter. Keep the black cap, black t-shirt, camo pants and bare feet from the photo, calm unbothered stare, hands up in a loose practical guard. A long glinting chain of aluminum can pop-tabs swings from his belt. He is ALONE in the frame — no robot, no other figure.`,
+  vanessa: `Character flavor: "The High Priestess" — a Mars high-priestess summoner. Keep her pink-and-teal geometric patterned zip-front dress with the pink center stripe, black sock-sneakers and wild curly hair from the photo. Confident ceremonial stance; three small floating terracotta CLAY figurines (round-headed little idols) orbit one raised hand with a faint SILVER moonlight glow (never green).`,
+  ygor: `Character flavor: "Suave" — a psychedelic projection artist. Keep the worn cap, yellow t-shirt with red leopard print, dark work pants and the vintage film camera on its neck strap from the photo. Playful grin; one open hand projects a beam of RAINBOW light with a small hand-drawn glowing MAGENTA-ORANGE cartoon creature leaping out of it (never green).`,
 };
 
 // optional extra face-shot reference merged into the canonical prompt for
 // sharper facial fidelity (used when a clean head-on face photo exists)
 const FACE = {
   kirby: 'assets/character-inspo/face/kirby.jpg',
+  bodhi: 'assets/character-inspo/face/bodhi.jpg',
+  cat: 'assets/character-inspo/face/cat.jpg',
+  chebel: 'assets/character-inspo/face/chebel.jpg',
+  earl: 'assets/character-inspo/face/earl.jpg',
+  haidai: 'assets/character-inspo/face/haidai.jpg',
+  rapha: 'assets/character-inspo/face/rapha.jpg',
+  vanessa: 'assets/character-inspo/face/vanessa.jpg',
+  ygor: 'assets/character-inspo/face/ygor.jpg',
 };
 
 // approved style-test canon doubles as canonical for the first two fighters
@@ -103,16 +130,28 @@ for (const id of [...Object.keys(REUSE), ...Object.keys(FLAVOR)]) {
   const raw = join(KORAW, `${id}.png`);
   if (!skip(raw, force)) {
     console.log(`ko-portrait ${id} ...`);
-    const prompt = `${DEFEAT}\n${STYLE}`;
     const refs = [canonical, ...(existsSync(inspo) ? [inspo] : [])];
-    const buf = await geminiImage({
-      apiKey: env.GEMINI_API_KEY,
-      model: MODEL,
-      prompt,
-      referencePaths: refs,
-      aspectRatio: '1:1',
-    });
-    saveAsset(raw, buf, prompt);
+    // log-and-skip on failure (pipeline rule: never abort the batch); retry
+    // IMAGE_SAFETY rejections once with the bloodless fallback prompt
+    let done = false;
+    for (const variant of [DEFEAT, DEFEAT_SOFT]) {
+      const prompt = `${variant}\n${STYLE}`;
+      try {
+        const buf = await geminiImage({
+          apiKey: env.GEMINI_API_KEY,
+          model: MODEL,
+          prompt,
+          referencePaths: refs,
+          aspectRatio: '1:1',
+        });
+        saveAsset(raw, buf, prompt);
+        done = true;
+        break;
+      } catch (err) {
+        console.warn(`  ko-portrait ${id} rejected (${variant === DEFEAT ? 'gory' : 'soft'} variant): ${String(err.message).slice(0, 120)}`);
+      }
+    }
+    if (!done) console.warn(`  ko-portrait ${id} SKIPPED — rerun later or hand-make`);
   }
   const out = join(PORTRAITS, `${id}-ko.png`);
   if (existsSync(raw) && !skip(out, force)) {

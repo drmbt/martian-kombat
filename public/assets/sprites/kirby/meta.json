@@ -62,6 +62,9 @@
     "cartwheel-recovery",
     "throw-startup",
     "throw-active",
-    "throw-recovery"
+    "throw-recovery",
+    "cat-scratch-startup",
+    "cat-scratch-active",
+    "cat-scratch-recovery"
   ]
 }

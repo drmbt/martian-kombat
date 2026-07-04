@@ -9,6 +9,7 @@
     "Jazzper had you. I just watched.",
     "I'm done with you. Jazzper gets the scraps."
   ],
+  "spriteOffsetY": -8,
   "health": 1000,
   "walkSpeed": 4.7,
   "backSpeed": 3.5,

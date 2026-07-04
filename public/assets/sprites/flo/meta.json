@@ -2,7 +2,7 @@
   "cellW": 288,
   "cellH": 384,
   "cols": 8,
-  "rows": 8,
+  "rows": 9,
   "frames": [
     "idle-a",
     "idle-b",
@@ -65,6 +65,9 @@
     "sudo-kill-recovery",
     "throw-startup",
     "throw-active",
-    "throw-recovery"
+    "throw-recovery",
+    "blunt-puff-startup",
+    "blunt-puff-active",
+    "blunt-puff-recovery"
   ]
 }
