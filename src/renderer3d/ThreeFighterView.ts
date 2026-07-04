@@ -198,6 +198,7 @@ export class ThreeFighterView {
   private skeleton: THREE.SkeletonHelper | null = null;
   private bones: THREE.Bone[] = [];
   private modelBaseY = 0;
+  private modelScale = 1;
   private v = new THREE.Vector3();
   private materials: THREE.MeshStandardMaterial[] = [];
   private flashUntil = -1;
@@ -282,6 +283,7 @@ export class ThreeFighterView {
     const scale = (this.def.hurtStand.h * WORLD_SCALE) / (rawH || 1);
     const wrapper = new THREE.Group();
     wrapper.scale.setScalar(scale);
+    this.modelScale = scale;
     model.position.y -= box.min.y; // foot contact at local origin
     wrapper.add(model);
 
@@ -343,9 +345,12 @@ export class ThreeFighterView {
     this.group.position.set(x, y, 0);
 
     if (this.modelWrapper && this.player) {
-      // our Blender FBX->GLB export lands the model facing +X (verified
-      // empirically via spawn screenshot) — 0 for right, 180 for left
-      this.modelWrapper.rotation.y = f.facing === 1 ? 0 : Math.PI;
+      // facing: MIRROR across the lane plane instead of rotating 180 — the
+      // rotation showed P2's BACK for side-oriented clips; the mirror shows
+      // every animation properly for both sides (2D sprite-flip convention:
+      // lead hand toward the opponent). three handles negative-determinant
+      // winding, so skinned meshes survive scale.x = -1.
+      this.modelWrapper.scale.set(this.modelScale * f.facing, this.modelScale, this.modelScale);
       this.player.update(tick, f, this.def, ctx);
       this.snapFeetToGround(f);
       this.applyFlash(tick);

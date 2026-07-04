@@ -14,9 +14,13 @@ const COLORS = {
   body: 0xffffff,
   startup: 0xffc53d,
   hit: 0xef4444,
+  /** active frames AFTER the move already connected (hasHit) — spent */
+  spent: 0x7f3a4a,
   recovery: 0x9ca3af,
   projectile: 0xfacc15,
   throw: 0xa855f7,
+  /** hitbox ∩ hurtbox overlap — the actual region damage applies to */
+  impact: 0xffffff,
 } as const;
 type BoxKind = keyof typeof COLORS;
 
@@ -42,7 +46,8 @@ export class ThreeHitboxDebug {
         fill: new THREE.MeshBasicMaterial({
           color,
           transparent: true,
-          opacity: 0.18,
+          // the impact overlap is the payload — render it hot
+          opacity: kind === 'impact' ? 0.55 : 0.18,
           depthWrite: false,
         }),
         line: new THREE.LineBasicMaterial({ color }),
@@ -62,22 +67,43 @@ export class ThreeHitboxDebug {
     if (!this.group.visible) return;
     this.used = 0;
 
-    for (const slot of [0, 1] as const) {
+    // hurt rects first — attack passes below overlap-test against them to
+    // show WHERE damage applies (2D F1 parity, but volumetric)
+    const hurtRects = [0, 1].map((slot) => {
       const f = state.fighters[slot];
       const def = defs[f.charId];
       const crouched =
         f.action.kind === 'crouch' ||
         (f.action.kind === 'attack' && f.action.moveId?.startsWith('c'));
-      this.place('hurt', worldBox(f, crouched ? def.hurtCrouch : def.hurtStand));
+      return worldBox(f, crouched ? def.hurtCrouch : def.hurtStand);
+    });
+
+    for (const slot of [0, 1] as const) {
+      const f = state.fighters[slot];
+      const def = defs[f.charId];
+      this.place('hurt', hurtRects[slot]);
       this.place('body', worldBox(f, def.bodyBox));
 
       const a = f.action;
       if ((a.kind === 'attack' || a.kind === 'airAttack') && a.moveId) {
         const m = resolveMove(def.moves[a.moveId], a.strength);
         if (m.hitbox) {
+          const active = a.frame >= m.startup && a.frame < m.startup + m.active;
           const kind: BoxKind =
-            a.frame < m.startup ? 'startup' : a.frame < m.startup + m.active ? 'hit' : 'recovery';
-          this.place(kind, worldBox(f, m.hitbox));
+            a.frame < m.startup ? 'startup' : active ? (a.hasHit ? 'spent' : 'hit') : 'recovery';
+          const hb = worldBox(f, m.hitbox);
+          this.place(kind, hb);
+          // the money shot: live hitbox ∩ opponent hurtbox = damage region
+          if (active) {
+            const opp = hurtRects[slot === 0 ? 1 : 0];
+            const ix = {
+              l: Math.max(hb.l, opp.l),
+              r: Math.min(hb.r, opp.r),
+              t: Math.max(hb.t, opp.t),
+              b: Math.min(hb.b, opp.b),
+            };
+            if (ix.l < ix.r && ix.t < ix.b) this.place('impact', ix);
+          }
         }
         if (m.grab && a.frame >= m.startup && a.frame < m.startup + m.active) {
           const front = f.facing === 1 ? f.x : f.x - m.grab.range;
