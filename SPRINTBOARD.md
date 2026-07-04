@@ -638,6 +638,14 @@ review — chains/cancels/scaling promoted to Sprint 19)
       motion-clip frames; the biggest visual-quality lever we have
 
 ### Icebox (do not start)
+- **Attract-mode gag reels (3D)**: occasionally, instead of a demo fight, the
+  attract rotation holds on a stage with one or two fighters doing weird
+  bits for a little while — Thriller-style dance, taunts, yawning under a
+  street lamp — then rolls back into the normal demo. Mixamo has full dance
+  clips (Thriller Part 1-4, etc.); the 3D clip pipeline + renderer-side
+  gesture overrides (intro/taunt pattern) already cover the plumbing: drop
+  clips into the manifest, add an attract scheduler that picks fight vs gag.
+
 *(new characters, super meter, and the bonus stage PROMOTED 2026-07-03 to
 the Long-term RFEs above)* · stage
 interactables · rage meter + ENOUGH., armored/vault dashes, backdash
