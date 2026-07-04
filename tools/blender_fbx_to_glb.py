@@ -70,11 +70,15 @@ def vertical_channel(arm, hips_name):
 
 
 def remap_bone_paths(action, rig_bones):
-    """Point fcurves at the rig's bone names when only the prefix differs."""
+    """Point fcurves at the rig's bone names when only the prefix differs.
+    Curves for bones the rig simply doesn't have (e.g. Mixamo pinkies on a
+    four-fingered Tripo rig) are REMOVED — they'd only spam Blender warnings
+    and ship dead channels in the GLB."""
     suffix = {}
     for b in rig_bones:
         suffix[b.split(':')[-1].lower()] = b
     missing = set()
+    doomed = []
     for fc in action.fcurves:
         m = BONE_RE.search(fc.data_path)
         if not m:
@@ -87,6 +91,9 @@ def remap_bone_paths(action, rig_bones):
             fc.data_path = fc.data_path.replace(f'pose.bones["{name}"]', f'pose.bones["{alt}"]')
         else:
             missing.add(name)
+            doomed.append(fc)
+    for fc in doomed:
+        action.fcurves.remove(fc)
     return sorted(missing)
 
 
