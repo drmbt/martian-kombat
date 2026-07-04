@@ -52,7 +52,8 @@ const BASE_CLIPS = {
   'taunt#2': { file: 'Yawn.fbx' },
   'taunt#3': { file: 'Charge.fbx' },
   'attack-generic': { file: 'Punching.fbx' },
-  'attack-air': { file: 'Mutant Jump Attack.fbx', stripY: true },
+  'attack-air': { file: 'Flying Bicycle Kick.fbx', stripY: true },
+  'attack-air#2': { file: 'Mutant Jump Attack.fbx', stripY: true },
   'attack/lp': { file: 'Lead Jab.fbx' },
   'attack/lp#2': { file: 'Lead Jab (2).fbx' },
   'attack/lp#3': { file: 'Lead Jab (3).fbx' },
@@ -60,13 +61,12 @@ const BASE_CLIPS = {
   'attack/mp#2': { file: 'Jab Cross.fbx' },
   'attack/hp': { file: 'Illegal Elbow Punch.fbx' },
   'attack/hp#2': { file: 'Body Jab Cross.fbx' },
-  // kicks: library has no true kick clips yet — knee covers all three (leg
-  // strikes beat arm-punches on K buttons). Swap when these Mixamo clips
-  // land in animations/kicks/: "Kicking" (mk), "Roundhouse Kick" (hk),
-  // "Leg Sweep" (crouch kicks), "Mma Kick".
   'attack/lk': { file: 'Illegal Knee.fbx' },
-  'attack/mk': { file: 'Kicking.fbx' },
+  'attack/lk#2': { file: 'Mma Kick (1).fbx' },
+  'attack/mk': { file: 'Mma Kick.fbx' },
+  'attack/mk#2': { file: 'Mma Kick (2).fbx' },
   'attack/hk': { file: 'Roundhouse Kick.fbx' },
+  'attack/hk#2': { file: 'Inside Crescent Kick.fbx' },
   'attack/throw': { file: 'Illegal Headbutt.fbx' },
 };
 
@@ -106,7 +106,8 @@ export const MESHES = {
       'attack/backbend-guillotine': { file: 'Back Flip To Uppercut.fbx', stripY: true },
       'attack/volga-piledriver': { file: 'Illegal Headbutt.fbx' },
       'attack/braid-lariat': { file: 'Hook Punch.fbx' },
-      'attack/spinning-star-kick': { file: 'Mutant Jump Attack.fbx', stripY: true },
+      'attack/spinning-star-kick': { file: 'Hurricane Kick.fbx', stripY: true },
+      'attack/spinning-star-kick#2': { file: 'Hurricane Kick (1).fbx', stripY: true },
     },
   },
 };

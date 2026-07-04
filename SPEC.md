@@ -1,4 +1,4 @@
-# SPEC — 3D renderer spike
+# SPEC — spikes: 3D renderer + netplay
 
 Source doc: `docs/THREE_D_RENDERER_SPIKE.md` (full prose detail: anim map, lighting, model contract).
 Branch: `spike/3d-renderer`.
@@ -6,6 +6,8 @@ Branch: `spike/3d-renderer`.
 ## §G
 
 Prove Three.js WebGPU presentation path beside 2D game. `src/engine/` keeps owning all fight logic; 3D = presentation only.
+
+Netplay spike: 2-player online versus over WebRTC. Netcode written once (session layer) — ∀ renderers (2D FightScene, 3D FightScene3D, future) inherit w/o duplication.
 
 ## §C
 
@@ -20,6 +22,17 @@ Prove Three.js WebGPU presentation path beside 2D game. `src/engine/` keeps owni
 - `?` raw FBX under `public/` vs repo convention (raw → outside `public/`, only game-ready committed to `public/assets`). User placed — flag, not moved.
 - Determinism sacred: ⊥ Math.random / wall-clock / render state in `src/engine/`.
 
+Netplay:
+
+- Netcode ∈ `src/net/` + `src/session/` — zero Phaser imports, vitest-able. Scenes ⊥ contain netcode.
+- Model: GGPO-style rollback (proper arcade netcode). Predict remote input = repeat last received. Late real input ≠ prediction → restore snapshot @ divergence tick, re-sim to head, same frame. Small local input delay (D=1–2, configurable) shrinks rollback frequency. Stall only when rollback window W (~10 ticks) exceeded.
+- Snapshots ∈ session layer (`structuredClone` ring buffer, W deep) — engine stays pure, ⊥ snapshot code in `src/engine/`.
+- Rollback perf ! budgeted: worst case = W re-steps + 1 snapshot per frame. `step` is cheap; ! measure, < 2ms mid laptop else shrink W.
+- Transport: WebRTC DataChannel. Signaling: peerjs cloud broker (room codes, zero infra) — DECIDED 2026-07-04. Self-hosted peer-server = later option, ⊥ spike scope.
+- Engine gains pure helpers only (`unpackInput`, `hashState`) — `step` signature untouched, still sync pure fn.
+- Cross-browser float determinism: engine ⊥ impl-varying Math ops (trig/pow) — audit in T35, `?` currently clean.
+- Local 2D versus stays default path. Netplay behind menu "ONLINE" entry + `?dev=net` dev route.
+
 ## §I
 
 - url: `?dev=3d` → scene `Fight3D` {p1:'vincent', p2:'yulia', stage:'chiba-roof', cpu:true} via `random3dFight()` in `src/devLaunch.ts`
@@ -29,6 +42,14 @@ Prove Three.js WebGPU presentation path beside 2D game. `src/engine/` keeps owni
 - asset-src: `public/assets/meshes/vincent/` → rig FBX + `animations/*.fbx` + `animations/Action Adventure Pack.zip` (22 more clips, unzip before T14) — input to T14 conversion, ⊥ runtime-loaded
 - data: char JSON optional `render3d?: {file, height?, clips?}` — add only after first GLB proves contract
 - coords: `WORLD_SCALE = 0.01` m/px; `Three X = (engineX - STAGE_W/2) * WORLD_SCALE`; `Three Y = (FLOOR_Y - engineY) * WORLD_SCALE`; combat lane Z=0; engine constants STAGE_W=960 STAGE_H=540 FLOOR_Y=460 STAGE_MIN_X=50 STAGE_MAX_X=910
+
+Netplay:
+
+- files: `src/session/FightSession.ts` (shared loop driver, local impl), `src/session/NetSession.ts` (lockstep impl), `src/net/transport.ts` (iface + `LoopbackTransport`), `src/net/webrtc.ts`, `src/scenes/LobbyScene.ts`
+- url: `?dev=net` → LobbyScene direct
+- menu: "ONLINE" → LobbyScene. Host: show room code + copy btn. Join: code input. Each side picks own char (reuse select-screen assets). Host = slot 0 (P1).
+- dep: `peerjs` (cloud broker signaling)
+- wire msgs (JSON over DataChannel, packed-number inputs): `{t:'hello', proto, charHash, charId, name}` \| `{t:'start', rules, stage, chars}` \| `{t:'input', tick, frames:[…last-8 packed]}` \| `{t:'hash', tick, h}` \| `{t:'bye', reason}`
 
 ## §V
 
@@ -47,6 +68,13 @@ V12: contract clip set + fallback chain defined once (data map, ⊥ scattered if
 V14: visual ground = engine ground, enforced not hoped. Stage GLB `Floor` group top surface auto-shifted to world Y=0 (`FLOOR_Y`) on load. Grounded fighters: lowest skeleton bone snapped to fighter ground per frame (clip hip-height drift ⊥ float, ⊥ poke-through). Airborne kinds (air/airAttack/airHit): no snap — engine owns arc.
 V15: presentation parity w/o asset duplication. 3D reuses: `play`/`playVoice` (BootScene), `playMusic` (audio/music.ts), portrait pngs (`assets/portraits/`), spark pngs (`assets/vfx/`), per-move overlay pngs (`vfx-<char>-<move>`), projectile pngs (`assets/sprites/<id>/projectile*.png`). Event detection = pure `diffTick` in `src/presentation/` (vitest) — 2D FightScene migrates onto it post-Sprint-19, ⊥ touch now (V7).
 V16: gore greenlit (legal ✓). Blood spray per hit: direction = knockback dir (attacker facing), volume ∝ damage; KO/heavy → gush. Renderer-side only; tick-hashed seeds, ⊥ engine RNG.
+V17: exactly one fight-loop driver (`FightSession`): accumulator, input gather (KeyboardSource/CpuDriver/remote), `step` call, koSlow pacing ∈ session — scenes (2D & 3D) ⊥ own step loops.
+V18: session API renderer-agnostic: scene feeds deltaMs + local `InputFrame`, reads state + tick count. Net vs local = session impl swap; scene code identical.
+V19: lockstep: tick T steps only when both inputs for T known. Remote gap → stall + HUD indicator, ⊥ guess/predict (spike; rollback relaxes later behind same API).
+V20: desync ⊥ silent: `hashState` exchanged every 60 ticks; mismatch → halt match, loud overlay, log both hashes + tick.
+V21: handshake ! verify {proto version, char-data hash} before start; mismatch → refuse w/ shown reason.
+V22: net input = packed number (`packInput` format) + tick id; ⊥ InputFrame objects on wire. ∀ input packets carry last-8 redundancy.
+V23: online: pause ⊥ stops sim (overlay only); disconnect → timeout → forfeit prompt.
 V13: anim transitions crossfade, ⊥ pose-snap. Clip classes in `clipContract.ts`: loop (phase = frame/60 % dur, walk timeScale ∝ walkSpeed), window (attacks: timeScale fits startup+active+recovery, optional `impactNorm` warp keeps impact on active frames), oneshot (natural speed, clamp). Pair-class fade table (ticks) data-driven. ∀ weights/times = fn(tick state) — mixer ⊥ free-run (`mixer.update(0)`), renderer-side transition record OK, engine untouched.
 
 ## §T
@@ -87,6 +115,16 @@ T31|x|uppercut: `Uppercut.fbx` arrived → `attack/rising-glyph` remapped (strip
 
 T32|x|taunt button (T): renderer-side gesture override while idle, ⊥ engine change; variant shuffle system (`name#N` clips, tick-hash latch per action instance) spreads Lead Jab×3/Hook×2/Elbow×2, reaction flavors, taunts×3|V1,V12
 T33|x|dash stocks: engine `dashStocks`/`dashRegen` (2 stocks, 150-tick regen) gate the existing double-tap impulse + 4 vitests; HUD ◆ pips w/ recharge fade; dash-forward/back clips read off vx|V1,V15
+T34|.|extract `FightSession` (local impl): accumulator, KeyboardSource/CpuDriver gather, `step`, koSlow pacing; FightScene + FightScene3D consume it; behavior unchanged (executes T13 decision)|V17,V18
+T35|.|engine pure helpers: `unpackInput(n)` + `hashState(s)` (FNV over numeric core: tick, phase, fighters x/y/vx/vy/health/action.kind+frame, wins, timer, projectiles) + vitests; audit engine for impl-varying Math ops|V20
+T36|.|`src/net/transport.ts`: Transport iface (send/onMessage/onStatus) + `LoopbackTransport` w/ latency+jitter sim + vitest|V18
+T37|.|`NetSession` lockstep: input delay D=3, last-8 redundant inputs per packet, stall on gap, hash exchange every 60 ticks, desync halt; vitest via loopback pair|V19,V20,V22
+T38|.|WebRTC transport `src/net/webrtc.ts`: host/join, DataChannel wiring, signaling per §C decision|V18
+T39|.|`LobbyScene`: host → room code display + copy; join → code entry; per-side char pick; ready → hello/start handshake → launch Fight w/ NetSession|V21
+T40|.|scenes accept injected session; online: pause = overlay only, disconnect → forfeit flow, rematch handshake|V23,V7
+T41|.|net HUD: ping ms, stall count, delay D|V20
+T42|.|desync harness: two full sessions over loopback, inject forced divergence, assert detect ≤ 60 ticks|V20
+T43|.|perf audit: netplay adds ≈0 frame cost on mid laptop; 3D route works w/ NetSession unmodified (proof of V18)|V8,V18
 ## §B
 
 id|date|cause|fix

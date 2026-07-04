@@ -49,7 +49,7 @@
   },
   {
    "name": "dash-forward#2",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Medium Step Forward.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/walk/Medium Step Forward.fbx",
    "frames": 28,
    "seconds": 0.933,
    "rootStripped": [
@@ -322,7 +322,7 @@
   },
   {
    "name": "dazed",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Stunned.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/knockout/Stunned.fbx",
    "frames": 49,
    "seconds": 1.633,
    "rootStripped": [
@@ -412,6 +412,17 @@
   },
   {
    "name": "attack-air",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/kicks/Flying Bicycle Kick.fbx",
+   "frames": 16,
+   "seconds": 0.533,
+   "rootStripped": [
+    "X",
+    "Yv",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack-air#2",
    "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Mutant Jump Attack.fbx",
    "frames": 74,
    "seconds": 2.467,
@@ -493,9 +504,59 @@
   },
   {
    "name": "attack/lk",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Illegal Knee.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/kicks/Illegal Knee.fbx",
    "frames": 68,
    "seconds": 2.267,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/lk#2",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/kicks/Mma Kick (1).fbx",
+   "frames": 38,
+   "seconds": 1.267,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/mk",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/kicks/Mma Kick.fbx",
+   "frames": 37,
+   "seconds": 1.233,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/mk#2",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/kicks/Mma Kick (2).fbx",
+   "frames": 35,
+   "seconds": 1.167,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/hk",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/kicks/Roundhouse Kick.fbx",
+   "frames": 57,
+   "seconds": 1.9,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/hk#2",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/kicks/Inside Crescent Kick.fbx",
+   "frames": 54,
+   "seconds": 1.8,
    "rootStripped": [
     "X",
     "Z"
@@ -555,9 +616,20 @@
   },
   {
    "name": "attack/spinning-star-kick",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Mutant Jump Attack.fbx",
-   "frames": 74,
-   "seconds": 2.467,
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/kicks/Hurricane Kick.fbx",
+   "frames": 43,
+   "seconds": 1.433,
+   "rootStripped": [
+    "X",
+    "Yv",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/spinning-star-kick#2",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/kicks/Hurricane Kick (1).fbx",
+   "frames": 43,
+   "seconds": 1.433,
    "rootStripped": [
     "X",
     "Yv",
@@ -618,6 +690,8 @@
    "attack/mp",
    "attack/hp",
    "attack/lk",
+   "attack/mk",
+   "attack/hk",
    "attack/cossack-spiral",
    "attack/backbend-guillotine",
    "attack/volga-piledriver",
@@ -627,14 +701,12 @@
   ],
   "fallback": [
    "block-crouch -> block-stand",
-   "attack/mk -> attack-generic",
-   "attack/hk -> attack-generic",
    "attack/clp -> attack/lp",
    "attack/cmp -> attack/mp",
    "attack/chp -> attack/hp",
    "attack/clk -> attack/lk",
-   "attack/cmk -> attack-generic",
-   "attack/chk -> attack-generic",
+   "attack/cmk -> attack/mk",
+   "attack/chk -> attack/hk",
    "attack/jlp -> attack-air",
    "attack/jmp -> attack-air",
    "attack/jhp -> attack-air",
@@ -644,8 +716,5 @@
   ],
   "missing": []
  },
- "missingSources": [
-  "attack/mk <- Kicking.fbx",
-  "attack/hk <- Roundhouse Kick.fbx"
- ]
+ "missingSources": []
 }
