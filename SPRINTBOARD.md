@@ -743,6 +743,14 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-04 · data+assets · win-quote polish + Freeman crouch raw** — tightened
+  SFII-style victory taunts for **Chebel, Flo, Gene, Kirby, Marzipan** (punchier
+  rewrites; Flo's German de-unicoded to `scheisse`; Gene dropped one weak line),
+  and committed the updated `freeman/04-crouch` raw frame (already baked into the
+  packed sheet). Also lands two prior same-day commits that shipped without a
+  changelog line: **`43631ef` — repack Freeman sprite sheet** (re-keyed/re-tiled
+  from the existing 62 raw frames, no new art) and **`0702ad0` — Marzipan male
+  voice** (parallel session). *(Claude)*
 - **2026-07-04 · data+tools+assets+docs+scenes · Wave 2 chars Chebel + Ygor
   shipped (+ bundled parallel select-screen redesign)** — added **Chebel**
   ("The Spirit Deck", rushdown+summon, stage `mimos`) and **Ygor** ("Suave",

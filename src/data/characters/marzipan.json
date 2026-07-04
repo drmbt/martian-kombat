@@ -4,11 +4,11 @@
   "color": "#7fbf5f",
   "stage": "mars",
   "winQuotes": [
-    "Everything composts eventually. You just went first.",
+    "Everything composts eventually. Now it's your turn.",
     "I don't fight. I cultivate. You were the weeds.",
-    "Rooted, grounded, and still standing. Namaste.",
+    "Your roots were too shallow. Now you're fertilizer.",
     "I hope you'll still collaborate with me.",
-    "Cyanobacteria invented oxygen. I just invented your defeat."
+    "Cyanobacteria invented oxygen. I invented your defeat."
   ],
   "fatality": {
     "id": "compost",
