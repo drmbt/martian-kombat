@@ -54,7 +54,13 @@ const PROJ_SIZE: Record<string, number> = {
   hallucination: 300,
   'hallucination-burst': 170,
   'rate-limit': 220,
+  'flour-bomb': 210,
+  'thread-of-life': 92,
 };
+// projectiles that depict a grounded figure: engine y is their FEET (spawnY 0,
+// box extends upward), so draw bottom-anchored instead of centered — a
+// centered clone renders half-buried below the floor
+const PROJ_FEET_ANCHORED = new Set(['hallucination', 'hallucination-burst', 'flour-bomb']);
 const LEGACY_BUTTON: Record<string, string> = {
   lp: 'light', mp: 'light', hp: 'heavy', lk: 'light', mk: 'heavy', hk: 'heavy',
 };
@@ -1144,7 +1150,7 @@ export class FightScene extends Phaser.Scene {
         sprite.setVisible(true);
         const h = def.hurtStand.h * 1.32; // art has margin around the body
         sprite.setDisplaySize((h * CELL_W) / CELL_H, h);
-        sprite.setPosition(f.x, f.y + SPRITE_FOOT_OFFSET_Y);
+        sprite.setPosition(f.x, f.y + SPRITE_FOOT_OFFSET_Y + (def.spriteOffsetY ?? 0));
         sprite.setFlipX(f.facing === -1);
         sprite.setRotation(0);
         const frame = this.actionToCell(slot, f);
@@ -1198,7 +1204,11 @@ export class FightScene extends Phaser.Scene {
       if (this.textures.exists(key)) {
         if (img.texture.key !== key) img.setTexture(key);
         const size = PROJ_SIZE[p.moveId] ?? 72;
-        img.setVisible(true).setPosition(p.x, p.y).setDisplaySize(size, size);
+        const feet = PROJ_FEET_ANCHORED.has(p.moveId);
+        img.setOrigin(0.5, feet ? 1 : 0.5);
+        img.setVisible(true)
+          .setPosition(p.x, feet ? p.y + SPRITE_FOOT_OFFSET_Y : p.y)
+          .setDisplaySize(size, size);
         img.setAlpha(p.moveId === 'smokescreen' ? 0.92 : 1);
         if (p.moveId === 'sigil-bolt') {
           img.setRotation(s.tick * 0.15 * (p.vx > 0 ? 1 : -1)); // runes spin

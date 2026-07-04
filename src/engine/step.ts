@@ -17,7 +17,10 @@ import {
 import {
   ACTION_BUFFER_TICKS,
   BOUNCE_VY,
+  CANCEL_WINDOW_TICKS,
   CHARGE_TICKS,
+  COMBO_SCALE_FLOOR,
+  COMBO_SCALE_STEP,
   COUNTER_HITSTOP_BONUS,
   COUNTER_HITSTUN_MULT,
   DASH_REGEN_TICKS,
@@ -73,6 +76,8 @@ function initFighter(charId: string, def: CharacterDef, slot: 0 | 1): FighterSta
     buffered: null,
     dashStocks: DASH_STOCKS,
     dashRegen: 0,
+    comboHits: 0,
+    floatGravity: 0,
   };
 }
 
@@ -224,6 +229,23 @@ function freshStrength(f: FighterState, cls: 'punch' | 'kick'): Strength | null 
   if (freshPress(f, m)) return 'm';
   if (freshPress(f, l)) return 'l';
   return null;
+}
+
+/** Mash trigger (lightning legs): the final press is THIS tick and the input
+ *  buffer holds at least `need` fresh press edges of the class in total —
+ *  any button of the class counts, so drumming lp/mp/hp all feed the mash. */
+function mashedStrength(f: FighterState, cls: 'punch' | 'kick', need: number): Strength | null {
+  const now = freshStrength(f, cls);
+  if (!now) return null;
+  const buf = f.inputBuffer;
+  let edges = 0;
+  for (const bit of STRENGTH_BITS[cls]) {
+    for (let i = 0; i < buf.length; i++) {
+      const prev = i > 0 ? buf[i - 1] : 0;
+      if (buf[i] & bit && !(prev & bit)) edges++;
+    }
+  }
+  return edges >= need ? now : null;
 }
 
 /** 2+ presses of the class landing within a ~5-tick window (practical 3P/3K —
@@ -381,7 +403,13 @@ function pickAttack(
     } else {
       const cls = m.input.button === 'PPP' ? 'punch' : m.input.button === 'KKK' ? 'kick' : m.input.button;
       const combo = m.input.button === 'PPP' || m.input.button === 'KKK';
-      strength = combo ? (comboPress(f, cls) ? 'm' : null) : freshStrength(f, cls);
+      strength = combo
+        ? comboPress(f, cls)
+          ? 'm'
+          : null
+        : m.input.mash
+          ? mashedStrength(f, cls, m.input.mash)
+          : freshStrength(f, cls);
     }
     if (!strength) continue;
     if (m.input.motion && !motionDone(f, m.input.motion)) continue;
@@ -413,6 +441,38 @@ function updateFighter(
 
   switch (a.kind) {
     case 'attack': {
+      // chains & special cancels: once this move has CONTACTED (hit or block —
+      // a.hasHit is set on either; whiffs never cancel), a buffered press may
+      // cut its recovery short inside the cancel window. Chains are data
+      // (`chains` on the move lists legal targets); `cancel: true` normals
+      // may cancel into any motion special (grabs excluded — canceling into
+      // a command grab on a reeling victim would be degenerate).
+      let canceled = false;
+      if (a.hasHit && f.buffered) {
+        const cm = resolveMove(def.moves[a.moveId!], a.strength);
+        if (a.frame <= cm.startup + cm.active + CANCEL_WINDOW_TICKS) {
+          const target = def.moves[f.buffered.id];
+          const isChain = !!target && !!cm.chains?.includes(f.buffered.id);
+          const isSpecialCancel = !!target && !!cm.cancel && !!target.input && !target.grab;
+          if (
+            (isChain || isSpecialCancel) &&
+            // one-fireball rule re-checked at cancel time
+            !(target.projectile && !target.projectile.field && ownsLiveProjectile(s, slot))
+          ) {
+            const res = resolveMove(target, f.buffered.strength);
+            f.action = {
+              kind: 'attack',
+              frame: 0,
+              moveId: f.buffered.id,
+              strength: f.buffered.strength,
+              hasHit: false,
+              invuln: res.invuln ?? 0,
+            };
+            f.buffered = null;
+            canceled = true;
+          }
+        }
+      }
       // early chord upgrade: a lone button that becomes a 2-button chord
       // within the first few frames kara-cancels into the PPP/KKK/LPLK
       // special (nobody can hit two keys on the same 60hz tick).
@@ -422,7 +482,7 @@ function updateFighter(
       const cur = def.moves[a.moveId!];
       const curIsChord =
         cur.input?.button === 'PPP' || cur.input?.button === 'KKK' || cur.input?.button === 'LPLK';
-      if (!curIsChord && a.frame < 4) {
+      if (!canceled && !curIsChord && a.frame < 4) {
         for (const [id, mv] of Object.entries(def.moves)) {
           const btn = mv.input?.button;
           if (btn !== 'PPP' && btn !== 'KKK' && btn !== 'LPLK') continue;
@@ -477,6 +537,16 @@ function updateFighter(
         f.action = { kind: 'air', frame: 0 };
         break;
       }
+      // yoga float: launch high, then drift down under reduced gravity
+      // (cleared on touchdown or on getting hit) — air normals stay live
+      if (m.float && act.frame === m.startup) {
+        f.vy = -m.float.vy;
+        f.vx = f.facing * (m.float.vx ?? 0);
+        f.floatGravity = m.float.gravity;
+        f.y -= 1;
+        f.action = { kind: 'air', frame: 0 };
+        break;
+      }
       // projectiles spawn on the first active frame (fans spawn several)
       if (m.projectile && act.frame === m.startup) {
         const p = m.projectile;
@@ -503,6 +573,7 @@ function updateFighter(
             rehit: p.rehit ?? 0,
             hitCooldown: 0,
             slowFactor: p.slowFactor ?? 0,
+            pull: p.pull ?? false,
           });
         }
       }
@@ -523,10 +594,13 @@ function updateFighter(
     }
     case 'air':
     case 'airHit': {
-      f.vy += def.gravity;
+      // a float only slows a controlled fall — getting hit ends it (applyHit
+      // clears it too, but knockdowns re-enter here as airHit)
+      f.vy += a.kind === 'air' && f.floatGravity > 0 ? f.floatGravity : def.gravity;
       f.y += f.vy;
       f.x += f.vx;
       if (f.y >= FLOOR_Y) {
+        f.floatGravity = 0;
         if (a.kind === 'airHit' && !a.bounced) {
           // ground-impact bounce: pop back off the floor once (invulnerable —
           // you're already down), then the next contact settles for real
@@ -552,11 +626,12 @@ function updateFighter(
     case 'airAttack': {
       const m = def.moves[a.moveId!];
       a.frame++;
-      f.vy += def.gravity;
+      f.vy += f.floatGravity > 0 ? f.floatGravity : def.gravity;
       f.y += f.vy;
       f.x += f.vx;
       if (f.y >= FLOOR_Y) {
         // landing interrupts the air normal — a whiff eats extra recovery
+        f.floatGravity = 0;
         f.y = FLOOR_Y;
         f.vy = 0;
         f.vx = 0;
@@ -733,6 +808,15 @@ function isCounterhit(d: FighterState, defs: Defs): boolean {
 /** lights are chipless; everything meatier shaves 10% through block */
 const CHIPLESS = new Set(['lp', 'lk', 'clp', 'clk', 'jlp', 'jlk']);
 
+/** Combo damage scaling: hits 1-2 land full, each later hit in the same combo
+ *  loses COMBO_SCALE_STEP% (cumulative) down to the COMBO_SCALE_FLOOR%.
+ *  Integer math keeps it deterministic; a connecting hit always deals ≥1. */
+function scaleForCombo(damage: number, comboHits: number): number {
+  if (damage <= 0) return damage;
+  const pct = Math.max(COMBO_SCALE_FLOOR, 100 - COMBO_SCALE_STEP * Math.max(0, comboHits - 2));
+  return Math.max(1, Math.floor((damage * pct) / 100));
+}
+
 /** Freeze frames for a connecting move: specials hit hardest, otherwise the
  *  button strength embedded in the move id ('lp'/'cmk'/'jhk') decides. */
 function hitstopFor(moveId: string, m: MoveDef): number {
@@ -766,12 +850,19 @@ function applyHit(
     d.vx = attackerFacing * hit.knockback * 0.8;
     if (hit.chip > 0) d.health = Math.max(1, d.health - hit.chip); // chip can't KO
   } else {
-    d.health = Math.max(0, d.health - hit.damage);
+    // combo bookkeeping: a hit on an already-reeling victim extends the combo,
+    // anything else starts a fresh one; later hits scale down (stun scales
+    // with them so long chains can't also be free dizzies)
+    const inCombo = d.action.kind === 'hitstun' || d.action.kind === 'airHit';
+    d.comboHits = inCombo ? d.comboHits + 1 : 1;
+    const damage = scaleForCombo(hit.damage, d.comboHits);
+    d.health = Math.max(0, d.health - damage);
     // stun feeds on clean hits only; the punish that lands on a dizzied
     // fighter ends the dizzy instead of stacking toward the next one
     if (d.action.kind === 'dazed') d.stun = 0;
-    else d.stun += hit.damage;
+    else d.stun += damage;
     const counter = hit.counter || undefined;
+    d.floatGravity = 0; // a hit knocks the float out of them
     if (!grounded(d)) {
       d.action = { kind: 'airHit', frame: 0, counter };
       d.vx = attackerFacing * hit.knockback * 0.6;
@@ -805,8 +896,11 @@ function resolveAttacks(
     const f = s.fighters[slot];
     const a = f.action;
     if (frozen[slot]) continue; // a frozen attacker's hitbox is inert this tick
-    if ((a.kind !== 'attack' && a.kind !== 'airAttack') || a.hasHit) continue;
+    if (a.kind !== 'attack' && a.kind !== 'airAttack') continue;
     const m = resolveMove(defs[f.charId].moves[a.moveId!], a.strength);
+    // one hit per activation — unless the move rehits (lightning legs):
+    // the same activation may connect again every `rehit` ticks
+    if (a.hasHit && !(m.rehit && a.frame - (a.lastHitFrame ?? 0) >= m.rehit)) continue;
     if (a.frame < m.startup || a.frame >= m.startup + m.active) continue;
 
     const defSlot = slot === 0 ? 1 : 0;
@@ -867,6 +961,7 @@ function resolveAttacks(
     if (!m.hitbox) continue;
     if (overlaps(worldBox(f, m.hitbox), defenderHurtRect(d, defs[d.charId]))) {
       a.hasHit = true;
+      a.lastHitFrame = a.frame;
       applyHit(s, defSlot, f.facing, {
         damage: m.damage,
         hitstun: m.hitstun,
@@ -997,6 +1092,15 @@ function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputF
         counter: isCounterhit(d, defs),
         chip: Math.floor(p.damage * 0.1),
       }, inputs[defSlot]);
+      // "get over here": an UNBLOCKED hit reels the victim in — dropped at
+      // the owner's feet mid-launch, the knockdown lands them right there
+      // (a blocked spear is plain blockstun + pushback, no drag)
+      if (p.pull && d.action.kind !== 'blockstun') {
+        const owner = s.fighters[p.owner];
+        const side = d.x >= owner.x ? 1 : -1;
+        d.x = Math.min(STAGE_MAX_X, Math.max(STAGE_MIN_X, owner.x + side * 85));
+        d.vx = 0;
+      }
       // lingering clouds survive their hits and re-hit on a cooldown
       if (p.rehit > 0) p.hitCooldown = p.rehit;
       else dead.add(p);
@@ -1246,6 +1350,10 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
     if (!frozen[slot] && f.stun > 0 && f.action.kind !== 'dazed') {
       f.stun = Math.max(0, f.stun - STUN_DECAY);
     }
+    // the combo drops the moment its victim stops reeling (hitstop pauses the
+    // reel, so a frozen victim keeps the count)
+    const k = f.action.kind;
+    if (k !== 'hitstun' && k !== 'airHit') f.comboHits = 0;
   }
 
   if (!frozen[0]) updateFighter(s, 0, defs[f1.charId], inputs[0]);

@@ -41,6 +41,7 @@ export class BootScene extends Phaser.Scene {
     });
 
     this.load.image('bg-salton', 'assets/backgrounds/salton-shoreline.jpg');
+    this.load.image('ui-world-map', 'assets/ui/world-map.png');
     for (const st of STAGES) {
       this.load.image(`bg-stage-${st.id}`, st.file);
       if (st.layers?.sky) this.load.image(`bg-stage-${st.id}-sky`, st.layers.sky.file);
@@ -55,7 +56,10 @@ export class BootScene extends Phaser.Scene {
       });
       this.load.json(`meta-${id}`, `assets/sprites/${id}/meta.json`);
       this.load.image(`proj-${id}`, `assets/sprites/${id}/projectile.png`);
+      // front-facing head icon — select grid, health-bar mugshots, VS card
       this.load.image(`portrait-${id}`, `assets/portraits/${id}.png`);
+      // side-profile bust — big per-player portrait on the select-screen edges
+      this.load.image(`bust-${id}`, `assets/portraits/${id}-bust.png`);
       // beaten-and-bloodied portrait for the post-match win-quote screen
       this.load.image(`portrait-ko-${id}`, `assets/portraits/${id}-ko.png`);
     }

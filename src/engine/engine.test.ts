@@ -775,7 +775,7 @@ describe('flo: kernel panic kit (traps, fields, charge)', () => {
   });
 });
 
-describe('flo fatality: rm -rf /', () => {
+describe('flo fatality: Burn One', () => {
   it('qcb+P in the finisher fires the fatality even though Smokescreen shares the input', () => {
     const s = initialState('flo', 'yulia', characters);
     s.phase = 'fight';
@@ -793,7 +793,7 @@ describe('flo fatality: rm -rf /', () => {
     step(s, [inp({ left: true }), inp()], characters);
     step(s, [inp({ left: true, hp: true }), inp()], characters);
     expect(s.phase).toBe('fatality');
-    expect(s.fatality).toEqual({ owner: 0, id: 'rm-rf' });
+    expect(s.fatality).toEqual({ owner: 0, id: 'burn-one' });
   });
 });
 
@@ -1512,5 +1512,473 @@ describe('ground-impact bounce (sprint 18)', () => {
       bounced = a.kind === 'airHit' && a.bounced === true;
     }
     expect(bounced).toBe(true);
+  });
+});
+
+describe('cancels & chains (Sprint 19)', () => {
+  /** step until P1's current attack has contacted (hit or block) */
+  function runUntilContact(s: GameState, p2: InputFrame = inp(), max = 30): void {
+    for (let i = 0; i < max && !s.fighters[0].action.hasHit; i++) {
+      step(s, [inp(), p2], characters);
+    }
+    expect(s.fighters[0].action.hasHit).toBe(true);
+  }
+
+  /** true once P1 is in a fresh attack with the given move (a cancel resets
+   *  frame + hasHit, so this can only follow a cancel mid-string) */
+  function inFreshAttack(s: GameState, moveId: string): boolean {
+    const a = s.fighters[0].action;
+    return a.kind === 'attack' && a.moveId === moveId && !a.hasHit;
+  }
+
+  it('a light chains into a light on hit', () => {
+    const s = fresh();
+    closeRange(s);
+    step(s, [inp({ lp: true }), inp()], characters);
+    runUntilContact(s);
+    step(s, [inp({ lp: true }), inp()], characters); // second tap: chain
+    let chained = false;
+    for (let i = 0; i < 8 && !chained; i++) {
+      chained = inFreshAttack(s, 'lp');
+      if (!chained) step(s, [inp(), inp()], characters);
+    }
+    expect(chained).toBe(true);
+    run(s, 20); // both jabs land clean, hits 1-2 unscaled
+    expect(s.fighters[1].health).toBe(characters[P2].health - 2 * characters[P1].moves.lp.damage);
+  });
+
+  it('a light chains on block too', () => {
+    const s = fresh();
+    closeRange(s);
+    const guard = inp({ right: true }); // P2 faces left: back = right
+    step(s, [inp({ lp: true }), guard], characters);
+    runUntilContact(s, guard);
+    step(s, [inp({ lp: true }), guard], characters);
+    let chained = false;
+    for (let i = 0; i < 8 && !chained; i++) {
+      chained = inFreshAttack(s, 'lp');
+      if (!chained) step(s, [inp(), guard], characters);
+    }
+    expect(chained).toBe(true);
+  });
+
+  it('a whiffed light never chains (frame counts through uninterrupted)', () => {
+    const s = fresh(); // full-screen: the jab whiffs
+    step(s, [inp({ lp: true }), inp()], characters);
+    run(s, 2);
+    step(s, [inp({ lp: true }), inp()], characters); // tap during the whiff
+    let lastFrame = s.fighters[0].action.frame;
+    while (s.fighters[0].action.kind === 'attack') {
+      step(s, [inp(), inp()], characters);
+      const a = s.fighters[0].action;
+      if (a.kind === 'attack') {
+        expect(a.frame).toBeGreaterThan(lastFrame); // no reset = no cancel
+        lastFrame = a.frame;
+      }
+    }
+  });
+
+  it('lights do not special-cancel (chains only)', () => {
+    const s = fresh();
+    closeRange(s);
+    step(s, [inp({ lp: true }), inp()], characters);
+    runUntilContact(s);
+    // qcf+P buffered during the jab
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ right: true }), inp()], characters);
+    step(s, [inp({ right: true, lp: true }), inp()], characters);
+    let sawSpecialMidMove = false;
+    for (let i = 0; i < 10; i++) {
+      if (s.fighters[0].action.kind !== 'attack') break;
+      if (s.fighters[0].action.moveId === 'sigil-bolt') sawSpecialMidMove = true;
+      step(s, [inp(), inp()], characters);
+    }
+    expect(sawSpecialMidMove).toBe(false);
+  });
+
+  it('a medium special-cancels into a fireball on hit', () => {
+    const s = fresh();
+    closeRange(s);
+    step(s, [inp({ mp: true }), inp()], characters);
+    runUntilContact(s);
+    fireSpecial(s); // qcf+P during the mp — buffered, then canceled into
+    let canceled = false;
+    for (let i = 0; i < 10 && !canceled; i++) {
+      canceled = s.fighters[0].action.kind === 'attack' && s.fighters[0].action.moveId === 'sigil-bolt';
+      if (!canceled) step(s, [inp(), inp()], characters);
+    }
+    expect(canceled).toBe(true);
+    run(s, 60); // the canceled-into bolt comes out and combos
+    expect(s.fighters[1].health).toBeLessThan(characters[P2].health - characters[P1].moves.mp.damage);
+  });
+
+  it('a medium special-cancels on block', () => {
+    const s = fresh();
+    closeRange(s);
+    const guard = inp({ right: true });
+    step(s, [inp({ mp: true }), guard], characters);
+    runUntilContact(s, guard);
+    step(s, [inp({ down: true }), guard], characters);
+    step(s, [inp({ down: true }), guard], characters);
+    step(s, [inp({ right: true }), guard], characters);
+    step(s, [inp({ right: true, lp: true }), guard], characters);
+    let canceled = false;
+    for (let i = 0; i < 10 && !canceled; i++) {
+      canceled = s.fighters[0].action.kind === 'attack' && s.fighters[0].action.moveId === 'sigil-bolt';
+      if (!canceled) step(s, [inp(), guard], characters);
+    }
+    expect(canceled).toBe(true);
+  });
+
+  it('a whiffed medium never cancels (buffer expires before the move ends)', () => {
+    const s = fresh(); // full-screen whiff
+    step(s, [inp({ mp: true }), inp()], characters);
+    fireSpecial(s); // qcf+P early in the whiff
+    let sawBolt = false;
+    for (let i = 0; i < 45; i++) {
+      if (s.fighters[0].action.moveId === 'sigil-bolt') sawBolt = true;
+      step(s, [inp(), inp()], characters);
+    }
+    expect(sawBolt).toBe(false);
+    expect(s.projectiles.length).toBe(0);
+  });
+});
+
+describe('combo damage scaling (Sprint 19)', () => {
+  /** mash jab: alternate press/release so every other tick is a fresh press —
+   *  chains keep the string true as long as the victim stays reeling */
+  function mash(t: number): InputFrame {
+    return inp({ lp: t % 2 === 0 });
+  }
+
+  it('hits 1-2 land full, later hits scale down 10% per hit', () => {
+    const s = fresh();
+    closeRange(s);
+    const deltas: number[] = [];
+    let hp = s.fighters[1].health;
+    for (let t = 0; t < 90; t++) {
+      step(s, [mash(t), inp()], characters);
+      if (s.fighters[1].health < hp) {
+        deltas.push(hp - s.fighters[1].health);
+        hp = s.fighters[1].health;
+      }
+    }
+    const jab = characters[P1].moves.lp.damage; // 45
+    expect(deltas.length).toBeGreaterThanOrEqual(5);
+    expect(deltas.slice(0, 5)).toEqual([
+      jab,
+      jab,
+      Math.floor(jab * 0.9),
+      Math.floor(jab * 0.8),
+      Math.floor(jab * 0.7),
+    ]);
+  });
+
+  it('scaling floors at 30%', () => {
+    const s = fresh();
+    closeRange(s);
+    // seed a deep combo: victim mid-reel, nine hits already eaten
+    s.fighters[1].action = { kind: 'hitstun', frame: 300 };
+    s.fighters[1].comboHits = 9;
+    const hp = s.fighters[1].health;
+    step(s, [inp({ lp: true }), inp()], characters);
+    run(s, 10);
+    const jab = characters[P1].moves.lp.damage;
+    expect(s.fighters[1].health).toBe(hp - Math.floor(jab * 0.3)); // hit 10: floored
+    expect(s.fighters[1].comboHits).toBe(10);
+  });
+
+  it('dropping the combo resets scaling to full', () => {
+    const s = fresh();
+    closeRange(s);
+    let hp = s.fighters[1].health;
+    let hits = 0;
+    for (let t = 0; t < 90 && hits < 4; t++) {
+      step(s, [mash(t), inp()], characters);
+      if (s.fighters[1].health < hp) {
+        hits++;
+        hp = s.fighters[1].health;
+      }
+    }
+    expect(hits).toBe(4); // a real scaled string happened
+    // let the victim fully recover — the combo drops
+    run(s, 60);
+    expect(s.fighters[1].action.kind).not.toBe('hitstun');
+    closeRange(s);
+    hp = s.fighters[1].health;
+    step(s, [inp({ lp: true }), inp()], characters);
+    run(s, 15);
+    expect(s.fighters[1].health).toBe(hp - characters[P1].moves.lp.damage); // full again
+  });
+
+  it('chained strings stay deterministic', () => {
+    const script = (t: number): [InputFrame, InputFrame] => [
+      inp({
+        lp: t % 2 === 0 && t % 90 < 40,
+        down: t % 90 >= 40 && t % 90 < 46,
+        right: t % 90 >= 46 && t % 90 < 52,
+        mp: t % 90 === 52,
+      }),
+      inp({ left: t % 60 < 20, lk: t % 2 === 1 && t % 70 < 30 }),
+    ];
+    const a = initialState(P1, P2, characters);
+    const b = initialState(P1, P2, characters);
+    a.phase = 'fight';
+    b.phase = 'fight';
+    for (let t = 0; t < 1200; t++) step(a, script(t), characters);
+    for (let t = 0; t < 1200; t++) step(b, script(t), characters);
+    expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+  });
+});
+
+describe('personality specials (Sprint 20)', () => {
+  describe('mash input (Cat Scratch)', () => {
+    it('five quick punch presses trigger the mash special', () => {
+      const s = initialState('kirby', 'yulia', characters);
+      s.phase = 'fight';
+      let saw = false;
+      for (let t = 0; t < 60 && !saw; t++) {
+        step(s, [inp({ lp: t % 2 === 0 }), inp()], characters);
+        saw = s.fighters[0].action.moveId === 'cat-scratch';
+      }
+      expect(saw).toBe(true);
+    });
+
+    it('a single press stays a plain jab', () => {
+      const s = initialState('kirby', 'yulia', characters);
+      s.phase = 'fight';
+      step(s, [inp({ lp: true }), inp()], characters);
+      expect(s.fighters[0].action.moveId).toBe('lp');
+      let saw = false;
+      for (let t = 0; t < 40; t++) {
+        step(s, [inp(), inp()], characters);
+        if (s.fighters[0].action.moveId === 'cat-scratch') saw = true;
+      }
+      expect(saw).toBe(false);
+    });
+  });
+
+  describe('melee rehit (multi-hit activations)', () => {
+    it('one Cat Scratch activation hits several times, scaling as a combo', () => {
+      const s = initialState('kirby', 'yulia', characters);
+      s.phase = 'fight';
+      closeRange(s);
+      s.fighters[0].action = { kind: 'attack', frame: 0, moveId: 'cat-scratch', hasHit: false };
+      const deltas: number[] = [];
+      let hp = s.fighters[1].health;
+      for (let t = 0; t < 90; t++) {
+        step(s, [inp(), inp()], characters);
+        if (s.fighters[1].health < hp) {
+          deltas.push(hp - s.fighters[1].health);
+          hp = s.fighters[1].health;
+        }
+      }
+      const dmg = characters.kirby.moves['cat-scratch'].damage;
+      expect(deltas.length).toBeGreaterThanOrEqual(3); // one press, many hits
+      expect(deltas[0]).toBe(dmg);
+      expect(deltas[2]).toBeLessThan(dmg); // combo scaling kicks in on hit 3
+    });
+
+    it('a rehit move chips through block repeatedly', () => {
+      const s = initialState('kirby', 'yulia', characters);
+      s.phase = 'fight';
+      closeRange(s);
+      s.fighters[0].action = { kind: 'attack', frame: 0, moveId: 'cat-scratch', hasHit: false };
+      const guard = inp({ right: true });
+      let drops = 0;
+      let brokeGuard = false;
+      let hp = s.fighters[1].health;
+      for (let t = 0; t < 90; t++) {
+        step(s, [inp(), guard], characters);
+        if (s.fighters[1].health < hp) {
+          drops++;
+          hp = s.fighters[1].health;
+        }
+        const k = s.fighters[1].action.kind;
+        if (k === 'hitstun' || k === 'airHit') brokeGuard = true;
+      }
+      expect(drops).toBeGreaterThanOrEqual(2); // repeated chip ticks
+      expect(brokeGuard).toBe(false); // the guard held throughout
+    });
+  });
+
+  describe('pull projectile (Vine Spear)', () => {
+    /** P1 marzipan fires vine spear: back, back, forward, forward+P */
+    function spear(s: GameState, p2: InputFrame = inp()): void {
+      step(s, [inp({ left: true }), p2], characters);
+      step(s, [inp({ left: true }), p2], characters);
+      step(s, [inp({ right: true }), p2], characters);
+      step(s, [inp({ right: true, lp: true }), p2], characters);
+    }
+
+    it('an unblocked spear drags the victim to the owner and knocks down', () => {
+      const s = initialState('marzipan', 'yulia', characters);
+      s.phase = 'fight';
+      s.fighters[0].x = 200;
+      s.fighters[1].x = 700;
+      spear(s);
+      expect(s.fighters[0].action.moveId).toBe('vine-spear');
+      run(s, 60);
+      expect(Math.abs(s.fighters[1].x - s.fighters[0].x)).toBeLessThanOrEqual(110);
+      expect(['airHit', 'knockdown', 'getup']).toContain(s.fighters[1].action.kind);
+      expect(s.fighters[1].health).toBeLessThan(characters.yulia.health);
+    });
+
+    it('a blocked spear does not drag', () => {
+      const s = initialState('marzipan', 'yulia', characters);
+      s.phase = 'fight';
+      s.fighters[0].x = 200;
+      s.fighters[1].x = 700;
+      const guard = inp({ right: true }); // P2 faces left: back = right
+      spear(s, guard);
+      run(s, 60, inp(), guard);
+      expect(s.fighters[1].x).toBeGreaterThan(500); // stayed far away
+      expect(s.fighters[1].action.kind).not.toBe('knockdown');
+    });
+  });
+
+  describe('yoga float (slow-fall)', () => {
+    /** P1 freeman floats: down, down, back, back+P (qcb) */
+    function float(s: GameState): void {
+      step(s, [inp({ down: true }), inp()], characters);
+      step(s, [inp({ down: true }), inp()], characters);
+      step(s, [inp({ left: true }), inp()], characters);
+      step(s, [inp({ left: true, lp: true }), inp()], characters);
+    }
+
+    function airTicks(s: GameState, launch: () => void): number {
+      launch();
+      let ticks = 0;
+      // wait for liftoff (startup), then count airborne ticks
+      for (let t = 0; t < 40 && s.fighters[0].action.kind !== 'air'; t++) {
+        step(s, [inp(), inp()], characters);
+      }
+      while (s.fighters[0].y < FLOOR_Y && ticks < 600) {
+        step(s, [inp(), inp()], characters);
+        ticks++;
+      }
+      return ticks;
+    }
+
+    it('floats far longer than a normal jump and lands clean', () => {
+      const a = initialState('freeman', 'yulia', characters);
+      a.phase = 'fight';
+      const floatTicks = airTicks(a, () => float(a));
+      expect(a.fighters[0].floatGravity).toBe(0); // cleared on touchdown
+
+      const b = initialState('freeman', 'yulia', characters);
+      b.phase = 'fight';
+      const jumpTicks = airTicks(b, () => step(b, [inp({ up: true }), inp()], characters));
+      expect(floatTicks).toBeGreaterThan(jumpTicks * 1.5);
+    });
+
+    it('getting hit knocks the float out', () => {
+      const s = initialState('freeman', 'yulia', characters);
+      s.phase = 'fight';
+      closeRange(s);
+      float(s);
+      for (let t = 0; t < 40 && s.fighters[0].action.kind !== 'air'; t++) {
+        step(s, [inp(), inp()], characters);
+      }
+      expect(s.fighters[0].floatGravity).toBeGreaterThan(0);
+      // yulia anti-airs him out of the float
+      let hit = false;
+      for (let t = 0; t < 120 && !hit; t++) {
+        step(s, [inp(), inp({ hp: true })], characters);
+        hit = s.fighters[0].action.kind === 'airHit';
+        step(s, [inp(), inp()], characters);
+        hit = hit || s.fighters[0].action.kind === 'airHit';
+      }
+      expect(hit).toBe(true);
+      expect(s.fighters[0].floatGravity).toBe(0);
+    });
+  });
+
+  describe('matrix teleport', () => {
+    it('vincent reappears behind the opponent', () => {
+      const s = fresh(); // vincent vs yulia
+      s.fighters[0].x = 300;
+      s.fighters[1].x = 600;
+      // qcf+K
+      step(s, [inp({ down: true }), inp()], characters);
+      step(s, [inp({ down: true }), inp()], characters);
+      step(s, [inp({ right: true }), inp()], characters);
+      step(s, [inp({ right: true, lk: true }), inp()], characters);
+      expect(s.fighters[0].action.moveId).toBe('matrix-teleport');
+      run(s, 20);
+      expect(s.fighters[0].x).toBeGreaterThan(s.fighters[1].x); // crossed to the far side
+    });
+  });
+});
+
+describe('cat kit (wet paint)', () => {
+  function freshCat(): GameState {
+    const s = initialState('cat', 'yulia', characters);
+    s.phase = 'fight';
+    s.fighters[0].x = 450;
+    s.fighters[1].x = 600;
+    return s;
+  }
+  // P1 faces right: back = left, forward = right
+  function hcfPunch(s: GameState): void {
+    step(s, [inp({ left: true }), inp()], characters);
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ right: true }), inp()], characters);
+    step(s, [inp({ right: true, lp: true }), inp()], characters);
+  }
+  function qcfPunch(s: GameState): void {
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ right: true }), inp()], characters);
+    step(s, [inp({ right: true, lp: true }), inp()], characters);
+  }
+  function qcbPunch(s: GameState): void {
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ left: true }), inp()], characters);
+    step(s, [inp({ left: true, lp: true }), inp()], characters);
+  }
+
+  it('hcf+P fires D. Catarina, not Flour Bomb (longer motion wins by declaration order)', () => {
+    const s = freshCat();
+    hcfPunch(s);
+    expect(s.fighters[0].action.moveId).toBe('d-catarina');
+  });
+
+  it('qcf+P lays a Flour Bomb slow-field puddle (no-damage field)', () => {
+    const s = freshCat();
+    qcfPunch(s);
+    expect(s.fighters[0].action.moveId).toBe('flour-bomb');
+    run(s, 15);
+    const p = s.projectiles[0];
+    expect(p.moveId).toBe('flour-bomb');
+    expect(p.field).toBe(true);
+    expect(p.slowFactor).toBeGreaterThan(0);
+    expect(p.damage).toBe(0);
+  });
+
+  it('qcb+P lashes Thread of Life — a knockdown projectile that damages', () => {
+    const s = freshCat();
+    s.fighters[1].x = 980; // out of reach so the lash is still airborne when inspected
+    qcbPunch(s);
+    expect(s.fighters[0].action.moveId).toBe('thread-of-life');
+    run(s, 16);
+    const p = s.projectiles[0];
+    expect(p.moveId).toBe('thread-of-life');
+    expect(p.knockdown).toBe(true);
+    expect(p.field).toBe(false);
+    expect(p.damage).toBeGreaterThan(0);
+  });
+
+  it('cat vs cat is deterministic across a scripted string', () => {
+    const script = (t: number): [InputFrame, InputFrame] => [
+      inp({ right: t % 40 < 20, down: t % 30 < 6, lp: t % 17 === 0, mk: t % 23 === 0 }),
+      inp({ left: t % 33 < 15, down: t % 41 < 9, hp: t % 19 === 0 }),
+    ];
+    const a = initialState('cat', 'cat', characters);
+    const b = initialState('cat', 'cat', characters);
+    for (let t = 0; t < 600; t++) step(a, script(t), characters);
+    for (let t = 0; t < 600; t++) step(b, script(t), characters);
+    expect(JSON.stringify(a)).toEqual(JSON.stringify(b));
   });
 });

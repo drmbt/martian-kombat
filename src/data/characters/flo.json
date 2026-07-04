@@ -8,18 +8,19 @@
     "Segmentation fault. That was you.",
     "I have logged this loss. Read the trace yourself.",
     "I seem to have shpoilt your guten tag.",
-    "Ach, du scheiße — for you, not me.",
+    "Ach, du schei\u00dfe \u2014 for you, not me.",
     "Root access requested. Your ass, denied."
   ],
   "fatality": {
-    "id": "rm-rf",
-    "name": "rm -rf /",
+    "id": "burn-one",
+    "name": "Burn One",
     "input": {
       "motion": "qcb",
       "button": "punch"
     },
     "panels": 4
   },
+  "spriteOffsetY": 2,
   "health": 1020,
   "walkSpeed": 3.8,
   "backSpeed": 3.6,
@@ -59,7 +60,13 @@
         "w": 118,
         "h": 40
       },
-      "height": "mid"
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
     },
     "mp": {
       "startup": 9,
@@ -75,7 +82,8 @@
         "w": 130,
         "h": 44
       },
-      "height": "mid"
+      "height": "mid",
+      "cancel": true
     },
     "hp": {
       "startup": 12,
@@ -108,7 +116,13 @@
         "w": 120,
         "h": 36
       },
-      "height": "mid"
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
     },
     "mk": {
       "startup": 10,
@@ -124,7 +138,8 @@
         "w": 142,
         "h": 48
       },
-      "height": "mid"
+      "height": "mid",
+      "cancel": true
     },
     "hk": {
       "startup": 13,
@@ -157,7 +172,13 @@
         "w": 108,
         "h": 36
       },
-      "height": "mid"
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
     },
     "cmp": {
       "startup": 8,
@@ -173,7 +194,8 @@
         "w": 90,
         "h": 104
       },
-      "height": "mid"
+      "height": "mid",
+      "cancel": true
     },
     "chp": {
       "startup": 10,
@@ -206,7 +228,13 @@
         "w": 116,
         "h": 32
       },
-      "height": "low"
+      "height": "low",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
     },
     "cmk": {
       "startup": 9,
@@ -222,7 +250,8 @@
         "w": 150,
         "h": 34
       },
-      "height": "low"
+      "height": "low",
+      "cancel": true
     },
     "chk": {
       "startup": 10,
@@ -530,6 +559,52 @@
         "h": {
           "projectile": {
             "spawnX": 380
+          }
+        }
+      }
+    },
+    "blunt-puff": {
+      "name": "Blunt Puff",
+      "input": {
+        "motion": "qcf",
+        "button": "kick"
+      },
+      "startup": 12,
+      "active": 2,
+      "recovery": 20,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "projectile": {
+        "vx": 3,
+        "spawnX": 80,
+        "spawnY": -180,
+        "box": {
+          "x": -36,
+          "y": -30,
+          "w": 72,
+          "h": 60
+        },
+        "damage": 25,
+        "hitstun": 12,
+        "blockstun": 8,
+        "knockback": 3,
+        "ttl": 60,
+        "rehit": 14
+      },
+      "variants": {
+        "l": {
+          "projectile": {
+            "vx": 2,
+            "ttl": 45
+          }
+        },
+        "h": {
+          "projectile": {
+            "vx": 5
           }
         }
       }

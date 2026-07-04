@@ -62,6 +62,9 @@
     "symbiosis-recovery",
     "throw-startup",
     "throw-active",
-    "throw-recovery"
+    "throw-recovery",
+    "vine-spear-startup",
+    "vine-spear-active",
+    "vine-spear-recovery"
   ]
 }

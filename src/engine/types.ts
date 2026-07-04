@@ -95,6 +95,10 @@ export interface ProjectileDef {
   /** field only: enemy projectiles inside the box move at vx*slowFactor and
    *  enemy ground impulses decay faster (Rate Limit) */
   slowFactor?: number;
+  /** "get over here": an UNBLOCKED hit drags the victim to the owner and
+   *  knocks them down (pair with knockdown: true); a blocked one is plain
+   *  blockstun + pushback (Vine Spear) */
+  pull?: boolean;
 }
 
 /** Fighting-game convention motions: quarter-circles, back-forward,
@@ -109,6 +113,10 @@ export interface SpecialInput {
    *  pressed together (practical keyboard-friendly "all buttons");
    *  LPLK = the universal-throw chord, LP+LK pressed together */
   button: 'punch' | 'kick' | 'PPP' | 'KKK' | 'LPLK';
+  /** mash trigger (lightning-legs style): fires when this many FRESH presses
+   *  of the button class land inside the input-buffer window (the final
+   *  press must be this tick); no directional motion required */
+  mash?: number;
 }
 
 /** L/M/H strength of the button that triggered a special. */
@@ -177,8 +185,24 @@ export interface MoveDef {
   /** shoryuken physics: rise with this velocity AT the first active frame while
    *  the attack stays out (hitbox travels with the fighter) */
   leap?: { vx: number; vy: number };
+  /** melee multi-hit (lightning legs): after connecting, the SAME activation
+   *  may hit again every `rehit` ticks while active frames remain — each hit
+   *  refreshes the victim's reel (and chips through block) */
+  rehit?: number;
+  /** yoga float: at the first active frame, launch airborne with vy (up) and
+   *  fall under this reduced gravity instead of the character's own until
+   *  touchdown or until hit — air normals stay available on the way down */
+  float?: { vy: number; gravity: number; vx?: number };
   /** SFII Turbo L/M/H button variants, merged over the base numbers */
   variants?: { l?: VariantPatch; m?: VariantPatch; h?: VariantPatch };
+  /** chain targets: once this move has CONTACTED (hit or block, never on
+   *  whiff), a fresh press of one of these moves cancels the remainder of
+   *  this move into it (lights chain into lights; light→medium where a kit
+   *  wants it) — pure data, the engine has no per-character cases */
+  chains?: string[];
+  /** special-cancelable: on contact (hit or block), this normal may cancel
+   *  into any motion special inside the cancel window */
+  cancel?: boolean;
   /** render hint only — per-move impact overlay art
    *  (assets/sprites/<char>/vfx-<moveId>.png, tools/gen-vfx.mjs) played by the
    *  scene when this move connects; engine never reads it */
@@ -206,6 +230,16 @@ export interface CharacterDef {
    *  only, engine never reads it. */
   winQuotes?: string[];
   fatality?: FatalityDef;
+  /** whole-character size multiplier (default 1). Baked into the collision
+   *  geometry (bodyBox, hurtboxes, move hitboxes) once at data load
+   *  (src/data/characters/index.ts); the engine only ever sees pre-scaled
+   *  boxes, and the renderer derives sprite size from hurtStand.h so the art
+   *  follows for free. Never read at runtime. */
+  spriteScale?: number;
+  /** render hint only — extra vertical pixels added to the sprite's draw
+   *  position (positive pushes the art down toward the floor); engine never
+   *  reads it */
+  spriteOffsetY?: number;
   health: number;
   walkSpeed: number;
   backSpeed: number;
@@ -262,6 +296,8 @@ export interface Action {
   /** airHit: already rebounded off the floor once — the next floor contact
    *  settles into knockdown (invulnerable while bounced, like knockdown) */
   bounced?: boolean;
+  /** attack frame of the most recent connect — gates melee `rehit` spacing */
+  lastHitFrame?: number;
 }
 
 /** A button press captured while unactionable, waiting for the first
@@ -302,6 +338,13 @@ export interface FighterState {
   dashStocks: number;
   /** ticks accumulated toward the next stock regen (counts only when short) */
   dashRegen: number;
+  /** hits taken in the CURRENT combo (this fighter is the victim): increments
+   *  while a hit lands on an already-reeling fighter, resets to 0 the moment
+   *  they leave hitstun/airHit — fuels combo damage scaling */
+  comboHits: number;
+  /** yoga float: reduced gravity in effect while airborne (0 = normal fall);
+   *  cleared on touchdown and when hit out of the air */
+  floatGravity: number;
 }
 
 /** A techable throw mid-hold: the victim is frozen while this counts down.
@@ -342,6 +385,8 @@ export interface Projectile {
   hitCooldown: number;
   /** field slow strength; 0 = no slow */
   slowFactor: number;
+  /** unblocked hits drag the victim to the owner (Vine Spear) */
+  pull: boolean;
 }
 
 export type Phase = 'intro' | 'fight' | 'roundEnd' | 'finisher' | 'fatality' | 'matchEnd';

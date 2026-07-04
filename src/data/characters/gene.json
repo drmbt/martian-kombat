@@ -19,6 +19,7 @@
     },
     "panels": 4
   },
+  "spriteOffsetY": -3,
   "health": 960,
   "walkSpeed": 4.2,
   "backSpeed": 3.4,
@@ -58,7 +59,13 @@
         "w": 104,
         "h": 40
       },
-      "height": "mid"
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
     },
     "mp": {
       "startup": 8,
@@ -74,7 +81,8 @@
         "w": 114,
         "h": 44
       },
-      "height": "mid"
+      "height": "mid",
+      "cancel": true
     },
     "hp": {
       "startup": 11,
@@ -107,7 +115,13 @@
         "w": 106,
         "h": 36
       },
-      "height": "mid"
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
     },
     "mk": {
       "startup": 9,
@@ -123,7 +137,8 @@
         "w": 120,
         "h": 48
       },
-      "height": "mid"
+      "height": "mid",
+      "cancel": true
     },
     "hk": {
       "startup": 12,
@@ -156,7 +171,13 @@
         "w": 96,
         "h": 36
       },
-      "height": "mid"
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
     },
     "cmp": {
       "startup": 7,
@@ -172,7 +193,8 @@
         "w": 84,
         "h": 100
       },
-      "height": "mid"
+      "height": "mid",
+      "cancel": true
     },
     "chp": {
       "startup": 10,
@@ -205,7 +227,13 @@
         "w": 102,
         "h": 32
       },
-      "height": "low"
+      "height": "low",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
     },
     "cmk": {
       "startup": 8,
@@ -221,7 +249,8 @@
         "w": 128,
         "h": 34
       },
-      "height": "low"
+      "height": "low",
+      "cancel": true
     },
     "chk": {
       "startup": 9,
@@ -487,6 +516,49 @@
         "h": {
           "projectile": {
             "vx": 5
+          }
+        }
+      }
+    },
+    "mana-burst": {
+      "name": "Mana Burst",
+      "input": {
+        "motion": "bf",
+        "button": "punch"
+      },
+      "startup": 12,
+      "active": 2,
+      "recovery": 24,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "projectile": {
+        "vx": 9,
+        "spawnX": 90,
+        "spawnY": -170,
+        "box": {
+          "x": -30,
+          "y": -30,
+          "w": 60,
+          "h": 60
+        },
+        "damage": 80,
+        "hitstun": 20,
+        "blockstun": 13,
+        "knockback": 10
+      },
+      "variants": {
+        "l": {
+          "projectile": {
+            "vx": 6
+          }
+        },
+        "h": {
+          "projectile": {
+            "vx": 13
           }
         }
       }

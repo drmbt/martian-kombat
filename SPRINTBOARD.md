@@ -6,13 +6,37 @@
 > Unchecked boxes in the active sprint = the backlog. Do not silently add scope;
 > new ideas go to the Icebox.
 
-**Current sprint: 19 — cancels & chains** · MVP shipped 2026-07-02 (8/8
-fighters playable, 19 stages, full music loop, fatalities, CPU + training
-modes, settings). Sprint 17 (universal throws + dizzy/stun) shipped +
-committed 2026-07-03. Sprint 18 (input forgiveness + hit feedback) shipped +
-committed 2026-07-03 (all engine work, 110/110 vitest, verified live; user
-authorized the commit, not pushed). Sprint 19 (cancels & chains) is in
-flight. Long-term RFEs live in their own roadmap section below.
+**Current sprint: 21 (Cat) SHIPPED — roster now 12 playable (Bodhi, Chebel, Ygor added)** · MVP shipped
+2026-07-02 (8/8 fighters playable, 19 stages, full music loop, fatalities,
+CPU + training modes, settings). Sprint 19 (cancels & chains) shipped +
+committed + pushed 2026-07-04 (`a27fa90`). Sprint 20 (personality specials +
+Burn One) shipped 2026-07-04 — engine + data + docs + generated art,
+130/130 vitest, verified live. Sprint 21 (**Cat — "Wet Paint"**, the first
+roster expansion beyond the launch eight) shipped 2026-07-04 — full 7-step
+pipeline, 134/134 vitest, art verified. Committed together with Sprint 20's
+staged art on the user's go-ahead. **Bodhi is being built in a parallel
+session** (registered `playable`, sheet packed, but audio + fatality panels
+still pending in that session — expect the dev loader to hang until they land;
+deploy degrades gracefully on real 404s). **Chebel + Ygor (Wave 2 chars #3–4)
+100% COMPLETE 2026-07-04** — all 7 pipeline steps done for both: data +
+generator-script entries, 62-cell sheets packed (+ projectile art: chebel
+spirit-draw; ygor suave-creature/oracle/rainbow-road), 16 VO lines each +
+announcer, portraits/KO (from earlier canonical pass), 4 fatality panels each
+(the-reversed / final-render). Both `playable:true`, tsc clean + 134/134
+tests, sprite-sheet QA passed (Bodhi's deep-crouch head-visible / hem-not-a-leg
+/ empty-air-grab guards all held — no headless torsos, phantom legs or clones).
+Roster now 12 playable. Parallelized by provider: ElevenLabs audio ran
+concurrent with two Gemini frame jobs (conc 4 each = 8 in-flight, no 429s),
+then pack + fatality. QA re-roll (user-directed): chebel `idle-a`/`idle-b`
+(were flickery — too dissimilar, `idle-b` had a stray jaguar) + `fall` (now
+topples backward) regenerated and re-packed. Added a reusable per-character
+generic-cell override seam — `spec.cells['idle-b'] = '...'` in
+frames-manifest overrides a shared CELLS pose without touching other chars
+(`buildJobs` reads `spec.cells?.[id] ?? c.pose`). LESSON: text alone won't
+hold an idle-loop frame static — the model turns "idle-b, chest risen" into a
+knee-raise action pose; pin it hard ("BOTH feet flat, NOT an attack, NO raised
+knee/kick/lunge") or it flickers against idle-a. Long-term RFEs live in their
+own roadmap section.
 
 ---
 
@@ -542,41 +566,88 @@ All engine work; every item ships with vitest coverage.
 ### Sprint 19 — Cancels & chains (planned 2026-07-03)
 Goal: combos become deliberate, not accidental (moved up from the near-term
 roadmap by the feel review; Sprint 18's buffering makes cancels land naturally).
-- [ ] Chain rules: lights chain into lights (light→medium where a kit wants
+- [x] Chain rules: lights chain into lights (light→medium where a kit wants
       it) — data-driven flags on moves, not engine special cases
-- [ ] Special-cancel windows: medium/heavy normals cancel into specials on
-      hit or block during a cancel window
-- [ ] Combo damage scaling (later hits in a combo do less)
-- [ ] Engine tests: chain windows, cancel-on-hit vs -on-block vs whiff (no
-      cancel), scaling math, determinism
+      (`chains: string[]` on the move; all 8 kits chain lights→lights,
+      Vincent/Kirby/Yulia/Catherine got light→medium flavor chains)
+- [x] Special-cancel windows: medium/heavy normals cancel into specials on
+      hit or block during a cancel window (`cancel: true`, non-knockdown
+      mediums/heavies; window = contact → active end + 8 ticks)
+- [x] Combo damage scaling (later hits in a combo do less): hits 1-2 full,
+      −10%/hit after, floored at 30% — stun scales with it
+- [x] Engine tests: chain windows, cancel-on-hit vs -on-block vs whiff (no
+      cancel), scaling math, determinism — 121/121 vitest
 
 ### Sprint 20 — Personality specials + Flo fatality rework (planned 2026-07-03)
 Goal: one signature "that's SO them" move per fighter + Flo's new fatality.
 Asset gen front-loaded/parallel like Sprint 17; cells append-only as always.
 New engine primitives called out — everything else rides existing plumbing.
-- [ ] **Gene — Mana Burst**: projectile stamped with the Eden Art Labs logo
-      (existing projectile primitives)
-- [ ] **Marzipan — vine spear** ("get over here"): projectile that DRAGS the
+- [x] **Gene — Mana Burst**: projectile stamped with the Eden Art Labs logo
+      (existing projectile primitives) — bf+P, L/M/H = speed
+- [x] **Marzipan — vine spear** ("get over here"): projectile that DRAGS the
       opponent to Marzipan on hit, becomes a knockdown throw if unblocked —
-      NEW pull-projectile primitive
-- [ ] **Yulia — spinning star kick** (Chun-Li spinning bird kick — existing
-      leap/forwardVel primitives)
-- [ ] **Flo — blunt smoke puff**: blows a smoke projectile (existing
-      primitives)
-- [ ] **Kirby — cat scratch**: mash-punch rapid attack (Chun-Li lightning
-      legs) — NEW mash-motion input type, promoted from the Sprint 8
-      deferred list
-- [ ] **Vincent — matrix teleport**: dissolves into green digital runes,
-      reappears behind the opponent — `teleport:'behind'` already exists
-      (Gene's Diffusion); this is art/VFX + wiring
-- [ ] **Freeman — yoga float**: Dhalsim-style high jump with slow held-pose
-      descent — NEW slow-fall/float mobility primitive
-- [ ] **Flo fatality replaced — "Burn One"**: lighter ignites the husk →
+      NEW pull-projectile primitive (`pull: true` on the ProjectileDef;
+      blocked spears push back, never drag) — bf+P
+- [x] **Yulia — spinning star kick** (Chun-Li spinning bird kick) — charge
+      d,u+K: forwardVel + NEW melee-rehit multi-hit
+- [x] **Flo — blunt smoke puff**: lingering tick-damage smoke-ring
+      projectile (existing rehit primitives) — qcf+K
+- [x] **Kirby — cat scratch**: mash-punch rapid attack (Chun-Li lightning
+      legs) — NEW mash-motion input type (`input.mash: N` press edges in
+      the buffer window) + melee rehit — multi-hits, chips through block
+- [x] **Vincent — matrix teleport**: dissolves into digital runes,
+      reappears behind the opponent — `teleport:'behind'` + invuln, qcf+K.
+      (Cell art uses CRIMSON runes, not the lore's green — green FX on the
+      chroma-green screen is the known unkeyable failure)
+- [x] **Freeman — yoga float**: Dhalsim-style high jump with slow held-pose
+      descent — NEW slow-fall/float primitive (`float: {vy, gravity}` +
+      `FighterState.floatGravity`, cleared on touchdown or on getting hit;
+      air normals stay live during the drift) — qcb+P
+- [x] **Flo fatality replaced — "Burn One"**: lighter ignites the husk →
       grinds the ash → rolls it into a cigarette → smokes it. 4 panels via
       `gen-fatality.mjs` (replaces rm -rf /); fatality block in flo.json
       updated
-- [ ] docs/CHARACTERS.md + docs/MOVES.md updated with the new moves; engine
-      tests for the two new primitives
+- [x] docs/CHARACTERS.md + docs/MOVES.md updated with the new moves; engine
+      tests for the new primitives (mash, melee rehit, pull, float,
+      teleport wiring) — 130/130 vitest
+
+### Sprint 21 — Cat "Wet Paint" (roster expansion; user-directed 2026-07-04)
+Goal: prove the pipeline scales past the launch eight with a fresh Martian.
+First fighter added since the Gene/Marzipan harvest. Rode entirely on existing
+engine primitives (no engine changes) — she's pure data + generated art.
+- [x] **Cat — barefoot Portuguese painter-dancer trickster** (rushdown +
+      ground control + an alter ego). `cat.json` full six-button kit tuned
+      light/fast (health 980, walk 5.4), dance normals, lights→lights/mediums
+      chains. Home stage `painted-canyon`.
+- [x] Four specials on existing plumbing: **Flour Bomb** (qcf+P — low pigment
+      slow-field puddle, Rate Limit `field`/`slowFactor`), **Thread of Life**
+      (qcb+P — woven knockdown lash, Vine Spear minus `pull`), **Pirouette**
+      (dp+K — invuln rising spin kick, `leap`+`invuln`), **D. Catarina**
+      (hcf+P — the old-lady cane whack; her lore ↓↓ isn't an engine motion so
+      remapped to hcf, DECLARED BEFORE Flour Bomb so the qcf tail can't steal
+      it — flo's sudo-kill lesson). Universal throw (LPLK).
+- [x] **Still Life fatality** (hcb+P — designed here; the bible had none):
+      flings living paint that pins the husk to a canvas, live-paints it
+      dissolving brushstroke-by-brushstroke into an unflattering framed
+      portrait, signs it, blows a kiss. `FATALITIES.cat` in gen-fatality.mjs;
+      4 panels generated.
+- [x] Full 7-step asset run: canonical + KO bust (pre-existing from an earlier
+      canonical pass), 62-cell v2 sheet (8×8) + 2 keyed projectiles
+      (flour-bomb puddle, thread-of-life lash), 16 grunts + `CAT!` announcer,
+      4 fatality panels. `frames-manifest.mjs` cat pose dict + `extra.
+      projectiles`. Zero gen failures.
+- [x] Wired: `index.ts` + `roster.ts` (playable), FightScene `PROJ_SIZE` +
+      `PROJ_FEET_ANCHORED` (flour-bomb is a ground puddle). BootScene needs
+      nothing (loads generically from roster/characters). Added a `--char`
+      scope flag to `gen-audio.mjs` so single-character runs don't clobber
+      other in-flight fighters' audio.
+- [x] docs/CHARACTERS.md Cat entry updated (fatality + hcf remap noted).
+      4 new vitests (hcf-vs-qcf declaration-order tiebreaker, both projectile
+      specials, cat-vs-cat determinism) — **134/134 green, tsc clean, prod
+      build clean.** Art verified cell-by-cell (clean chroma key, consistent
+      likeness, every pose matches the kit) via canvas render — a live in-game
+      fight was blocked only by the parallel Bodhi build's incomplete assets
+      hanging the dev loader (see current-sprint note), not by Cat.
 
 ### Near-term roadmap (approved 2026-07-03; updated same day by the feel
 review — chains/cancels/scaling promoted to Sprint 19)
@@ -598,6 +669,20 @@ review — chains/cancels/scaling promoted to Sprint 19)
       (Vincent reads small and floats slightly off the ground); auto-derive
       the ground baseline at pack time (lowest non-alpha pixel → offset in
       meta.json) and scale bounding boxes to match
+      — PARTIAL 2026-07-04: manual knobs shipped — optional `spriteScale` /
+      `spriteOffsetY` in character JSON. `spriteScale` is baked into the
+      collision geometry (bodyBox, hurt boxes, move + variant hitboxes) once
+      at data load in `src/data/characters/index.ts`, so engine and art stay
+      congruent (renderer derives sprite size from hurtStand.h; engine itself
+      never reads the field — determinism intact). `spriteOffsetY` is a
+      render-only vertical nudge in FightScene. Vincent set to
+      `spriteScale: 1.08`. Whole roster ground-aligned 2026-07-04: measured
+      each sheet's idle-cell lowest opaque pixel (alpha scan) vs the rendered
+      floor line, normalized to Yulia's (already-correct) foot line via
+      `spriteOffsetY` — vincent +20, marzipan +8, flo +2, gene −3,
+      catherine −8, freeman −12 (yulia/kirby 0, omitted). Verified in-game
+      across all four pairings. Still open: pack-time ground-baseline
+      auto-derive (would replace these hand-measured offsets).
 - [ ] Post-fatality flow: the cutscene exits straight to the victory/win
       screen instead of resolving back through the fight screen first
 - [ ] Attract-mode blink cleanup: "INSERT COIN" and "DEMO — PRESS ANY KEY"
@@ -773,6 +858,107 @@ fixed-screen SF2 framing is intentional).
   6 vitests. Spec/tasks in `SPEC.md` (SDD flow), spike doc in
   `docs/THREE_D_RENDERER_SPIKE.md`. Vincent mesh + ~130 Mixamo clips staged
   under `public/assets/meshes/vincent/`. — Claude
+- **2026-07-04 · data+tools+assets+docs+scenes · Wave 2 chars Chebel + Ygor
+  shipped (+ bundled parallel select-screen redesign)** — added **Chebel**
+  ("The Spirit Deck", rushdown+summon, stage `mimos`) and **Ygor** ("Suave",
+  projection zoner, stage `drive-in`): character JSONs, registry + roster
+  (both `playable:true`), frames-manifest / gen-audio / gen-fatality entries,
+  and full generated assets (62-cell sheets + projectile art, 16 VO lines each
+  + announcer, portraits/KO/bust, 4 fatality panels each). Personality
+  specials mapped onto proven plumbing (Ceremony→invuln DP, Microdose→teleport,
+  oRACLE→slow-field). Added a reusable per-character generic-cell override seam
+  (`spec.cells[id]`) and used it to fix Chebel's flickery idle-a/idle-b + a
+  stray idle jaguar and to pin her `fall` backward. tsc clean, 134/134 tests,
+  sprite QA passed. **This commit also lands a parallel session's uncommitted
+  work** (per user request to commit the whole tree): select-screen redesign
+  (`SelectScene.ts` +196, `BootScene.ts` world-map + side-profile `-bust.png`
+  loads), `public/assets/ui/world-map.png`, and a bulk portrait+bust regen for
+  all roster chars plus not-yet-wired Wave 2 portraits (earl/haidai/rapha/
+  vanessa — busts present, orphaned until those fighters are built). All 12
+  roster busts present, so the redesign is asset-complete for the live roster.
+  *(Claude — Chebel/Ygor; parallel session — select redesign)*
+- **2026-07-04 · data+tools+assets+docs · Sprint 21 shipped: Cat "Wet Paint"
+  (+ Sprint 20 art landed)** — first roster expansion past the launch eight,
+  pure data + generated art (zero engine changes). `cat.json`: light/fast
+  painter-dancer trickster (health 980, walk 5.4), six-button dance kit with
+  lights→lights/mediums chains, universal throw, and four specials all on
+  existing plumbing — **Flour Bomb** (qcf+P, low `field`/`slowFactor` pigment
+  puddle, feet-anchored render), **Thread of Life** (qcb+P, knockdown lash =
+  Vine Spear minus `pull`), **Pirouette** (dp+K, `leap`+`invuln` reversal),
+  **D. Catarina** (hcf+P old-lady cane whack; her lore ↓↓ has no engine motion
+  so remapped to hcf and DECLARED BEFORE the qcf Flour Bomb so the shared tail
+  doesn't steal it). NEW **Still Life** fatality (hcb+P — designed here, bible
+  had none): paints the husk into an unflattering framed portrait. Full 7-step
+  gen run (62-cell 8×8 sheet + 2 keyed projectiles, 16 grunts + `CAT!`
+  announcer, 4 fatality panels; canonical/KO bust pre-existing) — 0 failures.
+  `frames-manifest.mjs` cat pose dict; `index.ts`/`roster.ts` (playable);
+  FightScene `PROJ_SIZE`/`PROJ_FEET_ANCHORED`; `gen-audio.mjs` gained a
+  `--char` scope flag (so single-character runs don't touch parallel builds).
+  4 new vitests (hcf/qcf order, both projectile specials, determinism) —
+  **134/134 green, tsc + prod build clean**; art verified cell-by-cell via
+  canvas render (live fight blocked only by the parallel Bodhi build's
+  incomplete assets, not Cat). This commit also lands Sprint 20's staged art
+  (regenerated sheets/portraits) that was awaiting go-ahead, plus in-flight
+  Bodhi scaffolding and future-character raw canonicals from parallel sessions.
+  — Claude
+
+- **2026-07-04 · engine+data+tools+assets+docs · Sprint 20 shipped:
+  personality specials + Burn One** — one signature special per fighter,
+  three new engine primitives, all data-driven. (1) NEW mash input:
+  `SpecialInput.mash: N` — fires when N fresh press edges of the button
+  class sit in the input buffer and the final press is this tick
+  (`mashedStrength`); Kirby's **Cat Scratch** (mash P). (2) NEW melee
+  rehit: `MoveDef.rehit` lets one activation reconnect every N ticks
+  through the active window (`Action.lastHitFrame` gates spacing) — hits
+  refresh the reel, scale as a combo, and chip repeatedly through block;
+  Cat Scratch + Yulia's **Spinning Star Kick** (charge d,u+K). (3) NEW
+  pull projectile: `ProjectileDef.pull` — an UNBLOCKED hit snaps the
+  victim to the owner's feet (85px, wall-clamped) mid-launch so the
+  knockdown lands them right there; blocked = plain pushback; Marzipan's
+  **Vine Spear** (bf+P). (4) NEW slow-fall float: `MoveDef.float {vy,
+  gravity}` launches airborne at first active; `FighterState.floatGravity`
+  overrides fall gravity during air/airAttack, cleared on touchdown and by
+  applyHit; Freeman's **Yoga Float** (qcb+P) — 181-tick hang vs ~40 for a
+  jump, air normals live. Riding existing plumbing: Gene's **Mana Burst**
+  (bf+P logo fireball), Flo's **Blunt Puff** (qcf+K lingering rehit smoke
+  ring), Vincent's **Matrix Teleport** (qcf+K, teleport-behind + invuln 14
+  — cell art is CRIMSON runes because green FX keys out on the chroma
+  screen). Flo's fatality is now **Burn One** (ignite the husk → roll the
+  ash → smoke it; 4 panels generated, replaces rm -rf /, flo.json +
+  gen-fatality.mjs prompts swapped). frames-manifest grew 3 pose cells per
+  touched fighter (+3 projectile arts: mana-burst, vine-spear, blunt-puff);
+  sheets regenerated + repacked (65/65/62/65/62/65/62 cells). CpuDriver
+  needed nothing (mash specials are filtered out; motion specials picked
+  up automatically). docs/CHARACTERS.md + docs/MOVES.md updated. 9 new
+  vitests — 130/130 green, tsc clean, all four primitives verified live in
+  the browser via the engine module. — Claude
+
+- **2026-07-04 · engine+data · Sprint 19 shipped: cancels & chains** — all
+  four items, engine + character data only (no renderer changes needed).
+  (1) Chains: `chains: string[]` on a move lists the ids a CONTACTED move
+  (hit or block — `hasHit`, never a whiff) may cancel into; consumed from
+  the Sprint 18 action buffer at the top of updateFighter's attack case, so
+  presses during hitstop chain naturally. All lights chain into all lights
+  on every kit; light→medium where the kit wants it (Vincent lp→mp, Kirby
+  lp→mp + lk→mk, Yulia lk→mk, Catherine lp→mp). (2) Special cancels:
+  `cancel: true` normals (all non-knockdown mediums/heavies, roster-wide)
+  cancel into any motion special on contact — grabs excluded (canceling
+  into a command grab on a reeling victim is degenerate), one-fireball rule
+  re-checked at cancel time. Window: contact → end of active +
+  `CANCEL_WINDOW_TICKS` (8). (3) Combo damage scaling: `FighterState.
+  comboHits` (victim-side) increments when a hit lands on an already-reeling
+  (hitstun/airHit) fighter, resets the moment they stop reeling (hitstop
+  holds it — freeze is time standing still); hits 1-2 full, then
+  −`COMBO_SCALE_STEP`(10)%/hit to a `COMBO_SCALE_FLOOR` of 30%, integer
+  math, ≥1 dmg; stun feeds on the SCALED damage so long strings can't also
+  be free dizzies. Mash-jab midscreen naturally drops after ~5 hits from
+  pushback — that's spacing, not a bug. (4) 11 new vitests (chain on
+  hit/block, whiff never cancels, lights don't special-cancel, medium
+  cancels on hit/block/not-whiff, scaling curve 45/45/40/36/31, 30% floor,
+  drop-resets-scaling, chained-string determinism) — 121/121 green, tsc
+  clean, verified live in the browser (dev training scene + engine module
+  driven headless: same deltas). — Claude
+
 - **2026-07-03 · engine+scenes · Sprint 18 shipped: input forgiveness + hit
   feedback** — all six items, engine-core only + renderer presentation.
   (1) Action input buffer: `FighterState.buffered` captures a fresh press in
@@ -1379,24 +1565,137 @@ fixed-screen SF2 framing is intentional).
 
 *(overwrite this section each handoff — what's mid-flight, gotchas, next action)*
 
-**State (2026-07-03, Sprint 18 SHIPPED — committed & pushed on the user's
-go-ahead, Sprint 19 next):** 8/8
+**Wave 2 roster expansion (2026-07-04, IN FLIGHT — separate session from the
+Sprint 20 note below, do not collide):** user-directed multi-phase job to add
+8 new fighters. Eligible pool = inspo photos with BOTH a full-body
+`assets/character-inspo/<name>.jpg` and a `face/` shot (12 qualified). Chosen
+8: **bodhi, cat, chebel, earl, haidai, rapha, vanessa, ygor** (user swapped
+katana + xiao-chen out for rapha + vanessa 2026-07-04; benched: katana,
+xiao-chen, lyosha, seva — reasons in docs/CHARACTERS.md). Phase plan with
+approval gates: (1) character-sheet designs → appended to `docs/CHARACTERS.md`
+as "Wave 2 roster — PROPOSED v2, lore-informed", **awaiting user audit**.
+v2 redesigned all 8 around the Martian Lore sheet (Mars People tab — now
+cited in CLAUDE.md "Lore source" with a HARD privacy rule: never build
+anyone marked NO AI PLEASE). Biggest lore swings: Bodhi = Thai-bodywork
+grappler (not surfer), Chebel = animal-spirit-card summoner, Haidai =
+Balinese vibration priest (sash = saput poleng), Earl = "The Madd Wikkid"
+audio-engineer zoner, Ygor = VJ Suave projection zoner (not photographer).
+Xiao-Chen has no lore row — flagged lore-light. (2) canonical
+painted-cel images into `assets/raw/canonical/` → approve; (3) character
+JSONs + winQuotes + VO soundbite samples → approve; (4) parallel full asset
+gen (frames/pack/audio/portraits/fatalities/vfx); (5) wire up + make the
+select screen grid scale past 8. (Benched-char gotchas for Wave 3:
+xiao-chen's inspo is `xiao-chen.jpg` but the face shot is
+`face/xiaochen.jpg`; seva's full-body is only 240px.) Next action: user
+edited `docs/WAVE2-VO-CHECKLIST.md` 2026-07-04 (NOTE: edits left some
+categories short of the 6/6/4 VOICE_COUNTS contract — cat 2 victory, chebel
+5/5/2, earl 5 kiai, rapha 5 kiai + 3 victory, ygor 5 kiai + 3 victory;
+draft fill-ins for re-approval before running gen-audio). CANONICALS +
+PORTRAITS DONE 2026-07-04: all 8 in `assets/raw/canonical/` + 160px crops
+and KO busts in `public/assets/portraits/` via gen-canonical.mjs (FLAVOR +
+FACE entries added for the 8). Gen gotchas learned: (a) color words in
+CAPS in a flavor prompt can get rendered as literal text (bodhi's first
+canonical spelled "AMBER" — reworded + regened); (b) gemini IMAGE_SAFETY
+sometimes rejects the gory DEFEAT bust prompt (cat) — script now
+log-and-skips + falls back to a bloodless DEFEAT_SOFT variant
+automatically; (c) chebel's fixed portrait crop is tight on the forehead
+(knee-up pose) — acceptable, per-char crop offset is the fix if wanted;
+(d) ygor's canonical cap has garbled "MARS"-ish lettering — user to judge;
+(e) rapha's canonical regened WITHOUT Tubs (user call — companion entities
+stay out of canonicals; Tubs gets his own assist cell, Jazzper pattern).
+Canonicals approved (Rapha regened Tubs-free). NOW BUILDING FIGHTERS ONE AT
+A TIME (vertical slice first, then parallelize). **BODHI scaffolded
+2026-07-04** — grappler, pure data, tsc clean + 130/130 tests:
+`src/data/characters/bodhi.json` (2 command grabs Deep Tissue 360+P /
+Table Work qcb+K, Ascendant dp+P anti-air, Retrograde qcf+K low slide, LPLK
+throw; NOTE Table Work's lore "side-switch" dropped to cosmetic — engine
+teleport+grab combo untested, stayed on proven grab plumbing), registered in
+index.ts, roster.ts (playable:FALSE until sheet packs), frames-manifest.mjs
+(`always` line pins wardrobe + suppresses zodiac glyphs to Ascendant only,
+GOLD never green — 62 cells, no projectile/companion cells since he has
+neither), gen-audio.mjs (announcer BODHI! + voiceLines 6/6/4, Harry voice
+freeman-style calm settings). **SPRITE SHEET DONE 2026-07-04** — 62 frames
+generated + packed to public/assets/sprites/bodhi/{sheet.png,meta.json},
+playable:true, tsc clean. QA re-rolls done (targeted `--cells`): 37/38/39
+(cmk/chk crouch cells) had parka-hem phantom-legs + a headless torso —
+fixed by rewriting those poses (deep-squat framing, "hem is NOT a leg",
+"one head with beanie") AND deleting the poisoned chk-active anchor so it
+regened clean before the cells that anchor to it; 48 (deep-tissue-active)
+had a SECOND BODY (clone) from "hoisting an unseen opponent" — fixed by
+rewriting to mime the grab through empty air ("COMPLETELY ALONE, no
+clone"). LESSON for remaining chars: grab/throw actives must say "empty
+air / no second person", and low crouch cells need explicit "parka/skirt
+hem is not a leg" + head-visible guards. NOTE hit Gemini monthly spend cap
+mid-QA (429 RESOURCE_EXHAUSTED); user raised it. **BODHI 100% COMPLETE
+2026-07-04** — all 7 pipeline steps done: sheet+meta, portrait+ko, 4
+fatality panels (`full-realignment`, added to gen-fatality.mjs FATALITIES;
+QA: panel-4 "GOLD star-chart disc" rendered the literal word GOLD on a coin
+→ reworded to "amber zodiac ephemeris wheel, NO text/letters/coin" + re-ran
+just that panel), announcer BODHI! + 16 voice clips (6/6/4). tsc clean. He
+is the finished reference implementation — the first Wave 2 fighter fully
+shipped. LESSON banked: fatality/effect prompts must avoid ALL-CAPS color
+words next to nouns (renders as text) — same class of bug as bodhi's
+canonical "AMBER". Next: repeat for cat(parallel session)/chebel/earl/
+haidai/rapha/vanessa/ygor (Tubs +
+Little-Martians + Suave-creatures + jaguar = separate assist/projectile
+cells, Jazzper pattern). Select-screen already auto-sizes to ROSTER length
+(SelectScene.ts:22) so >8 grid is handled; BootScene loads sheets for all
+ROSTER ids (missing sheet = Phaser loaderror, non-fatal, capsule fallback).
+VO checklist gaps still to backfill before gen-audio for cat/chebel/earl/
+rapha/ygor (short of 6/6/4).
+
+**State (2026-07-04, Sprint 20 SHIPPED — uncommitted, awaiting the user's
+go-ahead; next sprint not yet cut):** 8/8
 fighters playable with fatalities, 20 stages, full music loop, settings +
 controls pages, CPU + training + attract modes, VS screen, win-quote screen.
-Sprint 17 shipped + committed in `03ad717`. **Sprint 18 (input forgiveness +
-hit feedback) is fully implemented, committed, and pushed.**
-110/110 vitest, tsc clean, verified live in the browser (demo bots
-via `window.__game` manual loop stepping — the hidden-preview-tab gotcha:
-Phaser's loader ALSO stalls without rAF; kick `boot.load.checkLoadQueue()`
-between `loop.step()` pumps). Touched files: `src/engine/{types,constants,
-step}.ts`, `src/engine/engine.test.ts`, `src/scenes/FightScene.ts`,
-`SPRINTBOARD.md`. What's on record for whoever picks this up:
-- **Next action:** user reviews + commits Sprint 18, then **Sprint 19
-  (cancels & chains)** — scoped in its section above; it builds directly on
-  the action buffer (a buffered special during an attack's cancel window is
-  the natural cancel implementation: check `f.buffered` inside the attack
-  case the way the chord-upgrade path already does).
-- **Where the Sprint 18 code landed (design notes for S19):**
+Sprint 19 committed + pushed in `a27fa90`. **Sprint 20 (personality
+specials + Burn One) is fully implemented in the working tree** — 130/130
+vitest, tsc clean, all four new primitives verified live in the browser.
+Touched: `src/engine/{types,step}.ts`, `src/engine/engine.test.ts`, all 7
+new-move `src/data/characters/*.json`, `tools/{frames-manifest,
+gen-fatality}.mjs`, `docs/{CHARACTERS,MOVES}.md`, regenerated sheets under
+`public/assets/sprites/<char>/` + `public/assets/fatalities/flo/burn-one-*`.
+- **Next action:** user reviews + commits Sprint 20, then cut the next
+  sprint from the near-term roadmap (top candidates per the feel review:
+  proximity guard/blocking feel, per-move hurtbox overrides, CPU difficulty
+  levels, round intros/victory poses).
+- **Where the Sprint 20 code landed:** (1) mash input — `SpecialInput.mash:
+  N`, `mashedStrength()` counts press edges across the whole input buffer,
+  final press must be this tick; CpuDriver ignores mash specials (filters
+  on `input.motion`). (2) melee rehit — `MoveDef.rehit` + `Action.
+  lastHitFrame`; the hasHit skip in resolveAttacks becomes conditional.
+  Rehit hits land while the victim is still reeling → they scale as one
+  combo and re-chip through block. (3) pull projectile — after applyHit in
+  updateProjectiles: if `p.pull` and the victim ISN'T in blockstun, snap
+  their x to owner ± 85 (stage-clamped), zero vx; the knockdown launch then
+  drops them at the owner's feet. (4) float — `f.floatGravity` replaces
+  def.gravity in the 'air'/'airAttack' physics only (never airHit), cleared
+  at every FLOOR_Y touchdown and in applyHit. If a future move wants float
+  VARIANTS, note VariantPatch has no `float` field yet. (5) Vincent's
+  teleport cells are CRIMSON (green FX would chroma-key away — same lesson
+  as the old teal sigil-bolt). (6) New specials were APPENDED after `throw`
+  in frames-manifest specials dicts — cells resolve by name, order is
+  cosmetic, but keep appending.
+- **Where the Sprint 19 code landed:**
+  (1) Cancels live at the TOP of updateFighter's attack case: a buffered
+  press (Sprint 18 `f.buffered`, pick resolved at press time) cancels the
+  current move once it has contacted (`a.hasHit` — set on hit AND block,
+  never whiff) inside contact→active-end+`CANCEL_WINDOW_TICKS`(8). Chain
+  legality is `chains: string[]` on the move (data, engine has zero
+  per-character cases); special-cancel legality is `cancel: true` + target
+  has `input` + target has no `grab`. One-fireball rule re-checked at cancel
+  time. The canceled-into move advances to frame 1 the same tick (matches
+  the chord-upgrade path just below it — keep them consistent).
+  (2) `FighterState.comboHits` is VICTIM-side: applyHit increments it when
+  the victim was already in hitstun/airHit, else sets 1; step()'s stun-decay
+  loop zeroes it whenever the fighter isn't reeling (frozen reels keep it).
+  Scaling: hits 1-2 full, −10%/hit, floor 30% (`scaleForCombo`, integer
+  math, min 1 dmg); stun gains use the SCALED damage. Links that connect on
+  the exact tick hitstun expires count as a NEW combo (victim passed through
+  idle) — accepted simplification. Mash-jab strings drop midscreen after ~5
+  hits from pushback; corner strings run longer. If S20 adds a renderer
+  combo counter off engine state, `comboHits` is already there.
+- **Where the Sprint 18 code landed:**
   (1) `FighterState.buffered` (`BufferedAction`): pick resolved at PRESS
   time (motion windows stay honest for reversals), executed in
   updateFighter's default branch before live pickAttack, TTL 8, cleared on

@@ -97,6 +97,8 @@ The measuring stick. Honest tools at every range.
   analog). L: one palm, short · H: three hits, ~half screen.
 - [x] **Redirect** — qcb+P · defensive reflector. Push-hands parry stance;
   reflects projectiles back as wireframes; L/M/H = stance duration.
+- **Matrix Teleport** — qcf+K · mobility ⚙ Sprint 20. Dissolves into
+  falling runes (invulnerable) and reappears behind the opponent.
 - [x] **Fatality — "Blue Screen":** he traces a full sigil circle; the opponent
   disintegrates row-by-row into cascading wireframe/code.
 
@@ -115,6 +117,9 @@ Slow, terrifying, wants to be inside your guard.
   damage · H: slower, bigger arc, knockdown.
 - [x] **Braid Lariat** — 3P · defensive spin ⚙ NEW. Upper-body projectile
   immunity while active (Zangief lariat).
+- **Spinning Star Kick** — charge d,u+K · advancing multi-hit ⚙ Sprint 20
+  (melee-rehit). Inverted helicopter spin that travels; L/M/H = distance
+  and hit count.
 - [x] **Fatality — "Heart Breaker"** *(shipped)*.
 
 ### CATHERINE — "The Chef de Guerre" · Weapon mid-range (Rolento / Chun hybrid)
@@ -145,8 +150,12 @@ Wants you standing exactly where the traps are.
   snares and pops the opponent up. Button = distance in front.
 - **sudo kill** — hcf+P · close blast ⚙ NEW (hcf). Short-range terminal
   flame-out (Yoga Flame analog) to punish rushdown.
-- **Fatality — "rm -rf /":** the opponent dissolves into cascading directory
-  listings that scroll away to nothing.
+- **Blunt Puff** — qcf+K · lingering projectile ⚙ Sprint 20. A fat smoke
+  ring drifts slowly forward, tick damage while it hangs. L: short hang ·
+  H: faster drift.
+- **Fatality — "Burn One":** lighter out — the husk goes up in flames,
+  the ash gets rolled into an enormous cigarette, and he smokes it.
+  (Replaced "rm -rf /", Sprint 20.)
 
 ### FREEMAN — "The Still Point" · Charge fighter (Guile)
 Two perfect tools and infinite patience.
@@ -160,6 +169,9 @@ Two perfect tools and infinite patience.
   the pose, he's suddenly behind you, palm extended. L/M/H = stance length.
 - **Breathwork** — 3P · install ⚙ NEW. Absorbs exactly one hit (armor) while
   the calm lasts.
+- **Yoga Float** — qcb+P · mobility ⚙ Sprint 20 (slow-fall primitive).
+  Lotus-position high jump with a drifting descent; air normals stay live
+  the whole way down.
 - **Fatality — "Ego Death":** one exhale; the opponent comes apart into
   drifting petals of light, leaving only their outline sitting in lotus.
 
@@ -175,6 +187,8 @@ Nothing he shows you is necessarily real.
   and dashes inside it. L/M/H = field size.
 - **Prompt Injection** — hcb+K · gimmick grab ⚙ NEW. Mind-hack touch:
   briefly reverses the opponent's left/right inputs.
+- **Mana Burst** — bf+P · projectile ⚙ Sprint 20. A magenta orb stamped
+  with the Eden Art Labs logo. L/M/H = speed.
 - **Fatality — "404":** the opponent compresses into JPEG artifacts, then a
   dialog box: `fighter not found`. It gets clicked away.
 
@@ -191,6 +205,9 @@ gossip themed:
   ripple that travels ⅓ screen and rattles (brief stun, low damage).
 - **Backbend Bridge** — dp+K · anti-air/evade ⚙ NEW. Drops into a bridge
   under attacks, then snaps up into an overhead flip kick.
+- **Cat Scratch** — mash P (5 presses) · rapid multi-hit ⚙ Sprint 20
+  (mash-input + melee-rehit primitives). Lightning-legs claw flurry;
+  chips through block, scales as a combo.
 - **Fatality — "The Last Word":** she whispers something we never hear; the
   opponent's soul visibly leaves their body out of sheer embarrassment.
 
@@ -206,6 +223,9 @@ Controls the battlefield; the battlefield is alive.
   **heals her** for a portion.
 - **Photosynthesis** — 3P · install ⚙ NEW. Stands in sunlight; slowly
   regenerates while not moving (cancelled by any action).
+- **Vine Spear** — bf+P · pull projectile ⚙ Sprint 20 (pull primitive).
+  "Get over here": unblocked hit drags the victim to his feet into a
+  knockdown; blocked is plain pushback. L: short reach · H: faster.
 - **Fatality — "Compost":** vines pull the opponent gently into the earth;
   a single desert flower blooms where they stood. She waters it.
 

@@ -62,6 +62,9 @@
     "sun-salutation-recovery",
     "throw-startup",
     "throw-active",
-    "throw-recovery"
+    "throw-recovery",
+    "yoga-float-startup",
+    "yoga-float-active",
+    "yoga-float-recovery"
   ]
 }

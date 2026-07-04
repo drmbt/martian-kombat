@@ -7,6 +7,10 @@ import { ROOT, loadEnv, saveAsset, skip, pool, concurrencyArg } from './lib.mjs'
 
 const env = loadEnv();
 const force = process.argv.includes('--force');
+// --char <id> scopes generation to one fighter's grunts + name VO (skips the
+// shared announcer pack and SFX) so a single-character run doesn't touch other
+// in-flight characters' audio.
+const only = process.argv.includes('--char') ? process.argv[process.argv.indexOf('--char') + 1] : null;
 const KEY = env.ELEVENLABS_API_KEY;
 // ElevenLabs caps concurrent requests by plan tier; keep this modest.
 const CONCURRENCY = concurrencyArg(4);
@@ -62,6 +66,10 @@ const announcerLines = {
   gene: 'GENE!',
   kirby: 'KIRBY!',
   marzipan: 'MARZIPAN!',
+  bodhi: 'BODHI!',
+  cat: 'CAT!',
+  chebel: 'CHEBEL!',
+  ygor: 'YGOR!',
   'finish-them': 'FINISH THEM!',
   fatality: 'FATALITY!',
 };
@@ -131,6 +139,42 @@ const voiceLines = {
     hurt: ['Oh!', 'Ow!', 'Ugh!', 'Hey now!', 'Aah!', 'My roots!'],
     victory: ['Please, collaborate with me.', 'Nature always wins.', 'Grow with me, or don\'t.', 'Everything composts eventually.'],
   },
+  // Bodhi is a calm bodywork grappler; high stability + low style = warm/centered
+  bodhi: {
+    voice: VOICE_M,
+    style: 0.3,
+    stability: 0.7,
+    kiai: ['Hyah!', 'Breathe.', 'Release!', 'Deep tissue!', 'Hold still.', 'Ha!'],
+    hurt: ['Oof!', 'Agh!', "That's a knot—!", 'Hnh!', 'Okay—', 'Mercury retrograde!'],
+    victory: ['Realigned.', "Session's over.", 'The stars are aligned.', 'Not today.'],
+  },
+  // Cat is a sassy Portuguese painter-dancer trickster; bright + expressive
+  cat: {
+    voice: VOICE_KIRBY,
+    style: 0.6,
+    stability: 0.35,
+    kiai: ['Sai da frente!', 'Ha!', 'Opa!', 'Voilà!', 'Toma!', 'Hup!'],
+    hurt: ['Ai!', 'Ui!', 'Ah!', 'Nossa!', 'Ai, não!', 'Ei!'],
+    victory: ['I painted you better than you fought.', 'Obrigada, querido.', 'You blinked first.', 'Que tempo horrível…'],
+  },
+  // Chebel is a warm Brazilian mystic tarot-reader; centered but sharp on attack
+  chebel: {
+    voice: VOICE_F,
+    style: 0.5,
+    stability: 0.45,
+    kiai: ['Hyah!', 'Vai!', 'Draw!', 'Ha!', 'Voa!', 'Toma!'],
+    hurt: ['Ai!', 'Agh!', 'Ui!', 'Não!', 'Tss!', 'Ei!'],
+    victory: ['The deck never lies.', 'This outcome was foretold.', 'Sit. Have tea. Reflect.', 'You. Reversed.'],
+  },
+  // Ygor is a laid-back, permanently-unbothered Brazilian projection artist
+  ygor: {
+    voice: VOICE_M,
+    style: 0.2,
+    stability: 0.6,
+    kiai: ['Suave!', 'Ha!', 'Vai, Appa!', 'Projeta!', 'Whoa!', 'Toma!'],
+    hurt: ['Ai!', 'Whoa—', 'Agh!', 'Mano...', 'Ei!', 'Hnh!'],
+    victory: ['Não foi microdose!', 'Suave, mano. Suave.', 'Mais Amor Por Favor.', 'Nice render.'],
+  },
 };
 
 const grunts = Object.entries(voiceLines).flatMap(([id, def]) =>
@@ -151,26 +195,31 @@ const sounds = [
 
 // Flatten every clip into one task list so announcer/voice/sfx generate
 // concurrently instead of three serial passes.
-const tasks = [
-  ...Object.entries(announcerLines).map(([id, text]) => ({
+const announcerTasks = Object.entries(announcerLines)
+  .filter(([id]) => !only || id === only)
+  .map(([id, text]) => ({
     out: join(AUDIO, 'announcer', `${id}.mp3`),
     label: `announcer ${id}`,
     prompt: text,
     run: () => tts(ANNOUNCER, text, 0.9),
-  })),
-  ...grunts.map(([id, voice, text, style, stability]) => ({
+  }));
+const gruntTasks = grunts
+  .filter(([id]) => !only || id.startsWith(`${only}-`))
+  .map(([id, voice, text, style, stability]) => ({
     out: join(AUDIO, 'voice', `${id}.mp3`),
     label: `grunt ${id}`,
     prompt: text,
     run: () => tts(voice, text, style ?? 0.9, stability),
-  })),
-  ...sounds.map(([id, text, secs]) => ({
-    out: join(AUDIO, 'sfx', `${id}.mp3`),
-    label: `sfx ${id}`,
-    prompt: text,
-    run: () => sfx(text, secs),
-  })),
-];
+  }));
+const soundTasks = only
+  ? []
+  : sounds.map(([id, text, secs]) => ({
+      out: join(AUDIO, 'sfx', `${id}.mp3`),
+      label: `sfx ${id}`,
+      prompt: text,
+      run: () => sfx(text, secs),
+    }));
+const tasks = [...announcerTasks, ...gruntTasks, ...soundTasks];
 
 const pending = tasks.filter((t) => !skip(t.out, force));
 await pool(pending, CONCURRENCY, async (t) => {

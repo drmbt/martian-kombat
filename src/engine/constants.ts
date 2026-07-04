@@ -59,6 +59,18 @@ export const COUNTER_HITSTOP_BONUS = 3;
 // frame instead of being dropped — covers wakeup reversals + landing buffer
 export const ACTION_BUFFER_TICKS = 8;
 
+// cancels & chains: once a move has CONTACTED (hit or block — never a whiff),
+// a buffered press may cancel it into a chain target (data-driven `chains` on
+// the move) or a motion special (`cancel: true` normals). The window runs
+// from contact through the active frames plus this many recovery ticks.
+export const CANCEL_WINDOW_TICKS = 8;
+
+// combo damage scaling: hits 1-2 land full, every later hit in the same combo
+// loses STEP percent (cumulative), floored at FLOOR percent — long chains
+// stay rewarding without deleting a health bar
+export const COMBO_SCALE_STEP = 10;
+export const COMBO_SCALE_FLOOR = 30;
+
 // landing recovery: jumps have consequences — a short unactionable window on
 // touchdown, longer after an air normal that whiffed
 export const LANDING_TICKS = 3;
