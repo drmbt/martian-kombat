@@ -751,7 +751,18 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
-- **2026-07-04 · session · NetSession rollback core (SPEC T37)** — GGPO-style
+- **2026-07-04 · net · WebRTC transport over PeerJS (SPEC T38, + rejoin spec
+  V27/T46)** — `src/net/webrtc.ts`: `WebRtcTransport` wraps a peerjs
+  DataConnection behind the same `Transport` iface as the loopback, so
+  NetSession is transport-agnostic. `hostRoom()` claims a namespaced room id
+  (5-char unambiguous code, no I/L/O/0/1) + waits for a guest; `joinRoom()`
+  connects to it; both surface a `transport` promise + `onReconnect` hook.
+  The room-owning Peer outlives any single DataConnection so a dropped peer
+  can rebind into the same room — groundwork for T46 rejoin. Reliable+ordered
+  channel (lockstep needs both). Not vitest-able (real broker); gated on
+  typecheck+build; code-gen unit-tested. peerjs dep added. SPEC gains V27
+  (grace window + host-authoritative resync, not instant forfeit) + T46. —
+  Claude GGPO-style
   netplay behind the same Session surface as FightSession: predicted remote
   inputs (repeat-last), structuredClone snapshot ring, mispredict → restore
   at divergence + silent re-sim to head (presentation hooks fire once per

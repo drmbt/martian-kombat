@@ -51,7 +51,7 @@ Netplay:
 - url: `?dev=net` → LobbyScene direct
 - menu: "ONLINE" → LobbyScene. Host: show room code + copy btn. Join: code input. Each side picks own char (reuse select-screen assets). Host = slot 0 (P1).
 - dep: `peerjs` (cloud broker signaling)
-- wire msgs (JSON over DataChannel, packed-number inputs): `{t:'hello', proto, charHash, charId, name}` \| `{t:'start', rules, stage, chars}` \| `{t:'input', tick, frames:[…last-8 packed]}` \| `{t:'hash', tick, h}` \| `{t:'bye', reason}`
+- wire msgs (JSON over DataChannel, packed-number inputs): `{t:'hello', proto, charHash, charId, name}` \| `{t:'start', rules, stage, chars, delay}` \| `{t:'input', tick, frames:[…last-8 packed]}` \| `{t:'hash', tick, h}` \| `{t:'resync', tick, state}` (full GameState, host→guest on rejoin) \| `{t:'bye', reason}`
 
 ## §V
 
@@ -76,10 +76,11 @@ V19: ~~lockstep stall~~ AMENDED 2026-07-04 → rollback: sim head runs on predic
 V20: desync ⊥ silent: `hashState` exchanged every 60 CONFIRMED ticks (both real inputs known — ⊥ hash predicted ticks); mismatch → halt match, loud overlay, log both hashes + tick.
 V21: handshake ! verify {proto version, char-data hash} before start; mismatch → refuse w/ shown reason.
 V22: net input = packed number (`packInput` format) + tick id; ⊥ InputFrame objects on wire. ∀ input packets carry last-8 redundancy (loss tolerance w/o resend round-trip).
-V23: online: pause ⊥ stops sim (overlay only); disconnect → timeout → forfeit prompt.
+V23: online: pause ⊥ stops sim (overlay only); disconnect handling per V27 (grace window + rejoin, ⊥ instant forfeit).
 V24: rollback invisible to renderers: scene sees latest head state + tick-keyed event stream. Events (sfx/vfx/announcer) fire ONCE per tick — re-sim after rollback ⊥ re-fires already-presented ticks (mispredicted events accepted, standard rollback artifact). Health bars/HUD read live state → self-correct free.
 V25: confirmed sim ≡ offline sim: given same input log, NetSession confirmed states hash-equal to plain step() replay (rollback machinery ⊥ leaks into outcomes).
 V26: timesync: sides measure ahead/behind via tick delta in input packets; ahead side eases pacing (skip-frame style) — one-sided rollback pileup ⊥ grows unbounded.
+V27: connection loss ≠ instant forfeit: sim freezes, grace window (~20s) w/ visible countdown overlay; dropped peer rejoins same room id → handshake re-verifies (V21) → host sends authoritative `resync` (full state @ tick, guest's local timeline discarded) → both resume. Grace expiry → forfeit prompt. Host authoritative on rejoin, ⊥ merge.
 V13: anim transitions crossfade, ⊥ pose-snap. Clip classes in `clipContract.ts`: loop (phase = frame/60 % dur, walk timeScale ∝ walkSpeed), window (attacks: timeScale fits startup+active+recovery, optional `impactNorm` warp keeps impact on active frames), oneshot (natural speed, clamp). Pair-class fade table (ticks) data-driven. ∀ weights/times = fn(tick state) — mixer ⊥ free-run (`mixer.update(0)`), renderer-side transition record OK, engine untouched.
 
 ## §T
@@ -124,14 +125,15 @@ T34|x|extract `FightSession` (local impl): accumulator, KeyboardSource/CpuDriver
 T35|x|engine pure helpers: `unpackInput(n)` + `hashState(s)` (FNV over numeric core: tick, phase, fighters x/y/vx/vy/health/action.kind+frame, wins, timer, projectiles) + vitests; audit engine for impl-varying Math ops|V20
 T36|x|`src/net/transport.ts`: Transport iface (send/onMessage/onStatus) + `LoopbackTransport` w/ latency+jitter sim + vitest|V18
 T37|x|`NetSession` rollback core: snapshot ring (W=10, `structuredClone`), predict remote = last input, confirmedTick tracking, mispredict → restore + re-sim to head, input delay D=1–2, stall past W, hash exchange on confirmed ticks; vitest loopback pair w/ latency+jitter: converges, confirmed hashes equal, V25 replay-equivalence|V19,V20,V22,V25
-T38|.|WebRTC transport `src/net/webrtc.ts`: host/join, DataChannel wiring, signaling per §C decision|V18
+T38|x|WebRTC transport `src/net/webrtc.ts`: host/join, DataChannel wiring, signaling per §C decision|V18
 T39|.|`LobbyScene`: host → room code display + copy; join → code entry; per-side char pick; ready → hello/start handshake → launch Fight w/ NetSession|V21
-T40|.|scenes accept injected session; online: pause = overlay only, disconnect → forfeit flow, rematch handshake|V23,V7
+T40|.|scenes accept injected session; online: pause = overlay only, disconnect → V27 grace/rejoin flow, rematch handshake|V23,V27,V7
 T41|.|net UI: lobby connect-lifecycle states w/ failure reasons; in-fight compact indicator (ping + green/yellow/red quality) via existing HUD component pattern; stall overlay past W; debug detail (rollback count/depth, delay D, ahead/behind) behind toggle|V20,V26,V24
 T42|.|desync harness: two full sessions over loopback, inject forced divergence, assert detect ≤ 60 confirmed ticks|V20
 T43|.|perf audit: worst-case W re-steps + snapshot per frame measured, < 2ms mid laptop else shrink W; 3D route works w/ NetSession unmodified (proof of V18)|V8,V18
 T44|.|tick-keyed event stream: session emits `tickEvents` diffs w/ tick ids, fire-once dedupe across re-sims, both scenes consume stream instead of own diffing; vitest (rollback ⊥ double-fire, ⊥ skip confirmed-only events)|V24
 T45|.|timesync: tick-delta from input packets → ahead side pacing ease (drop ~1 tick per interval); vitest converging drift|V26
+T46|.|rejoin: transport reconnect events (peerjs room persists), `NetSession.resync()` (adopt host state, clear input/snapshot buffers, resume), grace-window freeze + countdown UI, expiry → forfeit; vitest: kill transport mid-match, reattach, timelines converge|V27,V21
 ## §B
 
 id|date|cause|fix
