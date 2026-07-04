@@ -40,11 +40,17 @@ export function randomTraining(): LaunchTarget {
 }
 
 export function random3dFight(): LaunchTarget {
-  // vincent is the only character with a GLB so far — mirror him so both
-  // sides exercise the mesh + animation path
+  // ?p1= / ?p2= pick the matchup (vincent, flo, yulia have GLBs so far);
+  // anyone else gets the capsule placeholder
+  const params = new URLSearchParams(window.location.search);
   return {
     scene: 'Fight3D',
-    data: { p1: 'vincent', p2: 'vincent', stage: DEV_STAGE, cpu: true },
+    data: {
+      p1: params.get('p1') ?? 'vincent',
+      p2: params.get('p2') ?? 'vincent',
+      stage: DEV_STAGE,
+      cpu: true,
+    },
   };
 }
 

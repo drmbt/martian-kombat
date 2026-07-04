@@ -150,6 +150,8 @@ export class FightScene3D extends Phaser.Scene {
       return;
     }
     this.renderer3d = renderer;
+    // dev handle for CDP-driven verification
+    (window as unknown as { __r3d?: ThreeFightRenderer }).__r3d = renderer;
     // ?boxes=1 starts with the overlay on — lets headless screenshots verify
     // the debug cuboids without keyboard input
     this.settings.hitboxes = new URLSearchParams(window.location.search).get('boxes') === '1';

@@ -1,0 +1,705 @@
+{
+ "bones": 41,
+ "meshes": 1,
+ "basecolorApplied": false,
+ "hips": "mixamorig:Hips",
+ "verticalChannel": 1,
+ "restSpan": 0.01,
+ "scaleFactor": 237.9648,
+ "clips": [
+  {
+   "name": "idle",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Fight Idle.fbx",
+   "frames": 143,
+   "seconds": 4.767,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "walk-forward",
+   "source": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/shared/pro-magic-pack/Standing Walk Forward.fbx",
+   "frames": 34,
+   "seconds": 1.133,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "walk-back",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Standing Walk Back.fbx",
+   "frames": 30,
+   "seconds": 1,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "dash-forward",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Short Step Forward.fbx",
+   "frames": 30,
+   "seconds": 1,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "dash-forward#2",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Medium Step Forward.fbx",
+   "frames": 28,
+   "seconds": 0.933,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "dash-back",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Drunk Walk Backwards.fbx",
+   "frames": 47,
+   "seconds": 1.567,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "crouch",
+   "source": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/shared/pro-magic-pack/Crouch Idle.fbx",
+   "frames": 41,
+   "seconds": 1.367,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "prejump",
+   "source": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/shared/pro-magic-pack/Standing Idle To Crouch.fbx",
+   "frames": 30,
+   "seconds": 1,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "jump",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Jumping Up.fbx",
+   "frames": 25,
+   "seconds": 0.833,
+   "rootStripped": [
+    "X",
+    "Yv",
+    "Z"
+   ]
+  },
+  {
+   "name": "fall",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Falling Idle.fbx",
+   "frames": 21,
+   "seconds": 0.7,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "landing",
+   "source": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/shared/action-adventure-pack/hard landing.fbx",
+   "frames": 60,
+   "seconds": 2,
+   "rootStripped": [
+    "X",
+    "Yv",
+    "Z"
+   ]
+  },
+  {
+   "name": "getup",
+   "source": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/shared/action-adventure-pack/cover to stand.fbx",
+   "frames": 45,
+   "seconds": 1.5,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Head Hit.fbx",
+   "frames": 43,
+   "seconds": 1.433,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit#2",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Head Hit (2).fbx",
+   "frames": 32,
+   "seconds": 1.067,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit#3",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Head Hit (3).fbx",
+   "frames": 50,
+   "seconds": 1.667,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit-front",
+   "source": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/shared/pro-magic-pack/Standing React Small From Front.fbx",
+   "frames": 36,
+   "seconds": 1.2,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit-front#2",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Light Hit To Head.fbx",
+   "frames": 15,
+   "seconds": 0.5,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit-back",
+   "source": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/shared/pro-magic-pack/Standing React Small From Back.fbx",
+   "frames": 38,
+   "seconds": 1.267,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit-front-heavy",
+   "source": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/shared/pro-magic-pack/Standing React Large From Front.fbx",
+   "frames": 41,
+   "seconds": 1.367,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit-front-heavy#2",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Receive Uppercut To The Face.fbx",
+   "frames": 29,
+   "seconds": 0.967,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit-front-heavy#3",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Receiving A Big Uppercut.fbx",
+   "frames": 73,
+   "seconds": 2.433,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit-back-heavy",
+   "source": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/shared/pro-magic-pack/Standing React Large From Back.fbx",
+   "frames": 50,
+   "seconds": 1.667,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit-air",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Flying Back Death.fbx",
+   "frames": 91,
+   "seconds": 3.033,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit-body",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Big Stomach Hit.fbx",
+   "frames": 42,
+   "seconds": 1.4,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit-body#2",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Rib Hit.fbx",
+   "frames": 30,
+   "seconds": 1,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit-body#3",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Hit To Body.fbx",
+   "frames": 40,
+   "seconds": 1.333,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit-body-heavy",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Livershot Knockdown.fbx",
+   "frames": 66,
+   "seconds": 2.2,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "block-stand",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Standing Block Idle.fbx",
+   "frames": 69,
+   "seconds": 2.3,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "knockdown",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Fallen Idle.fbx",
+   "frames": 45,
+   "seconds": 1.5,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "ko",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Standing React Death Backward.fbx",
+   "frames": 109,
+   "seconds": 3.633,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "ko-forward",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Standing React Death Forward.fbx",
+   "frames": 110,
+   "seconds": 3.667,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "dazed",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Stunned.fbx",
+   "frames": 49,
+   "seconds": 1.633,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "win",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/gestures/Victory.fbx",
+   "frames": 135,
+   "seconds": 4.5,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "intro",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/gestures/Charge.fbx",
+   "frames": 171,
+   "seconds": 5.7,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "intro#2",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/gestures/Yawn.fbx",
+   "frames": 250,
+   "seconds": 8.333,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "intro#3",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/gestures/Whatever Gesture.fbx",
+   "frames": 42,
+   "seconds": 1.4,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "taunt",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/gestures/Whatever Gesture.fbx",
+   "frames": 42,
+   "seconds": 1.4,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "taunt#2",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/gestures/Yawn.fbx",
+   "frames": 250,
+   "seconds": 8.333,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "taunt#3",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/gestures/Charge.fbx",
+   "frames": 171,
+   "seconds": 5.7,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack-generic",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Punching.fbx",
+   "frames": 31,
+   "seconds": 1.033,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack-air",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Mutant Jump Attack.fbx",
+   "frames": 74,
+   "seconds": 2.467,
+   "rootStripped": [
+    "X",
+    "Yv",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/lp",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Lead Jab.fbx",
+   "frames": 37,
+   "seconds": 1.233,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/lp#2",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Lead Jab (2).fbx",
+   "frames": 54,
+   "seconds": 1.8,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/lp#3",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Lead Jab (3).fbx",
+   "frames": 55,
+   "seconds": 1.833,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/mp",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Hook.fbx",
+   "frames": 26,
+   "seconds": 0.867,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/mp#2",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Hook Punch.fbx",
+   "frames": 33,
+   "seconds": 1.1,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/hp",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Illegal Elbow Punch.fbx",
+   "frames": 68,
+   "seconds": 2.267,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/hp#2",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Illegal Elbow Punch (1).fbx",
+   "frames": 40,
+   "seconds": 1.333,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/lk",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Illegal Knee.fbx",
+   "frames": 68,
+   "seconds": 2.267,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/mk",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Jab Cross.fbx",
+   "frames": 59,
+   "seconds": 1.967,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/hk",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Body Jab Cross.fbx",
+   "frames": 41,
+   "seconds": 1.367,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/throw",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Illegal Headbutt.fbx",
+   "frames": 67,
+   "seconds": 2.233,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/cossack-spiral",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Back Flip To Uppercut.fbx",
+   "frames": 175,
+   "seconds": 5.833,
+   "rootStripped": [
+    "X",
+    "Yv",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/backbend-guillotine",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Body Jab Cross.fbx",
+   "frames": 41,
+   "seconds": 1.367,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/volga-piledriver",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Illegal Headbutt.fbx",
+   "frames": 67,
+   "seconds": 2.233,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/braid-lariat",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Hook Punch.fbx",
+   "frames": 33,
+   "seconds": 1.1,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/spinning-star-kick",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Mutant Jump Attack.fbx",
+   "frames": 74,
+   "seconds": 2.467,
+   "rootStripped": [
+    "X",
+    "Yv",
+    "Z"
+   ]
+  }
+ ],
+ "warnings": [
+  "idle: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "walk-forward: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "walk-back: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "dash-forward: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
+  "dash-forward#2: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
+  "dash-back: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "crouch: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "prejump: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "jump: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "fall: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "landing: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "getup: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "hit: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "hit#2: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "hit#3: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "hit-front: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "hit-front#2: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "hit-back: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "hit-front-heavy: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "hit-front-heavy#2: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "hit-front-heavy#3: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
+  "hit-back-heavy: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "hit-air: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "hit-body: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
+  "hit-body#2: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
+  "hit-body#3: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
+  "hit-body-heavy: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
+  "block-stand: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "knockdown: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "ko: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "ko-forward: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "dazed: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "win: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
+  "intro: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
+  "intro#2: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
+  "intro#3: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
+  "taunt: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
+  "taunt#2: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
+  "taunt#3: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
+  "attack-generic: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "attack-air: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "attack/lp: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "attack/lp#2: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "attack/lp#3: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "attack/mp: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "attack/mp#2: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "attack/hp: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "attack/hp#2: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "attack/lk: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
+  "attack/mk: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
+  "attack/hk: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
+  "attack/throw: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "attack/cossack-spiral: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
+  "attack/backbend-guillotine: unmapped bones ['mixamorig8:LeftHandMiddle1', 'mixamorig8:LeftHandMiddle2', 'mixamorig8:LeftHandMiddle3', 'mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2']",
+  "attack/volga-piledriver: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "attack/braid-lariat: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']",
+  "attack/spinning-star-kick: unmapped bones ['mixamorig:LeftHandMiddle1', 'mixamorig:LeftHandMiddle2', 'mixamorig:LeftHandMiddle3', 'mixamorig:LeftHandRing1', 'mixamorig:LeftHandRing2']"
+ ],
+ "coverage": {
+  "mapped": [
+   "idle",
+   "walk-forward",
+   "walk-back",
+   "crouch",
+   "prejump",
+   "jump",
+   "fall",
+   "landing",
+   "getup",
+   "hit",
+   "hit-front",
+   "hit-back",
+   "hit-air",
+   "block-stand",
+   "knockdown",
+   "ko",
+   "ko-forward",
+   "dazed",
+   "win",
+   "hit-front-heavy",
+   "hit-back-heavy",
+   "intro",
+   "hit-body",
+   "hit-body-heavy",
+   "taunt",
+   "dash-forward",
+   "dash-back",
+   "attack/lp",
+   "attack/mp",
+   "attack/hp",
+   "attack/lk",
+   "attack/mk",
+   "attack/hk",
+   "attack/cossack-spiral",
+   "attack/backbend-guillotine",
+   "attack/volga-piledriver",
+   "attack/braid-lariat",
+   "attack/spinning-star-kick",
+   "attack/throw"
+  ],
+  "fallback": [
+   "block-crouch -> block-stand",
+   "attack/clp -> attack/lp",
+   "attack/cmp -> attack/mp",
+   "attack/chp -> attack/hp",
+   "attack/clk -> attack/lk",
+   "attack/cmk -> attack/mk",
+   "attack/chk -> attack/hk",
+   "attack/jlp -> attack-air",
+   "attack/jmp -> attack-air",
+   "attack/jhp -> attack-air",
+   "attack/jlk -> attack-air",
+   "attack/jmk -> attack-air",
+   "attack/jhk -> attack-air"
+  ],
+  "missing": []
+ },
+ "missingSources": []
+}

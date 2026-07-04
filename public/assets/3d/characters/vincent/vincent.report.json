@@ -4,6 +4,8 @@
  "basecolorApplied": false,
  "hips": "mixamorig:Hips",
  "verticalChannel": 1,
+ "restSpan": 0.01,
+ "scaleFactor": 213.2165,
  "clips": [
   {
    "name": "idle",
@@ -20,6 +22,16 @@
    "source": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing Walk Forward.fbx",
    "frames": 34,
    "seconds": 1.133,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "walk-back",
+   "source": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing Walk Back.fbx",
+   "frames": 36,
+   "seconds": 1.2,
    "rootStripped": [
     "X",
     "Z"
@@ -50,16 +62,6 @@
    "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Drunk Walk Backwards.fbx",
    "frames": 47,
    "seconds": 1.567,
-   "rootStripped": [
-    "X",
-    "Z"
-   ]
-  },
-  {
-   "name": "walk-back",
-   "source": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing Walk Back.fbx",
-   "frames": 36,
-   "seconds": 1.2,
    "rootStripped": [
     "X",
     "Z"
@@ -408,36 +410,6 @@
    ]
   },
   {
-   "name": "attack/lk",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Illegal Knee.fbx",
-   "frames": 68,
-   "seconds": 2.267,
-   "rootStripped": [
-    "X",
-    "Z"
-   ]
-  },
-  {
-   "name": "attack/mk",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Jab Cross.fbx",
-   "frames": 59,
-   "seconds": 1.967,
-   "rootStripped": [
-    "X",
-    "Z"
-   ]
-  },
-  {
-   "name": "attack/hk",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Body Jab Cross.fbx",
-   "frames": 41,
-   "seconds": 1.367,
-   "rootStripped": [
-    "X",
-    "Z"
-   ]
-  },
-  {
    "name": "attack-air",
    "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Mutant Jump Attack.fbx",
    "frames": 74,
@@ -513,6 +485,36 @@
    "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Illegal Elbow Punch (1).fbx",
    "frames": 40,
    "seconds": 1.333,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/lk",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Illegal Knee.fbx",
+   "frames": 68,
+   "seconds": 2.267,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/mk",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Jab Cross.fbx",
+   "frames": 59,
+   "seconds": 1.967,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/hk",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Body Jab Cross.fbx",
+   "frames": 41,
+   "seconds": 1.367,
    "rootStripped": [
     "X",
     "Z"

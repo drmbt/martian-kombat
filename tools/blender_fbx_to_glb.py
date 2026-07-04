@@ -132,7 +132,40 @@ def main():
     if arm is None:
         fail('no armature in rig FBX')
     meshes = [o for o in rig_objs if o.type == 'MESH']
+    # drop unskinned meshes (Tripo exports sometimes carry a reference dummy):
+    # they can't animate, they render as frozen junk, and they poison the
+    # runtime height normalization
+    skinned = [m for m in meshes if len(m.vertex_groups) > 0]
+    if skinned and len(skinned) < len(meshes):
+        for m in meshes:
+            if m not in skinned:
+                print(f"BLENDER-NOTE: dropping unskinned mesh '{m.name}'")
+                bpy.data.objects.remove(m, do_unlink=True)
+        meshes = skinned
     textured = ensure_basecolor(meshes, job.get('basecolor'))
+
+    # normalize world height by SETTING the armature object scale (never
+    # transform_apply — that would change pose-space units under every clip):
+    # rigs arrive at wildly different unit conventions (vincent/flo/yulia all
+    # differ) and runtime Box3 guessing proved unreliable for skinned meshes
+    # ground truth = the RENDERED mesh: evaluate the skinned mesh through the
+    # depsgraph at rest (bone spans lie when a rig's bind convention differs —
+    # flo's bones span 18x his siblings' while his mesh renders 4x too big)
+    import mathutils
+    bpy.context.view_layer.update()
+    dg = bpy.context.evaluated_depsgraph_get()
+    zs = []
+    for m in meshes:
+        ev = m.evaluated_get(dg)
+        tmp = ev.to_mesh()
+        for v in tmp.vertices:
+            zs.append((ev.matrix_world @ v.co).z)
+        ev.to_mesh_clear()
+    span = max(zs) - min(zs)
+    target = job.get('targetHeight', 1.75)
+    factor = target / span if span > 1e-6 else 1.0
+    arm.scale = tuple(s * factor for s in arm.scale)
+    bpy.context.view_layer.update()
 
     rig_bones = {b.name for b in arm.data.bones}
     hips = next((b for b in rig_bones if b.lower().endswith('hips')), None)
@@ -149,6 +182,8 @@ def main():
         'basecolorApplied': textured,
         'hips': hips,
         'verticalChannel': vert_idx,
+        'restSpan': round(span, 4),
+        'scaleFactor': round(factor, 4),
         'clips': [],
         'warnings': [],
     }
@@ -181,6 +216,13 @@ def main():
         # the clip file's own objects are done — the action lives on our rig now
         for o in objs:
             bpy.data.objects.remove(o, do_unlink=True)
+
+    # final sweep: unskinned meshes sneak in via CLIP imports too (some packs
+    # ship the skin) — anything without vertex groups can't animate and only
+    # poisons bounds; kill before export
+    for o in [m for m in bpy.data.objects if m.type == 'MESH' and len(m.vertex_groups) == 0]:
+        print(f"BLENDER-NOTE: dropping unskinned mesh '{o.name}'")
+        bpy.data.objects.remove(o, do_unlink=True)
 
     bpy.data.orphans_purge(do_recursive=True)
 

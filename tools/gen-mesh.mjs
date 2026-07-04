@@ -37,6 +37,8 @@ const outDir = join(ROOT, 'public/assets/3d/characters', charId);
 const outGlb = join(outDir, `${charId}.glb`);
 const outReport = join(outDir, `${charId}.report.json`);
 
+const charJson = JSON.parse(readFileSync(join(ROOT, `src/data/characters/${charId}.json`), 'utf8'));
+
 if (skip(outGlb, force)) process.exit(0);
 if (!existsSync(BLENDER)) {
   console.error(`Blender not found at ${BLENDER} — install Blender.app or edit BLENDER in this script`);
@@ -99,6 +101,9 @@ writeFileSync(
       out: outGlb,
       report: outReport,
       clips: jobClips,
+      // world meters the standing rig must measure — baked into the GLB's
+      // armature node so the runtime needs NO per-rig scale guessing
+      targetHeight: (charJson.hurtStand.h / 100) * 0.95,
     },
     null,
     1,
@@ -112,7 +117,6 @@ execFileSync(BLENDER, ['--background', '--factory-startup', '--python', join(ROO
 
 // -- contract coverage (same data + chain walk as clipContract.ts) -------------
 const contract = JSON.parse(readFileSync(join(ROOT, 'src/renderer3d/clipContract.json'), 'utf8'));
-const charJson = JSON.parse(readFileSync(join(ROOT, `src/data/characters/${charId}.json`), 'utf8'));
 const report = JSON.parse(readFileSync(outReport, 'utf8'));
 const converted = new Set(report.clips.map((c) => c.name));
 
