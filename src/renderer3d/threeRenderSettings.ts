@@ -25,7 +25,7 @@ export const DEFAULT_SETTINGS: RenderSettings = {
   exposure: 0.88, // dark base so the lamps and neon actually carry the scene
   keyIntensity: 0.45,
   fillIntensity: 0.12,
-  rimIntensity: 1.2,
+  rimIntensity: 1.5, // black outfits vs dark walls — rim does the separating
   cameraPreset: 'default',
   hitboxes: false,
   skeleton: false,

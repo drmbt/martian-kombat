@@ -153,12 +153,25 @@ export class ThreeStageView {
     moonGlow.position.set(-9, 13, -33.4);
     g.add(sky, moon, moonGlow);
 
+    // backlot ground under all building rows — kills the void "holes" that
+    // showed between and behind the blocks
+    const backlot = new THREE.Mesh(
+      new THREE.BoxGeometry(stageW + 90, 0.1, 36),
+      new THREE.MeshStandardMaterial({ color: 0x0b0d13, roughness: 1 }),
+    );
+    backlot.position.set(0, -0.06, -22);
+    g.add(backlot);
+
     // building rows at staggered depths — the parallax layers (near → skyline).
     // near row deliberately sparse: the GAPS are where the deeper rows peek
-    // through and the parallax actually reads during camera travel
-    const rows: { z: number; h: [number, number]; color: number; count: number; span: number }[] = [
-      { z: -8.5, h: [3, 7], color: 0x2e3340, count: 6, span: stageW + 30 },
-      { z: -13.5, h: [5, 10], color: 0x232734, count: 10, span: stageW + 40 },
+    // through and the parallax actually reads during camera travel.
+    // near/mid rows draw from a muted color palette so the all-black fighters
+    // separate from the walls instead of grey-on-grey mush
+    const NEAR_PALETTE = [0x4a3339, 0x2f4548, 0x413c2d, 0x39405c, 0x442f4a];
+    const MID_PALETTE = [0x32262b, 0x223034, 0x2d2a22, 0x282e42];
+    const rows: { z: number; h: [number, number]; color: number; palette?: number[]; count: number; span: number }[] = [
+      { z: -8.5, h: [3, 7], color: 0x2e3340, palette: NEAR_PALETTE, count: 6, span: stageW + 30 },
+      { z: -13.5, h: [5, 10], color: 0x232734, palette: MID_PALETTE, count: 10, span: stageW + 40 },
       { z: -20, h: [8, 16], color: 0x181b26, count: 12, span: stageW + 55 },
       { z: -29, h: [13, 24], color: 0x0e1119, count: 15, span: stageW + 80 },
     ];
@@ -169,12 +182,32 @@ export class ThreeStageView {
         const w = 2 + r * 3.5;
         const h = row.h[0] + hash01(ri * 57 + i * 23) * (row.h[1] - row.h[0]);
         const x = -row.span / 2 + (i + 0.5) * (row.span / row.count) + (r - 0.5) * 1.2;
+        const bColor = row.palette
+          ? row.palette[Math.floor(hash01(ri * 211 + i * 41) * row.palette.length)]
+          : row.color;
         const b = new THREE.Mesh(
           new THREE.BoxGeometry(w, h, 2 + r * 2),
-          new THREE.MeshStandardMaterial({ color: row.color, roughness: 0.95 }),
+          new THREE.MeshStandardMaterial({ color: bColor, roughness: 0.95 }),
         );
         b.position.set(x, h / 2, row.z);
         g.add(b);
+        // faint uplight glow at near-row bases — colors the wall, sells depth
+        if (ri === 0) {
+          const uplight = new THREE.Mesh(
+            new THREE.PlaneGeometry(w * 0.9, 1.8),
+            new THREE.MeshBasicMaterial({
+              map: radialTexture([
+                [0, 'rgba(255,178,102,0.22)'],
+                [1, 'rgba(255,178,102,0)'],
+              ]),
+              transparent: true,
+              blending: THREE.AdditiveBlending,
+              depthWrite: false,
+            }),
+          );
+          uplight.position.set(x, 0.7, row.z + (2 + r * 2) / 2 + 0.015);
+          g.add(uplight);
+        }
         // sparse lit windows on the two near rows (cheap, sells "city at night")
         if (ri <= 1) {
           const winCount = 2 + Math.floor(r * 4);
@@ -347,6 +380,14 @@ export class ThreeStageView {
       lamp.position.set(x, 0, -1.6);
       g.add(lamp);
     }
+
+    // two colored accent washes on the near wall — lift it off the fighters
+    // without brightening the lane (short falloff, no shadows)
+    const warmWash = new THREE.PointLight(0xff8a50, 9, 9, 1.8);
+    warmWash.position.set(-5.5, 2.2, -6.8);
+    const coolWash = new THREE.PointLight(0x4fa8ff, 8, 9, 1.8);
+    coolWash.position.set(5.5, 2.6, -6.8);
+    g.add(warmWash, coolWash);
 
     this.placeholder = g;
     this.group.add(g);
