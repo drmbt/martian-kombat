@@ -115,18 +115,97 @@ export class ThreeFxSystem {
     return null;
   }
 
-  /** warm the cache so first-hit sparks don't miss their art */
-  preload(charIds: string[]): void {
-    for (const k of ['spark-hit', 'spark-heavy', 'spark-block']) this.texture(`${BASE}assets/vfx/${k}.png`);
+  private fightTextureUrls(charIds: string[]): string[] {
+    const urls = ['spark-hit', 'spark-heavy', 'spark-block', 'dizzy'].map((k) => `${BASE}assets/vfx/${k}.png`);
     for (const id of charIds) {
-      this.texture(`${BASE}assets/sprites/${id}/projectile.png`);
+      urls.push(`${BASE}assets/sprites/${id}/projectile.png`);
       const def = this.defs[id];
       for (const [moveId, m] of Object.entries(def.moves)) {
         if (m.projectile) {
-          this.texture(`${BASE}assets/sprites/${id}/projectile-${moveId}.png`);
-          if (m.projectile.detonate) this.texture(`${BASE}assets/sprites/${id}/projectile-${moveId}-burst.png`);
+          urls.push(`${BASE}assets/sprites/${id}/projectile-${moveId}.png`);
+          if (m.projectile.detonate) urls.push(`${BASE}assets/sprites/${id}/projectile-${moveId}-burst.png`);
         }
-        if (m.vfx) this.texture(`${BASE}assets/sprites/${id}/vfx-${moveId}.png`);
+        if (m.vfx) urls.push(`${BASE}assets/sprites/${id}/vfx-${moveId}.png`);
+      }
+    }
+    return urls;
+  }
+
+  /** Await EVERY texture the fight can use — first-use uploads mid-combo are
+   *  the stutter the perf pass measured. 404s cache as 'missing' as before. */
+  async preloadAll(charIds: string[]): Promise<void> {
+    await Promise.all(
+      this.fightTextureUrls(charIds).map(async (url) => {
+        if (this.textures.has(url)) return;
+        this.textures.set(url, 'loading');
+        try {
+          const t = await this.loader.loadAsync(url);
+          t.colorSpace = THREE.SRGBColorSpace;
+          this.textures.set(url, t);
+        } catch {
+          this.textures.set(url, 'missing');
+        }
+      }),
+    );
+  }
+
+  /** Instantiate one of every material/pipeline variant the fight can hit —
+   *  projectile sprites+glows, both billboard blend modes, blood, splats,
+   *  dizzy — so renderer.compileAsync builds all pipelines up front. Pass
+   *  false to stow the prewarm instances again. */
+  prewarm(on: boolean, charIds: [string, string]): void {
+    if (on) {
+      // projectile pool: 4 entries, each bound to a real projectile texture
+      const texUrls = this.fightTextureUrls(charIds).filter((u) => u.includes('projectile'));
+      while (this.projMeshes.length < 4) this.allocProjEntry();
+      this.projMeshes.forEach((e, i) => {
+        const tex = this.texture(texUrls[i % Math.max(texUrls.length, 1)] ?? '');
+        if (tex) {
+          e.mat.map = tex;
+          e.mat.needsUpdate = true;
+        }
+        e.sprite.visible = true;
+        e.sprite.scale.setScalar(0.0001);
+        e.glow.visible = true;
+        e.glow.scale.setScalar(0.0001);
+      });
+      // one billboard per blend mode, with a spark texture bound
+      this.spawnBillboard(`${BASE}assets/vfx/spark-hit.png`, 480, 300, 0.01, { additive: true });
+      this.spawnBillboard(`${BASE}assets/vfx/spark-heavy.png`, 480, 300, 0.01, { additive: false });
+      // one blood drop + one splat so the instanced pipelines exist
+      this.drops[0].alive = true;
+      this.drops[0].size = 0.0001;
+      this.drops[0].y = 0.5;
+      this.blood.count = 1;
+      this.addSplat(0, -50, 0.0001);
+      // dizzy quads for both slots
+      for (const slot of [0, 1] as const) {
+        if (!this.dizzy[slot]) {
+          const mat = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false });
+          mat.map = this.texture(`${BASE}assets/vfx/dizzy.png`);
+          const mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9), mat);
+          mesh.renderOrder = 21;
+          mesh.layers.set(FX_LAYER);
+          mesh.scale.setScalar(0.0001);
+          this.group.add(mesh);
+          this.dizzy[slot] = mesh;
+        }
+        this.dizzy[slot]!.visible = true;
+      }
+    } else {
+      for (const e of this.projMeshes) {
+        e.sprite.visible = false;
+        e.glow.visible = false;
+        e.light.intensity = 0;
+      }
+      for (const b of this.billboards) {
+        b.active = false;
+        b.mesh.visible = false;
+      }
+      this.drops[0].alive = false;
+      this.blood.count = 0;
+      for (const d of this.dizzy) {
+        if (d) d.visible = false;
       }
     }
   }
@@ -335,34 +414,36 @@ export class ThreeFxSystem {
     );
   }
 
+  private allocProjEntry(): void {
+    // additive: magic reads as energy AND black-fringed pngs lose the fringe
+    // (black adds nothing) — fixes the ugly dark squares around projectiles
+    const mat = new THREE.MeshBasicMaterial({
+      transparent: true,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+    });
+    const sprite = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
+    sprite.renderOrder = 15;
+    sprite.layers.set(FX_LAYER);
+    const glowMat = new THREE.MeshBasicMaterial({
+      map: this.glowTexture,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const glow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), glowMat);
+    glow.renderOrder = 14;
+    glow.layers.set(FX_LAYER);
+    // the light is what makes the bolt illuminate street + fighters
+    const light = new THREE.PointLight(0xffffff, 0, 7, 1.8);
+    sprite.add(light);
+    this.group.add(sprite, glow);
+    this.projMeshes.push({ sprite, mat, glow, glowMat, light });
+  }
+
   private syncProjectiles(state: GameState): void {
-    while (this.projMeshes.length < state.projectiles.length) {
-      // additive: magic reads as energy AND black-fringed pngs lose the fringe
-      // (black adds nothing) — fixes the ugly dark squares around projectiles
-      const mat = new THREE.MeshBasicMaterial({
-        transparent: true,
-        depthWrite: false,
-        side: THREE.DoubleSide,
-        blending: THREE.AdditiveBlending,
-      });
-      const sprite = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
-      sprite.renderOrder = 15;
-      sprite.layers.set(FX_LAYER);
-      const glowMat = new THREE.MeshBasicMaterial({
-        map: this.glowTexture,
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-      });
-      const glow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), glowMat);
-      glow.renderOrder = 14;
-      glow.layers.set(FX_LAYER);
-      // the light is what makes the bolt illuminate street + fighters
-      const light = new THREE.PointLight(0xffffff, 0, 7, 1.8);
-      sprite.add(light);
-      this.group.add(sprite, glow);
-      this.projMeshes.push({ sprite, mat, glow, glowMat, light });
-    }
+    while (this.projMeshes.length < state.projectiles.length) this.allocProjEntry();
     this.projMeshes.forEach((entry, i) => {
       const p = state.projectiles[i];
       if (!p) {

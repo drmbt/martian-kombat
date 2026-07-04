@@ -47,11 +47,14 @@ export class ThreeFightRenderer {
   private post: THREE.RenderPipeline | null = null;
   private readonly viewH: number;
 
+  private charIds: [string, string];
+
   constructor(
     private defs: Defs,
     charIds: [string, string],
     private roomKind: PlaceholderKind = 'test-room',
   ) {
+    this.charIds = charIds;
     this.renderer = new THREE.WebGPURenderer({ antialias: true });
     this.canvas = this.renderer.domElement;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -109,7 +112,6 @@ export class ThreeFightRenderer {
       new ThreeFighterView(defs[charIds[1]]),
     ];
     this.fx = new ThreeFxSystem(defs);
-    this.fx.preload([charIds[0], charIds[1]]);
     this.scene.add(
       this.fighters[0].group,
       this.fighters[1].group,
@@ -140,12 +142,27 @@ export class ThreeFightRenderer {
 
   /** WebGPU init is async; render() is a no-op until this resolves. */
   async init(stageId?: string): Promise<void> {
-    // models load in parallel with the backend; each falls back gracefully
-    void this.fighters[0].loadModel(this.scene);
-    void this.fighters[1].loadModel(this.scene);
-    if (stageId) void this.stage.load(stageId);
-    await this.renderer.init();
+    // everything the fight can touch loads BEFORE the first frame: models,
+    // stage, every FX texture — then one prewarm pass instantiates every
+    // material variant and compileAsync builds all GPU pipelines up front.
+    // First-use pipeline compiles + texture uploads were the mid-fight
+    // stutter on projectiles/effects.
+    await Promise.all([
+      this.fighters[0].loadModel(this.scene),
+      this.fighters[1].loadModel(this.scene),
+      stageId ? this.stage.load(stageId) : Promise.resolve(),
+      this.fx.preloadAll(this.charIds),
+      this.renderer.init(),
+    ]);
     if (this.disposed) return; // scene shut down while the backend was booting
+    this.fx.prewarm(true, this.charIds);
+    try {
+      await this.renderer.compileAsync(this.scene, this.camera);
+    } catch (err) {
+      console.warn('[3d] compileAsync failed (continuing):', err);
+    }
+    this.fx.prewarm(false, this.charIds);
+    if (this.disposed) return;
     this.ready = true;
     this.buildPost();
   }
