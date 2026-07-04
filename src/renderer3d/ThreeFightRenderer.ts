@@ -15,7 +15,7 @@ import { engineToWorld, WORLD_SCALE } from './threeCoordinates';
 import { DEFAULT_SETTINGS, type RenderSettings } from './threeRenderSettings';
 import { ThreeFighterView } from './ThreeFighterView';
 import { ThreeHitboxDebug } from './ThreeHitboxDebug';
-import { ThreeStageView } from './ThreeStageView';
+import { ThreeStageView, type PlaceholderKind } from './ThreeStageView';
 import { ThreeFxSystem } from './ThreeFxSystem';
 import type { ResolvedClip } from './clipContract';
 
@@ -50,6 +50,7 @@ export class ThreeFightRenderer {
   constructor(
     private defs: Defs,
     charIds: [string, string],
+    private roomKind: PlaceholderKind = 'test-room',
   ) {
     this.renderer = new THREE.WebGPURenderer({ antialias: true });
     this.canvas = this.renderer.domElement;
@@ -73,12 +74,13 @@ export class ThreeFightRenderer {
     this.camera = this.persp;
     this.applyCameraPreset('default');
 
-    // night street mood (T24): dark blue ambience + haze; the street lamps
-    // carry the scene — key/fill stay low so their warm pools read cozy
-    this.scene.background = new THREE.Color(0x0b0e17);
-    this.scene.fog = new THREE.Fog(0x0e1120, 11, 30);
+    // mood per room: the street is a dark night scene the lamps carry; the
+    // test room is a neutral, evenly lit chamber for structure readouts
+    const testRoom = this.roomKind === 'test-room';
+    this.scene.background = new THREE.Color(testRoom ? 0x1a1a1e : 0x0b0e17);
+    if (!testRoom) this.scene.fog = new THREE.Fog(0x0e1120, 11, 30);
 
-    const key = new THREE.DirectionalLight(0xcfd8ff, 0.6); // dim cool moon
+    const key = new THREE.DirectionalLight(testRoom ? 0xffffff : 0xcfd8ff, testRoom ? 2.4 : 0.6);
     key.position.set(-3.5, 7, 4.5);
     key.castShadow = true;
     key.shadow.mapSize.set(2048, 2048);
@@ -87,16 +89,20 @@ export class ThreeFightRenderer {
     key.shadow.camera.top = 8;
     key.shadow.camera.bottom = -2;
     key.shadow.bias = -0.0005;
-    const fill = new THREE.DirectionalLight(0x7a86b8, 0.3);
+    const fill = new THREE.DirectionalLight(testRoom ? 0xe8e8f0 : 0x7a86b8, testRoom ? 0.8 : 0.3);
     fill.position.set(4, 2.5, 7);
-    const rim = new THREE.DirectionalLight(0x8fb4ff, 1.2);
+    const rim = new THREE.DirectionalLight(0x8fb4ff, testRoom ? 0.8 : 1.2);
     rim.position.set(1, 4.5, -6);
-    const ambient = new THREE.HemisphereLight(0x232c48, 0x0e0c0a, 0.4);
+    const ambient = new THREE.HemisphereLight(
+      testRoom ? 0x8a8a92 : 0x232c48,
+      testRoom ? 0x3a3a3e : 0x0e0c0a,
+      testRoom ? 0.55 : 0.4,
+    );
     this.scene.add(key, fill, rim, ambient);
     this.lights = { key, fill, rim };
     this.renderer.toneMappingExposure = DEFAULT_SETTINGS.exposure;
 
-    this.stage.buildPlaceholder();
+    this.stage.buildPlaceholder(this.roomKind);
 
     this.fighters = [
       new ThreeFighterView(defs[charIds[0]]),

@@ -109,7 +109,10 @@ export class FightScene3D extends Phaser.Scene {
 
   private async bootRenderer(): Promise<void> {
     const { ThreeFightRenderer } = await import('../renderer3d/ThreeFightRenderer');
-    const renderer = new ThreeFightRenderer(characters, this.chars);
+    // dev placeholder room: grey test chamber by default, ?room=street for
+    // the night-street mood stage
+    const room = new URLSearchParams(window.location.search).get('room') === 'street' ? 'street' : 'test-room';
+    const renderer = new ThreeFightRenderer(characters, this.chars, room);
     // the scene may have shut down while the chunk was loading
     if (!this.scene.isActive()) {
       renderer.dispose();

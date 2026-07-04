@@ -40,6 +40,26 @@ function hash01(seed: number): number {
   return ((h >>> 0) % 100000) / 100000;
 }
 
+/** repeating grid texture for the test room: light lines over a flat shade,
+ *  one canvas cell per world unit via the repeat counts */
+function gridTexture(bg: string, line: string, repeatX: number, repeatY: number): THREE.CanvasTexture {
+  const c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const ctx = c.getContext('2d')!;
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, 64, 64);
+  ctx.strokeStyle = line;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(0.5, 0.5, 64, 64);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(repeatX, repeatY);
+  return t;
+}
+
+export type PlaceholderKind = 'test-room' | 'street';
+
 export class ThreeStageView {
   readonly group = new THREE.Group();
   loaded = false;
@@ -93,7 +113,99 @@ export class ThreeStageView {
     });
   }
 
-  buildPlaceholder(): void {
+  buildPlaceholder(kind: PlaceholderKind = 'test-room'): void {
+    if (kind === 'test-room') this.buildTestRoom();
+    else this.buildStreet();
+  }
+
+  /** Dev test chamber (default while the 3D engine is under construction):
+   *  four grey wall layers at staggered depths, grid patterns on every
+   *  surface, depth labels — pure structure readout with readable chars. */
+  private buildTestRoom(): void {
+    const g = new THREE.Group();
+    const stageW = STAGE_W * WORLD_SCALE;
+
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(stageW + 30, 24),
+      new THREE.MeshStandardMaterial({
+        map: gridTexture('#8a8a8e', '#a9a9ad', stageW + 30, 24),
+        roughness: 0.92,
+      }),
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.set(0, 0, -4);
+    floor.receiveShadow = true;
+    g.add(floor);
+
+    // four wall layers: further = darker + taller, all visible at once
+    const layers = [
+      { z: -3, h: 2.2, shade: '#7b7b80', line: '#94949a', span: stageW + 6 },
+      { z: -8, h: 4.2, shade: '#646469', line: '#7c7c82', span: stageW + 16 },
+      { z: -14, h: 6.5, shade: '#4d4d52', line: '#636369', span: stageW + 26 },
+      { z: -21, h: 9.5, shade: '#37373c', line: '#4a4a50', span: stageW + 40 },
+    ];
+    for (const [i, l] of layers.entries()) {
+      const wall = new THREE.Mesh(
+        new THREE.PlaneGeometry(l.span, l.h),
+        new THREE.MeshStandardMaterial({
+          map: gridTexture(l.shade, l.line, l.span, l.h),
+          roughness: 0.95,
+        }),
+      );
+      wall.position.set(0, l.h / 2, l.z);
+      wall.receiveShadow = true;
+      g.add(wall);
+      // depth label plate per layer
+      const label = document.createElement('canvas');
+      label.width = 256;
+      label.height = 64;
+      const ctx = label.getContext('2d')!;
+      ctx.fillStyle = '#26262a';
+      ctx.fillRect(0, 0, 256, 64);
+      ctx.font = 'bold 30px monospace';
+      ctx.fillStyle = '#d8d8dc';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`LAYER ${i + 1} · z ${l.z}m`, 128, 34);
+      const labelTex = new THREE.CanvasTexture(label);
+      labelTex.colorSpace = THREE.SRGBColorSpace;
+      const plate = new THREE.Mesh(
+        new THREE.PlaneGeometry(2.4, 0.6),
+        new THREE.MeshBasicMaterial({ map: labelTex }),
+      );
+      plate.position.set(-4 - i * 1.6, l.h - 0.45, l.z + 0.02);
+      g.add(plate);
+    }
+
+    // side walls close the box
+    const sideMat = new THREE.MeshStandardMaterial({
+      map: gridTexture('#59595e', '#6e6e74', 24, 10),
+      roughness: 0.95,
+    });
+    for (const dir of [-1, 1] as const) {
+      const side = new THREE.Mesh(new THREE.PlaneGeometry(24, 10), sideMat);
+      side.position.set(dir * (stageW / 2 + 5), 5, -9);
+      side.rotation.y = -dir * Math.PI * 0.5;
+      side.receiveShadow = true;
+      g.add(side);
+    }
+
+    // lane markers: center line + spawn ticks
+    const markMat = new THREE.MeshStandardMaterial({ color: 0xc8c84a, roughness: 0.8 });
+    const center = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.012, 3), markMat);
+    center.position.set(0, 0.007, 0);
+    g.add(center);
+    for (const mx of [-1.8, 1.8]) {
+      const tick = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.012, 0.08), markMat);
+      tick.position.set(mx, 0.007, 0);
+      g.add(tick);
+    }
+
+    this.placeholder = g;
+    this.group.add(g);
+  }
+
+  private buildStreet(): void {
     const g = new THREE.Group();
     const stageW = STAGE_W * WORLD_SCALE;
 

@@ -19,7 +19,7 @@
     "gen:music": "node tools/gen-music-manifest.mjs",
     "gen:fatality": "node tools/gen-fatality.mjs",
     "gen:vfx": "node tools/gen-vfx.mjs",
-    "gen:mesh": "node tools/gen-mesh.mjs"
+    "gen:mesh": "node tools/gen-mesh.mjs",
     "gen:worldmap": "node tools/gen-worldmap.mjs"
   },
   "dependencies": {

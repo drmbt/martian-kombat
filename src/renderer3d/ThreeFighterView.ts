@@ -217,6 +217,9 @@ export class ThreeFighterView {
     nose.position.set(r * 1.1, h * 0.85, 0);
     nose.castShadow = true;
     this.placeholder.add(body, nose);
+    // hidden until loadModel resolves: the capsule only ever shows when the
+    // character truly has no GLB — no more capsule pop-in before the swap
+    this.placeholder.visible = false;
     this.group.add(this.placeholder);
     // personal fill: a soft short-range light that rides the fighter so the
     // all-black outfit stays readable anywhere on the lane — classic
@@ -257,12 +260,16 @@ export class ThreeFighterView {
       await this.swapInModel(sceneRoot);
     } catch (err) {
       console.error(`[3d] model swap failed for ${this.def.id}:`, err);
+      this.placeholder.visible = true; // fail loud but stay visible
     }
   }
 
   private async swapInModel(sceneRoot: THREE.Object3D): Promise<void> {
     const gltf = await loadGlb(characterGlbUrl(this.def.id));
-    if (!gltf) return;
+    if (!gltf) {
+      this.placeholder.visible = true; // genuinely no model — capsule it is
+      return;
+    }
 
     // each consumer gets a fresh parse from the byte cache (see threeAssets)
     // — fresh meshes, fresh materials, no cross-fighter effect bleed
