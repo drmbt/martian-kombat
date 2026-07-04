@@ -327,8 +327,8 @@ export class FightScene3D extends Phaser.Scene {
       'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;';
     el.innerHTML =
       `<div style="display:flex;gap:40px;align-items:flex-end;">` +
-      `<img src="${base}assets/portraits/${winner.charId}.png" style="width:130px;border:3px solid #e8c832;">` +
-      `<img src="${base}assets/portraits/${loser.charId}-ko.png" onerror="this.src='${base}assets/portraits/${loser.charId}.png';this.style.filter='grayscale(1)'" style="width:110px;border:3px solid #555;">` +
+      `<img src="${base}assets/portraits/${winner.charId}.png" style="width:130px;border:3px solid #e8c832;background:#222;">` +
+      `<img src="${base}assets/portraits/${loser.charId}-ko.png" onerror="this.src='${base}assets/portraits/${loser.charId}.png';this.style.filter='grayscale(1)'" style="width:110px;border:3px solid #555;background:#222;">` +
       `</div>` +
       `<div style="font-size:20px;color:#ffd75e;">${wDef.name.toUpperCase()} WINS</div>` +
       `<div style="max-width:70%;">“${quote}”</div>` +
