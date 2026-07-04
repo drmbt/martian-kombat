@@ -658,6 +658,22 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-04 · renderer3d · 3D spike T25–T27 + depth/beam/blood pass** —
+  depth layers (gradient sky + moon, 4th skyline row, neon signs + halos,
+  power cables, foreground bollards/walls), lamps rebuilt w/ TSL
+  inverse-fresnel fake-volumetric beams (`beamMaterial` in ThreeStageView,
+  technique from webgpu-threejs-tsl skill) + head glow + asphalt pool decals,
+  2 shadow-casting lamps over the lane. Blood: fixed flat-lying mid-flight
+  drops (shared instancing dummy kept splat X-rotation — full rotation.set
+  now), circular drops, damage-tiered counts (3+dmg·0.45/0.75 cap 42, KO 70),
+  smaller rarer splats. impactNorm piecewise warp (`attackClipTime`) lands
+  authored hit frames on engine active-window open (vitest'd). Fatality
+  cutscene = DOM panel slideshow from 2D jpgs; matchEnd win screen (winner
+  portrait, loser -ko bust, winQuotes). Dizzy stars billboard. fps audit:
+  82–108fps w/ AO+bloom+2 point-shadow lamps (headless WebGPU/Metal).
+  Verification workflow: `scratchpad cdp-shot.mjs` (node 24 native WebSocket
+  CDP driver — headless Chrome `--screenshot` can't wait for async GLB loads;
+  real-time wait + JS eval + capture). — Claude
 - **2026-07-04 · renderer3d+presentation · 3D spike T17–T24: full presentation
   parity + gore** — pure `src/presentation/tickEvents.ts` (`snapTick`/`diffTick`
   → typed events, 6 vitests; 2D migrates onto it post-Sprint-19). Fight3D now
