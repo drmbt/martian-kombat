@@ -12,15 +12,17 @@ interface Captured {
   phases: [string, string?][];
   start: StartConfig | null;
   remote: { name: string; charId: string } | null;
+  adoptedRender3d: boolean | null;
 }
 
 function mount(transport: Transport, isHost: boolean, name: string, extra: Record<string, unknown> = {}): Captured {
-  const cap: Captured = { ctrl: null as never, phases: [], start: null, remote: null };
+  const cap: Captured = { ctrl: null as never, phases: [], start: null, remote: null, adoptedRender3d: null };
   cap.ctrl = new LobbyController(
     {
       onPhase: (p, d) => cap.phases.push([p, d]),
       onStart: (c) => (cap.start = c),
       onRemoteLock: (r) => (cap.remote = r),
+      onRenderMode: (r) => (cap.adoptedRender3d = r),
     },
     { transport, isHost, defs: characters, localName: name, ...extra },
   );
@@ -39,7 +41,7 @@ describe('charDataHash', () => {
 describe('LobbyController handshake', () => {
   it('compatible peers agree on one start config (host authoritative)', () => {
     const wire = createLoopbackPair({ latency: 1 });
-    const host = mount(wire.a, true, 'Flo', { stage: 'chiba-roof', delay: 3 });
+    const host = mount(wire.a, true, 'Flo', { stage: 'chiba-roof', delay: 3, render3d: true });
     const guest = mount(wire.b, false, 'Yulia');
     wire.run(2); // transports open
     host.ctrl.lockChar('vincent');
@@ -52,9 +54,23 @@ describe('LobbyController handshake', () => {
       stage: 'chiba-roof',
       chars: ['vincent', 'yulia'], // [host slot 0, guest slot 1]
       delay: 3,
+      render3d: true, // guest adopts host's renderer — no cross-join
     });
     expect(host.remote).toEqual({ name: 'Yulia', charId: 'yulia' });
     expect(guest.remote).toEqual({ name: 'Flo', charId: 'vincent' });
+  });
+
+  it('guest auto-adopts the host renderer on connect (no 2D/3D cross-join)', () => {
+    const wire = createLoopbackPair({ latency: 1 });
+    const host = mount(wire.a, true, 'Flo', { render3d: true });
+    const guest = mount(wire.b, false, 'Yulia'); // guest never asked for 3D
+    wire.run(3); // host's `mode` reaches the guest
+    expect(guest.adoptedRender3d).toBe(true);
+    host.ctrl.lockChar('vincent');
+    guest.ctrl.lockChar('yulia');
+    wire.run(4);
+    expect(guest.start?.render3d).toBe(true);
+    expect(host.start?.render3d).toBe(true);
   });
 
   it('order independence: a char locked before the channel opens still starts', () => {

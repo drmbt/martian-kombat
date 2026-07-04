@@ -20,8 +20,6 @@ import type { Transport } from '../net/transport';
 
 type Screen = 'choose' | 'host' | 'join' | 'pick' | 'error';
 
-const PLAYABLE = ROSTER.filter((r) => r.playable);
-
 export class LobbyScene extends Phaser.Scene {
   private screen: Screen = 'choose';
   private link: PeerLink | null = null;
@@ -29,6 +27,13 @@ export class LobbyScene extends Phaser.Scene {
   private controller: LobbyController | null = null;
   private isHost = false;
   private localSlot: 0 | 1 = 0;
+  /** renderer for this session. Host picks it (carried from the menu toggle);
+   *  a guest ADOPTS the host's mode from the start message, so 2D and 3D can
+   *  never cross-join. `roster` is the pool the char picker draws from. */
+  private render3d = false;
+  private roster = ROSTER.filter((r) => r.playable);
+  /** the paste-anywhere handler, detached on shutdown */
+  private pasteHandler: ((e: ClipboardEvent) => void) | null = null;
 
   private joinCode = '';
   private pickIdx = 0;
@@ -47,9 +52,25 @@ export class LobbyScene extends Phaser.Scene {
     super('Lobby');
   }
 
+  init(data: { render3d?: boolean }): void {
+    // host carries the menu's render toggle in; a guest starts 2D and adopts
+    // the host's mode on connect (onRenderMode)
+    this.render3d = !!data.render3d;
+    this.roster = this.rosterFor(this.render3d);
+  }
+
+  /** the character pool for a renderer: 3D can only field fighters with a
+   *  baked GLB, 2D fields everyone playable */
+  private rosterFor(render3d: boolean): typeof ROSTER {
+    return ROSTER.filter((r) => (render3d ? r.playable && r.mesh3d : r.playable));
+  }
+
   create(): void {
     playMusic('menu');
     this.resetState();
+    // paste the room code from anywhere on the page (not just a focused field)
+    this.pasteHandler = (e: ClipboardEvent) => this.onPaste(e);
+    window.addEventListener('paste', this.pasteHandler);
     this.add.rectangle(STAGE_W / 2, STAGE_H / 2, STAGE_W, STAGE_H, 0x0c0910, 0.85).setDepth(-1);
     if (this.textures.exists('bg-salton')) {
       this.add.image(STAGE_W / 2, STAGE_H / 2, 'bg-salton').setDisplaySize(STAGE_W, STAGE_H).setAlpha(0.25).setDepth(-2);
@@ -114,7 +135,7 @@ export class LobbyScene extends Phaser.Scene {
   private renderHostCode(code: string): void {
     this.clearLayer();
     this.title('HOSTING');
-    this.subtitle('share this code — waiting for your opponent to join');
+    this.subtitle(`${this.modeTag()} match — share this code, waiting for your opponent`);
     const codeText = this.add
       .text(STAGE_W / 2, 250, code, {
         fontFamily: 'monospace', fontSize: '72px', fontStyle: 'bold', color: '#ffd24a',
@@ -191,6 +212,10 @@ export class LobbyScene extends Phaser.Scene {
   private onConnected(transport: Transport): void {
     this.transport = transport;
     const cfg = getSettings();
+    // 3D uses the wider arena bounds + a 3D-capable stage; both peers build the
+    // identical initialState from these rules, so V25 holds in either renderer
+    const bounds = this.render3d ? { minX: -110, maxX: 1070 } : { minX: 50, maxX: 910 };
+    const hostStage = this.render3d ? 'chiba-roof' : 'salton';
     this.controller = new LobbyController(
       {
         onPhase: (phase, detail) => this.onLobbyPhase(phase, detail),
@@ -200,6 +225,7 @@ export class LobbyScene extends Phaser.Scene {
           play(this, 's-blip', 0.5);
           this.setStatus(`${r.name} locked in`);
         },
+        onRenderMode: (render3d) => this.adoptRenderMode(render3d),
         onStart: (c) => this.launch(c),
       },
       {
@@ -207,28 +233,41 @@ export class LobbyScene extends Phaser.Scene {
         isHost: this.isHost,
         defs: characters,
         localName: this.isHost ? 'HOST' : 'GUEST',
+        render3d: this.render3d,
         rules: this.isHost
-          ? { roundTicks: cfg.roundSeconds * 60, winsNeeded: cfg.winsNeeded, stage: { minX: 50, maxX: 910 }, introTicks: 240 }
+          ? { roundTicks: cfg.roundSeconds * 60, winsNeeded: cfg.winsNeeded, stage: bounds, introTicks: 240 }
           : undefined,
-        stage: this.isHost ? 'salton' : undefined,
+        stage: this.isHost ? hostStage : undefined,
       },
     );
     this.renderPick();
+  }
+
+  /** GUEST auto-adopts the host's renderer: re-pool the roster and, if a pick
+   *  is already showing, rebuild it so the fighters match the mode. */
+  private adoptRenderMode(render3d: boolean): void {
+    if (this.render3d === render3d) return;
+    this.render3d = render3d;
+    this.roster = this.rosterFor(render3d);
+    if (this.pickIdx >= this.roster.length) this.pickIdx = 0;
+    if (this.screen === 'pick' && !this.locked) this.renderPick();
   }
 
   private renderPick(): void {
     this.screen = 'pick';
     this.clearLayer();
     this.title('CHOOSE YOUR MARTIAN');
-    this.subtitle(this.isHost ? 'you are Player 1' : 'you are Player 2');
+    this.subtitle(
+      `${this.modeTag()} match · ${this.isHost ? 'you are Player 1' : "you are Player 2 (host's mode)"}`,
+    );
     this.buttons = [];
     // horizontal roster strip of portraits
-    const n = PLAYABLE.length;
+    const n = this.roster.length;
     const cell = Math.min(96, Math.floor((STAGE_W - 80) / n));
     const totalW = cell * n;
     const startX = (STAGE_W - totalW) / 2 + cell / 2;
     const y = 250;
-    PLAYABLE.forEach((entry, i) => {
+    this.roster.forEach((entry, i) => {
       const x = startX + i * cell;
       const bg = this.add.rectangle(x, y, cell - 6, cell - 6, 0x14101a, 0.9).setStrokeStyle(2, 0x594566).setDepth(2);
       if (this.textures.exists(`portrait-${entry.id}`)) {
@@ -242,7 +281,7 @@ export class LobbyScene extends Phaser.Scene {
       this.buttons.push({ bg, label: this.add.text(0, 0, '').setVisible(false), act: () => this.lockPick() });
     });
     const nameText = this.add
-      .text(STAGE_W / 2, y + cell, PLAYABLE[this.pickIdx].name, {
+      .text(STAGE_W / 2, y + cell, this.roster[this.pickIdx].name, {
         fontFamily: 'monospace', fontSize: '28px', fontStyle: 'bold', color: '#ffd24a', stroke: '#000', strokeThickness: 5,
       })
       .setOrigin(0.5);
@@ -260,12 +299,12 @@ export class LobbyScene extends Phaser.Scene {
       bg.setStrokeStyle(on ? 4 : 2, on ? 0xffb347 : 0x594566);
       bg.setScale(on && !this.locked ? 1.12 : 1);
     });
-    if (this.pickNameText) this.pickNameText.setText(PLAYABLE[this.pickIdx].name);
+    if (this.pickNameText) this.pickNameText.setText(this.roster[this.pickIdx].name);
   }
 
   private movePick(d: number): void {
     if (this.locked) return;
-    this.pickIdx = (this.pickIdx + d + PLAYABLE.length) % PLAYABLE.length;
+    this.pickIdx = (this.pickIdx + d + this.roster.length) % this.roster.length;
     play(this, 's-blip', 0.4);
     this.highlightPick();
   }
@@ -273,7 +312,7 @@ export class LobbyScene extends Phaser.Scene {
   private lockPick(): void {
     if (this.locked || !this.controller) return;
     this.locked = true;
-    const charId = PLAYABLE[this.pickIdx].id;
+    const charId = this.roster[this.pickIdx].id;
     play(this, 's-blip', 0.6);
     this.controller.lockChar(charId);
     this.highlightPick();
@@ -299,12 +338,33 @@ export class LobbyScene extends Phaser.Scene {
     // hand the live transport to the fight; don't tear it down on shutdown
     this.transport = null;
     play(this, 's-blip', 0.7);
-    this.scene.start('Fight', {
+    // host-authoritative renderer — both peers launch the SAME scene (V18/V25)
+    this.scene.start(config.render3d ? 'Fight3D' : 'Fight', {
       p1: config.chars[0],
       p2: config.chars[1],
       stage: config.stage,
       online,
     });
+  }
+
+  // ---------- paste-anywhere ----------
+
+  /** Accept the room code pasted anywhere on the page: jump to the join
+   *  screen if needed, fill up to 5 valid chars, auto-connect when complete. */
+  private onPaste(e: ClipboardEvent): void {
+    if (this.isHost || this.screen === 'pick' || this.screen === 'error') return;
+    const raw = e.clipboardData?.getData('text') ?? '';
+    const code = raw
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '')
+      .slice(0, 5);
+    if (!code) return;
+    e.preventDefault();
+    if (this.screen !== 'join') this.startJoin();
+    this.joinCode = code;
+    this.refreshJoinBox();
+    play(this, 's-blip', 0.5);
+    if (code.length === 5) void this.connectAsGuest();
   }
 
   // ---------- input ----------
@@ -468,9 +528,18 @@ export class LobbyScene extends Phaser.Scene {
   }
 
   private teardown(): void {
+    if (this.pasteHandler) {
+      window.removeEventListener('paste', this.pasteHandler);
+      this.pasteHandler = null;
+    }
     // only destroy the link if we didn't hand the transport to a fight
     if (!this.launched) this.link?.destroy();
     this.link = null;
     this.controller = null;
+  }
+
+  /** short "2D"/"3D" tag for the current renderer, shown in lobby headers */
+  private modeTag(): string {
+    return this.render3d ? '3D' : '2D';
   }
 }

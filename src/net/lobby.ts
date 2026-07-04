@@ -37,6 +37,8 @@ export interface StartConfig {
   stage: string;
   chars: [string, string]; // [host = slot 0, guest = slot 1]
   delay: number;
+  /** host-chosen renderer — guest adopts it, so 2D/3D can never cross-join */
+  render3d: boolean;
 }
 
 /** what LobbyScene hands FightScene to run an online match (SPEC T40). The
@@ -58,6 +60,9 @@ export interface LobbyHooks {
   onPhase?: (phase: LobbyPhase, detail?: string) => void;
   /** the remote player locked in (name + character) */
   onRemoteLock?: (remote: RemotePlayer) => void;
+  /** GUEST only: the host announced its renderer — adopt it before picking a
+   *  character (so the roster pool + launched scene match, no cross-join) */
+  onRenderMode?: (render3d: boolean) => void;
   /** handshake complete — launch the Fight with a NetSession using this */
   onStart?: (config: StartConfig) => void;
 }
@@ -72,6 +77,8 @@ export interface LobbyOptions {
   /** host-only: match rules + stage for the start message */
   rules?: MatchRules;
   stage?: string;
+  /** host-only: renderer for the match (2D default). Guest adopts host's. */
+  render3d?: boolean;
 }
 
 const DEFAULT_RULES: MatchRules = {
@@ -88,6 +95,8 @@ export class LobbyController {
   private readonly localName: string;
   private readonly delay: number;
   private readonly rules: MatchRules;
+  /** host: fixed from opts. guest: adopted from the host's `mode` message. */
+  private render3d: boolean;
   private stage: string;
 
   private phase: LobbyPhase = 'connecting';
@@ -107,6 +116,7 @@ export class LobbyController {
     this.localName = opts.localName;
     this.delay = opts.delay ?? 2;
     this.rules = opts.rules ?? DEFAULT_RULES;
+    this.render3d = opts.render3d ?? false;
     this.stage = opts.stage ?? 'salton';
     this.transport.onMessage((m) => this.receive(m));
     this.transport.onStatus((s, d) => this.onStatus(s, d));
@@ -139,6 +149,14 @@ export class LobbyController {
   private receive(m: NetMsg): void {
     if (this.phase === 'error') return;
     switch (m.t) {
+      case 'mode': {
+        // guest adopts the host's renderer before picking (auto-switch)
+        if (!this.isHost) {
+          this.render3d = m.render3d;
+          this.hooks.onRenderMode?.(m.render3d);
+        }
+        break;
+      }
       case 'hello': {
         if (m.proto !== PROTO) {
           return this.fail(`version mismatch (peer proto ${m.proto}, need ${PROTO})`);
@@ -153,8 +171,9 @@ export class LobbyController {
         break;
       }
       case 'start': {
-        // authoritative config from the host — guest obeys it verbatim
-        if (!this.isHost) this.beginMatch(m.rules, m.stage, m.chars, m.delay);
+        // authoritative config from the host — guest obeys it verbatim,
+        // including the renderer (so a 2D guest can't join a 3D host)
+        if (!this.isHost) this.beginMatch(m.rules, m.stage, m.chars, m.delay, m.render3d);
         break;
       }
       case 'bye':
@@ -174,22 +193,38 @@ export class LobbyController {
     // config, sends `start`, and both begin on it. Guest waits for `start`.
     if (this.isHost) {
       const chars: [string, string] = [this.localChar, this.remote.charId];
-      this.transport.send({ t: 'start', rules: this.rules, stage: this.stage, chars, delay: this.delay });
-      this.beginMatch(this.rules, this.stage, chars, this.delay);
+      this.transport.send({
+        t: 'start',
+        rules: this.rules,
+        stage: this.stage,
+        chars,
+        delay: this.delay,
+        render3d: this.render3d,
+      });
+      this.beginMatch(this.rules, this.stage, chars, this.delay, this.render3d);
     }
   }
 
-  private beginMatch(rules: MatchRules, stage: string, chars: [string, string], delay: number): void {
+  private beginMatch(
+    rules: MatchRules,
+    stage: string,
+    chars: [string, string],
+    delay: number,
+    render3d: boolean,
+  ): void {
     if (this.started) return;
     this.started = true;
     this.setPhase('starting');
-    this.hooks.onStart?.({ rules, stage, chars, delay });
+    this.hooks.onStart?.({ rules, stage, chars, delay, render3d });
   }
 
   private onStatus(s: TransportStatus, detail?: string): void {
     if (s === 'open') {
       this.open = true;
       if (this.phase === 'connecting') this.setPhase('picking');
+      // host announces its renderer immediately so the guest adopts it before
+      // picking a character (2D/3D never cross-join)
+      if (this.isHost) this.transport.send({ t: 'mode', render3d: this.render3d });
       // a char locked before the channel opened still needs its hello
       if (this.localChar) this.sendHello();
       this.maybeStart();

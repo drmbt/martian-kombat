@@ -63,14 +63,14 @@ export class MenuScene extends Phaser.Scene {
       this.scene.start('Select', { cpu, training, render3d: this.render3d });
     };
 
-    // Render-mode chip between the title and subtitle: ◄ / ► (or click) flips
+    // Render-mode chip in the bottom-left corner: ◄ / ► (or click) flips
     // 2D ⇄ 3D. Hidden with the rest of the menu until the coin drop.
     this.renderChip = this.add
-      .text(STAGE_W / 2, 250, '', {
-        fontFamily: 'monospace', fontSize: '18px', fontStyle: 'bold', color: '#f5ead9',
-        stroke: '#000', strokeThickness: 4, backgroundColor: '#241b2e', padding: { x: 12, y: 5 },
+      .text(10, STAGE_H - 8, '', {
+        fontFamily: 'monospace', fontSize: '12px', fontStyle: 'bold', color: '#f5ead9',
+        stroke: '#000', strokeThickness: 3, backgroundColor: '#241b2e', padding: { x: 7, y: 4 },
       })
-      .setOrigin(0.5)
+      .setOrigin(0, 1)
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => { if (this.canChoose()) this.toggleRender(); });
     this.menuItems.push(this.renderChip);
@@ -83,7 +83,7 @@ export class MenuScene extends Phaser.Scene {
     };
     const toLobby = () => {
       play(this, 's-blip');
-      this.scene.start('Lobby');
+      this.scene.start('Lobby', { render3d: this.render3d });
     };
     const opts: { label: string; act: () => void }[] = [
       { label: '1 · VS CPU', act: () => go(true) },

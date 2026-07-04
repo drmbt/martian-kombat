@@ -6,8 +6,10 @@
 // and music reuse the exact 2D helpers and asset keys.
 import Phaser from 'phaser';
 import { initialState } from '../engine';
-import type { GameState } from '../engine';
-import { FightSession } from '../session/FightSession';
+import type { GameState, InputFrame } from '../engine';
+import { FightSession, type Session } from '../session/FightSession';
+import { NetSession, type NetIssue } from '../session/NetSession';
+import type { OnlineFightData } from '../net/lobby';
 import { characters } from '../data/characters';
 import { KeyboardSource } from '../input/keyboard';
 import { getSettings } from '../settings';
@@ -33,7 +35,10 @@ export class FightScene3D extends Phaser.Scene {
   private state!: GameState;
   private inputs!: KeyboardSource;
   private bot: CpuDriver | null = null;
-  private session!: FightSession;
+  private session!: Session;
+  private online: OnlineFightData | null = null;
+  private net: NetSession | null = null;
+  private netIssue: NetIssue | null = null;
   /** captured by the session's beforeTick hook for diffTick */
   private pendingSnap: ReturnType<typeof snapTick> | null = null;
   private renderer3d: ThreeFightRenderer | null = null;
@@ -58,11 +63,22 @@ export class FightScene3D extends Phaser.Scene {
     super('Fight3D');
   }
 
-  init(data: { p1?: string; p2?: string; cpu?: boolean; training?: boolean; stage?: string }): void {
+  init(data: {
+    p1?: string;
+    p2?: string;
+    cpu?: boolean;
+    training?: boolean;
+    stage?: string;
+    online?: OnlineFightData;
+  }): void {
     this.chars = [data.p1 ?? 'vincent', data.p2 ?? 'vincent'];
     this.stageId = data.stage ?? 'chiba-roof';
-    this.cpu = !!data.cpu;
-    this.training = !!data.training;
+    this.online = data.online ?? null;
+    // online is strictly 2-human — no CPU, no training upkeep
+    this.cpu = !this.online && !!data.cpu;
+    this.training = !this.online && !!data.training;
+    this.net = null;
+    this.netIssue = null;
     this.bot = this.cpu ? new CpuDriver(1) : null;
     this.comboHits = 0;
     this.comboTicks = 0;
@@ -70,45 +86,66 @@ export class FightScene3D extends Phaser.Scene {
 
   create(): void {
     // 3D arena is wider than the 2D 960px stage — symmetric around center so
-    // the engine->Three mapping stays put (engine V: rules.stage)
-    this.state = initialState(this.chars[0], this.chars[1], characters, {
-      stage: { minX: -110, maxX: 1070 },
-      // room for the entry gesture + READY? 3-2-1 before FIGHT
-      introTicks: 240,
-      // training sandbox: no round clock
-      ...(this.training ? { roundTicks: 0 } : {}),
-    });
+    // the engine->Three mapping stays put (engine V: rules.stage). Online: both
+    // peers build the identical state from the lobby's agreed rules (which the
+    // host baked with these same 3D bounds), so V25 holds.
+    this.state = initialState(
+      this.chars[0],
+      this.chars[1],
+      characters,
+      this.online
+        ? this.online.rules
+        : {
+            stage: { minX: -110, maxX: 1070 },
+            // room for the entry gesture + READY? 3-2-1 before FIGHT
+            introTicks: 240,
+            // training sandbox: no round clock
+            ...(this.training ? { roundTicks: 0 } : {}),
+          },
+    );
     this.inputs = new KeyboardSource(this);
-    // the one fight-loop driver (SPEC V17/V18) — same session as FightScene,
-    // different presenter hanging off the tick hooks
-    this.session = new FightSession(
-      this.state,
-      {
-        beforeTick: (s) => {
-          this.pendingSnap = snapTick(s);
-        },
-        inputs: (s) => [this.inputs.poll(0), this.bot ? this.bot.poll(s) : this.inputs.poll(1)],
-        afterTick: (s) => {
-          const prev = this.pendingSnap!;
-          if (prev.phase !== 'fight' && s.phase === 'fight') {
-            this.fightEnteredTick = s.tick;
-          }
-          this.handleEvents(diffTick(prev, s, characters));
-          if (this.training && s.phase === 'fight') {
-            // sandbox upkeep: health snaps back so nothing ever dies
-            for (const f of s.fighters) {
-              f.health = Math.max(f.health, Math.ceil(characters[f.charId].health * 0.4));
-              if (f.action.kind !== 'hitstun' && f.action.kind !== 'airHit' && f.action.kind !== 'knockdown') {
-                f.health = characters[f.charId].health;
-              }
+    // the one fight-loop driver (SPEC V17/V18) — same hooks for local and net;
+    // NetSession just consumes the local slot and drives the remote over the
+    // wire (V18). Identical to FightScene's wiring, different presenter.
+    const hooks = {
+      beforeTick: (s: GameState) => {
+        this.pendingSnap = snapTick(s);
+      },
+      inputs: (s: GameState): [InputFrame, InputFrame] => [
+        this.inputs.poll(0),
+        this.bot ? this.bot.poll(s) : this.inputs.poll(1),
+      ],
+      afterTick: (s: GameState) => {
+        const prev = this.pendingSnap!;
+        if (prev.phase !== 'fight' && s.phase === 'fight') {
+          this.fightEnteredTick = s.tick;
+        }
+        this.handleEvents(diffTick(prev, s, characters));
+        if (this.training && s.phase === 'fight') {
+          // sandbox upkeep: health snaps back so nothing ever dies
+          for (const f of s.fighters) {
+            f.health = Math.max(f.health, Math.ceil(characters[f.charId].health * 0.4));
+            if (f.action.kind !== 'hitstun' && f.action.kind !== 'airHit' && f.action.kind !== 'knockdown') {
+              f.health = characters[f.charId].health;
             }
           }
-          this.tickGhosts();
-          if (this.comboTicks > 0 && --this.comboTicks === 0) this.comboHits = 0;
-        },
+        }
+        this.tickGhosts();
+        if (this.comboTicks > 0 && --this.comboTicks === 0) this.comboHits = 0;
       },
-      characters,
-    );
+    };
+    if (this.online) {
+      const net = new NetSession(this.state, hooks, characters, {
+        transport: this.online.transport,
+        localSlot: this.online.localSlot,
+        delay: this.online.delay,
+      });
+      net.onIssue((issue) => (this.netIssue = issue));
+      this.net = net;
+      this.session = net;
+    } else {
+      this.session = new FightSession(this.state, hooks, characters);
+    }
     this.ghostHealth = [characters[this.chars[0]].health, characters[this.chars[1]].health];
     this.ghostHoldUntil = [0, 0];
     playMusic([`stages/${this.stageId}`, 'stages/default']);
