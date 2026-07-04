@@ -321,7 +321,11 @@ export class ThreeFightRenderer {
   /** Lazy-attach the official three.js inspector (r185 addon). */
   async enableInspector(): Promise<void> {
     const { Inspector } = await import('three/addons/inspector/Inspector.js');
-    this.renderer.inspector = new Inspector();
+    const inspector = new Inspector();
+    this.renderer.inspector = inspector;
+    // the renderer only calls inspector.init() inside renderer.init() — we
+    // attach after boot, so mount the UI ourselves (init appends the DOM)
+    inspector.init();
   }
 
   dispose(): void {
