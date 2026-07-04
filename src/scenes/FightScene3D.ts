@@ -19,6 +19,7 @@ import { diffTick, snapTick, type FightEvent } from '../presentation/tickEvents'
 import type { ThreeFightRenderer } from '../renderer3d/ThreeFightRenderer';
 import { createSettingsPanel, DEFAULT_SETTINGS } from '../renderer3d/threeRenderSettings';
 import { FightHud } from '../renderer3d/hud/FightHud';
+import { AnnouncerBanner, type BannerVariant } from '../renderer3d/hud/AnnouncerBanner';
 import { FatalityOverlay } from '../renderer3d/hud/FatalityOverlay';
 import { WinOverlay } from '../renderer3d/hud/WinOverlay';
 
@@ -32,6 +33,10 @@ export class FightScene3D extends Phaser.Scene {
   private accumulator = 0;
   private renderer3d: ThreeFightRenderer | null = null;
   private hud: FightHud | null = null;
+  private banner: AnnouncerBanner | null = null;
+  /** engine tick when the fight phase last began (phaseFrame stays 0 in
+   *  fight — the FIGHT! banner needs its own clock) */
+  private fightEnteredTick = -1;
   private fatalityOverlay: FatalityOverlay | null = null;
   private winOverlay: WinOverlay | null = null;
   private skeletonOn = false;
@@ -105,6 +110,8 @@ export class FightScene3D extends Phaser.Scene {
       this.renderer3d = null;
       this.hud?.dispose();
       this.hud = null;
+      this.banner?.dispose();
+      this.banner = null;
       this.fatalityOverlay?.dispose();
       this.fatalityOverlay = null;
       this.winOverlay?.dispose();
@@ -162,6 +169,7 @@ export class FightScene3D extends Phaser.Scene {
     canvas.style.cssText = 'position:absolute;pointer-events:none;';
     parent.appendChild(canvas);
     this.hud = new FightHud(parent, this.chars, characters);
+    this.banner = new AnnouncerBanner(parent, this.hud.root);
     this.fatalityOverlay = new FatalityOverlay(parent, characters, this.hud.root);
     this.winOverlay = new WinOverlay(parent, characters, this.hud.root);
     this.layoutDom();
@@ -188,8 +196,46 @@ export class FightScene3D extends Phaser.Scene {
    *  (innerHTML re-parses and textContent invalidates layout every frame) */
   private hudCache: Record<string, string | number> = {};
 
+  /** center-stage announcement for the current state (see AnnouncerBanner) */
+  private bannerMessage(): [string, BannerVariant] {
+    const s = this.state;
+    const introLen = s.roundNumber === 1 ? s.rules.introTicks : 90;
+    switch (s.phase) {
+      case 'intro': {
+        const left = introLen - s.phaseFrame;
+        if (s.roundNumber === 1 && s.rules.introTicks >= 240) {
+          if (left > 180) return [s.phaseFrame < 45 ? `ROUND ${s.roundNumber}` : 'READY?', 'pop'];
+          if (left > 120) return ['3', 'count'];
+          if (left > 60) return ['2', 'count'];
+          return ['1', 'count'];
+        }
+        return [`ROUND ${s.roundNumber}`, 'pop'];
+      }
+      case 'fight':
+        return this.fightEnteredTick >= 0 && s.tick - this.fightEnteredTick < 55
+          ? ['FIGHT!', 'slam']
+          : ['', 'pop'];
+      case 'roundEnd': {
+        if (s.roundWinner === null) return ['DOUBLE K.O.', 'slam'];
+        if (s.rules.roundTicks > 0 && s.timer <= 0) return ['TIME UP', 'slam'];
+        const w = s.fighters[s.roundWinner];
+        const perfect = w.health === characters[w.charId].health;
+        if (perfect && s.phaseFrame >= 60 && s.phaseFrame < 150) return ['PERFECT', 'shine'];
+        return s.phaseFrame < 60 ? ['K.O.!', 'slam'] : ['', 'pop'];
+      }
+      case 'finisher':
+        return ['FINISH THEM', 'pulse'];
+      case 'fatality':
+        return s.phaseFrame < 70 ? ['FATALITY', 'slam'] : ['', 'pop'];
+      default:
+        return ['', 'pop'];
+    }
+  }
+
   private drawHud(): void {
     if (!this.hud) return;
+    const [text, variant] = this.bannerMessage();
+    this.banner?.set(text, variant);
     const clip = (slot: 0 | 1): string => {
       const ci = this.renderer3d?.clipInfo(slot);
       return ci ? `${ci.name}${ci.placeholder ? ' *PLACEHOLDER*' : ''}` : '…';
@@ -324,6 +370,9 @@ export class FightScene3D extends Phaser.Scene {
       const p1 = this.inputs.poll(0);
       const p2 = this.bot ? this.bot.poll(this.state) : this.inputs.poll(1);
       step(this.state, [p1, p2], characters);
+      if (prev.phase !== 'fight' && this.state.phase === 'fight') {
+        this.fightEnteredTick = this.state.tick;
+      }
       this.handleEvents(diffTick(prev, this.state, characters));
       this.tickGhosts();
       if (this.comboTicks > 0 && --this.comboTicks === 0) this.comboHits = 0;

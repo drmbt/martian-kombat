@@ -2,17 +2,8 @@
 // ghost bars, round pips, timer, combo counter, debug info line. Reuses the
 // 2D portrait pngs (V15). All DOM writes are cached — the DOM is only
 // touched when a value actually changes (perf pass).
-import type { Defs, GameState, Phase } from '../../engine';
+import type { Defs, GameState } from '../../engine';
 import { DASH_REGEN_TICKS, DASH_STOCKS } from '../../engine';
-
-const PHASE_LABEL: Record<Phase, string> = {
-  intro: 'ROUND',
-  fight: '',
-  roundEnd: 'KO',
-  finisher: 'FINISH THEM',
-  fatality: 'FATALITY',
-  matchEnd: 'MATCH OVER — F9 REMATCH',
-};
 
 export interface FightHudFrame {
   ghost: [number, number];
@@ -27,7 +18,6 @@ export class FightHud {
   private wins: [HTMLSpanElement, HTMLSpanElement];
   private dashes: [HTMLSpanElement, HTMLSpanElement];
   private timer: HTMLDivElement;
-  private label: HTMLDivElement;
   private combo: HTMLDivElement;
   private info: HTMLDivElement;
   private cache: Record<string, string | number> = {};
@@ -98,15 +88,12 @@ export class FightHud {
     this.timer = document.createElement('div');
     this.timer.style.cssText =
       'position:absolute;top:14px;left:50%;transform:translateX(-50%);font-size:28px;font-weight:bold;';
-    this.label = document.createElement('div');
-    this.label.style.cssText =
-      'position:absolute;top:52px;left:50%;transform:translateX(-50%);font-size:16px;color:#ff5e4a;white-space:nowrap;';
     this.combo = document.createElement('div');
     this.combo.style.cssText =
       'position:absolute;top:34%;left:18%;font-size:22px;font-weight:bold;color:#ffd75e;display:none;';
     this.info = document.createElement('div');
     this.info.style.cssText = 'position:absolute;left:12px;bottom:8px;white-space:pre;opacity:.8;';
-    this.root.append(this.timer, this.label, this.combo, this.info);
+    this.root.append(this.timer, this.combo, this.info);
     host.appendChild(this.root);
   }
 
@@ -148,22 +135,6 @@ export class FightHud {
     if (c.timer !== timer) {
       c.timer = timer;
       this.timer.textContent = timer;
-    }
-    let label = s.phase === 'intro' ? `ROUND ${s.roundNumber}` : PHASE_LABEL[s.phase];
-    if (s.phase === 'intro' && s.roundNumber === 1 && s.rules.introTicks >= 240) {
-      const left = s.rules.introTicks - s.phaseFrame;
-      label =
-        left > 180
-          ? 'READY?'
-          : left > 120
-            ? '3'
-            : left > 60
-              ? '2'
-              : '1';
-    }
-    if (c.label !== label) {
-      c.label = label;
-      this.label.textContent = label;
     }
     if (c.combo !== frame.combo) {
       c.combo = frame.combo;
