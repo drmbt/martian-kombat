@@ -139,19 +139,23 @@ export class ThreeStageView {
     }
     // the cross street itself: receding asphalt ribbon + center dashes
     const crossRoad = new THREE.Mesh(
-      new THREE.PlaneGeometry(CROSS_W, 27),
-      new THREE.MeshStandardMaterial({ color: 0x1e2026, roughness: 0.95 }),
+      new THREE.PlaneGeometry(CROSS_W + 0.8, 27),
+      new THREE.MeshStandardMaterial({ color: 0x282a31, roughness: 0.92 }),
     );
     crossRoad.rotation.x = -Math.PI / 2;
     crossRoad.position.set(CROSS_X, 0.004, -17);
     crossRoad.receiveShadow = true;
     g.add(crossRoad);
-    const crossDashMat = new THREE.MeshStandardMaterial({ color: 0x6e6a55, roughness: 0.85 });
+    const crossDashMat = new THREE.MeshStandardMaterial({ color: 0x8a8468, roughness: 0.85 });
     for (let dz = -6; dz >= -28; dz -= 2.2) {
       const dash = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.008, 0.7), crossDashMat);
       dash.position.set(CROSS_X, 0.01, dz);
       g.add(dash);
     }
+    // cool spill down the cross street so the corridor reads at a glance
+    const corridorLight = new THREE.PointLight(0x9fb8dd, 12, 12, 1.8);
+    corridorLight.position.set(CROSS_X, 3.2, -11);
+    g.add(corridorLight);
     // wet patches near the curb — low roughness picks up lamp speculars
     const puddleMat = new THREE.MeshStandardMaterial({
       color: 0x101318,
@@ -247,8 +251,10 @@ export class ThreeStageView {
         const w = 2 + r * 3.5;
         const h = row.h[0] + hash01(ri * 57 + i * 23) * (row.h[1] - row.h[0]);
         const x = -row.span / 2 + (i + 0.5) * (row.span / row.count) + (r - 0.5) * 1.2;
-        // keep the cross-street corridor clear so the road reads to the horizon
-        if (ri <= 2 && Math.abs(x - 9) < 2.8 + ri * 0.4) continue;
+        // keep the cross-street corridor clear so the road reads to the
+        // horizon — measured to the building EDGE, not its center (wide
+        // blocks used to lean into the road and cars drove through them)
+        if (ri <= 2 && Math.abs(x - 9) < 2.6 + ri * 0.4 + w / 2) continue;
         const bColor = row.palette
           ? row.palette[Math.floor(hash01(ri * 211 + i * 41) * row.palette.length)]
           : row.color;
@@ -325,6 +331,7 @@ export class ThreeStageView {
     deck.position.set(0, 5.4, -11);
     g.add(deck);
     for (let px = -16; px <= 16; px += 4) {
+      if (Math.abs(px - 9) < 3) continue; // the rail bridges the cross street
       const pylon = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5.2, 1.1), viaductMat);
       pylon.position.set(px, 2.6, -11);
       g.add(pylon);

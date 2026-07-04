@@ -201,6 +201,12 @@ export class ThreeFighterView {
     nose.castShadow = true;
     this.placeholder.add(body, nose);
     this.group.add(this.placeholder);
+    // personal fill: a soft short-range light that rides the fighter so the
+    // all-black outfit stays readable anywhere on the lane — classic
+    // fighting-game character lighting, separate from the set
+    const fill = new THREE.PointLight(0xd8dff0, 7, 3.4, 2);
+    fill.position.set(0, 1.4, 1.1);
+    this.group.add(fill);
   }
 
   /** What's playing (for the debug HUD's PLACEHOLDER flag — SPEC V12). */
