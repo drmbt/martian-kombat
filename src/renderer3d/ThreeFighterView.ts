@@ -226,7 +226,10 @@ export class ThreeFighterView {
     // fighting-game character lighting, separate from the set
     const fill = new THREE.PointLight(0xd8dff0, 7, 3.4, 2);
     fill.position.set(0, 1.4, 1.1);
-    this.group.add(fill);
+    // rim kicker from behind-above: separates the silhouette from the walls
+    const rim = new THREE.PointLight(0xbcd2ff, 6, 3.2, 2);
+    rim.position.set(0, 2.1, -1.2);
+    this.group.add(fill, rim);
   }
 
   /** What's playing (for the debug HUD's PLACEHOLDER flag — SPEC V12). */
@@ -288,7 +291,13 @@ export class ThreeFighterView {
         o.frustumCulled = false; // skinned bounds lag the pose; never blink
         const mats = Array.isArray(o.material) ? o.material : [o.material];
         for (const m of mats) {
-          if (m instanceof THREE.MeshStandardMaterial) this.materials.push(m);
+          if (m instanceof THREE.MeshStandardMaterial) {
+            // FBX->Principled conversion leaves metallic/specular hot and the
+            // character reads plastic — clamp toward matte cloth/skin
+            m.metalness = Math.min(m.metalness, 0.05);
+            m.roughness = Math.max(m.roughness, 0.82);
+            this.materials.push(m);
+          }
         }
       }
       if ((o as THREE.Bone).isBone) this.bones.push(o as THREE.Bone);

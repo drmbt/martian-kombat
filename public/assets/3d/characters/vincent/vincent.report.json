@@ -339,9 +339,29 @@
   },
   {
    "name": "intro",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/gestures/Quick Informal Bow.fbx",
-   "frames": 82,
-   "seconds": 2.733,
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/gestures/Charge.fbx",
+   "frames": 171,
+   "seconds": 5.7,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "intro#2",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/gestures/Yawn.fbx",
+   "frames": 250,
+   "seconds": 8.333,
+   "rootStripped": [
+    "X",
+    "Z"
+   ]
+  },
+  {
+   "name": "intro#3",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/gestures/Whatever Gesture.fbx",
+   "frames": 42,
+   "seconds": 1.4,
    "rootStripped": [
     "X",
     "Z"
@@ -560,6 +580,8 @@
   "hit-body-heavy: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
   "win: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
   "intro: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "intro#2: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "intro#3: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
   "taunt: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
   "taunt#2: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
   "taunt#3: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
@@ -622,7 +644,8 @@
    "attack/jhp -> attack-air",
    "attack/jlk -> attack-air",
    "attack/jmk -> attack-air",
-   "attack/jhk -> attack-air"
+   "attack/jhk -> attack-air",
+   "attack/matrix-teleport -> attack-generic"
   ],
   "missing": []
  },

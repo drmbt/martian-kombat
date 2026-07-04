@@ -146,9 +146,9 @@ export class ThreeStageView {
     const stageW = STAGE_W * WORLD_SCALE;
 
     const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(stageW + 30, 24),
+      new THREE.PlaneGeometry(stageW + 44, 24),
       new THREE.MeshStandardMaterial({
-        map: gridTexture('#8a8a8e', '#a9a9ad', stageW + 30, 24),
+        map: gridTexture('#8a8a8e', '#a9a9ad', stageW + 44, 24),
         roughness: 0.92,
       }),
     );
@@ -160,10 +160,11 @@ export class ThreeStageView {
     // named like the 2D stage template: NEAR / FAR / SKY walls + FLOOR —
     // further = darker + taller, all visible at once
     const layers = [
-      { z: -3, h: 1.2, name: 'NEAR', labelY: 0.8, shade: '#7b7b80', line: '#94949a', span: stageW + 6 },
-      { z: -9, h: 2.6, name: 'FAR', labelY: 2.2, shade: '#5a5a60', line: '#70707a', span: stageW + 18 },
+      // spans sized for the widened arena + camera travel + frustum spread
+      { z: -3, h: 1.2, name: 'NEAR', labelY: 0.8, shade: '#7b7b80', line: '#94949a', span: stageW + 24 },
+      { z: -9, h: 2.6, name: 'FAR', labelY: 2.2, shade: '#5a5a60', line: '#70707a', span: stageW + 38 },
       // SKY towers over FAR so it owns everything above the horizon line
-      { z: -24, h: 14, name: 'SKY', labelY: 4.6, shade: '#38383e', line: '#48484f', span: stageW + 44 },
+      { z: -24, h: 14, name: 'SKY', labelY: 4.6, shade: '#38383e', line: '#48484f', span: stageW + 80 },
     ];
     for (const [i, l] of layers.entries()) {
       const wall = new THREE.Mesh(
@@ -183,17 +184,36 @@ export class ThreeStageView {
     floorLabel.rotation.x = -Math.PI / 2;
     g.add(floorLabel);
 
-    // side walls close the box
+    // side walls close the box (out past the widened bounds)
     const sideMat = new THREE.MeshStandardMaterial({
       map: gridTexture('#59595e', '#6e6e74', 24, 10),
       roughness: 0.95,
     });
     for (const dir of [-1, 1] as const) {
       const side = new THREE.Mesh(new THREE.PlaneGeometry(24, 10), sideMat);
-      side.position.set(dir * (stageW / 2 + 5), 5, -9);
+      side.position.set(dir * (stageW / 2 + 8.5), 5, -9);
       side.rotation.y = -dir * Math.PI * 0.5;
       side.receiveShadow = true;
       g.add(side);
+    }
+
+    // low end-of-range walls: the motion clamp made visible on both sides
+    // (engine bounds -110..1070 px -> ±5.9m world)
+    const endMat = new THREE.MeshStandardMaterial({
+      map: gridTexture('#6a6a70', '#83838a', 6, 1),
+      roughness: 0.9,
+    });
+    for (const dir of [-1, 1] as const) {
+      // bounds clamp the fighter CENTER (±5.9m) — pad by ~a half-body so
+      // feet/coats can't poke through the barrier
+      const end = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.6, 6), endMat);
+      end.position.set(dir * 7.4, 0.3, -0.6);
+      end.castShadow = true;
+      end.receiveShadow = true;
+      g.add(end);
+      const endLabel = makeLabel(`RANGE ${dir === 1 ? 'MAX' : 'MIN'}`, dir * 7.4, 0.85, -0.6);
+      endLabel.rotation.y = -dir * Math.PI * 0.5;
+      g.add(endLabel);
     }
 
     // lane markers: center line + spawn ticks

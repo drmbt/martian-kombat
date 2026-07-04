@@ -397,6 +397,9 @@ export interface MatchRules {
   roundTicks: number;
   /** rounds needed to take the match */
   winsNeeded: number;
+  /** walkable x range — wider arenas (3D stage) widen it symmetrically
+   *  around STAGE_W/2 so renderer centering stays put */
+  stage: { minX: number; maxX: number };
 }
 
 export interface GameState {

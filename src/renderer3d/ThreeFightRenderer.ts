@@ -87,14 +87,14 @@ export class ThreeFightRenderer {
     key.position.set(-3.5, 7, 4.5);
     key.castShadow = true;
     key.shadow.mapSize.set(2048, 2048);
-    key.shadow.camera.left = -7;
-    key.shadow.camera.right = 7;
+    key.shadow.camera.left = -8.5;
+    key.shadow.camera.right = 8.5;
     key.shadow.camera.top = 8;
     key.shadow.camera.bottom = -2;
     key.shadow.bias = -0.0005;
     const fill = new THREE.DirectionalLight(testRoom ? 0xe8e8f0 : 0x7a86b8, testRoom ? 0.8 : 0.3);
     fill.position.set(4, 2.5, 7);
-    const rim = new THREE.DirectionalLight(0x8fb4ff, testRoom ? 0.8 : 1.2);
+    const rim = new THREE.DirectionalLight(0x8fb4ff, testRoom ? 1.8 : 1.6);
     rim.position.set(1, 4.5, -6);
     const ambient = new THREE.HemisphereLight(
       testRoom ? 0x8a8a92 : 0x232c48,
@@ -212,9 +212,9 @@ export class ThreeFightRenderer {
     }
     const [a, b] = state.fighters;
     const [mx] = engineToWorld((a.x + b.x) / 2, 0);
-    const sep01 = Math.min(Math.abs(a.x - b.x) / 700, 1);
+    const sep01 = Math.min(Math.abs(a.x - b.x) / 1000, 1);
     const targetX = mx * 0.8;
-    const targetZ = 13.5 + sep01 * 4.5; // dolly out as they spread
+    const targetZ = 13.5 + sep01 * 6.5; // dolly out as they spread
     this.camX += (targetX - this.camX) * 0.08;
     this.camZ += (targetZ - this.camZ) * 0.05;
     this.camera.position.set(this.camX, this.baseCamY, this.camZ);

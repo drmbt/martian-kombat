@@ -171,7 +171,17 @@
   },
   {
    "name": "intro",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/gestures/Quick Informal Bow.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/gestures/Charge.fbx",
+   "stripY": false
+  },
+  {
+   "name": "intro#2",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/gestures/Yawn.fbx",
+   "stripY": false
+  },
+  {
+   "name": "intro#3",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/gestures/Whatever Gesture.fbx",
    "stripY": false
   },
   {

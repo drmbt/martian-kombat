@@ -57,7 +57,11 @@ export class FightScene3D extends Phaser.Scene {
   }
 
   create(): void {
-    this.state = initialState(this.chars[0], this.chars[1], characters);
+    // 3D arena is wider than the 2D 960px stage — symmetric around center so
+    // the engine->Three mapping stays put (engine V: rules.stage)
+    this.state = initialState(this.chars[0], this.chars[1], characters, {
+      stage: { minX: -110, maxX: 1070 },
+    });
     this.inputs = new KeyboardSource(this);
     this.ghostHealth = [characters[this.chars[0]].health, characters[this.chars[1]].health];
     this.ghostHoldUntil = [0, 0];

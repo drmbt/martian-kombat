@@ -25,6 +25,21 @@ function doubleTapForward(s: GameState): void {
   step(s, [inp({ right: true }), inp()], characters);
 }
 
+describe('stage bounds (MatchRules.stage)', () => {
+  it('defaults clamp at the classic 50..910 and wider rules widen the walk range', () => {
+    const def = fresh();
+    def.fighters[0].x = 60;
+    for (let t = 0; t < 120; t++) step(def, [inp({ left: true }), inp()], characters);
+    expect(def.fighters[0].x).toBe(50);
+
+    const wide = initialState('vincent', 'yulia', characters, { stage: { minX: -110, maxX: 1070 } });
+    wide.phase = 'fight';
+    wide.fighters[0].x = 60;
+    for (let t = 0; t < 300; t++) step(wide, [inp({ left: true }), inp()], characters);
+    expect(wide.fighters[0].x).toBe(-110);
+  });
+});
+
 describe('dash stocks', () => {
   it('spends a stock per dash and applies the impulse', () => {
     const s = fresh();

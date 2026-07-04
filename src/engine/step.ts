@@ -90,6 +90,7 @@ export function initialState(
   const r: MatchRules = {
     roundTicks: rules?.roundTicks ?? ROUND_TICKS,
     winsNeeded: rules?.winsNeeded ?? WINS_NEEDED,
+    stage: rules?.stage ?? { minX: STAGE_MIN_X, maxX: STAGE_MAX_X },
   };
   return {
     tick: 0,
@@ -507,9 +508,9 @@ function updateFighter(
         if (m.teleport.mode === 'behind') {
           f.x = o.x + (f.x <= o.x ? 90 : -90);
         } else {
-          f.x = f.facing === 1 ? STAGE_MIN_X + 40 : STAGE_MAX_X - 40;
+          f.x = f.facing === 1 ? s.rules.stage.minX + 40 : s.rules.stage.maxX - 40;
         }
-        f.x = Math.min(STAGE_MAX_X, Math.max(STAGE_MIN_X, f.x));
+        f.x = Math.min(s.rules.stage.maxX, Math.max(s.rules.stage.minX, f.x));
       }
       // shoryuken leaps: rise while the attack stays out
       if (m.leap) {
@@ -880,7 +881,7 @@ function applyHit(
 
   // corner transfer: if the defender is pinned on a wall, push the attacker
   // back instead so spacing still changes
-  if (d.x <= STAGE_MIN_X + 1 || d.x >= STAGE_MAX_X - 1) {
+  if (d.x <= s.rules.stage.minX + 1 || d.x >= s.rules.stage.maxX - 1) {
     s.fighters[atkSlot].vx = -attackerFacing * hit.knockback * 0.7;
   }
 }
@@ -1098,7 +1099,7 @@ function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputF
       if (p.pull && d.action.kind !== 'blockstun') {
         const owner = s.fighters[p.owner];
         const side = d.x >= owner.x ? 1 : -1;
-        d.x = Math.min(STAGE_MAX_X, Math.max(STAGE_MIN_X, owner.x + side * 85));
+        d.x = Math.min(s.rules.stage.maxX, Math.max(s.rules.stage.minX, owner.x + side * 85));
         d.vx = 0;
       }
       // lingering clouds survive their hits and re-hit on a cooldown
@@ -1144,7 +1145,7 @@ function endRound(s: GameState, winner: 0 | 1 | null, defs: Defs): void {
   }
 }
 
-function passivePhysics(f: FighterState, def: CharacterDef): void {
+function passivePhysics(f: FighterState, def: CharacterDef, stage: { minX: number; maxX: number }): void {
   if (!grounded(f) || f.action.kind === 'ko') {
     f.vy += def.gravity;
     f.y += f.vy;
@@ -1159,7 +1160,7 @@ function passivePhysics(f: FighterState, def: CharacterDef): void {
     f.vx *= GROUND_FRICTION;
     if (Math.abs(f.vx) < 0.05) f.vx = 0;
   }
-  f.x = Math.min(STAGE_MAX_X, Math.max(STAGE_MIN_X, f.x));
+  f.x = Math.min(stage.maxX, Math.max(stage.minX, f.x));
 }
 
 // ---------- the tick ----------
@@ -1215,7 +1216,7 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
   if (s.phase === 'roundEnd') {
     s.phaseFrame++;
     for (const slot of [0, 1] as const) {
-      passivePhysics(s.fighters[slot], defs[s.fighters[slot].charId]);
+      passivePhysics(s.fighters[slot], defs[s.fighters[slot].charId], s.rules.stage);
     }
     if (s.phaseFrame >= ROUND_END_TICKS) {
       if (s.roundWinner !== null && s.wins[s.roundWinner] >= s.rules.winsNeeded) {
@@ -1239,7 +1240,7 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
     // can deal damage anymore
     updateFighter(s, w, winnerDef, inputs[w]);
     s.projectiles = [];
-    winner.x = Math.min(STAGE_MAX_X, Math.max(STAGE_MIN_X, winner.x));
+    winner.x = Math.min(s.rules.stage.maxX, Math.max(s.rules.stage.minX, winner.x));
     if (canAct(winner) && grounded(winner)) {
       winner.facing = s.fighters[loser].x >= winner.x ? 1 : -1;
     }
@@ -1387,7 +1388,7 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
 
   for (const slot of [0, 1] as const) {
     const f = s.fighters[slot];
-    f.x = Math.min(STAGE_MAX_X, Math.max(STAGE_MIN_X, f.x));
+    f.x = Math.min(s.rules.stage.maxX, Math.max(s.rules.stage.minX, f.x));
   }
 
   // the round clock holds its breath with the freeze frames
