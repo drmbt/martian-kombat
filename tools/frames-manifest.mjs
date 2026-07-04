@@ -40,7 +40,10 @@ export const V2_BUTTONS = ['lp', 'mp', 'hp', 'lk', 'mk', 'hk'];
 
 /** Ordered generation/pack job list for a character spec. */
 export function buildJobs(spec) {
-  const jobs = CELLS.map((c) => ({ id: c.id, pose: c.pose }));
+  // A character may override any shared generic-cell pose via spec.cells
+  // (e.g. to stop an idle-loop from flickering or pin a fall direction) —
+  // named specials/normals still come from moves6.
+  const jobs = CELLS.map((c) => ({ id: c.id, pose: spec.cells?.[c.id] ?? c.pose }));
   if (spec.layout === 'v2') {
     for (const b of V2_BUTTONS) {
       for (const phase of ['startup', 'active', 'recovery']) {
@@ -1233,6 +1236,250 @@ export const CHARACTERS = {
         'thread-of-life': {
           prompt:
             'A single taut horizontal woven loom-thread lash stretched left-to-right like a whip, braided strands of bright ORANGE, MAGENTA and BLUE, a small frayed tuft at the leading right end, painted cel-shaded anime style, centered, on solid flat chroma-key green background #00B140, no green thread, no character, no text, no watermark.',
+        },
+      },
+    },
+  },
+  chebel: {
+    canonical: 'assets/raw/canonical/chebel.png',
+    layout: 'v2',
+    // wardrobe + deck must persist; any card/spirit glow is warm AMBER-GOLD and
+    // VIOLET only (never green — green dies in the chroma key). She is a
+    // fast kick-first rushdown dancer; strap sandals, hair always in motion.
+    always:
+      'She ALWAYS wears the same brown crop top, oxblood-red high-waisted shorts and brown strap sandals, with long dark wavy hair caught mid-whip, and a small tarot card deck glowing faintly AMBER-GOLD at her right hip. She is a lithe, fast kick-first rushdown dancer with a fierce focused expression. Any conjured card, tarot-glow or animal-spirit effects are warm AMBER-GOLD and VIOLET — never green. No glowing effects unless this pose explicitly describes them.',
+    // idle-a/idle-b are a 2-frame breathing loop that ALTERNATES every few
+    // ticks — they must be near-identical or the sprite flickers. Both pin the
+    // exact same stance and forbid any conjured spirit (the deck stays holstered
+    // outside her specials). fall is pinned to topple backward onto her back.
+    cells: {
+      'idle-a':
+        'a relaxed fighting stance facing right, both hands up in a light EMPTY-HANDED guard near her chin, weight settled on the back foot, hair hanging naturally. Her hands are empty — no card held, no glow. There is NO conjured spirit, NO animal, NO tarot card and NO glowing effect anywhere in the frame',
+      'idle-b':
+        'a nearly-STATIC idle breathing pose: she stands facing right in a calm relaxed upright fighting stance with BOTH feet flat on the ground about shoulder-width apart, weight settled, both hands up in a light EMPTY-HANDED guard near her chin. This is the SAME calm grounded standing stance as a neutral ready idle — it is NOT an attack: NO raised knee, NO kick, NO lifted leg, NO lunge, NO leaning. The ONLY change from a plain neutral stance is that her chest has risen slightly with an inhaled breath and her hair has drifted a touch. Her hands are empty — no card held, no glow. There is NO conjured spirit, NO animal, NO tarot card and NO glowing effect anywhere in the frame',
+      fall:
+        'knocked off her feet and toppling over BACKWARDS, her body tipping onto her back, head dropping down and behind her toward the lower left, both feet lifting up off the ground, arms flailing upward — clearly falling backward, NOT forward. No conjured spirit or animal in the frame',
+    },
+    moves6: {
+      stand: {
+        lp: {
+          startup: 'chambering a quick lead-hand backhand, rear hand loose at her hip, rising onto the balls of her feet',
+          active: 'a short snapping lead-hand backfist fully extended at head height, hair whipping forward',
+          recovery: 'drawing the hand back into a light dancer\'s guard',
+        },
+        mp: {
+          startup: 'winding one arm back across her body in a coiled painterly arc, torso loading',
+          active: 'driving a straight palm strike forward at chest height, a faint AMBER-GOLD card-glint flickering off her hip deck',
+          recovery: 'the arm flowing back into a loose ready guard',
+        },
+        hp: {
+          startup: 'both hands sweeping up as she plucks a glowing card from the hip deck, cocking it back over her shoulder',
+          active: 'a lunging overhand card-slash swept downward at head height, a bright AMBER-GOLD arc trailing the card',
+          recovery: 'the card dissolving into gold motes, arm settling back to guard',
+        },
+        lk: {
+          startup: 'weight shifting back, lead foot lifting for a quick front teep',
+          active: 'a quick snapping front teep kick at stomach height, planted on one foot — exactly one foot on the ground',
+          recovery: 'the kicking foot returning softly to a light stance',
+        },
+        mk: {
+          startup: 'lead knee chambering high across her body for a round kick',
+          active: 'a whipping roundhouse kick fully extended at chest height, hair and hips arcing with it — exactly one foot on the ground',
+          recovery: 'the leg swinging back down into a balanced stance',
+        },
+        hk: {
+          startup: 'coiling low and loading her rear leg for a high stepping axe kick, arms counterbalanced',
+          active: 'a soaring high axe kick fully extended at head height, one leg driven up and over — exactly one foot on the ground, a faint AMBER-GOLD crescent trailing the heel',
+          recovery: 'the kicking leg swinging down, both feet planted back into stance',
+        },
+      },
+      crouch: {
+        lp: {
+          active: 'a short backhand snapped out at waist height from the low squat',
+          recovery: 'the hand pulled back to guard, still coiled low in the squat',
+        },
+        mp: {
+          active: 'a rising palm driven diagonally upward out of the squat',
+          recovery: 'the palm lowering, weight sinking back into the squat',
+        },
+        hp: {
+          active: 'a glowing AMBER-GOLD card thrust straight upward out of the squat (anti-air), arm fully extended overhead',
+          recovery: 'the card fading, arm lowering back into the squat',
+        },
+        lk: {
+          active: 'crouched low on her left leg while her RIGHT foot snaps a quick low kick forward at ankle height',
+          recovery: 'the kicking leg pulled back beneath her, folded low in the squat',
+        },
+        mk: {
+          active: 'balanced in a DEEP low squat on her bent left leg, hips near her heels, her RIGHT leg extended straight forward along the ground in a low sweeping kick at ankle height. She has EXACTLY two legs, two arms and one clearly-visible head with her hair — no third leg, no extra or duplicated limbs',
+          recovery: 'pulling the extended leg back beneath her into a compact deep squat, hips near her heels, hands to guard; her head and face are clearly visible at the top of the figure — no headless torso, no third leg',
+        },
+        hk: {
+          active: 'crouched very low, one hand planted flat on the floor for balance, her other leg sweeping a low spinning arc extended along the ground at ankle height, whole body kept low. She has EXACTLY two legs, two arms and one clearly-visible head — no third leg, no extra or duplicated limbs',
+          recovery: 'rising up out of the low sweep back toward her standing stance, her one head and face clearly visible',
+        },
+      },
+      air: {
+        lp: 'throwing a short downward-angled backhand',
+        mp: 'driving a straight palm at a downward angle',
+        hp: 'a downward card-slash swung with one arm, a faint AMBER-GOLD arc trailing',
+        lk: 'a sharp knee raised toward the opponent below',
+        mk: 'a whipping downward-angled roundhouse kick, one leg extended, the other tucked',
+        hk: 'a downward axe-kick divekick, RIGHT leg fully extended downward, LEFT leg tucked, both legs clearly attached',
+      },
+      specials: {
+        'spirit-draw': {
+          startup: 'plucking a glowing card from the hip deck and cocking it back beside her head, AMBER-GOLD light gathering at her fingertips',
+          active: 'flicking the card forward at arm\'s length, releasing a small burst of AMBER-GOLD and VIOLET spirit-light off her fingertips toward the right — she is a single figure, the released spirit is only a small glow at her hand, no separate creature drawn yet',
+          recovery: 'the throwing arm following through and settling, gold motes fading from her hand',
+        },
+        'crescent-moon': {
+          startup: 'stepping in and loading her rear leg high, body coiling for a downward axe kick',
+          active: 'a soaring stepping axe kick chopped straight down from overhead, heel driven downward at head height, a bright AMBER-GOLD crescent arc trailing the foot — exactly one foot on the ground',
+          recovery: 'the kicking leg landing forward, settling into stance, the crescent glow fading',
+        },
+        ceremony: {
+          startup: 'sinking into a poised low stance, one hand cradling a faintly glowing teacup of AMBER-GOLD light, knees bent ready to spring',
+          active: 'rising into the air on a soaring upward kick, one leg driven straight up, a swirl of AMBER-GOLD and VIOLET spirit-light flaring around her — both feet off the ground',
+          recovery: 'descending from the rise, the gold swirl fading, landing softly on bent knees',
+        },
+        'unicycle-rush': {
+          startup: 'perched atop a single-wheel unicycle, arms out wobbling for balance, leaning forward ready to charge',
+          active: 'charging forward fast atop the wobbling unicycle, one leg kicked out ahead at chest height, arms wide, hair streaming back — a single rider on one wheel',
+          recovery: 'skidding the unicycle to a stop, hopping off back into a light standing stance',
+        },
+        throw: {
+          startup: 'lunging forward, both hands snatching at chest height in front of her, fingers splayed to grab',
+          active: 'both arms thrust out toward the right frame edge, hands clawed actively gripping the EMPTY GREEN AIR, a small white impact flash at her hands — she is COMPLETELY ALONE, a single figure grabbing empty air, absolutely no second person and no clone of herself anywhere in the frame',
+          recovery: 'shoving her hands forward to fling the unseen opponent away, then settling back into stance',
+        },
+      },
+    },
+    extra: {
+      projectiles: {
+        'spirit-draw': {
+          prompt:
+            'A single glowing spirit-animal apparition made of AMBER-GOLD and VIOLET light — a stylized leaping cat-like spirit mid-pounce facing right, semi-transparent, trailing gold motes, painted cel-shaded anime style, small, centered, on solid flat chroma-key green background #00B140, no character, no green in the spirit, no text, no watermark.',
+        },
+      },
+    },
+  },
+  ygor: {
+    canonical: 'assets/raw/canonical/ygor.png',
+    layout: 'v2',
+    // wardrobe + camera must persist; any projector/projection glow is CYAN and
+    // MAGENTA only (never green — green dies in the chroma key). He is a
+    // laid-back lens-first punch zoner; hands glow like a projector when specials start.
+    always:
+      'He ALWAYS wears the same worn cap over shaggy hair, a yellow tee with red leopard-print, dark work pants and a vintage camera on a neck strap. He is a laid-back, unbothered lens-first zoner. Any projector-glow, projected-creature or psychedelic effects are CYAN and MAGENTA — never green. His hands only glow like a projector lens where a pose explicitly describes it; otherwise there are no glowing effects at all.',
+    moves6: {
+      stand: {
+        lp: {
+          startup: 'chambering a quick lead-hand jab at his hip, framing the opponent with his other hand like a lens',
+          active: 'a short straight jab fully extended at chest height, front arm firm',
+          recovery: 'drawing the fist back into a relaxed loose guard',
+        },
+        mp: {
+          startup: 'winding a rolling hook across his chest, shoulder loading',
+          active: 'driving a hook punch forward at chest height, full shoulder behind it',
+          recovery: 'the fist returning to a calm ready guard',
+        },
+        hp: {
+          startup: 'both hands rising as a faint CYAN projector-glow gathers at his palms, cocking back a big straight',
+          active: 'a heavy straight cross fully extended at chest height, a brief CYAN lens-flare bursting off his lead knuckles',
+          recovery: 'straightening up, the cyan glow fading, rolling his shoulder loose',
+        },
+        lk: {
+          startup: 'lifting the front knee for a quick low push kick',
+          active: 'a short snapping front kick at shin height, planted and balanced — exactly one foot on the ground',
+          recovery: 'the foot returning softly to stance',
+        },
+        mk: {
+          startup: 'chambering the lead knee high across his body for a round kick',
+          active: 'a driving round kick fully extended at stomach height — exactly one foot on the ground',
+          recovery: 'the leg lowering, foot planting back into stance',
+        },
+        hk: {
+          startup: 'balancing on one leg, the other knee drawn up high, arms counterbalanced',
+          active: 'a heavy stepping roundhouse kick fully extended at chest height, one leg driven across — exactly ONE foot on the ground',
+          recovery: 'the kicking leg swinging back down into a grounded stance',
+        },
+      },
+      crouch: {
+        lp: {
+          active: 'a short jab snapped out at waist height from the low squat',
+          recovery: 'the fist pulled back to guard, still folded low in the squat',
+        },
+        mp: {
+          active: 'a rising hook driven diagonally upward out of the squat',
+          recovery: 'the fist lowering, weight sinking back into the squat',
+        },
+        hp: {
+          active: 'both fists thrust powerfully straight upward out of the squat (anti-air), a faint CYAN lens-flare at the knuckles',
+          recovery: 'arms lowering from overhead, settling back into the squat',
+        },
+        lk: {
+          active: 'crouched low on his left leg while his RIGHT foot snaps a quick low kick forward at ankle height',
+          recovery: 'the kicking leg pulled back beneath him, folded low in the squat',
+        },
+        mk: {
+          active: 'balanced in a DEEP low squat on his bent left leg, hips near his heels, his RIGHT leg extended straight forward along the ground in a low kick at ankle height. He has EXACTLY two legs, two arms and one clearly-visible head wearing the cap — no third leg, no extra or duplicated limbs',
+          recovery: 'pulling the extended leg back beneath him into a compact deep squat, hips near his heels, hands to guard; his head and cap are clearly visible at the top of the figure — no headless torso, no third leg',
+        },
+        hk: {
+          active: 'crouched very low, one hand planted flat on the floor for balance, his other leg sweeping a low spinning arc extended along the ground at ankle height, whole body kept low. He has EXACTLY two legs, two arms and one clearly-visible head wearing the cap — no third leg, no extra or duplicated limbs',
+          recovery: 'rising up out of the low sweep back toward his standing stance, his one head and cap clearly visible',
+        },
+      },
+      air: {
+        lp: 'throwing a short downward-angled jab',
+        mp: 'driving a hook at a downward angle',
+        hp: 'a heavy downward straight punch, arm extended, a faint CYAN glint at the knuckles',
+        lk: 'a sharp knee raised toward the opponent below',
+        mk: 'a stomping side kick angled downward',
+        hk: 'a heavy downward axe kick, RIGHT leg fully extended, LEFT leg tucked beneath him, both legs clearly attached',
+      },
+      specials: {
+        'suave-creature': {
+          startup: 'both hands rising and cupping together as a CYAN and MAGENTA projector-glow blooms between his palms, framing the space ahead like a lens',
+          active: 'flinging both hands forward, casting a burst of CYAN and MAGENTA projection-light off his palms toward the right — he is a single figure, the projected creature is only a bloom of light at his hands, no separate creature drawn yet',
+          recovery: 'the throwing hands following through and lowering, the projector-glow fading from his palms',
+        },
+        oracle: {
+          startup: 'crouching to plant a small booth-tripod on the ground beside him, both hands setting it down',
+          active: 'stepping back from the planted booth as it emits a soft ring of CYAN and MAGENTA psychedelic light — he is standing apart, gesturing toward the small booth on the ground',
+          recovery: 'straightening up and stepping away from the booth into a relaxed guard',
+        },
+        microdose: {
+          startup: 'colors blooming around him as a wash of CYAN and MAGENTA psychedelic glow rises up his body, eyes going briefly wide',
+          active: 'half-dissolving into a smear of CYAN and MAGENTA light mid-step, his body streaking sideways as he blinks out',
+          recovery: 'reforming out of the color-smear into a relaxed standing stance, the glow settling',
+        },
+        'rainbow-road': {
+          startup: 'turning to gesture low toward the ground, one hand conjuring a small CYAN glow at ankle height',
+          active: 'gesturing forward and low as a tiny putting golf-cart trailing a bright rainbow projection rolls out along the ground ahead of him at ankle height — he stands upright, the cart is small and low on the ground',
+          recovery: 'watching the cart putt away, settling back upright into a relaxed guard',
+        },
+        throw: {
+          startup: 'lunging forward, both hands snatching at chest height in front of him, fingers splayed to grab',
+          active: 'both arms thrust out toward the right frame edge, hands clawed actively gripping the EMPTY GREEN AIR, a small white impact flash at his hands — he is COMPLETELY ALONE, a single figure grabbing empty air, absolutely no second person and no clone of himself anywhere in the frame',
+          recovery: 'shoving his hands forward to fling the unseen opponent away, then settling back into stance',
+        },
+      },
+    },
+    extra: {
+      projectiles: {
+        'suave-creature': {
+          prompt:
+            'A single glowing hand-drawn cartoon creature made of CYAN and MAGENTA projection-light — a goofy loping four-legged critter mid-stride facing right, thick outline, semi-transparent glow, painted cel-shaded anime style, small, centered, on solid flat chroma-key green background #00B140, no character, no green in the creature, no text, no watermark.',
+        },
+        oracle: {
+          prompt:
+            'A small glowing psychedelic booth on a tripod emitting a soft upright ring of CYAN and MAGENTA light, subtle swirling patterns, painted cel-shaded anime style, centered, on solid flat chroma-key green background #00B140, no character, no green, no text, no watermark.',
+        },
+        'rainbow-road': {
+          prompt:
+            'A tiny putting golf-cart seen from the side facing right, trailing a bright rainbow projection-streak behind it low along the ground, wider than it is tall, painted cel-shaded anime style, on solid flat chroma-key green background #00B140, no character, no green in the cart, no text, no watermark.',
         },
       },
     },

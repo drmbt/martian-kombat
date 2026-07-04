@@ -13,6 +13,8 @@ import marzipan from './marzipan.json';
 import gene from './gene.json';
 import bodhi from './bodhi.json';
 import cat from './cat.json';
+import chebel from './chebel.json';
+import ygor from './ygor.json';
 
 const scaleBox = (b: Box, s: number): Box => ({
   x: Math.round(b.x * s),
@@ -65,4 +67,6 @@ export const characters: Defs = {
   gene: applySpriteScale(gene as unknown as CharacterDef),
   bodhi: applySpriteScale(bodhi as unknown as CharacterDef),
   cat: applySpriteScale(cat as unknown as CharacterDef),
+  chebel: applySpriteScale(chebel as unknown as CharacterDef),
+  ygor: applySpriteScale(ygor as unknown as CharacterDef),
 };

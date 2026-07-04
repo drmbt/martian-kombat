@@ -81,31 +81,37 @@ victory (2):
 - [ ] "Obrigada, querido."
 - [ ] "Que quadro lindo!"
 
-## Chebel — "The Spirit Deck"
-**Voice:** [ ] warm mystic female, Brazilian accent — new pick; Sarah as
-fallback.
+## Chebel — "The Spirit Deck"  ✅ FINALIZED 6/6/4 (Sarah / VOICE_F, style 0.5 stab 0.45)
+**Voice:** [x] Sarah (VOICE_F) — warm mature confident, stands in for Brazilian mystic.
 
-winQuotes:
-- [ ] "Sit. Have tea. Reflect."
-- [ ] "Your card was The Fool. I checked twice."
+winQuotes: (in chebel.json)
+- [x] "The deck told me this morning. I just delivered."
+- [x] "This card? You. Reversed."
+- [x] "Sit. Have tea. Reflect."
+- [x] "Your card was The Fool. I checked twice."
+- [x] "The spirits were loud today. You were not."
 
-kiai (5):
-- [ ] "Hyah!"
-- [ ] "Vai!"
-- [ ] "Draw!"
-- [ ] "Ha!"
-- [ ] "Voa!"
+kiai (6):
+- [x] "Hyah!"
+- [x] "Vai!"
+- [x] "Draw!"
+- [x] "Ha!"
+- [x] "Voa!"
+- [x] "Toma!"
 
-hurt (5):
-- [ ] "Ai!"
-- [ ] "Agh!"
-- [ ] "Ui!"
-- [ ] "Não!"
-- [ ] "Tss!"
+hurt (6):
+- [x] "Ai!"
+- [x] "Agh!"
+- [x] "Ui!"
+- [x] "Não!"
+- [x] "Tss!"
+- [x] "Ei!"
 
-victory (2):
-- [ ] "The deck never lies."
-- [ ] "This outcome was foretold."
+victory (4):
+- [x] "The deck never lies."
+- [x] "This outcome was foretold."
+- [x] "Sit. Have tea. Reflect."
+- [x] "You. Reversed."
 
 ## Earl — "The Madd Wikkid"
 **Voice:** [ ] gravelly older male with groove — new pick (something with a
@@ -229,31 +235,34 @@ victory (4):
 - [ ] "Say thank you."
 - [ ] "The little martians will sing your song of sorrow"
 
-## Ygor — "Suave"
-**Voice:** [ ] laid-back male, Brazilian accent, permanently unbothered — new
-pick; Harry at low style as fallback.
+## Ygor — "Suave"  ✅ FINALIZED 6/6/4 (Harry / VOICE_M, style 0.2 stab 0.6 — low + unbothered)
+**Voice:** [x] Harry (VOICE_M) at low style — laid-back, permanently unbothered.
 
-winQuotes:
-- [ ] "Suave, mano. Suave."
-- [ ] "Appa drives better than you fought."
-- [ ] "I animate. You barely moved."
+winQuotes: (in ygor.json)
+- [x] "This was not a microdosis."
+- [x] "I projected your defeat two rounds ago. Nice render."
+- [x] "Suave, mano. Suave."
+- [x] "Appa drives better than you fought."
+- [x] "I animate. You barely moved."
 
-kiai (5):
-- [ ] "Suave!"
-- [ ] "Ha!"
-- [ ] "Vai, Appa!"
-- [ ] "Projeta!"
-- [ ] "Whoa!"
+kiai (6):
+- [x] "Suave!"
+- [x] "Ha!"
+- [x] "Vai, Appa!"
+- [x] "Projeta!"
+- [x] "Whoa!"
+- [x] "Toma!"
 
 hurt (6):
-- [ ] "Ai!"
-- [ ] "Whoa—"
-- [ ] "Agh!"
-- [ ] "Mano..."
-- [ ] "Ei!"
-- [ ] "Hnh!"
+- [x] "Ai!"
+- [x] "Whoa—"
+- [x] "Agh!"
+- [x] "Mano..."
+- [x] "Ei!"
+- [x] "Hnh!"
 
 victory (4):
-- [ ] "Não foi microdose!"
-- [ ] "Suave, mano. Suave."
-- [ ] "Mais Amor Por Favor."
+- [x] "Não foi microdose!"
+- [x] "Suave, mano. Suave."
+- [x] "Mais Amor Por Favor."
+- [x] "Nice render."

@@ -89,6 +89,26 @@ const FATALITIES = {
       `The woman from the reference image standing beside a finished framed portrait on a wooden easel — a deliberately unflattering, lumpy caricature of the defeated fighter in bright paint — signing the bottom corner with a flourish and blowing a kiss to camera, while only a small paint-splattered scorch mark remains where the husk stood. She does not look at it. Bright, smug, final.`,
     ],
   },
+  chebel: {
+    id: 'the-reversed',
+    canonical: 'assets/raw/canonical/chebel.png',
+    panels: [
+      `The woman from the reference image (long dark wavy hair, brown crop top, oxblood-red shorts, strap sandals) sliding a single glowing tarot card off her hip deck and holding it up between two fingers, its face blazing with AMBER-GOLD and VIOLET light, while ${HUSK} stands frozen before her. Low dramatic angle, warm gold and violet light washing over everything, never any green.`,
+      `The card FLARING as an enormous translucent AMBER-GOLD and VIOLET animal-spirit — a great leaping cat-like apparition — erupts from it and lunges at ${HUSK}, spectral claws raking through the charred figure in a shower of gold sparks. Dynamic diagonal angle, violet and gold spirit-light streaking outward.`,
+      `Extreme close-up as the spirit-cat's jaws clamp over ${HUSK} and wrench it upside-down, the burnt figure inverted and flailing while the tarot card hovers spinning, now shown REVERSED — a huge AMBER-GOLD constellation flare radiating behind it. Maximum contrast, radial gold star-streak motion lines, her expression calm and certain.`,
+      `The woman lowering the card and sliding it calmly back into her hip deck, taking a slow sip from a small glowing teacup, while the defeated fighter hangs suspended upside-down in a fading violet spirit-halo behind her, then drops as a charred heap. She does not look back. Calm, warm amber-and-violet light fading, final.`,
+    ],
+  },
+  ygor: {
+    id: 'final-render',
+    canonical: 'assets/raw/canonical/ygor.png',
+    panels: [
+      `The man from the reference image (worn cap over shaggy hair, yellow tee with red leopard-print, dark work pants, vintage camera on a neck strap) raising both hands as they blaze with CYAN and MAGENTA projector-light, casting a wide beam that pins ${HUSK} in a harsh flickering projection. Low dramatic angle, cyan and magenta light washing over everything, never any green.`,
+      `A swarm of glowing hand-drawn CYAN and MAGENTA cartoon creatures pouring out of his projected beam and swarming over ${HUSK}, biting and dragging at the charred figure, the whole scene strobing like a glitching projector. Dynamic side angle, magenta scanlines and cyan light-streaks slashing across the frame.`,
+      `Extreme close-up as the projection OVERLOADS — ${HUSK} pixel-sorting apart into cascading CYAN and MAGENTA scanline fragments and drawn-creature shards, dissolving row by row into pure projected light. Maximum contrast, radial magenta motion streaks, his face lit cyan and unbothered.`,
+      `The man tipping his cap and exhaling a slow breath of colored smoke as the last CYAN and MAGENTA fragments of the husk scatter and wink out behind him, a tiny drawn creature hopping onto his shoulder. He does not look back. Calm, cyan-and-magenta light fading, final.`,
+    ],
+  },
   bodhi: {
     id: 'full-realignment',
     canonical: 'assets/raw/canonical/bodhi.png',

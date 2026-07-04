@@ -1,0 +1,422 @@
+{
+  "id": "ygor",
+  "name": "YGOR",
+  "color": "#e94f37",
+  "stage": "drive-in",
+  "winQuotes": [
+    "This was not a microdosis.",
+    "I projected your defeat two rounds ago. Nice render.",
+    "Suave, mano. Suave.",
+    "Appa drives better than you fought.",
+    "I animate. You barely moved."
+  ],
+  "fatality": {
+    "id": "final-render",
+    "name": "Final Render",
+    "input": {
+      "motion": "hcb",
+      "button": "kick"
+    },
+    "panels": 4
+  },
+  "health": 1080,
+  "walkSpeed": 4.5,
+  "backSpeed": 3.6,
+  "jumpVel": 18,
+  "gravity": 0.95,
+  "prejumpFrames": 4,
+  "bodyBox": {
+    "x": -44,
+    "y": -242,
+    "w": 88,
+    "h": 242
+  },
+  "hurtStand": {
+    "x": -54,
+    "y": -256,
+    "w": 108,
+    "h": 256
+  },
+  "hurtCrouch": {
+    "x": -54,
+    "y": -160,
+    "w": 108,
+    "h": 160
+  },
+  "moves": {
+    "lp": {
+      "startup": 4,
+      "active": 3,
+      "recovery": 10,
+      "damage": 46,
+      "hitstun": 15,
+      "blockstun": 10,
+      "knockback": 7,
+      "hitbox": { "x": 38, "y": -224, "w": 100, "h": 40 },
+      "height": "mid",
+      "chains": ["lp", "lk", "clp", "clk"]
+    },
+    "mp": {
+      "startup": 7,
+      "active": 3,
+      "recovery": 14,
+      "damage": 72,
+      "hitstun": 19,
+      "blockstun": 12,
+      "knockback": 9,
+      "hitbox": { "x": 40, "y": -226, "w": 112, "h": 44 },
+      "height": "mid",
+      "cancel": true
+    },
+    "hp": {
+      "startup": 11,
+      "active": 4,
+      "recovery": 20,
+      "damage": 102,
+      "hitstun": 24,
+      "blockstun": 15,
+      "knockback": 12,
+      "hitbox": { "x": 40, "y": -232, "w": 120, "h": 58 },
+      "height": "mid",
+      "knockdown": true
+    },
+    "lk": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 11,
+      "damage": 46,
+      "hitstun": 14,
+      "blockstun": 9,
+      "knockback": 6,
+      "hitbox": { "x": 40, "y": -86, "w": 108, "h": 36 },
+      "height": "mid",
+      "chains": ["lp", "lk", "clp", "clk"]
+    },
+    "mk": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 16,
+      "damage": 76,
+      "hitstun": 20,
+      "blockstun": 13,
+      "knockback": 11,
+      "hitbox": { "x": 44, "y": -190, "w": 122, "h": 46 },
+      "height": "mid",
+      "cancel": true
+    },
+    "hk": {
+      "startup": 13,
+      "active": 4,
+      "recovery": 21,
+      "damage": 104,
+      "hitstun": 26,
+      "blockstun": 15,
+      "knockback": 13,
+      "hitbox": { "x": 44, "y": -244, "w": 126, "h": 72 },
+      "height": "mid",
+      "knockdown": true
+    },
+    "clp": {
+      "startup": 4,
+      "active": 3,
+      "recovery": 10,
+      "damage": 44,
+      "hitstun": 14,
+      "blockstun": 9,
+      "knockback": 6,
+      "hitbox": { "x": 38, "y": -134, "w": 100, "h": 36 },
+      "height": "mid",
+      "chains": ["lp", "lk", "clp", "clk"]
+    },
+    "cmp": {
+      "startup": 8,
+      "active": 4,
+      "recovery": 15,
+      "damage": 66,
+      "hitstun": 18,
+      "blockstun": 11,
+      "knockback": 8,
+      "hitbox": { "x": 30, "y": -196, "w": 86, "h": 104 },
+      "height": "mid",
+      "cancel": true
+    },
+    "chp": {
+      "startup": 10,
+      "active": 5,
+      "recovery": 20,
+      "damage": 90,
+      "hitstun": 24,
+      "blockstun": 14,
+      "knockback": 10,
+      "hitbox": { "x": 22, "y": -256, "w": 86, "h": 150 },
+      "height": "mid",
+      "knockdown": true
+    },
+    "clk": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 11,
+      "damage": 42,
+      "hitstun": 14,
+      "blockstun": 9,
+      "knockback": 6,
+      "hitbox": { "x": 38, "y": -32, "w": 110, "h": 32 },
+      "height": "low",
+      "chains": ["lp", "lk", "clp", "clk"]
+    },
+    "cmk": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 17,
+      "damage": 74,
+      "hitstun": 19,
+      "blockstun": 12,
+      "knockback": 9,
+      "hitbox": { "x": 42, "y": -34, "w": 140, "h": 34 },
+      "height": "low",
+      "cancel": true
+    },
+    "chk": {
+      "startup": 10,
+      "active": 4,
+      "recovery": 21,
+      "damage": 62,
+      "hitstun": 20,
+      "blockstun": 12,
+      "knockback": 8,
+      "hitbox": { "x": 28, "y": -36, "w": 150, "h": 36 },
+      "height": "low",
+      "knockdown": true
+    },
+    "jlp": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 8,
+      "damage": 46,
+      "hitstun": 15,
+      "blockstun": 10,
+      "knockback": 6,
+      "hitbox": { "x": 26, "y": -154, "w": 90, "h": 48 },
+      "height": "high"
+    },
+    "jmp": {
+      "startup": 6,
+      "active": 6,
+      "recovery": 10,
+      "damage": 70,
+      "hitstun": 18,
+      "blockstun": 12,
+      "knockback": 8,
+      "hitbox": { "x": 28, "y": -144, "w": 98, "h": 56 },
+      "height": "high"
+    },
+    "jhp": {
+      "startup": 8,
+      "active": 7,
+      "recovery": 12,
+      "damage": 94,
+      "hitstun": 22,
+      "blockstun": 14,
+      "knockback": 10,
+      "hitbox": { "x": 26, "y": -154, "w": 106, "h": 66 },
+      "height": "high"
+    },
+    "jlk": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 8,
+      "damage": 44,
+      "hitstun": 14,
+      "blockstun": 10,
+      "knockback": 6,
+      "hitbox": { "x": 28, "y": -124, "w": 88, "h": 50 },
+      "height": "high"
+    },
+    "jmk": {
+      "startup": 6,
+      "active": 7,
+      "recovery": 10,
+      "damage": 76,
+      "hitstun": 19,
+      "blockstun": 12,
+      "knockback": 9,
+      "hitbox": { "x": 30, "y": -134, "w": 104, "h": 58 },
+      "height": "high"
+    },
+    "jhk": {
+      "startup": 9,
+      "active": 7,
+      "recovery": 12,
+      "damage": 98,
+      "hitstun": 23,
+      "blockstun": 14,
+      "knockback": 12,
+      "hitbox": { "x": 32, "y": -144, "w": 116, "h": 62 },
+      "height": "high"
+    },
+    "suave-creature": {
+      "name": "Suave Creature",
+      "input": {
+        "motion": "qcf",
+        "button": "punch"
+      },
+      "startup": 12,
+      "active": 4,
+      "recovery": 24,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "projectile": {
+        "vx": 8,
+        "spawnX": 90,
+        "spawnY": -120,
+        "box": { "x": -34, "y": -40, "w": 68, "h": 80 },
+        "damage": 80,
+        "hitstun": 20,
+        "blockstun": 13,
+        "knockback": 10,
+        "ttl": 120
+      },
+      "variants": {
+        "l": {
+          "projectile": {
+            "vx": 11,
+            "box": { "x": -26, "y": -30, "w": 52, "h": 60 },
+            "damage": 62,
+            "knockback": 8
+          }
+        },
+        "h": {
+          "projectile": {
+            "vx": 5,
+            "box": { "x": -40, "y": -48, "w": 80, "h": 96 },
+            "damage": 98,
+            "hitstun": 24,
+            "knockback": 12
+          }
+        }
+      }
+    },
+    "oracle": {
+      "name": "oRACLE",
+      "input": {
+        "motion": "qcb",
+        "button": "punch"
+      },
+      "startup": 15,
+      "active": 2,
+      "recovery": 22,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "projectile": {
+        "vx": 0,
+        "spawnX": 110,
+        "spawnY": -110,
+        "box": { "x": -70, "y": -120, "w": 140, "h": 220 },
+        "damage": 0,
+        "hitstun": 0,
+        "blockstun": 0,
+        "knockback": 0,
+        "ttl": 160,
+        "field": true,
+        "slowFactor": 0.45
+      },
+      "variants": {
+        "l": {
+          "projectile": {
+            "ttl": 100
+          }
+        },
+        "h": {
+          "projectile": {
+            "ttl": 240,
+            "spawnX": 130
+          }
+        }
+      }
+    },
+    "microdose": {
+      "name": "Microdose",
+      "input": {
+        "motion": "qcf",
+        "button": "kick"
+      },
+      "startup": 14,
+      "active": 2,
+      "recovery": 10,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "teleport": { "mode": "behind" },
+      "invuln": 14
+    },
+    "rainbow-road": {
+      "name": "Rainbow Road",
+      "input": {
+        "motion": "qcb",
+        "button": "kick"
+      },
+      "startup": 12,
+      "active": 2,
+      "recovery": 24,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "projectile": {
+        "vx": 7,
+        "spawnX": 90,
+        "spawnY": -4,
+        "box": { "x": -40, "y": -44, "w": 80, "h": 44 },
+        "damage": 72,
+        "hitstun": 20,
+        "blockstun": 14,
+        "knockback": 7,
+        "height": "low",
+        "ttl": 60
+      },
+      "variants": {
+        "l": {
+          "projectile": {
+            "ttl": 30
+          }
+        },
+        "h": {
+          "projectile": {
+            "ttl": -1
+          }
+        }
+      }
+    },
+    "throw": {
+      "name": "Throw",
+      "input": {
+        "button": "LPLK"
+      },
+      "startup": 4,
+      "active": 2,
+      "recovery": 20,
+      "damage": 94,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 9,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": { "range": 110 },
+      "techable": true
+    }
+  }
+}

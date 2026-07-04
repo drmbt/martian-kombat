@@ -14,9 +14,36 @@ import { BindAction, getSettings } from '../settings';
 
 const ATTACK_ACTIONS: BindAction[] = ['lp', 'mp', 'hp', 'lk', 'mk', 'hk'];
 
-const COLS = 4;
-const CELL = 150;
-const GAP = 24;
+// --- Character-select layout ---------------------------------------------
+// The world map sits up top; the roster packs into a bottom-center grid that
+// scales to the roster count (see layoutGrid), and each player's currently
+// boxed pick blows up as a big portrait on the outer left/right, SFII-style.
+const MAP_ASPECT = 3168 / 1344; // source stage-map.png aspect (~2.357)
+const MAP_TOP = 42;
+const MAP_H = 236;
+const MAP_W = Math.round(MAP_H * MAP_ASPECT);
+
+// Bottom-center band the roster grid lives in (bottom edge is flush/tight).
+const GRID_LEFT = 214;
+const GRID_RIGHT = 746;
+const GRID_TOP = 298;
+const GRID_BOTTOM = STAGE_H - 4;
+const GRID_W = GRID_RIGHT - GRID_LEFT;
+const GRID_H = GRID_BOTTOM - GRID_TOP;
+const GRID_GAP = 6;
+const CELL_MAX = 132; // don't let cells balloon when the roster is small
+
+// Animated idle sprite on each side. P1 (left) faces right toward the center;
+// P2 (right) is flipped to face left, so the two fighters square off inward.
+const CELL_W = 288; // sprite-sheet cell dims (matches FightScene)
+const CELL_H = 384;
+const SIDE_P1_X = 116;
+const SIDE_P2_X = STAGE_W - 116;
+const SIDE_SPRITE_H = 250; // display height of the idle sprite
+const SIDE_BASE_Y = 512; // feet baseline
+const SIDE_TAG_Y = 296; // "1P" / "2P" label
+const SIDE_NAME_Y = 524; // character name
+const SIDE_IDLE_MS = 360; // idle-a <-> idle-b toggle period
 
 // stage dialog: the grid sizes itself to the option count (RANDOM + every
 // stage) so a growing roster keeps fitting the 960x540 canvas — see
@@ -32,6 +59,16 @@ export class SelectScene extends Phaser.Scene {
   private confirmed: [boolean, boolean] = [false, false];
   private cursors!: Phaser.GameObjects.Graphics;
   private nameTexts: Phaser.GameObjects.Text[] = [];
+  private sideSprites: (Phaser.GameObjects.Sprite | null)[] = [null, null];
+  private sidePodium!: Phaser.GameObjects.Graphics;
+  private sideSheet: [string, string] = ['', ''];
+  private sideIdle: [[number, number], [number, number]] = [[0, 1], [0, 1]];
+  // roster grid, sized to the roster count by layoutGrid()
+  private gcols = 5;
+  private grows = 2;
+  private gcell = 100;
+  private gOriginX = 0;
+  private gOriginY = 0;
   private starting = false;
   private cpu = false;
   private training = false;
@@ -70,25 +107,31 @@ export class SelectScene extends Phaser.Scene {
     }
     this.add.rectangle(STAGE_W / 2, STAGE_H / 2, STAGE_W, STAGE_H, 0x0c0910, 0.5);
     this.add
-      .text(STAGE_W / 2, 48, 'CHOOSE YOUR MARTIAN', {
-        fontFamily: 'monospace', fontSize: '34px', fontStyle: 'bold', color: '#ffb347',
+      .text(STAGE_W / 2, 22, 'CHOOSE YOUR MARTIAN', {
+        fontFamily: 'monospace', fontSize: '30px', fontStyle: 'bold', color: '#ffb347',
         stroke: '#2a0a0a', strokeThickness: 8,
       })
       .setOrigin(0.5);
 
+    // World map banner across the top.
+    if (this.textures.exists('ui-world-map')) {
+      this.add
+        .image(STAGE_W / 2, MAP_TOP + MAP_H / 2, 'ui-world-map')
+        .setDisplaySize(MAP_W, MAP_H)
+        .setDepth(1);
+    }
+
+    // Size the roster grid to the current count before laying cells out.
+    this.layoutGrid(ROSTER.length);
+
     ROSTER.forEach((entry, i) => {
       const { x, y } = this.cellXY(i);
-      const cellBg = this.add.rectangle(x, y, CELL - 8, CELL - 8, 0x14101a, 0.85).setStrokeStyle(2, 0x594566);
+      const c = this.gcell;
+      const cellBg = this.add.rectangle(x, y, c, c, 0x14101a, 0.85).setStrokeStyle(2, 0x594566).setDepth(2);
       if (this.textures.exists(`portrait-${entry.id}`)) {
-        const img = this.add.image(x, y, `portrait-${entry.id}`).setDisplaySize(CELL - 14, CELL - 14);
+        const img = this.add.image(x, y, `portrait-${entry.id}`).setDisplaySize(c - 6, c - 6).setDepth(3);
         if (!entry.playable) img.setAlpha(0.3).setTint(0x777799);
       }
-      this.add
-        .text(x, y + CELL / 2 + 12, entry.playable ? entry.name : `${entry.name} · SOON`, {
-          fontFamily: 'monospace', fontSize: '13px', color: entry.playable ? '#f5ead9' : '#7a7286',
-          stroke: '#000', strokeThickness: 3,
-        })
-        .setOrigin(0.5);
       // mouse: hovering moves the active cursor here; clicking confirms it.
       // The mouse always drives the first unconfirmed slot — in every mode it
       // picks P1 first, then (once P1 locks) P2 / the CPU opponent / the dummy.
@@ -107,18 +150,40 @@ export class SelectScene extends Phaser.Scene {
       });
     });
 
-    this.cursors = this.add.graphics();
-    this.nameTexts = [
-      this.add.text(40, STAGE_H - 46, '', { fontFamily: 'monospace', fontSize: '22px', color: '#58e6d9', stroke: '#000', strokeThickness: 4 }),
-      this.add.text(STAGE_W - 40, STAGE_H - 46, '', { fontFamily: 'monospace', fontSize: '22px', color: '#ff5a48', stroke: '#000', strokeThickness: 4 }).setOrigin(1, 0),
-    ];
+    this.sidePodium = this.add.graphics().setDepth(3);
+    this.cursors = this.add.graphics().setDepth(6);
+
+    // Big animated idle sprites on the outer edges (SFII-style), squaring off.
+    for (const p of [0, 1] as const) {
+      const sx = p === 0 ? SIDE_P1_X : SIDE_P2_X;
+      const color = p === 0 ? '#58e6d9' : '#ff5a48';
+      this.add
+        .text(sx, SIDE_TAG_Y, p === 0 ? '1P' : '2P', {
+          fontFamily: 'monospace', fontSize: '20px', fontStyle: 'bold', color, stroke: '#000', strokeThickness: 4,
+        })
+        .setOrigin(0.5)
+        .setDepth(5);
+      this.sideSprites[p] = this.add
+        .sprite(sx, SIDE_BASE_Y, 'sheet-vincent', 0)
+        .setOrigin(0.5, 0.95)
+        .setDisplaySize((SIDE_SPRITE_H * CELL_W) / CELL_H, SIDE_SPRITE_H)
+        .setFlipX(p === 1)
+        .setDepth(4);
+      this.nameTexts[p] = this.add
+        .text(sx, SIDE_NAME_Y, '', {
+          fontFamily: 'monospace', fontSize: '18px', fontStyle: 'bold', color, stroke: '#000', strokeThickness: 4,
+        })
+        .setOrigin(0.5)
+        .setDepth(5);
+    }
 
     if (this.cpu || this.training) {
       this.add
-        .text(STAGE_W / 2, 84, this.training ? 'TRAINING — pick your fighter, then the dummy' : 'VS CPU — pick your fighter, then your opponent', {
-          fontFamily: 'monospace', fontSize: '15px', color: '#e8dcc8', stroke: '#000', strokeThickness: 3,
+        .text(STAGE_W / 2, MAP_TOP + MAP_H + 10, this.training ? 'TRAINING — pick your fighter, then the dummy' : 'VS CPU — pick your fighter, then your opponent', {
+          fontFamily: 'monospace', fontSize: '13px', color: '#e8dcc8', stroke: '#000', strokeThickness: 3,
         })
-        .setOrigin(0.5);
+        .setOrigin(0.5)
+        .setDepth(5);
     }
 
     const kb = this.input.keyboard!;
@@ -126,8 +191,8 @@ export class SelectScene extends Phaser.Scene {
     const move = this.moveGrid.bind(this);
     kb.on('keydown-A', () => (this.stageMode ? this.stageMove(-1) : move(slotForP1(), -1)));
     kb.on('keydown-D', () => (this.stageMode ? this.stageMove(1) : move(slotForP1(), 1)));
-    kb.on('keydown-W', () => (this.stageMode ? this.stageMove(-this.scols) : move(slotForP1(), -COLS)));
-    kb.on('keydown-S', () => (this.stageMode ? this.stageMove(this.scols) : move(slotForP1(), COLS)));
+    kb.on('keydown-W', () => (this.stageMode ? this.stageMove(-this.scols) : move(slotForP1(), -this.gcols)));
+    kb.on('keydown-S', () => (this.stageMode ? this.stageMove(this.scols) : move(slotForP1(), this.gcols)));
     // any of P1's bound attack keys confirms P1's slot; any of P2's confirms
     // P2's (in the stage dialog either side confirms the shared pick)
     const bindings = getSettings().bindings;
@@ -156,8 +221,8 @@ export class SelectScene extends Phaser.Scene {
     if (!this.cpu && !this.training) {
       kb.on('keydown-LEFT', () => !this.stageMode && move(1, -1));
       kb.on('keydown-RIGHT', () => !this.stageMode && move(1, 1));
-      kb.on('keydown-UP', () => !this.stageMode && move(1, -COLS));
-      kb.on('keydown-DOWN', () => !this.stageMode && move(1, COLS));
+      kb.on('keydown-UP', () => !this.stageMode && move(1, -this.gcols));
+      kb.on('keydown-DOWN', () => !this.stageMode && move(1, this.gcols));
     }
     // ESC backs out: stage dialog -> character pick, character pick -> main menu
     kb.on('keydown-ESC', () => {
@@ -188,13 +253,44 @@ export class SelectScene extends Phaser.Scene {
     play(this, 's-blip', 0.5);
   }
 
+  /** idle-a / idle-b sheet frame indices for the side idle animation. */
+  private idleFrames(id: string): [number, number] {
+    const meta = this.cache.json.get(`meta-${id}`) as { frames?: string[] } | undefined;
+    const frames = meta?.frames ?? [];
+    const ia = frames.indexOf('idle-a');
+    const ib = frames.indexOf('idle-b');
+    return [ia >= 0 ? ia : 0, ib >= 0 ? ib : ia >= 0 ? ia : 0];
+  }
+
+  /**
+   * Size the roster grid to fit the bottom-center band: pick the column count
+   * giving the largest square cell that fits both the band width and height,
+   * then bottom-anchor the rows flush to the screen edge. Grows gracefully as
+   * the roster expands — more fighters just shrink the cells / add rows.
+   */
+  private layoutGrid(n: number): void {
+    let best = { cols: 4, s: 0 };
+    for (let cols = 3; cols <= 8; cols++) {
+      const rows = Math.ceil(n / cols);
+      const s = Math.min((GRID_W - (cols - 1) * GRID_GAP) / cols, (GRID_H - (rows - 1) * GRID_GAP) / rows);
+      if (s > best.s) best = { cols, s };
+    }
+    this.gcols = best.cols;
+    this.grows = Math.ceil(n / this.gcols);
+    this.gcell = Math.min(CELL_MAX, Math.floor(best.s));
+    const gridW = this.gcols * this.gcell + (this.gcols - 1) * GRID_GAP;
+    const gridH = this.grows * this.gcell + (this.grows - 1) * GRID_GAP;
+    this.gOriginX = STAGE_W / 2 - gridW / 2 + this.gcell / 2;
+    this.gOriginY = GRID_BOTTOM - gridH + this.gcell / 2; // flush to the bottom
+  }
+
   private cellXY(i: number): { x: number; y: number } {
-    const col = i % COLS;
-    const row = Math.floor(i / COLS);
-    const gridW = COLS * CELL + (COLS - 1) * GAP;
+    const col = i % this.gcols;
+    const row = Math.floor(i / this.gcols);
+    const stride = this.gcell + GRID_GAP;
     return {
-      x: STAGE_W / 2 - gridW / 2 + CELL / 2 + col * (CELL + GAP),
-      y: 150 + row * (CELL + GAP + 26),
+      x: this.gOriginX + col * stride,
+      y: this.gOriginY + row * stride,
     };
   }
 
@@ -368,8 +464,8 @@ export class SelectScene extends Phaser.Scene {
       return;
     }
     const p = this.padSlot();
-    if (n.up) this.moveGrid(p, -COLS);
-    if (n.down) this.moveGrid(p, COLS);
+    if (n.up) this.moveGrid(p, -this.gcols);
+    if (n.down) this.moveGrid(p, this.gcols);
     if (n.left) this.moveGrid(p, -1);
     if (n.right) this.moveGrid(p, 1);
     if (n.confirm || n.start) navDefer(this, () => { if (!this.stageMode) this.confirm(this.padSlot()); });
@@ -382,16 +478,42 @@ export class SelectScene extends Phaser.Scene {
 
   private redraw(): void {
     const g = this.cursors;
+    const pod = this.sidePodium;
+    const c = this.gcell;
     g.clear();
+    pod.clear();
     for (const p of [0, 1] as const) {
+      const entry = ROSTER[this.idx[p]];
       const { x, y } = this.cellXY(this.idx[p]);
       const color = p === 0 ? 0x58e6d9 : 0xff5a48;
-      const inset = p === 0 ? 0 : 6;
+      const inset = p === 0 ? 0 : 4; // nest P2's box so a shared cell shows both
+      // grid cursor
       g.lineStyle(this.confirmed[p] ? 5 : 3, color, 1);
-      g.strokeRect(x - CELL / 2 + 4 + inset, y - CELL / 2 + 4 + inset, CELL - 8 - inset * 2, CELL - 8 - inset * 2);
-      this.nameTexts[p].setText(
-        `${p === 0 ? 'P1' : 'P2'}: ${ROSTER[this.idx[p]].name}${this.confirmed[p] ? ' ✓' : ''}`,
-      );
+      g.strokeRect(x - c / 2 + inset, y - c / 2 + inset, c - inset * 2, c - inset * 2);
+      // animated idle sprite for this player's current pick (P2 faces center)
+      const sx = p === 0 ? SIDE_P1_X : SIDE_P2_X;
+      const spr = this.sideSprites[p];
+      const sheetKey = `sheet-${entry.id}`;
+      if (spr && this.textures.exists(sheetKey)) {
+        spr.setVisible(true);
+        if (this.sideSheet[p] !== sheetKey) {
+          this.sideSheet[p] = sheetKey;
+          spr.setTexture(sheetKey, 0);
+          spr.setDisplaySize((SIDE_SPRITE_H * CELL_W) / CELL_H, SIDE_SPRITE_H);
+          spr.setFlipX(p === 1);
+          this.sideIdle[p] = this.idleFrames(entry.id);
+          if (!entry.playable) spr.setAlpha(0.5).setTint(0x8a8aa0);
+          else spr.setAlpha(1).clearTint();
+        }
+        const [ia, ib] = this.sideIdle[p];
+        spr.setFrame(Math.floor(this.time.now / SIDE_IDLE_MS) % 2 ? ib : ia);
+      } else if (spr) {
+        spr.setVisible(false);
+      }
+      // player-colored podium glow under the feet, brighter when locked in
+      pod.fillStyle(color, this.confirmed[p] ? 0.55 : 0.16);
+      pod.fillEllipse(sx, SIDE_BASE_Y + 8, 150, 26);
+      this.nameTexts[p].setText(`${entry.name}${this.confirmed[p] ? ' ✓' : ''}`);
     }
   }
 }

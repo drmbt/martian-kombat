@@ -68,6 +68,8 @@ const announcerLines = {
   marzipan: 'MARZIPAN!',
   bodhi: 'BODHI!',
   cat: 'CAT!',
+  chebel: 'CHEBEL!',
+  ygor: 'YGOR!',
   'finish-them': 'FINISH THEM!',
   fatality: 'FATALITY!',
 };
@@ -154,6 +156,24 @@ const voiceLines = {
     kiai: ['Sai da frente!', 'Ha!', 'Opa!', 'Voilà!', 'Toma!', 'Hup!'],
     hurt: ['Ai!', 'Ui!', 'Ah!', 'Nossa!', 'Ai, não!', 'Ei!'],
     victory: ['I painted you better than you fought.', 'Obrigada, querido.', 'You blinked first.', 'Que tempo horrível…'],
+  },
+  // Chebel is a warm Brazilian mystic tarot-reader; centered but sharp on attack
+  chebel: {
+    voice: VOICE_F,
+    style: 0.5,
+    stability: 0.45,
+    kiai: ['Hyah!', 'Vai!', 'Draw!', 'Ha!', 'Voa!', 'Toma!'],
+    hurt: ['Ai!', 'Agh!', 'Ui!', 'Não!', 'Tss!', 'Ei!'],
+    victory: ['The deck never lies.', 'This outcome was foretold.', 'Sit. Have tea. Reflect.', 'You. Reversed.'],
+  },
+  // Ygor is a laid-back, permanently-unbothered Brazilian projection artist
+  ygor: {
+    voice: VOICE_M,
+    style: 0.2,
+    stability: 0.6,
+    kiai: ['Suave!', 'Ha!', 'Vai, Appa!', 'Projeta!', 'Whoa!', 'Toma!'],
+    hurt: ['Ai!', 'Whoa—', 'Agh!', 'Mano...', 'Ei!', 'Hnh!'],
+    victory: ['Não foi microdose!', 'Suave, mano. Suave.', 'Mais Amor Por Favor.', 'Nice render.'],
   },
 };
 

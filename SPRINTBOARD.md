@@ -6,7 +6,7 @@
 > Unchecked boxes in the active sprint = the backlog. Do not silently add scope;
 > new ideas go to the Icebox.
 
-**Current sprint: 21 (Cat) SHIPPED — roster now 9 playable** · MVP shipped
+**Current sprint: 21 (Cat) SHIPPED — roster now 12 playable (Bodhi, Chebel, Ygor added)** · MVP shipped
 2026-07-02 (8/8 fighters playable, 19 stages, full music loop, fatalities,
 CPU + training modes, settings). Sprint 19 (cancels & chains) shipped +
 committed + pushed 2026-07-04 (`a27fa90`). Sprint 20 (personality specials +
@@ -17,8 +17,26 @@ pipeline, 134/134 vitest, art verified. Committed together with Sprint 20's
 staged art on the user's go-ahead. **Bodhi is being built in a parallel
 session** (registered `playable`, sheet packed, but audio + fatality panels
 still pending in that session — expect the dev loader to hang until they land;
-deploy degrades gracefully on real 404s). Long-term RFEs live in their own
-roadmap section.
+deploy degrades gracefully on real 404s). **Chebel + Ygor (Wave 2 chars #3–4)
+100% COMPLETE 2026-07-04** — all 7 pipeline steps done for both: data +
+generator-script entries, 62-cell sheets packed (+ projectile art: chebel
+spirit-draw; ygor suave-creature/oracle/rainbow-road), 16 VO lines each +
+announcer, portraits/KO (from earlier canonical pass), 4 fatality panels each
+(the-reversed / final-render). Both `playable:true`, tsc clean + 134/134
+tests, sprite-sheet QA passed (Bodhi's deep-crouch head-visible / hem-not-a-leg
+/ empty-air-grab guards all held — no headless torsos, phantom legs or clones).
+Roster now 12 playable. Parallelized by provider: ElevenLabs audio ran
+concurrent with two Gemini frame jobs (conc 4 each = 8 in-flight, no 429s),
+then pack + fatality. QA re-roll (user-directed): chebel `idle-a`/`idle-b`
+(were flickery — too dissimilar, `idle-b` had a stray jaguar) + `fall` (now
+topples backward) regenerated and re-packed. Added a reusable per-character
+generic-cell override seam — `spec.cells['idle-b'] = '...'` in
+frames-manifest overrides a shared CELLS pose without touching other chars
+(`buildJobs` reads `spec.cells?.[id] ?? c.pose`). LESSON: text alone won't
+hold an idle-loop frame static — the model turns "idle-b, chest risen" into a
+knee-raise action pose; pin it hard ("BOTH feet flat, NOT an attack, NO raised
+knee/kick/lunge") or it flickers against idle-a. Long-term RFEs live in their
+own roadmap section.
 
 ---
 
@@ -725,6 +743,25 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-04 · data+tools+assets+docs+scenes · Wave 2 chars Chebel + Ygor
+  shipped (+ bundled parallel select-screen redesign)** — added **Chebel**
+  ("The Spirit Deck", rushdown+summon, stage `mimos`) and **Ygor** ("Suave",
+  projection zoner, stage `drive-in`): character JSONs, registry + roster
+  (both `playable:true`), frames-manifest / gen-audio / gen-fatality entries,
+  and full generated assets (62-cell sheets + projectile art, 16 VO lines each
+  + announcer, portraits/KO/bust, 4 fatality panels each). Personality
+  specials mapped onto proven plumbing (Ceremony→invuln DP, Microdose→teleport,
+  oRACLE→slow-field). Added a reusable per-character generic-cell override seam
+  (`spec.cells[id]`) and used it to fix Chebel's flickery idle-a/idle-b + a
+  stray idle jaguar and to pin her `fall` backward. tsc clean, 134/134 tests,
+  sprite QA passed. **This commit also lands a parallel session's uncommitted
+  work** (per user request to commit the whole tree): select-screen redesign
+  (`SelectScene.ts` +196, `BootScene.ts` world-map + side-profile `-bust.png`
+  loads), `public/assets/ui/world-map.png`, and a bulk portrait+bust regen for
+  all roster chars plus not-yet-wired Wave 2 portraits (earl/haidai/rapha/
+  vanessa — busts present, orphaned until those fighters are built). All 12
+  roster busts present, so the redesign is asset-complete for the live roster.
+  *(Claude — Chebel/Ygor; parallel session — select redesign)*
 - **2026-07-04 · data+tools+assets+docs · Sprint 21 shipped: Cat "Wet Paint"
   (+ Sprint 20 art landed)** — first roster expansion past the launch eight,
   pure data + generated art (zero engine changes). `cat.json`: light/fast
