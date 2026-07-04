@@ -67,8 +67,12 @@ export class ThreeFxSystem {
     mat: THREE.MeshBasicMaterial;
     glow: THREE.Mesh;
     glowMat: THREE.MeshBasicMaterial;
-    light: THREE.PointLight;
   }[] = [];
+  /** ALWAYS in the scene at intensity 0 when unused: toggling a light's
+   *  presence (e.g. hiding its parent sprite) changes the light count and
+   *  forces a pipeline rehash of every lit material — the first-projectile
+   *  stutter. Four is the illumination cap from T23. */
+  private projLights: THREE.PointLight[] = [];
   private glowTexture: THREE.Texture;
   private ownerColors = new Map<string, THREE.Color>();
 
@@ -94,6 +98,11 @@ export class ThreeFxSystem {
 
     this.group.add(this.blood, this.splats);
     this.glowTexture = radialTexture();
+    for (let i = 0; i < 4; i++) {
+      const light = new THREE.PointLight(0xffffff, 0, 7, 1.8);
+      this.group.add(light);
+      this.projLights.push(light);
+    }
   }
 
   // ---------- textures ----------
@@ -196,8 +205,8 @@ export class ThreeFxSystem {
       for (const e of this.projMeshes) {
         e.sprite.visible = false;
         e.glow.visible = false;
-        e.light.intensity = 0;
       }
+      for (const l of this.projLights) l.intensity = 0;
       for (const b of this.billboards) {
         b.active = false;
         b.mesh.visible = false;
@@ -435,21 +444,19 @@ export class ThreeFxSystem {
     const glow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), glowMat);
     glow.renderOrder = 14;
     glow.layers.set(FX_LAYER);
-    // the light is what makes the bolt illuminate street + fighters
-    const light = new THREE.PointLight(0xffffff, 0, 7, 1.8);
-    sprite.add(light);
     this.group.add(sprite, glow);
-    this.projMeshes.push({ sprite, mat, glow, glowMat, light });
+    this.projMeshes.push({ sprite, mat, glow, glowMat });
   }
 
   private syncProjectiles(state: GameState): void {
     while (this.projMeshes.length < state.projectiles.length) this.allocProjEntry();
     this.projMeshes.forEach((entry, i) => {
       const p = state.projectiles[i];
+      const light = this.projLights[i];
       if (!p) {
         entry.sprite.visible = false;
         entry.glow.visible = false;
-        entry.light.intensity = 0;
+        if (light) light.intensity = 0;
         return;
       }
       const ownerChar = state.fighters[p.owner].charId;
@@ -478,8 +485,11 @@ export class ThreeFxSystem {
       entry.glow.scale.set(gs, gs, 1);
       entry.glowMat.color = color;
       entry.glowMat.opacity = 0.85;
-      entry.light.color = color;
-      entry.light.intensity = i < 4 && !p.field ? 18 : 0;
+      if (light) {
+        light.position.set(x, y, 0.4);
+        light.color = color;
+        light.intensity = p.field ? 0 : 18;
+      }
     });
   }
 

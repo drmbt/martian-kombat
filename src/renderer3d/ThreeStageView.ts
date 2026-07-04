@@ -58,6 +58,26 @@ function gridTexture(bg: string, line: string, repeatX: number, repeatY: number)
   return t;
 }
 
+/** compact annotation plate for the test room (NEAR / FAR / SKY / FLOOR) */
+function makeLabel(text: string, x: number, y: number, z: number): THREE.Mesh {
+  const c = document.createElement('canvas');
+  c.width = 192;
+  c.height = 48;
+  const ctx = c.getContext('2d')!;
+  ctx.fillStyle = '#232327';
+  ctx.fillRect(0, 0, 192, 48);
+  ctx.font = 'bold 22px monospace';
+  ctx.fillStyle = '#cfcfd4';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, 96, 25);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 0.29), new THREE.MeshBasicMaterial({ map: tex }));
+  m.position.set(x, y, z);
+  return m;
+}
+
 export type PlaceholderKind = 'test-room' | 'street';
 
 export class ThreeStageView {
@@ -137,12 +157,13 @@ export class ThreeStageView {
     floor.receiveShadow = true;
     g.add(floor);
 
-    // four wall layers: further = darker + taller, all visible at once
+    // named like the 2D stage template: NEAR / FAR / SKY walls + FLOOR —
+    // further = darker + taller, all visible at once
     const layers = [
-      { z: -3, h: 2.2, shade: '#7b7b80', line: '#94949a', span: stageW + 6 },
-      { z: -8, h: 4.2, shade: '#646469', line: '#7c7c82', span: stageW + 16 },
-      { z: -14, h: 6.5, shade: '#4d4d52', line: '#636369', span: stageW + 26 },
-      { z: -21, h: 9.5, shade: '#37373c', line: '#4a4a50', span: stageW + 40 },
+      { z: -3, h: 1.2, name: 'NEAR', labelY: 0.8, shade: '#7b7b80', line: '#94949a', span: stageW + 6 },
+      { z: -9, h: 2.6, name: 'FAR', labelY: 2.2, shade: '#5a5a60', line: '#70707a', span: stageW + 18 },
+      // SKY towers over FAR so it owns everything above the horizon line
+      { z: -24, h: 14, name: 'SKY', labelY: 4.6, shade: '#38383e', line: '#48484f', span: stageW + 44 },
     ];
     for (const [i, l] of layers.entries()) {
       const wall = new THREE.Mesh(
@@ -155,27 +176,12 @@ export class ThreeStageView {
       wall.position.set(0, l.h / 2, l.z);
       wall.receiveShadow = true;
       g.add(wall);
-      // depth label plate per layer
-      const label = document.createElement('canvas');
-      label.width = 256;
-      label.height = 64;
-      const ctx = label.getContext('2d')!;
-      ctx.fillStyle = '#26262a';
-      ctx.fillRect(0, 0, 256, 64);
-      ctx.font = 'bold 30px monospace';
-      ctx.fillStyle = '#d8d8dc';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(`LAYER ${i + 1} · z ${l.z}m`, 128, 34);
-      const labelTex = new THREE.CanvasTexture(label);
-      labelTex.colorSpace = THREE.SRGBColorSpace;
-      const plate = new THREE.Mesh(
-        new THREE.PlaneGeometry(2.4, 0.6),
-        new THREE.MeshBasicMaterial({ map: labelTex }),
-      );
-      plate.position.set(-4 - i * 1.6, l.h - 0.45, l.z + 0.02);
-      g.add(plate);
+      g.add(makeLabel(`${l.name} z${l.z}`, -3.5 - i * 1.4, l.labelY, l.z + 0.02));
     }
+    // floor label lies flat on the ground plane
+    const floorLabel = makeLabel('FLOOR z0', 3.4, 0.006, -1.2);
+    floorLabel.rotation.x = -Math.PI / 2;
+    g.add(floorLabel);
 
     // side walls close the box
     const sideMat = new THREE.MeshStandardMaterial({
