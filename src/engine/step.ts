@@ -17,7 +17,10 @@ import {
 import {
   ACTION_BUFFER_TICKS,
   BOUNCE_VY,
+  CANCEL_WINDOW_TICKS,
   CHARGE_TICKS,
+  COMBO_SCALE_FLOOR,
+  COMBO_SCALE_STEP,
   COUNTER_HITSTOP_BONUS,
   COUNTER_HITSTUN_MULT,
   DIZZY_TICKS,
@@ -69,6 +72,7 @@ function initFighter(charId: string, def: CharacterDef, slot: 0 | 1): FighterSta
     stun: 0,
     hitstop: 0,
     buffered: null,
+    comboHits: 0,
   };
 }
 
@@ -409,6 +413,38 @@ function updateFighter(
 
   switch (a.kind) {
     case 'attack': {
+      // chains & special cancels: once this move has CONTACTED (hit or block —
+      // a.hasHit is set on either; whiffs never cancel), a buffered press may
+      // cut its recovery short inside the cancel window. Chains are data
+      // (`chains` on the move lists legal targets); `cancel: true` normals
+      // may cancel into any motion special (grabs excluded — canceling into
+      // a command grab on a reeling victim would be degenerate).
+      let canceled = false;
+      if (a.hasHit && f.buffered) {
+        const cm = resolveMove(def.moves[a.moveId!], a.strength);
+        if (a.frame <= cm.startup + cm.active + CANCEL_WINDOW_TICKS) {
+          const target = def.moves[f.buffered.id];
+          const isChain = !!target && !!cm.chains?.includes(f.buffered.id);
+          const isSpecialCancel = !!target && !!cm.cancel && !!target.input && !target.grab;
+          if (
+            (isChain || isSpecialCancel) &&
+            // one-fireball rule re-checked at cancel time
+            !(target.projectile && !target.projectile.field && ownsLiveProjectile(s, slot))
+          ) {
+            const res = resolveMove(target, f.buffered.strength);
+            f.action = {
+              kind: 'attack',
+              frame: 0,
+              moveId: f.buffered.id,
+              strength: f.buffered.strength,
+              hasHit: false,
+              invuln: res.invuln ?? 0,
+            };
+            f.buffered = null;
+            canceled = true;
+          }
+        }
+      }
       // early chord upgrade: a lone button that becomes a 2-button chord
       // within the first few frames kara-cancels into the PPP/KKK/LPLK
       // special (nobody can hit two keys on the same 60hz tick).
@@ -418,7 +454,7 @@ function updateFighter(
       const cur = def.moves[a.moveId!];
       const curIsChord =
         cur.input?.button === 'PPP' || cur.input?.button === 'KKK' || cur.input?.button === 'LPLK';
-      if (!curIsChord && a.frame < 4) {
+      if (!canceled && !curIsChord && a.frame < 4) {
         for (const [id, mv] of Object.entries(def.moves)) {
           const btn = mv.input?.button;
           if (btn !== 'PPP' && btn !== 'KKK' && btn !== 'LPLK') continue;
@@ -722,6 +758,15 @@ function isCounterhit(d: FighterState, defs: Defs): boolean {
 /** lights are chipless; everything meatier shaves 10% through block */
 const CHIPLESS = new Set(['lp', 'lk', 'clp', 'clk', 'jlp', 'jlk']);
 
+/** Combo damage scaling: hits 1-2 land full, each later hit in the same combo
+ *  loses COMBO_SCALE_STEP% (cumulative) down to the COMBO_SCALE_FLOOR%.
+ *  Integer math keeps it deterministic; a connecting hit always deals ≥1. */
+function scaleForCombo(damage: number, comboHits: number): number {
+  if (damage <= 0) return damage;
+  const pct = Math.max(COMBO_SCALE_FLOOR, 100 - COMBO_SCALE_STEP * Math.max(0, comboHits - 2));
+  return Math.max(1, Math.floor((damage * pct) / 100));
+}
+
 /** Freeze frames for a connecting move: specials hit hardest, otherwise the
  *  button strength embedded in the move id ('lp'/'cmk'/'jhk') decides. */
 function hitstopFor(moveId: string, m: MoveDef): number {
@@ -755,11 +800,17 @@ function applyHit(
     d.vx = attackerFacing * hit.knockback * 0.8;
     if (hit.chip > 0) d.health = Math.max(1, d.health - hit.chip); // chip can't KO
   } else {
-    d.health = Math.max(0, d.health - hit.damage);
+    // combo bookkeeping: a hit on an already-reeling victim extends the combo,
+    // anything else starts a fresh one; later hits scale down (stun scales
+    // with them so long chains can't also be free dizzies)
+    const inCombo = d.action.kind === 'hitstun' || d.action.kind === 'airHit';
+    d.comboHits = inCombo ? d.comboHits + 1 : 1;
+    const damage = scaleForCombo(hit.damage, d.comboHits);
+    d.health = Math.max(0, d.health - damage);
     // stun feeds on clean hits only; the punish that lands on a dizzied
     // fighter ends the dizzy instead of stacking toward the next one
     if (d.action.kind === 'dazed') d.stun = 0;
-    else d.stun += hit.damage;
+    else d.stun += damage;
     const counter = hit.counter || undefined;
     if (!grounded(d)) {
       d.action = { kind: 'airHit', frame: 0, counter };
@@ -1230,6 +1281,10 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
     if (!frozen[slot] && f.stun > 0 && f.action.kind !== 'dazed') {
       f.stun = Math.max(0, f.stun - STUN_DECAY);
     }
+    // the combo drops the moment its victim stops reeling (hitstop pauses the
+    // reel, so a frozen victim keeps the count)
+    const k = f.action.kind;
+    if (k !== 'hitstun' && k !== 'airHit') f.comboHits = 0;
   }
 
   if (!frozen[0]) updateFighter(s, 0, defs[f1.charId], inputs[0]);

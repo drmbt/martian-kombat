@@ -58,7 +58,13 @@
         "w": 104,
         "h": 40
       },
-      "height": "mid"
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
     },
     "mp": {
       "startup": 8,
@@ -74,7 +80,8 @@
         "w": 114,
         "h": 44
       },
-      "height": "mid"
+      "height": "mid",
+      "cancel": true
     },
     "hp": {
       "startup": 11,
@@ -107,7 +114,13 @@
         "w": 106,
         "h": 36
       },
-      "height": "mid"
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
     },
     "mk": {
       "startup": 9,
@@ -123,7 +136,8 @@
         "w": 120,
         "h": 48
       },
-      "height": "mid"
+      "height": "mid",
+      "cancel": true
     },
     "hk": {
       "startup": 12,
@@ -156,7 +170,13 @@
         "w": 96,
         "h": 36
       },
-      "height": "mid"
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
     },
     "cmp": {
       "startup": 7,
@@ -172,7 +192,8 @@
         "w": 84,
         "h": 100
       },
-      "height": "mid"
+      "height": "mid",
+      "cancel": true
     },
     "chp": {
       "startup": 10,
@@ -205,7 +226,13 @@
         "w": 102,
         "h": 32
       },
-      "height": "low"
+      "height": "low",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
     },
     "cmk": {
       "startup": 8,
@@ -221,7 +248,8 @@
         "w": 128,
         "h": 34
       },
-      "height": "low"
+      "height": "low",
+      "cancel": true
     },
     "chk": {
       "startup": 9,

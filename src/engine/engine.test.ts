@@ -1514,3 +1514,220 @@ describe('ground-impact bounce (sprint 18)', () => {
     expect(bounced).toBe(true);
   });
 });
+
+describe('cancels & chains (Sprint 19)', () => {
+  /** step until P1's current attack has contacted (hit or block) */
+  function runUntilContact(s: GameState, p2: InputFrame = inp(), max = 30): void {
+    for (let i = 0; i < max && !s.fighters[0].action.hasHit; i++) {
+      step(s, [inp(), p2], characters);
+    }
+    expect(s.fighters[0].action.hasHit).toBe(true);
+  }
+
+  /** true once P1 is in a fresh attack with the given move (a cancel resets
+   *  frame + hasHit, so this can only follow a cancel mid-string) */
+  function inFreshAttack(s: GameState, moveId: string): boolean {
+    const a = s.fighters[0].action;
+    return a.kind === 'attack' && a.moveId === moveId && !a.hasHit;
+  }
+
+  it('a light chains into a light on hit', () => {
+    const s = fresh();
+    closeRange(s);
+    step(s, [inp({ lp: true }), inp()], characters);
+    runUntilContact(s);
+    step(s, [inp({ lp: true }), inp()], characters); // second tap: chain
+    let chained = false;
+    for (let i = 0; i < 8 && !chained; i++) {
+      chained = inFreshAttack(s, 'lp');
+      if (!chained) step(s, [inp(), inp()], characters);
+    }
+    expect(chained).toBe(true);
+    run(s, 20); // both jabs land clean, hits 1-2 unscaled
+    expect(s.fighters[1].health).toBe(characters[P2].health - 2 * characters[P1].moves.lp.damage);
+  });
+
+  it('a light chains on block too', () => {
+    const s = fresh();
+    closeRange(s);
+    const guard = inp({ right: true }); // P2 faces left: back = right
+    step(s, [inp({ lp: true }), guard], characters);
+    runUntilContact(s, guard);
+    step(s, [inp({ lp: true }), guard], characters);
+    let chained = false;
+    for (let i = 0; i < 8 && !chained; i++) {
+      chained = inFreshAttack(s, 'lp');
+      if (!chained) step(s, [inp(), guard], characters);
+    }
+    expect(chained).toBe(true);
+  });
+
+  it('a whiffed light never chains (frame counts through uninterrupted)', () => {
+    const s = fresh(); // full-screen: the jab whiffs
+    step(s, [inp({ lp: true }), inp()], characters);
+    run(s, 2);
+    step(s, [inp({ lp: true }), inp()], characters); // tap during the whiff
+    let lastFrame = s.fighters[0].action.frame;
+    while (s.fighters[0].action.kind === 'attack') {
+      step(s, [inp(), inp()], characters);
+      const a = s.fighters[0].action;
+      if (a.kind === 'attack') {
+        expect(a.frame).toBeGreaterThan(lastFrame); // no reset = no cancel
+        lastFrame = a.frame;
+      }
+    }
+  });
+
+  it('lights do not special-cancel (chains only)', () => {
+    const s = fresh();
+    closeRange(s);
+    step(s, [inp({ lp: true }), inp()], characters);
+    runUntilContact(s);
+    // qcf+P buffered during the jab
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ right: true }), inp()], characters);
+    step(s, [inp({ right: true, lp: true }), inp()], characters);
+    let sawSpecialMidMove = false;
+    for (let i = 0; i < 10; i++) {
+      if (s.fighters[0].action.kind !== 'attack') break;
+      if (s.fighters[0].action.moveId === 'sigil-bolt') sawSpecialMidMove = true;
+      step(s, [inp(), inp()], characters);
+    }
+    expect(sawSpecialMidMove).toBe(false);
+  });
+
+  it('a medium special-cancels into a fireball on hit', () => {
+    const s = fresh();
+    closeRange(s);
+    step(s, [inp({ mp: true }), inp()], characters);
+    runUntilContact(s);
+    fireSpecial(s); // qcf+P during the mp — buffered, then canceled into
+    let canceled = false;
+    for (let i = 0; i < 10 && !canceled; i++) {
+      canceled = s.fighters[0].action.kind === 'attack' && s.fighters[0].action.moveId === 'sigil-bolt';
+      if (!canceled) step(s, [inp(), inp()], characters);
+    }
+    expect(canceled).toBe(true);
+    run(s, 60); // the canceled-into bolt comes out and combos
+    expect(s.fighters[1].health).toBeLessThan(characters[P2].health - characters[P1].moves.mp.damage);
+  });
+
+  it('a medium special-cancels on block', () => {
+    const s = fresh();
+    closeRange(s);
+    const guard = inp({ right: true });
+    step(s, [inp({ mp: true }), guard], characters);
+    runUntilContact(s, guard);
+    step(s, [inp({ down: true }), guard], characters);
+    step(s, [inp({ down: true }), guard], characters);
+    step(s, [inp({ right: true }), guard], characters);
+    step(s, [inp({ right: true, lp: true }), guard], characters);
+    let canceled = false;
+    for (let i = 0; i < 10 && !canceled; i++) {
+      canceled = s.fighters[0].action.kind === 'attack' && s.fighters[0].action.moveId === 'sigil-bolt';
+      if (!canceled) step(s, [inp(), guard], characters);
+    }
+    expect(canceled).toBe(true);
+  });
+
+  it('a whiffed medium never cancels (buffer expires before the move ends)', () => {
+    const s = fresh(); // full-screen whiff
+    step(s, [inp({ mp: true }), inp()], characters);
+    fireSpecial(s); // qcf+P early in the whiff
+    let sawBolt = false;
+    for (let i = 0; i < 45; i++) {
+      if (s.fighters[0].action.moveId === 'sigil-bolt') sawBolt = true;
+      step(s, [inp(), inp()], characters);
+    }
+    expect(sawBolt).toBe(false);
+    expect(s.projectiles.length).toBe(0);
+  });
+});
+
+describe('combo damage scaling (Sprint 19)', () => {
+  /** mash jab: alternate press/release so every other tick is a fresh press —
+   *  chains keep the string true as long as the victim stays reeling */
+  function mash(t: number): InputFrame {
+    return inp({ lp: t % 2 === 0 });
+  }
+
+  it('hits 1-2 land full, later hits scale down 10% per hit', () => {
+    const s = fresh();
+    closeRange(s);
+    const deltas: number[] = [];
+    let hp = s.fighters[1].health;
+    for (let t = 0; t < 90; t++) {
+      step(s, [mash(t), inp()], characters);
+      if (s.fighters[1].health < hp) {
+        deltas.push(hp - s.fighters[1].health);
+        hp = s.fighters[1].health;
+      }
+    }
+    const jab = characters[P1].moves.lp.damage; // 45
+    expect(deltas.length).toBeGreaterThanOrEqual(5);
+    expect(deltas.slice(0, 5)).toEqual([
+      jab,
+      jab,
+      Math.floor(jab * 0.9),
+      Math.floor(jab * 0.8),
+      Math.floor(jab * 0.7),
+    ]);
+  });
+
+  it('scaling floors at 30%', () => {
+    const s = fresh();
+    closeRange(s);
+    // seed a deep combo: victim mid-reel, nine hits already eaten
+    s.fighters[1].action = { kind: 'hitstun', frame: 300 };
+    s.fighters[1].comboHits = 9;
+    const hp = s.fighters[1].health;
+    step(s, [inp({ lp: true }), inp()], characters);
+    run(s, 10);
+    const jab = characters[P1].moves.lp.damage;
+    expect(s.fighters[1].health).toBe(hp - Math.floor(jab * 0.3)); // hit 10: floored
+    expect(s.fighters[1].comboHits).toBe(10);
+  });
+
+  it('dropping the combo resets scaling to full', () => {
+    const s = fresh();
+    closeRange(s);
+    let hp = s.fighters[1].health;
+    let hits = 0;
+    for (let t = 0; t < 90 && hits < 4; t++) {
+      step(s, [mash(t), inp()], characters);
+      if (s.fighters[1].health < hp) {
+        hits++;
+        hp = s.fighters[1].health;
+      }
+    }
+    expect(hits).toBe(4); // a real scaled string happened
+    // let the victim fully recover — the combo drops
+    run(s, 60);
+    expect(s.fighters[1].action.kind).not.toBe('hitstun');
+    closeRange(s);
+    hp = s.fighters[1].health;
+    step(s, [inp({ lp: true }), inp()], characters);
+    run(s, 15);
+    expect(s.fighters[1].health).toBe(hp - characters[P1].moves.lp.damage); // full again
+  });
+
+  it('chained strings stay deterministic', () => {
+    const script = (t: number): [InputFrame, InputFrame] => [
+      inp({
+        lp: t % 2 === 0 && t % 90 < 40,
+        down: t % 90 >= 40 && t % 90 < 46,
+        right: t % 90 >= 46 && t % 90 < 52,
+        mp: t % 90 === 52,
+      }),
+      inp({ left: t % 60 < 20, lk: t % 2 === 1 && t % 70 < 30 }),
+    ];
+    const a = initialState(P1, P2, characters);
+    const b = initialState(P1, P2, characters);
+    a.phase = 'fight';
+    b.phase = 'fight';
+    for (let t = 0; t < 1200; t++) step(a, script(t), characters);
+    for (let t = 0; t < 1200; t++) step(b, script(t), characters);
+    expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+  });
+});

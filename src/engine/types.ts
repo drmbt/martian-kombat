@@ -179,6 +179,14 @@ export interface MoveDef {
   leap?: { vx: number; vy: number };
   /** SFII Turbo L/M/H button variants, merged over the base numbers */
   variants?: { l?: VariantPatch; m?: VariantPatch; h?: VariantPatch };
+  /** chain targets: once this move has CONTACTED (hit or block, never on
+   *  whiff), a fresh press of one of these moves cancels the remainder of
+   *  this move into it (lights chain into lights; light→medium where a kit
+   *  wants it) — pure data, the engine has no per-character cases */
+  chains?: string[];
+  /** special-cancelable: on contact (hit or block), this normal may cancel
+   *  into any motion special inside the cancel window */
+  cancel?: boolean;
   /** render hint only — per-move impact overlay art
    *  (assets/sprites/<char>/vfx-<moveId>.png, tools/gen-vfx.mjs) played by the
    *  scene when this move connects; engine never reads it */
@@ -298,6 +306,10 @@ export interface FighterState {
   hitstop: number;
   /** action input buffer — null once consumed or expired */
   buffered: BufferedAction | null;
+  /** hits taken in the CURRENT combo (this fighter is the victim): increments
+   *  while a hit lands on an already-reeling fighter, resets to 0 the moment
+   *  they leave hitstun/airHit — fuels combo damage scaling */
+  comboHits: number;
 }
 
 /** A techable throw mid-hold: the victim is frozen while this counts down.

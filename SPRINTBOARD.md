@@ -6,13 +6,13 @@
 > Unchecked boxes in the active sprint = the backlog. Do not silently add scope;
 > new ideas go to the Icebox.
 
-**Current sprint: 19 — cancels & chains** · MVP shipped 2026-07-02 (8/8
-fighters playable, 19 stages, full music loop, fatalities, CPU + training
-modes, settings). Sprint 17 (universal throws + dizzy/stun) shipped +
-committed 2026-07-03. Sprint 18 (input forgiveness + hit feedback) shipped +
-committed 2026-07-03 (all engine work, 110/110 vitest, verified live; user
-authorized the commit, not pushed). Sprint 19 (cancels & chains) is in
-flight. Long-term RFEs live in their own roadmap section below.
+**Current sprint: 20 — personality specials + Flo fatality rework** · MVP
+shipped 2026-07-02 (8/8 fighters playable, 19 stages, full music loop,
+fatalities, CPU + training modes, settings). Sprint 18 (input forgiveness +
+hit feedback) shipped + committed 2026-07-03. Sprint 19 (cancels & chains)
+shipped 2026-07-04 (engine + data only, 121/121 vitest, verified live;
+awaiting the user's commit go-ahead). Sprint 20 (personality specials) is
+next. Long-term RFEs live in their own roadmap section below.
 
 ---
 
@@ -542,13 +542,17 @@ All engine work; every item ships with vitest coverage.
 ### Sprint 19 — Cancels & chains (planned 2026-07-03)
 Goal: combos become deliberate, not accidental (moved up from the near-term
 roadmap by the feel review; Sprint 18's buffering makes cancels land naturally).
-- [ ] Chain rules: lights chain into lights (light→medium where a kit wants
+- [x] Chain rules: lights chain into lights (light→medium where a kit wants
       it) — data-driven flags on moves, not engine special cases
-- [ ] Special-cancel windows: medium/heavy normals cancel into specials on
-      hit or block during a cancel window
-- [ ] Combo damage scaling (later hits in a combo do less)
-- [ ] Engine tests: chain windows, cancel-on-hit vs -on-block vs whiff (no
-      cancel), scaling math, determinism
+      (`chains: string[]` on the move; all 8 kits chain lights→lights,
+      Vincent/Kirby/Yulia/Catherine got light→medium flavor chains)
+- [x] Special-cancel windows: medium/heavy normals cancel into specials on
+      hit or block during a cancel window (`cancel: true`, non-knockdown
+      mediums/heavies; window = contact → active end + 8 ticks)
+- [x] Combo damage scaling (later hits in a combo do less): hits 1-2 full,
+      −10%/hit after, floored at 30% — stun scales with it
+- [x] Engine tests: chain windows, cancel-on-hit vs -on-block vs whiff (no
+      cancel), scaling math, determinism — 121/121 vitest
 
 ### Sprint 20 — Personality specials + Flo fatality rework (planned 2026-07-03)
 Goal: one signature "that's SO them" move per fighter + Flo's new fatality.
@@ -657,6 +661,32 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-04 · engine+data · Sprint 19 shipped: cancels & chains** — all
+  four items, engine + character data only (no renderer changes needed).
+  (1) Chains: `chains: string[]` on a move lists the ids a CONTACTED move
+  (hit or block — `hasHit`, never a whiff) may cancel into; consumed from
+  the Sprint 18 action buffer at the top of updateFighter's attack case, so
+  presses during hitstop chain naturally. All lights chain into all lights
+  on every kit; light→medium where the kit wants it (Vincent lp→mp, Kirby
+  lp→mp + lk→mk, Yulia lk→mk, Catherine lp→mp). (2) Special cancels:
+  `cancel: true` normals (all non-knockdown mediums/heavies, roster-wide)
+  cancel into any motion special on contact — grabs excluded (canceling
+  into a command grab on a reeling victim is degenerate), one-fireball rule
+  re-checked at cancel time. Window: contact → end of active +
+  `CANCEL_WINDOW_TICKS` (8). (3) Combo damage scaling: `FighterState.
+  comboHits` (victim-side) increments when a hit lands on an already-reeling
+  (hitstun/airHit) fighter, resets the moment they stop reeling (hitstop
+  holds it — freeze is time standing still); hits 1-2 full, then
+  −`COMBO_SCALE_STEP`(10)%/hit to a `COMBO_SCALE_FLOOR` of 30%, integer
+  math, ≥1 dmg; stun feeds on the SCALED damage so long strings can't also
+  be free dizzies. Mash-jab midscreen naturally drops after ~5 hits from
+  pushback — that's spacing, not a bug. (4) 11 new vitests (chain on
+  hit/block, whiff never cancels, lights don't special-cancel, medium
+  cancels on hit/block/not-whiff, scaling curve 45/45/40/36/31, 30% floor,
+  drop-resets-scaling, chained-string determinism) — 121/121 green, tsc
+  clean, verified live in the browser (dev training scene + engine module
+  driven headless: same deltas). — Claude
 
 - **2026-07-03 · engine+scenes · Sprint 18 shipped: input forgiveness + hit
   feedback** — all six items, engine-core only + renderer presentation.
@@ -1264,24 +1294,41 @@ fixed-screen SF2 framing is intentional).
 
 *(overwrite this section each handoff — what's mid-flight, gotchas, next action)*
 
-**State (2026-07-03, Sprint 18 SHIPPED — committed & pushed on the user's
-go-ahead, Sprint 19 next):** 8/8
+**State (2026-07-04, Sprint 19 SHIPPED — uncommitted, awaiting the user's
+go-ahead; Sprint 20 next):** 8/8
 fighters playable with fatalities, 20 stages, full music loop, settings +
 controls pages, CPU + training + attract modes, VS screen, win-quote screen.
-Sprint 17 shipped + committed in `03ad717`. **Sprint 18 (input forgiveness +
-hit feedback) is fully implemented, committed, and pushed.**
-110/110 vitest, tsc clean, verified live in the browser (demo bots
-via `window.__game` manual loop stepping — the hidden-preview-tab gotcha:
-Phaser's loader ALSO stalls without rAF; kick `boot.load.checkLoadQueue()`
-between `loop.step()` pumps). Touched files: `src/engine/{types,constants,
-step}.ts`, `src/engine/engine.test.ts`, `src/scenes/FightScene.ts`,
-`SPRINTBOARD.md`. What's on record for whoever picks this up:
-- **Next action:** user reviews + commits Sprint 18, then **Sprint 19
-  (cancels & chains)** — scoped in its section above; it builds directly on
-  the action buffer (a buffered special during an attack's cancel window is
-  the natural cancel implementation: check `f.buffered` inside the attack
-  case the way the chord-upgrade path already does).
-- **Where the Sprint 18 code landed (design notes for S19):**
+Sprint 18 committed in `ef0276e`. **Sprint 19 (cancels & chains) is fully
+implemented in the working tree** — 121/121 vitest, tsc clean, verified live
+(dev training scene boots; the engine module was also driven headless in the
+page and produced the expected scaled string 45/45/40/36/31). Touched files:
+`src/engine/{types,constants,step}.ts`, `src/engine/engine.test.ts`, all 8
+`src/data/characters/*.json`, `SPRINTBOARD.md`.
+- **Next action:** user reviews + commits Sprint 19, then **Sprint 20
+  (personality specials + Flo fatality rework)** — scoped in its section
+  above; two NEW engine primitives are called out there (pull-projectile for
+  Marzipan's vine spear, mash-motion input for Kirby's cat scratch);
+  everything else rides existing plumbing. Asset gen is front-loaded/parallel.
+- **Where the Sprint 19 code landed (design notes for S20):**
+  (1) Cancels live at the TOP of updateFighter's attack case: a buffered
+  press (Sprint 18 `f.buffered`, pick resolved at press time) cancels the
+  current move once it has contacted (`a.hasHit` — set on hit AND block,
+  never whiff) inside contact→active-end+`CANCEL_WINDOW_TICKS`(8). Chain
+  legality is `chains: string[]` on the move (data, engine has zero
+  per-character cases); special-cancel legality is `cancel: true` + target
+  has `input` + target has no `grab`. One-fireball rule re-checked at cancel
+  time. The canceled-into move advances to frame 1 the same tick (matches
+  the chord-upgrade path just below it — keep them consistent).
+  (2) `FighterState.comboHits` is VICTIM-side: applyHit increments it when
+  the victim was already in hitstun/airHit, else sets 1; step()'s stun-decay
+  loop zeroes it whenever the fighter isn't reeling (frozen reels keep it).
+  Scaling: hits 1-2 full, −10%/hit, floor 30% (`scaleForCombo`, integer
+  math, min 1 dmg); stun gains use the SCALED damage. Links that connect on
+  the exact tick hitstun expires count as a NEW combo (victim passed through
+  idle) — accepted simplification. Mash-jab strings drop midscreen after ~5
+  hits from pushback; corner strings run longer. If S20 adds a renderer
+  combo counter off engine state, `comboHits` is already there.
+- **Where the Sprint 18 code landed:**
   (1) `FighterState.buffered` (`BufferedAction`): pick resolved at PRESS
   time (motion windows stay honest for reversals), executed in
   updateFighter's default branch before live pickAttack, TTL 8, cleared on
