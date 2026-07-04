@@ -232,6 +232,9 @@ export class ThreeFightRenderer {
       const solidOnly = new THREE.Layers(); // defaults to layer 0 only
       const gPass = pass(this.scene, this.camera);
       gPass.setLayers(solidOnly);
+      // AO is low-frequency — half-res G-pass halves the second scene render
+      // cost with no visible difference after the blur/denoise
+      gPass.setResolutionScale(0.5);
       gPass.setMRT(mrt({ output, normal: normalView }));
       const aoPass = ao(gPass.getTextureNode('depth'), gPass.getTextureNode('normal'), this.camera);
       color = (color as ReturnType<typeof vec4>).mul(vec4(vec3(aoPass.getTextureNode().r), 1));

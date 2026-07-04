@@ -27,7 +27,10 @@ interface Billboard {
   life: number;
   max: number;
   grow: number;
+  active: boolean;
 }
+
+const UNIT_PLANE = new THREE.PlaneGeometry(1, 1);
 
 interface BloodDrop {
   alive: boolean;
@@ -67,6 +70,7 @@ export class ThreeFxSystem {
     light: THREE.PointLight;
   }[] = [];
   private glowTexture: THREE.Texture;
+  private ownerColors = new Map<string, THREE.Color>();
 
   constructor(private defs: Defs) {
     // circle, not quad: stretched drops read as ellipses instead of rectangles
@@ -137,23 +141,39 @@ export class ThreeFxSystem {
     opts: { tint?: number; flip?: boolean; additive?: boolean } = {},
   ): void {
     const tex = url ? this.texture(url) : null;
-    const mat = new THREE.MeshBasicMaterial({
-      map: tex,
-      color: opts.tint ?? 0xffffff,
-      transparent: true,
-      depthWrite: false,
-      blending: opts.additive || !tex ? THREE.AdditiveBlending : THREE.NormalBlending,
-      side: THREE.DoubleSide,
-    });
+    // pooled: geometry is shared, meshes/materials are reused — spawning a
+    // spark mid-combo must not allocate or recompile anything after warmup
+    let b = this.billboards.find((e) => !e.active);
+    if (!b) {
+      const mat = new THREE.MeshBasicMaterial({
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      });
+      const mesh = new THREE.Mesh(UNIT_PLANE, mat);
+      mesh.renderOrder = 20;
+      mesh.layers.set(FX_LAYER);
+      this.group.add(mesh);
+      b = { mesh, mat, life: 0, max: 14, grow: 0, active: false };
+      this.billboards.push(b);
+    }
+    const blending = opts.additive || !tex ? THREE.AdditiveBlending : THREE.NormalBlending;
+    if (b.mat.map !== tex || b.mat.blending !== blending) {
+      b.mat.map = tex;
+      b.mat.blending = blending;
+      b.mat.needsUpdate = true;
+    }
+    b.mat.color.setHex(opts.tint ?? 0xffffff);
+    b.mat.opacity = 1;
     const size = sizePx * WORLD_SCALE;
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
     const [x, y] = engineToWorld(ex, ey);
-    mesh.position.set(x, y, 0.25);
-    mesh.scale.set(opts.flip ? -size : size, size, 1);
-    mesh.renderOrder = 20;
-    mesh.layers.set(FX_LAYER);
-    this.group.add(mesh);
-    this.billboards.push({ mesh, mat, life: 14, max: 14, grow: size * 0.04 });
+    b.mesh.position.set(x, y, 0.25);
+    b.mesh.scale.set(opts.flip ? -size : size, size, 1);
+    b.mesh.visible = true;
+    b.life = 14;
+    b.max = 14;
+    b.grow = size * 0.04;
+    b.active = true;
   }
 
   /** hit spark parity with FightScene.spawnHitVfx (per-move art > spark) */
@@ -355,13 +375,22 @@ export class ThreeFxSystem {
       const [x, y] = engineToWorld(p.x + p.box.x + p.box.w / 2, p.y + p.box.y + p.box.h / 2);
       const w = Math.max(p.box.w, 24) * WORLD_SCALE * 1.6;
       const h = Math.max(p.box.h, 24) * WORLD_SCALE * 1.6;
-      const color = new THREE.Color(this.defs[ownerChar].color);
+      let color = this.ownerColors.get(ownerChar);
+      if (!color) {
+        color = new THREE.Color(this.defs[ownerChar].color);
+        this.ownerColors.set(ownerChar, color);
+      }
       entry.sprite.visible = true;
       entry.sprite.position.set(x, y, 0.1);
       entry.sprite.scale.set(p.vx < 0 ? -w : w, h, 1);
-      entry.mat.map = this.projTexture(p, ownerChar);
+      // needsUpdate recompiles the material — only pay it when the texture
+      // actually changes (arrives from the loader / detonation morph)
+      const tex = this.projTexture(p, ownerChar);
+      if (entry.mat.map !== tex) {
+        entry.mat.map = tex;
+        entry.mat.needsUpdate = true;
+      }
       entry.mat.opacity = p.field ? 0.5 : p.fuse > 0 ? 0.75 : 1;
-      entry.mat.needsUpdate = true;
       entry.glow.visible = !p.field;
       entry.glow.position.set(x, y, 0.05);
       const gs = Math.max(w, h) * 2.6;
@@ -411,14 +440,12 @@ export class ThreeFxSystem {
   // ---------- per-frame ----------
 
   update(dtTicks: number, state: GameState): void {
-    for (let i = this.billboards.length - 1; i >= 0; i--) {
-      const b = this.billboards[i];
+    for (const b of this.billboards) {
+      if (!b.active) continue;
       b.life -= dtTicks;
       if (b.life <= 0) {
-        this.group.remove(b.mesh);
-        b.mat.dispose();
-        (b.mesh.geometry as THREE.BufferGeometry).dispose();
-        this.billboards.splice(i, 1);
+        b.active = false;
+        b.mesh.visible = false;
         continue;
       }
       const t = b.life / b.max;

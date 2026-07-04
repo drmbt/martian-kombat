@@ -239,33 +239,61 @@ export class FightScene3D extends Phaser.Scene {
     r3d.setSize(Math.round(gr.width), Math.round(gr.height));
   }
 
+  /** last written DOM values — the HUD only touches the DOM on change
+   *  (innerHTML re-parses and textContent invalidates layout every frame) */
+  private hudCache: Record<string, string | number> = {};
+
   private drawHud(): void {
     if (!this.hud) return;
     const s = this.state;
+    const c = this.hudCache;
     for (const slot of [0, 1] as const) {
       const f = s.fighters[slot];
       const max = characters[f.charId].health;
-      this.hud.bars[slot].style.width = `${Math.max(0, (f.health / max) * 100)}%`;
-      this.hud.ghosts[slot].style.width = `${Math.max(0, (this.ghostHealth[slot] / max) * 100)}%`;
-      const empty = Math.max(0, s.rules.winsNeeded - s.wins[slot]);
-      this.hud.wins[slot].innerHTML =
-        '★'.repeat(s.wins[slot]) + (empty ? `<span style="color:#5d5748;">${'☆'.repeat(empty)}</span>` : '');
+      const barW = Math.max(0, Math.round((f.health / max) * 1000) / 10);
+      if (c[`bar${slot}`] !== barW) {
+        c[`bar${slot}`] = barW;
+        this.hud.bars[slot].style.width = `${barW}%`;
+      }
+      const ghostW = Math.max(0, Math.round((this.ghostHealth[slot] / max) * 1000) / 10);
+      if (c[`ghost${slot}`] !== ghostW) {
+        c[`ghost${slot}`] = ghostW;
+        this.hud.ghosts[slot].style.width = `${ghostW}%`;
+      }
+      if (c[`wins${slot}`] !== s.wins[slot]) {
+        c[`wins${slot}`] = s.wins[slot];
+        const empty = Math.max(0, s.rules.winsNeeded - s.wins[slot]);
+        this.hud.wins[slot].innerHTML =
+          '★'.repeat(s.wins[slot]) + (empty ? `<span style="color:#5d5748;">${'☆'.repeat(empty)}</span>` : '');
+      }
     }
-    this.hud.timer.textContent = s.rules.roundTicks ? String(Math.max(0, Math.ceil(s.timer / 60))) : '∞';
-    this.hud.label.textContent = s.phase === 'intro' ? `ROUND ${s.roundNumber}` : PHASE_LABEL[s.phase];
-    if (this.comboHits >= 2 && this.comboTicks > 0) {
-      this.hud.combo.style.display = 'block';
-      this.hud.combo.textContent = `${this.comboHits} HITS`;
-    } else {
-      this.hud.combo.style.display = 'none';
+    const timer = s.rules.roundTicks ? String(Math.max(0, Math.ceil(s.timer / 60))) : '∞';
+    if (c.timer !== timer) {
+      c.timer = timer;
+      this.hud.timer.textContent = timer;
+    }
+    const label = s.phase === 'intro' ? `ROUND ${s.roundNumber}` : PHASE_LABEL[s.phase];
+    if (c.label !== label) {
+      c.label = label;
+      this.hud.label.textContent = label;
+    }
+    const combo = this.comboHits >= 2 && this.comboTicks > 0 ? `${this.comboHits} HITS` : '';
+    if (c.combo !== combo) {
+      c.combo = combo;
+      this.hud.combo.style.display = combo ? 'block' : 'none';
+      if (combo) this.hud.combo.textContent = combo;
     }
     const clip = (slot: 0 | 1): string => {
-      const c = this.renderer3d?.clipInfo(slot);
-      return c ? `${c.name}${c.placeholder ? ' *PLACEHOLDER*' : ''}` : '…';
+      const ci = this.renderer3d?.clipInfo(slot);
+      return ci ? `${ci.name}${ci.placeholder ? ' *PLACEHOLDER*' : ''}` : '…';
     };
-    this.hud.info.textContent =
+    const info =
       `[F1] hitboxes  [F2] skeleton  [F3] inspector  [F4] settings  [F9] rematch  [ESC] menu\n` +
       `clips: ${clip(0)} | ${clip(1)}`;
+    if (c.info !== info) {
+      c.info = info;
+      this.hud.info.textContent = info;
+    }
   }
 
   // ---------- fatality panels + win screen (SPEC T27, reusing 2D art) ----------
