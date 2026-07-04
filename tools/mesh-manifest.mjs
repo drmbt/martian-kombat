@@ -1,8 +1,10 @@
 // Per-character 3D mesh + animation-clip sources for gen-mesh.mjs.
 // Contract clip names (keys) come from src/renderer3d/clipContract.json plus
 // per-move `attack/<moveId>` entries; values are source FBX FILENAMES matched
-// case-insensitively against public/assets/meshes/<char>/animations/ (loose
-// files win) and the extracted zip packs in assets/raw/mesh-clips/<char>/.
+// case-insensitively against the SHARED public/assets/animations/ library (one
+// Mixamo skeleton fits all rigs), overridable per character via
+// public/assets/meshes/<char>/animations/. Zip packs auto-extract to
+// assets/raw/mesh-clips/.
 //
 // `stripY: true` on a clip also flattens the hips' vertical travel (the engine
 // owns jump arcs — SPEC V6); horizontal root motion is always stripped.

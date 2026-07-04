@@ -167,6 +167,9 @@ export class ThreeFightRenderer {
     if (this.disposed) return;
     this.ready = true;
     this.buildPost();
+    // the renderer drives its own draw loop so the r185 inspector gets a
+    // proper frame scope (node inspection needs setAnimationLoop)
+    this.renderer.setAnimationLoop(() => this.drawFrame());
   }
 
   /** Active clip per fighter for the debug HUD (SPEC V12). */
@@ -314,6 +317,13 @@ export class ThreeFightRenderer {
       this.camera.position.x += j(state.tick * 3 + 1) * this.shakeAmp * decay;
       this.camera.position.y += j(state.tick * 7 + 5) * this.shakeAmp * decay;
     }
+    // drawing happens in renderer.setAnimationLoop (see init) — the
+    // inspector needs draws inside its frame scope; sim/update stays here,
+    // driven by Phaser's fixed-timestep loop
+  }
+
+  private drawFrame(): void {
+    if (!this.ready || this.disposed) return;
     if (this.post) this.post.render();
     else this.renderer.render(this.scene, this.camera);
   }
@@ -331,6 +341,7 @@ export class ThreeFightRenderer {
   dispose(): void {
     this.disposed = true;
     this.ready = false;
+    this.renderer.setAnimationLoop(null);
     this.renderer.dispose();
     this.canvas.remove();
   }

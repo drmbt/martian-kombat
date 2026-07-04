@@ -6,7 +6,7 @@
  "clips": [
   {
    "name": "idle",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Fight Idle.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Fight Idle.fbx",
    "stripY": false
   },
   {
@@ -16,22 +16,22 @@
   },
   {
    "name": "dash-forward",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Short Step Forward.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Short Step Forward.fbx",
    "stripY": false
   },
   {
    "name": "dash-forward#2",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Medium Step Forward.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Medium Step Forward.fbx",
    "stripY": false
   },
   {
    "name": "dash-back",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Drunk Walk Backwards.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Drunk Walk Backwards.fbx",
    "stripY": false
   },
   {
    "name": "walk-back",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Standing Walk Back.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing Walk Back.fbx",
    "stripY": false
   },
   {
@@ -46,12 +46,12 @@
   },
   {
    "name": "jump",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Jumping Up.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/action-adventure-pack/jumping up.fbx",
    "stripY": true
   },
   {
    "name": "fall",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Falling Idle.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/action-adventure-pack/falling idle.fbx",
    "stripY": false
   },
   {
@@ -66,17 +66,17 @@
   },
   {
    "name": "hit",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Head Hit.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Head Hit.fbx",
    "stripY": false
   },
   {
    "name": "hit#2",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Head Hit (2).fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Head Hit (2).fbx",
    "stripY": false
   },
   {
    "name": "hit#3",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Head Hit (3).fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Head Hit (3).fbx",
    "stripY": false
   },
   {
@@ -86,7 +86,7 @@
   },
   {
    "name": "hit-front#2",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Light Hit To Head.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Light Hit To Head.fbx",
    "stripY": false
   },
   {
@@ -101,12 +101,12 @@
   },
   {
    "name": "hit-front-heavy#2",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Receive Uppercut To The Face.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Receive Uppercut To The Face.fbx",
    "stripY": false
   },
   {
    "name": "hit-front-heavy#3",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Receiving A Big Uppercut.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Receiving A Big Uppercut.fbx",
    "stripY": false
   },
   {
@@ -116,152 +116,152 @@
   },
   {
    "name": "hit-air",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Flying Back Death.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Flying Back Death.fbx",
    "stripY": false
   },
   {
    "name": "hit-body",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Big Stomach Hit.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Big Stomach Hit.fbx",
    "stripY": false
   },
   {
    "name": "hit-body#2",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Rib Hit.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Rib Hit.fbx",
    "stripY": false
   },
   {
    "name": "hit-body#3",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Hit To Body.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Hit To Body.fbx",
    "stripY": false
   },
   {
    "name": "hit-body-heavy",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Livershot Knockdown.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Livershot Knockdown.fbx",
    "stripY": false
   },
   {
    "name": "block-stand",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Standing Block Idle.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing Block Idle.fbx",
    "stripY": false
   },
   {
    "name": "knockdown",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Fallen Idle.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Fallen Idle.fbx",
    "stripY": false
   },
   {
    "name": "ko",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Standing React Death Backward.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing React Death Backward.fbx",
    "stripY": false
   },
   {
    "name": "ko-forward",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Standing React Death Forward.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing React Death Forward.fbx",
    "stripY": false
   },
   {
    "name": "dazed",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Stunned.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Stunned.fbx",
    "stripY": false
   },
   {
    "name": "win",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/gestures/Victory.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/gestures/Victory.fbx",
    "stripY": false
   },
   {
    "name": "intro",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/gestures/Charge.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/gestures/Charge.fbx",
    "stripY": false
   },
   {
    "name": "intro#2",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/gestures/Yawn.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/gestures/Yawn.fbx",
    "stripY": false
   },
   {
    "name": "intro#3",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/gestures/Whatever Gesture.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/gestures/Whatever Gesture.fbx",
    "stripY": false
   },
   {
    "name": "taunt",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/gestures/Whatever Gesture.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/gestures/Whatever Gesture.fbx",
    "stripY": false
   },
   {
    "name": "taunt#2",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/gestures/Yawn.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/gestures/Yawn.fbx",
    "stripY": false
   },
   {
    "name": "taunt#3",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/gestures/Charge.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/gestures/Charge.fbx",
    "stripY": false
   },
   {
    "name": "attack-generic",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Punching.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Punching.fbx",
    "stripY": false
   },
   {
    "name": "attack/lk",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Illegal Knee.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Illegal Knee.fbx",
    "stripY": false
   },
   {
    "name": "attack/mk",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Jab Cross.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Jab Cross.fbx",
    "stripY": false
   },
   {
    "name": "attack/hk",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Body Jab Cross.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Body Jab Cross.fbx",
    "stripY": false
   },
   {
    "name": "attack-air",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Mutant Jump Attack.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Mutant Jump Attack.fbx",
    "stripY": true
   },
   {
    "name": "attack/lp",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Lead Jab.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Lead Jab.fbx",
    "stripY": false
   },
   {
    "name": "attack/lp#2",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Lead Jab (2).fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Lead Jab (2).fbx",
    "stripY": false
   },
   {
    "name": "attack/lp#3",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Lead Jab (3).fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Lead Jab (3).fbx",
    "stripY": false
   },
   {
    "name": "attack/mp",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Hook.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Hook.fbx",
    "stripY": false
   },
   {
    "name": "attack/mp#2",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Hook Punch.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Hook Punch.fbx",
    "stripY": false
   },
   {
    "name": "attack/hp",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Illegal Elbow Punch.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Illegal Elbow Punch.fbx",
    "stripY": false
   },
   {
    "name": "attack/hp#2",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Illegal Elbow Punch (1).fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Illegal Elbow Punch (1).fbx",
    "stripY": false
   },
   {
    "name": "attack/throw",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Illegal Headbutt.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Illegal Headbutt.fbx",
    "stripY": false
   },
   {
@@ -276,7 +276,7 @@
   },
   {
    "name": "attack/rising-glyph",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Uppercut.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Uppercut.fbx",
    "stripY": true
   },
   {

@@ -102,7 +102,9 @@ class ClipPlayer {
       (countsDown ? f.action.frame > this.lastActionFrame : f.action.frame < this.lastActionFrame);
     if (key !== this.actionKey || restarted) {
       this.actionKey = key;
-      this.elapsed = countsDown || override ? 0 : f.action.frame;
+      // defeated loser (post-fatality matchEnd): start the death clip at its
+      // END — they're already on the floor, no fresh stand-up-and-die replay
+      this.elapsed = ctx.defeated ? 9999 : countsDown || override ? 0 : f.action.frame;
       // latch reel flavor at the moment of impact (frame counts down, so
       // neither can be derived later): long stun / counter = heavy; a LOW
       // attack from the opponent = body reaction (stomach/liver clips)
