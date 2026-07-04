@@ -247,7 +247,9 @@ export class FightScene3D extends Phaser.Scene {
       const max = characters[f.charId].health;
       this.hud.bars[slot].style.width = `${Math.max(0, (f.health / max) * 100)}%`;
       this.hud.ghosts[slot].style.width = `${Math.max(0, (this.ghostHealth[slot] / max) * 100)}%`;
-      this.hud.wins[slot].textContent = '★'.repeat(s.wins[slot]) + '☆'.repeat(Math.max(0, s.rules.winsNeeded - s.wins[slot]));
+      const empty = Math.max(0, s.rules.winsNeeded - s.wins[slot]);
+      this.hud.wins[slot].innerHTML =
+        '★'.repeat(s.wins[slot]) + (empty ? `<span style="color:#5d5748;">${'☆'.repeat(empty)}</span>` : '');
     }
     this.hud.timer.textContent = s.rules.roundTicks ? String(Math.max(0, Math.ceil(s.timer / 60))) : '∞';
     this.hud.label.textContent = s.phase === 'intro' ? `ROUND ${s.roundNumber}` : PHASE_LABEL[s.phase];
