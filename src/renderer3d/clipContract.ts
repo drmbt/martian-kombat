@@ -137,6 +137,26 @@ export function pickVariant(available: ReadonlySet<string>, name: string, seed: 
   return variants[(h >>> 0) % variants.length];
 }
 
+/**
+ * Deterministic ordered variant pick: cycles `name` → `name#2` → `name#3` by an
+ * instance index (a per-fighter counter), so repeated punches alternate L/R in a
+ * fixed, tunable, repeatable order — the opposite of `pickVariant`'s hash shuffle.
+ * The `#2` clip stands in as the "other hand" until dedicated mirrored clips
+ * exist (procedural skeletal mirroring is a later upgrade).
+ */
+export function variantByIndex(available: ReadonlySet<string>, name: string, index: number): string {
+  const variants = [name];
+  for (let n = 2; available.has(`${name}#${n}`); n++) variants.push(`${name}#${n}`);
+  return variants[((index % variants.length) + variants.length) % variants.length];
+}
+
+/** punch normals (lp/mp/hp, incl. crouch/air `c`/`j` prefixes) resolve to an
+ *  `attack/…p` clip — those alternate L/R; kicks (`…k`) and named specials play
+ *  their one fixed clip. */
+export function isPunchClip(name: string): boolean {
+  return name.startsWith('attack/') && name.endsWith('p');
+}
+
 export function clipClass(name: string): ClipClass {
   const base = name.split('#')[0];
   if (base.startsWith('attack/')) return 'window';

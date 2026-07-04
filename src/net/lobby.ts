@@ -50,6 +50,11 @@ export interface OnlineFightData {
   localSlot: 0 | 1;
   delay: number;
   rules: MatchRules;
+  /** opponent's display name — carried through so a rematch can relabel the
+   *  select without re-doing the handshake */
+  remoteName: string;
+  /** the renderer this match runs in (so a rematch re-enters the same one) */
+  render3d: boolean;
 }
 
 export interface RemotePlayer {
@@ -100,6 +105,11 @@ export interface LobbyOptions {
   stage?: string;
   /** host-only: renderer for the match (2D default). Guest adopts host's. */
   render3d?: boolean;
+  /** rematch: peers are already verified from the previous match on this same
+   *  channel — skip the hello handshake and go straight to select */
+  skipVerify?: boolean;
+  /** rematch: the opponent's name is already known (no hello to carry it) */
+  remoteName?: string;
 }
 
 const DEFAULT_RULES: MatchRules = {
@@ -147,6 +157,13 @@ export class LobbyController {
     this.render3d = opts.render3d ?? false;
     this.modeKnown = opts.isHost; // host sets its own mode; guest awaits `mode`
     this.stage = opts.stage ?? 'salton';
+    // rematch: same peers, same channel, already verified — skip the handshake
+    // and treat the peer as verified so onReady fires as soon as it's open
+    if (opts.skipVerify) {
+      this.remoteVerified = true;
+      this.modeKnown = true;
+      this.remoteName = opts.remoteName ?? '';
+    }
     this.transport.onMessage((m) => this.receive(m));
     this.transport.onStatus((s, d) => this.onStatus(s, d));
   }

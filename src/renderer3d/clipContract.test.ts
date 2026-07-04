@@ -9,7 +9,9 @@ import {
   clipTimeSec,
   fadeTicksFor,
   fallbackChain,
+  isPunchClip,
   resolveClipName,
+  variantByIndex,
 } from './clipContract';
 import type { FighterState } from '../engine';
 
@@ -91,6 +93,37 @@ describe('attackClipTime (V5 impactNorm warp)', () => {
   it('stretches pre-impact across startup and the rest across the window end', () => {
     expect(attackClipTime(3, 6, 30, 2, 0.5)).toBeCloseTo(0.5, 2); // mid-startup
     expect(attackClipTime(30, 6, 30, 2, 0.5)).toBeCloseTo(2, 2); // window end
+  });
+});
+
+describe('variantByIndex (deterministic L/R alternation)', () => {
+  const available = new Set(['attack/lp', 'attack/lp#2', 'attack/lp#3', 'attack/mp']);
+
+  it('cycles base -> #2 -> #3 in a fixed order by instance index', () => {
+    // WHY: punches must alternate L/R the SAME way every time so the moveset is
+    // tunable — never the tick-hash shuffle. Index n picks variant n % count.
+    expect(variantByIndex(available, 'attack/lp', 0)).toBe('attack/lp');
+    expect(variantByIndex(available, 'attack/lp', 1)).toBe('attack/lp#2');
+    expect(variantByIndex(available, 'attack/lp', 2)).toBe('attack/lp#3');
+    expect(variantByIndex(available, 'attack/lp', 3)).toBe('attack/lp'); // wraps
+  });
+
+  it('stays on the one clip when a move has no variants', () => {
+    expect(variantByIndex(available, 'attack/mp', 0)).toBe('attack/mp');
+    expect(variantByIndex(available, 'attack/mp', 5)).toBe('attack/mp');
+  });
+});
+
+describe('isPunchClip (only punches alternate)', () => {
+  it('flags punch normals (…p) but not kicks, specials, or fallbacks', () => {
+    // WHY: kicks and named specials must read as ONE fixed animation; only
+    // punches earn L/R variety.
+    expect(isPunchClip('attack/lp')).toBe(true);
+    expect(isPunchClip('attack/chp')).toBe(true); // crouch heavy punch
+    expect(isPunchClip('attack/hk')).toBe(false); // kick
+    expect(isPunchClip('attack/sigil-bolt')).toBe(false); // special
+    expect(isPunchClip('attack/throw')).toBe(false);
+    expect(isPunchClip('attack-generic')).toBe(false); // fallback, not a punch
   });
 });
 

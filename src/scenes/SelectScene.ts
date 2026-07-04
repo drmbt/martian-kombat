@@ -410,6 +410,8 @@ export class SelectScene extends Phaser.Scene {
           localSlot: net.localSlot,
           delay: config.delay,
           rules: config.rules,
+          remoteName: net.remoteName,
+          render3d: config.render3d,
         },
       });
     });

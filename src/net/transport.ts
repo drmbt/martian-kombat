@@ -15,6 +15,7 @@ export type NetMsg =
   | { t: 'stagePick'; stageId: string } // a player's stage vote; host reconciles (agree → that, disagree → coin flip)
   | { t: 'start'; rules: MatchRules; stage: string; chars: [string, string]; delay: number; render3d: boolean }
   | { t: 'input'; tick: number; frames: number[] } // packed inputs, oldest first, last-8 redundancy (V22)
+  | { t: 'rematch' } // post-match "play again" opt-in; both send → back to Select on the same channel
   | { t: 'hash'; tick: number; h: number } // confirmed-tick state hash (V20)
   | { t: 'resync'; tick: number; state: GameState } // host→guest authoritative state on rejoin (V27)
   | { t: 'bye'; reason: string };

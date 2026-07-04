@@ -35,6 +35,8 @@ export class FightScene3D extends Phaser.Scene {
   private state!: GameState;
   private inputs!: KeyboardSource;
   private bot: CpuDriver | null = null;
+  private botP1: CpuDriver | null = null;
+  private demo = false;
   private session!: Session;
   private online: OnlineFightData | null = null;
   private net: NetSession | null = null;
@@ -69,17 +71,21 @@ export class FightScene3D extends Phaser.Scene {
     cpu?: boolean;
     training?: boolean;
     stage?: string;
+    demo?: boolean;
     online?: OnlineFightData;
   }): void {
     this.chars = [data.p1 ?? 'vincent', data.p2 ?? 'vincent'];
     this.stageId = data.stage ?? 'chiba-roof';
     this.online = data.online ?? null;
-    // online is strictly 2-human — no CPU, no training upkeep
+    // online is strictly 2-human — no CPU, no demo, no training upkeep
+    this.demo = !this.online && !!data.demo;
     this.cpu = !this.online && !!data.cpu;
     this.training = !this.online && !!data.training;
     this.net = null;
     this.netIssue = null;
-    this.bot = this.cpu ? new CpuDriver(1) : null;
+    // demo = attract mode: both sides are bots
+    this.bot = this.cpu || this.demo ? new CpuDriver(1) : null;
+    this.botP1 = this.demo ? new CpuDriver(0) : null;
     this.comboHits = 0;
     this.comboTicks = 0;
   }
@@ -112,7 +118,7 @@ export class FightScene3D extends Phaser.Scene {
         this.pendingSnap = snapTick(s);
       },
       inputs: (s: GameState): [InputFrame, InputFrame] => [
-        this.inputs.poll(0),
+        this.botP1 ? this.botP1.poll(s) : this.inputs.poll(0),
         this.bot ? this.bot.poll(s) : this.inputs.poll(1),
       ],
       afterTick: (s: GameState) => {
@@ -183,6 +189,22 @@ export class FightScene3D extends Phaser.Scene {
       this.scene.restart({ p1: this.chars[0], p2: this.chars[1], cpu: this.cpu, stage: this.stageId }),
     );
 
+    if (this.demo) {
+      // attract mode: any input drops back to the title (` stays free for the
+      // perf overlay); the match auto-returns so the menu can cycle the demo
+      const toMenu = (): void => { this.scene.start('Menu'); };
+      this.input.keyboard!.on('keydown', (e: KeyboardEvent) => { if (e.key !== '`') toMenu(); });
+      this.input.on('pointerdown', toMenu);
+      const host = this.game.canvas.parentElement ?? document.body;
+      const hint = document.createElement('div');
+      hint.textContent = 'DEMO — PRESS ANY KEY';
+      hint.style.cssText =
+        'position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:40;' +
+        'font:bold 20px monospace;color:#ffd24a;text-shadow:0 2px 5px #000;pointer-events:none;';
+      host.appendChild(hint);
+      this.events.once('shutdown', () => hint.remove());
+    }
+
     this.scale.on('resize', this.layoutDom, this);
     this.events.once('shutdown', () => {
       this.scale.off('resize', this.layoutDom, this);
@@ -203,11 +225,12 @@ export class FightScene3D extends Phaser.Scene {
 
   private async bootRenderer(): Promise<void> {
     const { ThreeFightRenderer } = await import('../renderer3d/ThreeFightRenderer');
-    // dev placeholder rooms: grey test chamber (default), ?room=street for
-    // the night-street stage, ?room=2d for the painted-2D-stage bridge
-    // (billboards at parallax-matched depths; uses this match's stageId)
+    // DEFAULT: mount the picked match's painted 2D stage art as a 3D parallax
+    // bridge (billboards at depths matching the 2D layer factors, over a shadow
+    // ground) — the real stage in 3D, no grey test chamber. Dev overrides:
+    // ?room=test for the grid chamber, ?room=street for the night-street set.
     const roomParam = new URLSearchParams(window.location.search).get('room');
-    const room = roomParam === 'street' ? 'street' : roomParam === '2d' ? '2d' : 'test-room';
+    const room = roomParam === 'street' ? 'street' : roomParam === 'test' ? 'test-room' : '2d';
     let stage2d;
     if (room === '2d') {
       const entry = stageById(this.stageId);
@@ -377,6 +400,8 @@ export class FightScene3D extends Phaser.Scene {
           play(this, `ann-${s.fighters[e.winner].charId}`, 1);
           this.time.delayedCall(900, () => play(this, 'ann-victory', 1));
           playMusic('victory', { keepOnMiss: true, once: true });
+          // attract mode loops back to the title so the menu can cycle the demo
+          if (this.demo) this.time.delayedCall(6000, () => this.scene.start('Menu'));
           break;
         case 'finisher':
           play(this, 'ann-finish-them', 1);

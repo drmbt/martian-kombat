@@ -10,10 +10,10 @@ import { applyMusicVolume } from '../audio/volume';
 import { getSettings, updateSettings } from '../settings';
 import { play } from './BootScene';
 
-const PANEL_W = 220;
-const PANEL_H = 48;
-const TRACK_W = 120;
-const TRACK_H = 10;
+const PANEL_W = 188;
+const PANEL_H = 38;
+const TRACK_W = 96;
+const TRACK_H = 8;
 const HIDE_AFTER_MS = 2600;
 
 export class VolumeOverlayScene extends Phaser.Scene {
@@ -43,7 +43,7 @@ export class VolumeOverlayScene extends Phaser.Scene {
     this.panel.add(bg);
 
     this.icon = this.add
-      .text(28, PANEL_H / 2, '', { fontSize: '24px' })
+      .text(22, PANEL_H / 2, '', { fontSize: '19px' })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     this.icon.on(
@@ -59,7 +59,7 @@ export class VolumeOverlayScene extends Phaser.Scene {
     );
     this.panel.add(this.icon);
 
-    this.trackX = 52;
+    this.trackX = 44;
     const track = this.add.graphics();
     track.fillStyle(0x0c0910, 1).fillRect(this.trackX, (PANEL_H - TRACK_H) / 2, TRACK_W, TRACK_H);
     track.lineStyle(1, 0x7a6a86, 1).strokeRect(this.trackX, (PANEL_H - TRACK_H) / 2, TRACK_W, TRACK_H);
@@ -68,9 +68,9 @@ export class VolumeOverlayScene extends Phaser.Scene {
     this.panel.add(this.fill);
 
     this.pct = this.add
-      .text(this.trackX + TRACK_W + 12, PANEL_H / 2, '', {
-        fontFamily: 'monospace', fontSize: '15px', fontStyle: 'bold', color: '#58e6d9',
-        stroke: '#000', strokeThickness: 3,
+      .text(this.trackX + TRACK_W + 9, PANEL_H / 2, '', {
+        fontFamily: 'monospace', fontSize: '12px', fontStyle: 'bold', color: '#58e6d9',
+        stroke: '#000', strokeThickness: 2,
       })
       .setOrigin(0, 0.5);
     this.panel.add(this.pct);

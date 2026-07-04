@@ -231,10 +231,11 @@ export class MenuScene extends Phaser.Scene {
   /** Arcade attract mode: two random fighters demo the game on a random stage
    *  until any key/click/pad button brings the player back to the title. */
   private startAttractDemo(): void {
-    const playable = ROSTER.filter((r) => r.playable).map((r) => r.id);
-    const p1 = Phaser.Utils.Array.GetRandom(playable);
-    const p2 = Phaser.Utils.Array.GetRandom(playable);
+    // 3D attract is restricted to fighters with a baked GLB; 2D uses everyone playable
+    const pool = ROSTER.filter((r) => (this.render3d ? r.mesh3d : r.playable)).map((r) => r.id);
+    const p1 = Phaser.Utils.Array.GetRandom(pool);
+    const p2 = Phaser.Utils.Array.GetRandom(pool);
     const stage = Phaser.Utils.Array.GetRandom(STAGES).id;
-    this.scene.start('Fight', { p1, p2, stage, demo: true });
+    this.scene.start(this.render3d ? 'Fight3D' : 'Fight', { p1, p2, stage, demo: true });
   }
 }

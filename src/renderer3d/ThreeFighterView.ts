@@ -27,9 +27,11 @@ import {
   clipTimeSec,
   fadeTicksFor,
   impactNorm,
+  isPunchClip,
   pickVariant,
   resolveClipName,
   syncToWalkSpeed,
+  variantByIndex,
   type ResolvedClip,
 } from './clipContract';
 
@@ -56,6 +58,8 @@ class ClipPlayer {
   private lastActionFrame = -1;
   private heavyReel = false;
   private bodyReel = false;
+  /** counts punch instances so repeated punches alternate L/R deterministically */
+  private punchInstance = 0;
 
   constructor(root: THREE.Object3D, clips: THREE.AnimationClip[]) {
     this.mixer = new THREE.AnimationMixer(root);
@@ -136,8 +140,20 @@ class ClipPlayer {
     // variant shuffle (jab #1/#2/#3, reaction flavors) — latched per action
     // instance so the clip doesn't hop mid-swing
     if (!this.current || this.current.name.split('#')[0] !== resolved.name || restarted) {
-      const seed = tick * 131 + (Math.round(f.x) | 0);
-      const variant = pickVariant(this.available, resolved.name, seed);
+      // A character's OWN attacks are deterministic — no tick-hash shuffle — so a
+      // moveset is tunable and reads the same every time (that's how fighting
+      // games work). Punches alternate L/R in a fixed order via a per-fighter
+      // instance counter (lead jab → cross → …, reusing the baked `#2` variant
+      // as the other hand); every other attack plays its one fixed clip. Only
+      // involuntary flavor (hit reactions, taunts, intros) keeps the shuffle.
+      let variant: string;
+      if (isPunchClip(resolved.name)) {
+        variant = variantByIndex(this.available, resolved.name, this.punchInstance++);
+      } else if (resolved.name.startsWith('attack')) {
+        variant = resolved.name;
+      } else {
+        variant = pickVariant(this.available, resolved.name, tick * 131 + (Math.round(f.x) | 0));
+      }
       this.transitionTo({ ...resolved, name: variant }, tick, f, def);
     }
     const cur = this.current!;

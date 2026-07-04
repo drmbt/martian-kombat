@@ -18,7 +18,7 @@ import {
 } from '../engine';
 import { FightSession, type Session } from '../session/FightSession';
 import { NetSession, type NetIssue } from '../session/NetSession';
-import type { OnlineFightData } from '../net/lobby';
+import { LobbyController, type OnlineFightData, type OnlineSelectData } from '../net/lobby';
 import { characters } from '../data/characters';
 import { stageById } from '../data/stages';
 import { KeyboardSource } from '../input/keyboard';
@@ -175,6 +175,12 @@ export class FightScene extends Phaser.Scene {
   private net: NetSession | null = null;
   private netIssue: NetIssue | null = null;
   private netText: Phaser.GameObjects.Text | null = null;
+  /** online rematch opt-in (post-match, same channel): armed at matchEnd */
+  private rematchArmed = false;
+  private rematchLocal = false;
+  private rematchRemote = false;
+  private rematchStarted = false;
+  private rematchText: Phaser.GameObjects.Text | null = null;
   /** captured by the session's beforeTick hook for presentTick's diff */
   private pendingSnap: TickSnapshot | null = null;
   private tickStart = 0;
@@ -242,6 +248,10 @@ export class FightScene extends Phaser.Scene {
     this.demo = !this.online && !!data.demo;
     this.net = null;
     this.netIssue = null;
+    this.rematchArmed = false;
+    this.rematchLocal = false;
+    this.rematchRemote = false;
+    this.rematchStarted = false;
     this.bot = this.cpu || this.demo ? new CpuDriver(1) : null;
     this.botP1 = this.demo ? new CpuDriver(0) : null;
     this.fatalityPanel = null;
@@ -497,14 +507,6 @@ export class FightScene extends Phaser.Scene {
 
     if (this.demo) {
       // attract mode: a blinking banner, and ANY input returns to the title
-      const coin = this.add
-        .text(STAGE_W / 2, STAGE_H - 88, 'INSERT COIN', {
-          fontFamily: 'monospace', fontSize: '34px', fontStyle: 'bold', color: '#ffb347',
-          stroke: '#2a3a7a', strokeThickness: 8,
-        })
-        .setOrigin(0.5)
-        .setDepth(30);
-      this.time.addEvent({ delay: 600, loop: true, callback: () => coin.setVisible(!coin.visible) });
       const banner = this.add
         .text(STAGE_W / 2, STAGE_H - 44, 'DEMO — PRESS ANY KEY', {
           fontFamily: 'monospace', fontSize: '26px', fontStyle: 'bold', color: '#ffd24a',

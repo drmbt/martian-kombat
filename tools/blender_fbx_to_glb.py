@@ -240,7 +240,10 @@ def main():
             missing = remap_bone_paths(action, rig_bones)
             if missing:
                 report['warnings'].append(f"{clip['name']}: unmapped bones {missing[:5]}")
-            stripped = strip_root_motion(action, hips, vert_idx, clip.get('stripY', False))
+            # keepRoot clips (dances) retain ALL root travel so they can roam the
+            # floor; everything else strips it (the engine owns translation)
+            stripped = ([] if clip.get('keepRoot')
+                        else strip_root_motion(action, hips, vert_idx, clip.get('stripY', False)))
             action.name = clip['name']
             action.use_fake_user = True
             start, end = action.frame_range

@@ -6,11 +6,12 @@
 //
 //   npm run gen:mesh -- --char vincent [--force]
 //
-// Idempotent: skips when the GLB exists (--force to regen). Animation clips
-// live in the SHARED public/assets/animations/ library (one Mixamo skeleton fits all
-// rigs); a character may override/extend with its own
-// public/assets/meshes/<char>/animations/. Zip packs are extracted once into
-// assets/raw/mesh-clips/.
+// Idempotent: skips when the GLB exists (--force to regen). Animation clips all
+// live under the canonical public/assets/animations/ library (one Mixamo
+// skeleton fits all rigs), searched RECURSIVELY so category and pack subfolders
+// resolve by filename with no extra wiring; a character may override any clip
+// with its own public/assets/meshes/<char>/animations/. (Source zip packs are
+// unzipped into public/assets/animations/ by hand — no in-script extraction.)
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -29,10 +30,8 @@ if (!charId || !MESHES[charId]) {
 
 const cfg = MESHES[charId];
 const srcDir = join(ROOT, 'public/assets/meshes', charId);
-const sharedAnimDir = join(ROOT, 'public/assets/animations');
+const animDir = join(ROOT, 'public/assets/animations');
 const charAnimDir = join(srcDir, 'animations');
-const rawDir = join(ROOT, 'assets/raw/mesh-clips', charId);
-const sharedRawDir = join(ROOT, 'assets/raw/mesh-clips/shared');
 const outDir = join(ROOT, 'public/assets/3d/characters', charId);
 const outGlb = join(outDir, `${charId}.glb`);
 const outReport = join(outDir, `${charId}.report.json`);
@@ -45,23 +44,8 @@ if (!existsSync(BLENDER)) {
   process.exit(1);
 }
 
-// -- extract zip packs (once) ------------------------------------------------
-for (const [dir, rawOut] of [
-  [sharedAnimDir, sharedRawDir],
-  [charAnimDir, rawDir],
-]) {
-  if (!existsSync(dir)) continue;
-  for (const zip of readdirSync(dir).filter((f) => f.endsWith('.zip'))) {
-    const dest = join(rawOut, zip.replace(/\.zip$/, '').toLowerCase().replace(/\s+/g, '-'));
-    if (existsSync(dest)) continue;
-    mkdirSync(dest, { recursive: true });
-    console.log(`  unzip ${zip}`);
-    execFileSync('unzip', ['-o', '-q', join(dir, zip), '-d', dest]);
-  }
-}
-
 // -- filename -> path index ----------------------------------------------------
-// priority: char-specific loose > char packs > shared loose > shared packs
+// priority: char-specific override > canonical library (both searched recursively)
 const index = new Map();
 const addDir = (dir) => {
   if (!existsSync(dir)) return;
@@ -73,9 +57,7 @@ const addDir = (dir) => {
   }
 };
 addDir(charAnimDir);
-addDir(rawDir);
-addDir(sharedAnimDir);
-addDir(sharedRawDir);
+addDir(animDir);
 
 // -- build the blender job ----------------------------------------------------
 const jobClips = [];
@@ -83,15 +65,14 @@ const missingSources = [];
 for (const [name, clip] of Object.entries(cfg.clips)) {
   const path = index.get(clip.file.toLowerCase());
   if (!path) missingSources.push(`${name} <- ${clip.file}`);
-  else jobClips.push({ name, file: path, stripY: clip.stripY === true });
+  else jobClips.push({ name, file: path, stripY: clip.stripY === true, keepRoot: clip.keepRoot === true });
 }
 if (missingSources.length) {
   console.warn(`  WARN source fbx not found:\n    ${missingSources.join('\n    ')}`);
 }
 
 mkdirSync(outDir, { recursive: true });
-mkdirSync(rawDir, { recursive: true });
-const jobPath = join(rawDir, 'job.json');
+const jobPath = join(outDir, `${charId}.job.json`);
 writeFileSync(
   jobPath,
   JSON.stringify(

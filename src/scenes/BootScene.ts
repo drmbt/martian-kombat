@@ -15,7 +15,9 @@ const CELL_H = 384;
 const ANNOUNCER = [
   'round-1', 'round-2', 'final-round', 'fight', 'ko', 'time-up',
   'double-ko', 'perfect', 'victory', 'finish-them', 'fatality',
-  ...ROSTER.map((r) => r.id),
+  // per-fighter name calls — only for fighters with generated VO. A 404'd mp3
+  // decodes to an uncaught EncodingError (not harmless), so gate like VOICES.
+  ...ROSTER.filter((r) => r.playable).map((r) => r.id),
 ];
 // several numbered variants per category so combat/win-screen audio doesn't
 // loop the same clip every hit; missing files 404 harmlessly, so characters
@@ -49,7 +51,10 @@ export class BootScene extends Phaser.Scene {
       if (st.layers?.near) this.load.image(`bg-stage-${st.id}-near`, st.layers.near.file);
       if (st.layers?.floor) this.load.image(`bg-stage-${st.id}-floor`, st.layers.floor.file);
     }
-    for (const { id } of ROSTER) {
+    for (const { id, playable } of ROSTER) {
+      // 3D-only fighters (mesh but no packed 2D sheet) have none of these files
+      // — skip so their absence isn't a wall of 404s at boot
+      if (!playable) continue;
       this.load.spritesheet(`sheet-${id}`, `assets/sprites/${id}/sheet.png`, {
         frameWidth: CELL_W,
         frameHeight: CELL_H,
@@ -108,6 +113,12 @@ export class BootScene extends Phaser.Scene {
 /** Play a sound if it loaded; silently skip if the asset doesn't exist.
  *  `volume` is per-sound emphasis, scaled by master+SFX settings (and mute). */
 export function play(scene: Phaser.Scene, key: string, volume = 0.8): void {
+  // Drop SFX/VO while the tab is unfocused. A backgrounded tab suspends the
+  // WebAudio context but the sim keeps ticking (throttled) — sounds scheduled
+  // into the suspended context bank up and ALL fire at once on refocus. Gating
+  // centrally here covers every caller (2D + 3D), not just the few that used to
+  // wrap it. Music is a raw <audio> element elsewhere, so it's unaffected.
+  if (typeof document !== 'undefined' && !document.hasFocus()) return;
   const v = volume * effectiveSfxVolume();
   if (v > 0 && scene.cache.audio.exists(key)) scene.sound.play(key, { volume: v });
 }

@@ -1,0 +1,389 @@
+{
+ "rig": "/Users/flo/work/code/martian-kombat/public/assets/meshes/yulia/yulia-v2.fbx",
+ "basecolor": "/Users/flo/work/code/martian-kombat/public/assets/meshes/yulia/yulia-20k-tripo-unrigged/yulia-20k-tripo-unrigged_basecolor.PNG",
+ "out": "/Users/flo/work/code/martian-kombat/public/assets/3d/characters/yulia/yulia.glb",
+ "report": "/Users/flo/work/code/martian-kombat/public/assets/3d/characters/yulia/yulia.report.json",
+ "clips": [
+  {
+   "name": "idle",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/idle/Fight Idle.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "walk-forward",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/pro-magic-pack/Standing Walk Forward.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "walk-back",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/walk/Standing Walk Back.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "dash-forward",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/walk/Short Step Forward.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "dash-forward#2",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/walk/Medium Step Forward.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "dash-back",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/walk/Drunk Walk Backwards.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "crouch",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/pro-magic-pack/Crouch Idle.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "prejump",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/jump/Jumping Up.fbx",
+   "stripY": true,
+   "keepRoot": false
+  },
+  {
+   "name": "jump",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/jump/Jumping Up.fbx",
+   "stripY": true,
+   "keepRoot": false
+  },
+  {
+   "name": "fall",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Falling Idle.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "landing",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/pro-magic-pack/Standing Land To Standing Idle.fbx",
+   "stripY": true,
+   "keepRoot": false
+  },
+  {
+   "name": "getup",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/action-adventure-pack/cover to stand.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "hit",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/hits/Head Hit.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "hit#2",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/hits/Head Hit (2).fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "hit#3",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/hits/Head Hit (3).fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "hit-front",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/pro-magic-pack/Standing React Small From Front.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "hit-front#2",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/hits/Light Hit To Head.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "hit-back",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/pro-magic-pack/Standing React Small From Back.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "hit-front-heavy",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/pro-magic-pack/Standing React Large From Front.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "hit-front-heavy#2",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/hits/Receive Uppercut To The Face.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "hit-front-heavy#3",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/hits/Receiving A Big Uppercut.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "hit-back-heavy",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/pro-magic-pack/Standing React Large From Back.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "hit-air",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/knockout/Flying Back Death.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "hit-body",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/hits/Big Stomach Hit.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "hit-body#2",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/hits/Rib Hit.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "hit-body#3",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/hits/Hit To Body.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "hit-body-heavy",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Livershot Knockdown.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "block-stand",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/block/Standing Block Idle.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "knockdown",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Fallen Idle.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "ko",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/knockout/Standing React Death Backward.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "ko-forward",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/knockout/Standing React Death Forward.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "dazed",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/knockout/Stunned.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "win",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/gestures/Victory.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "intro",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/gestures/Charge.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "intro#2",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/gestures/Yawn.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "intro#3",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/gestures/Whatever Gesture.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "taunt",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/gestures/Whatever Gesture.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "taunt#2",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/gestures/Yawn.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "taunt#3",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/gestures/Charge.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "dance-thriller-1",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/dances/Thriller Part 2.fbx",
+   "stripY": false,
+   "keepRoot": true
+  },
+  {
+   "name": "dance-thriller-2",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/dances/Thriller Part 3.fbx",
+   "stripY": false,
+   "keepRoot": true
+  },
+  {
+   "name": "dance-thriller-3",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/dances/Thriller Part 4.fbx",
+   "stripY": false,
+   "keepRoot": true
+  },
+  {
+   "name": "dance-hiphop",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/dances/Hip Hop Dancing.fbx",
+   "stripY": false,
+   "keepRoot": true
+  },
+  {
+   "name": "dance-twist",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/dances/Twist Dance.fbx",
+   "stripY": false,
+   "keepRoot": true
+  },
+  {
+   "name": "dance-wave",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/dances/Wave Hip Hop Dance.fbx",
+   "stripY": false,
+   "keepRoot": true
+  },
+  {
+   "name": "attack-generic",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Punching.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "attack-air",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/kicks/Flying Bicycle Kick.fbx",
+   "stripY": true,
+   "keepRoot": false
+  },
+  {
+   "name": "attack-air#2",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Mutant Jump Attack.fbx",
+   "stripY": true,
+   "keepRoot": false
+  },
+  {
+   "name": "attack/throw",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Illegal Headbutt.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "attack/lp",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Lead Jab.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "attack/lp#2",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Jab Cross.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "attack/mp",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Hook.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "attack/hp",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Body Jab Cross.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "attack/lk",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/kicks/Illegal Knee.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "attack/mk",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/kicks/Hurricane Kick.fbx",
+   "stripY": true,
+   "keepRoot": false
+  },
+  {
+   "name": "attack/mk#2",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/kicks/Hurricane Kick (1).fbx",
+   "stripY": true,
+   "keepRoot": false
+  },
+  {
+   "name": "attack/hk",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/kicks/Inside Crescent Kick.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "attack/cossack-spiral",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/jump/Cross Jumps Rotation.fbx",
+   "stripY": true,
+   "keepRoot": false
+  },
+  {
+   "name": "attack/backbend-guillotine",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Back Flip To Uppercut.fbx",
+   "stripY": true,
+   "keepRoot": false
+  },
+  {
+   "name": "attack/volga-piledriver",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Illegal Headbutt.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "attack/braid-lariat",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Hook Punch.fbx",
+   "stripY": false,
+   "keepRoot": false
+  },
+  {
+   "name": "attack/spinning-star-kick",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/kicks/Hurricane Kick.fbx",
+   "stripY": true,
+   "keepRoot": false
+  },
+  {
+   "name": "attack/spinning-star-kick#2",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/kicks/Hurricane Kick (1).fbx",
+   "stripY": true,
+   "keepRoot": false
+  }
+ ],
+ "targetHeight": 2.375,
+ "forward": "x",
+ "bakeTransform": true
+}
