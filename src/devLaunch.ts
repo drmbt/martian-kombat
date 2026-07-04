@@ -49,7 +49,9 @@ export function random3dFight(): LaunchTarget {
       p1: params.get('p1') ?? 'flo',
       p2: params.get('p2') ?? 'yulia',
       stage: DEV_STAGE,
-      cpu: true,
+      // training dummy by default for inspection; ?cpu=1 re-arms the bot
+      cpu: params.get('cpu') === '1',
+      training: params.get('cpu') !== '1',
     },
   };
 }

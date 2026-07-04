@@ -151,6 +151,16 @@ def main():
                 print(f"BLENDER-NOTE: dropping unskinned mesh '{m.name}'")
                 bpy.data.objects.remove(m, do_unlink=True)
         meshes = skinned
+    # Tripo meshes ship INCONSISTENT normals (mixed inward/outward faces —
+    # see-through patches, garbled faces). Recalculate consistently outward
+    # for every rig; harmless when already consistent (vincent).
+    for m in meshes:
+        bpy.context.view_layer.objects.active = m
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.normals_make_consistent(inside=False)
+        bpy.ops.object.mode_set(mode='OBJECT')
+
     textured = ensure_basecolor(meshes, job.get('basecolor'))
 
     # normalize world height by SETTING the armature object scale (never
@@ -185,14 +195,7 @@ def main():
         arm.rotation_euler.rotate_axis('Z', -1.5707963)
         arm.rotation_euler.rotate_axis('Y', -1.5707963)
         arm.rotation_euler.rotate_axis('Z', 3.14159265)
-        # the bake path flips triangle winding (characters rendered
-        # see-through, backfaces culled) — pre-flip normals to compensate
-        for m in meshes:
-            bpy.context.view_layer.objects.active = m
-            bpy.ops.object.mode_set(mode='EDIT')
-            bpy.ops.mesh.select_all(action='SELECT')
-            bpy.ops.mesh.flip_normals()
-            bpy.ops.object.mode_set(mode='OBJECT')
+
     bpy.context.view_layer.update()
 
     rig_bones = {b.name for b in arm.data.bones}

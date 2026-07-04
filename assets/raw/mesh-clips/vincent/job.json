@@ -285,5 +285,7 @@
    "stripY": false
   }
  ],
- "targetHeight": 2.128
+ "targetHeight": 2.128,
+ "forward": "x",
+ "bakeTransform": false
 }

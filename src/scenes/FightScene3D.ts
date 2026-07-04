@@ -27,6 +27,7 @@ export class FightScene3D extends Phaser.Scene {
   private chars: [string, string] = ['vincent', 'vincent'];
   private stageId = 'chiba-roof';
   private cpu = false;
+  private training = false;
   private state!: GameState;
   private inputs!: KeyboardSource;
   private bot: CpuDriver | null = null;
@@ -52,10 +53,11 @@ export class FightScene3D extends Phaser.Scene {
     super('Fight3D');
   }
 
-  init(data: { p1?: string; p2?: string; cpu?: boolean; stage?: string }): void {
+  init(data: { p1?: string; p2?: string; cpu?: boolean; training?: boolean; stage?: string }): void {
     this.chars = [data.p1 ?? 'vincent', data.p2 ?? 'vincent'];
     this.stageId = data.stage ?? 'chiba-roof';
     this.cpu = !!data.cpu;
+    this.training = !!data.training;
     this.bot = this.cpu ? new CpuDriver(1) : null;
     this.accumulator = 0;
     this.comboHits = 0;
@@ -69,6 +71,8 @@ export class FightScene3D extends Phaser.Scene {
       stage: { minX: -110, maxX: 1070 },
       // room for the entry gesture + READY? 3-2-1 before FIGHT
       introTicks: 240,
+      // training sandbox: no round clock
+      ...(this.training ? { roundTicks: 0 } : {}),
     });
     this.inputs = new KeyboardSource(this);
     this.ghostHealth = [characters[this.chars[0]].health, characters[this.chars[1]].health];
@@ -376,6 +380,15 @@ export class FightScene3D extends Phaser.Scene {
         this.fightEnteredTick = this.state.tick;
       }
       this.handleEvents(diffTick(prev, this.state, characters));
+      if (this.training && this.state.phase === 'fight') {
+        // sandbox upkeep: health snaps back so nothing ever dies
+        for (const f of this.state.fighters) {
+          f.health = Math.max(f.health, Math.ceil(characters[f.charId].health * 0.4));
+          if (f.action.kind !== 'hitstun' && f.action.kind !== 'airHit' && f.action.kind !== 'knockdown') {
+            f.health = characters[f.charId].health;
+          }
+        }
+      }
       this.tickGhosts();
       if (this.comboTicks > 0 && --this.comboTicks === 0) this.comboHits = 0;
       this.accumulator -= TICK_MS;
