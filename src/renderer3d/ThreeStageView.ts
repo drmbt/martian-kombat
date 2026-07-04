@@ -45,13 +45,51 @@ export class ThreeStageView {
   loaded = false;
   private placeholder: THREE.Group | null = null;
   private train: THREE.Group | null = null;
+  private neons: { mat: THREE.MeshBasicMaterial; base: THREE.Color; phase: number }[] = [];
+  private blinkers: { mat: THREE.MeshBasicMaterial; phase: number }[] = [];
+  private steam: { mesh: THREE.Mesh; mat: THREE.MeshBasicMaterial; phase: number }[] = [];
+  private haze: THREE.Mesh[] = [];
+  private cars: { group: THREE.Group; speed: number; span: number; offset: number }[] = [];
+  private trafficHeads: THREE.MeshBasicMaterial[] = [];
 
-  /** ambient stage motion (the elevated train) — tick-driven, render-side */
+  /** ambient stage motion — all tick-driven, render-side only */
   update(tick: number): void {
     if (this.train) {
       const span = 70;
       this.train.position.x = ((tick * 0.045) % span) - span / 2;
     }
+    // neon flicker: mostly steady, occasional dropouts per-sign
+    for (const n of this.neons) {
+      const t = tick + n.phase;
+      const drop = hash01(Math.floor(t / 7) * 31 + n.phase) < 0.06;
+      const flick = drop ? 0.25 : 0.92 + 0.08 * Math.sin(t * 0.7);
+      n.mat.color.copy(n.base).multiplyScalar(flick);
+    }
+    // rooftop aviation blinkers: slow sin pulse, staggered
+    for (const b of this.blinkers) {
+      b.mat.opacity = 0.15 + 0.85 * Math.max(0, Math.sin((tick + b.phase) * 0.045));
+    }
+    // manhole steam: quads rise, fade, loop
+    for (const s of this.steam) {
+      const p = ((tick + s.phase) % 240) / 240;
+      s.mesh.position.y = 0.2 + p * 2.4;
+      s.mesh.scale.setScalar(0.6 + p * 1.6);
+      s.mat.opacity = 0.16 * (1 - p) * Math.min(p * 6, 1);
+    }
+    // haze sheets drift sideways very slowly
+    this.haze.forEach((h, i) => {
+      h.position.x = Math.sin(tick * 0.0016 + i * 2.4) * 3;
+    });
+    // distant traffic: light pairs sliding along the gap behind the mid row
+    for (const c of this.cars) {
+      c.group.position.x = ((tick * c.speed + c.offset) % c.span) - c.span / 2;
+    }
+    // traffic light cycle: green -> amber -> red
+    const cycle = tick % 720;
+    const active = cycle < 320 ? 2 : cycle < 400 ? 1 : 0; // g, a, r
+    this.trafficHeads.forEach((m, i) => {
+      m.opacity = i === active ? 1 : 0.12;
+    });
   }
 
   buildPlaceholder(): void {
@@ -224,9 +262,11 @@ export class ThreeStageView {
         // a few neon signs on the near row for cozy color depth
         if (ri === 0 && hash01(i * 613) > 0.55) {
           const neonColor = [0xff4d6d, 0x39d0ff, 0x9dff5e, 0xffb347][Math.floor(hash01(i * 271) * 4)];
+          const signMat = new THREE.MeshBasicMaterial({ color: neonColor });
+          this.neons.push({ mat: signMat, base: new THREE.Color(neonColor), phase: Math.floor(hash01(i * 89) * 600) });
           const sign = new THREE.Mesh(
             new THREE.PlaneGeometry(0.22, 1.1 + hash01(i * 331) * 0.8),
-            new THREE.MeshBasicMaterial({ color: neonColor }),
+            signMat,
           );
           sign.position.set(x + (hash01(i * 449) - 0.5) * w * 0.6, 1.6 + hash01(i * 523) * 2, row.z + (2 + r * 2) / 2 + 0.02);
           const signGlow = new THREE.Mesh(
@@ -380,6 +420,140 @@ export class ThreeStageView {
       lamp.position.set(x, 0, -1.6);
       g.add(lamp);
     }
+
+    // rooftop aviation blinkers on the tallest far-row silhouettes
+    let blinked = 0;
+    for (const [bx, by, bz] of [
+      [-11, 21, -29],
+      [4, 23, -29],
+      [13, 19, -29],
+      [-3, 15, -20],
+      [9, 14, -20],
+    ] as const) {
+      const mat = new THREE.MeshBasicMaterial({ color: 0xff3b30, transparent: true, fog: false });
+      const dot = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 5), mat);
+      dot.position.set(bx, by, bz);
+      g.add(dot);
+      this.blinkers.push({ mat, phase: blinked++ * 47 });
+    }
+
+    // manhole grate + steam column on the fight lane
+    const grate = new THREE.Mesh(
+      new THREE.CircleGeometry(0.42, 12),
+      new THREE.MeshStandardMaterial({ color: 0x15161a, roughness: 0.7, metalness: 0.5 }),
+    );
+    grate.rotation.x = -Math.PI / 2;
+    grate.position.set(-2.2, 0.003, 1.8);
+    g.add(grate);
+    for (let si = 0; si < 3; si++) {
+      const mat = new THREE.MeshBasicMaterial({
+        map: radialTexture([
+          [0, 'rgba(200,210,230,0.5)'],
+          [1, 'rgba(200,210,230,0)'],
+        ]),
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+      });
+      const puff = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
+      puff.position.set(-2.2, 0.3, 1.8);
+      g.add(puff);
+      this.steam.push({ mesh: puff, mat, phase: si * 80 });
+    }
+
+    // two huge slow haze sheets between building rows — atmosphere + depth
+    for (const [hz, hy, ho] of [
+      [-10.5, 2.4, 0.05],
+      [-17, 4, 0.04],
+    ] as const) {
+      const hazeMat = new THREE.MeshBasicMaterial({
+        map: radialTexture([
+          [0, 'rgba(150,170,210,0.5)'],
+          [1, 'rgba(150,170,210,0)'],
+        ]),
+        transparent: true,
+        opacity: ho,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const sheet = new THREE.Mesh(new THREE.PlaneGeometry(26, 5), hazeMat);
+      sheet.position.set(0, hy, hz);
+      g.add(sheet);
+      this.haze.push(sheet);
+    }
+
+    // distant traffic: head/tail light pairs sliding behind the mid row
+    for (const [dir, y, z, speed, offset] of [
+      [1, 0.5, -17.5, 0.06, 0],
+      [-1, 0.5, -17.8, 0.05, 31],
+    ] as const) {
+      const car = new THREE.Group();
+      const head = new THREE.Mesh(
+        new THREE.SphereGeometry(0.09, 6, 5),
+        new THREE.MeshBasicMaterial({ color: 0xfff2c8, fog: false }),
+      );
+      const tail = new THREE.Mesh(
+        new THREE.SphereGeometry(0.07, 6, 5),
+        new THREE.MeshBasicMaterial({ color: 0xff3b30, fog: false }),
+      );
+      head.position.x = dir * 0.5;
+      tail.position.x = -dir * 0.5;
+      car.add(head, tail);
+      car.position.set(0, y, z);
+      g.add(car);
+      this.cars.push({ group: car, speed: dir * speed, span: 60, offset });
+    }
+
+    // traffic light on the sidewalk at frame right — cycles, sells "street"
+    const tlPole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.06, 3.4, 8), poleMat);
+    tlPole.position.set(8.6, 1.7, -4.1);
+    const tlBox = new THREE.Mesh(
+      new THREE.BoxGeometry(0.28, 0.8, 0.24),
+      new THREE.MeshStandardMaterial({ color: 0x14151b, roughness: 0.7 }),
+    );
+    tlBox.position.set(8.6, 3.55, -4.1);
+    g.add(tlPole, tlBox);
+    for (const [ci, cc] of ([0xff3b30, 0xffb340, 0x3ddc6a] as const).entries()) {
+      const mat = new THREE.MeshBasicMaterial({ color: cc, transparent: true, opacity: 0.12 });
+      const bulb = new THREE.Mesh(new THREE.CircleGeometry(0.075, 10), mat);
+      bulb.position.set(8.6, 3.8 - ci * 0.25, -3.97);
+      g.add(bulb);
+      this.trafficHeads.push(mat);
+    }
+
+    // sidewalk clutter: trash can, bags, boxes, hydrant — silhouette props
+    const propMat = new THREE.MeshStandardMaterial({ color: 0x181a20, roughness: 0.9 });
+    const can = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.24, 0.75, 10), propMat);
+    can.position.set(-7.2, 0.4, -4.6);
+    can.castShadow = true;
+    const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.06, 10), propMat);
+    lid.position.set(-7.2, 0.8, -4.6);
+    for (const [bx, bs] of [
+      [-6.6, 0.3],
+      [-6.9, 0.22],
+    ] as const) {
+      const bag = new THREE.Mesh(new THREE.SphereGeometry(bs, 7, 6), propMat);
+      bag.position.set(bx, bs * 0.75, -4.4);
+      bag.scale.y = 0.8;
+      bag.castShadow = true;
+      g.add(bag);
+    }
+    const box1 = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.35, 0.4), new THREE.MeshStandardMaterial({ color: 0x2e2620, roughness: 1 }));
+    box1.position.set(6.9, 0.28, -4.7);
+    box1.rotation.y = 0.4;
+    box1.castShadow = true;
+    const hydrant = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.11, 0.14, 0.55, 8),
+      new THREE.MeshStandardMaterial({ color: 0x5c2a24, roughness: 0.75 }),
+    );
+    hydrant.position.set(4.4, 0.38, -4.3);
+    hydrant.castShadow = true;
+    const hydrantCap = new THREE.Mesh(
+      new THREE.SphereGeometry(0.11, 8, 6),
+      new THREE.MeshStandardMaterial({ color: 0x5c2a24, roughness: 0.75 }),
+    );
+    hydrantCap.position.set(4.4, 0.68, -4.3);
+    g.add(can, lid, box1, hydrant, hydrantCap);
 
     // two colored accent washes on the near wall — lift it off the fighters
     // without brightening the lane (short falloff, no shadows)
