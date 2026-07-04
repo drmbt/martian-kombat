@@ -80,9 +80,10 @@ export class ThreeStageView {
     this.haze.forEach((h, i) => {
       h.position.x = Math.sin(tick * 0.0016 + i * 2.4) * 3;
     });
-    // distant traffic: light pairs sliding along the gap behind the mid row
+    // distant traffic: recede/approach along the cross street (z axis)
     for (const c of this.cars) {
-      c.group.position.x = ((tick * c.speed + c.offset) % c.span) - c.span / 2;
+      const p = (((tick * Math.abs(c.speed) + c.offset) % c.span) + c.span) % c.span;
+      c.group.position.z = c.speed > 0 ? -28 + p : -5.5 - p;
     }
     // traffic light cycle: green -> amber -> red
     const cycle = tick % 720;
@@ -103,30 +104,53 @@ export class ThreeStageView {
     );
     asphalt.position.set(0, -0.05, 0.5);
     asphalt.receiveShadow = true;
-    const sidewalk = new THREE.Mesh(
-      new THREE.BoxGeometry(stageW + 30, 0.22, 3.4),
-      new THREE.MeshStandardMaterial({ color: 0x3a3a40, roughness: 0.9 }),
-    );
-    sidewalk.position.set(0, 0.11 - 0.1, -5.7);
-    sidewalk.receiveShadow = true;
-    // curb: lighter worn top edge + darker vertical face at the lane boundary
-    const curbTop = new THREE.Mesh(
-      new THREE.BoxGeometry(stageW + 30, 0.03, 0.22),
-      new THREE.MeshStandardMaterial({ color: 0x55555c, roughness: 0.8 }),
-    );
-    curbTop.position.set(0, 0.12, -3.95);
-    const curbFace = new THREE.Mesh(
-      new THREE.BoxGeometry(stageW + 30, 0.14, 0.04),
-      new THREE.MeshStandardMaterial({ color: 0x1a1b20, roughness: 0.95 }),
-    );
-    curbFace.position.set(0, 0.05, -3.85);
-    g.add(asphalt, sidewalk, curbTop, curbFace);
+    // the sidewalk/curb splits around a cross street at CROSS_X — the gap the
+    // distant traffic drives through instead of ghosting between houses
+    const CROSS_X = 9;
+    const CROSS_W = 3.6;
+    const half = (stageW + 30) / 2;
+    const sidewalkMat = new THREE.MeshStandardMaterial({ color: 0x3a3a40, roughness: 0.9 });
+    const curbTopMat = new THREE.MeshStandardMaterial({ color: 0x55555c, roughness: 0.8 });
+    const curbFaceMat = new THREE.MeshStandardMaterial({ color: 0x1a1b20, roughness: 0.95 });
+    const segments: [number, number][] = [
+      [-half, CROSS_X - CROSS_W / 2],
+      [CROSS_X + CROSS_W / 2, half],
+    ];
+    for (const [x0, x1] of segments) {
+      const w = x1 - x0;
+      const cx = (x0 + x1) / 2;
+      const sidewalk = new THREE.Mesh(new THREE.BoxGeometry(w, 0.22, 3.4), sidewalkMat);
+      sidewalk.position.set(cx, 0.01, -5.7);
+      sidewalk.receiveShadow = true;
+      const curbTop = new THREE.Mesh(new THREE.BoxGeometry(w, 0.03, 0.22), curbTopMat);
+      curbTop.position.set(cx, 0.12, -3.95);
+      const curbFace = new THREE.Mesh(new THREE.BoxGeometry(w, 0.14, 0.04), curbFaceMat);
+      curbFace.position.set(cx, 0.05, -3.85);
+      g.add(sidewalk, curbTop, curbFace);
+    }
+    g.add(asphalt);
     // sidewalk expansion joints — cheap lines that sell the concrete slabs
     const jointMat = new THREE.MeshStandardMaterial({ color: 0x232329, roughness: 1 });
     for (let jx = -14; jx <= 14; jx += 1.4) {
+      if (Math.abs(jx - CROSS_X) < CROSS_W / 2 + 0.2) continue;
       const joint = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.012, 3.3), jointMat);
       joint.position.set(jx, 0.125, -5.7);
       g.add(joint);
+    }
+    // the cross street itself: receding asphalt ribbon + center dashes
+    const crossRoad = new THREE.Mesh(
+      new THREE.PlaneGeometry(CROSS_W, 27),
+      new THREE.MeshStandardMaterial({ color: 0x1e2026, roughness: 0.95 }),
+    );
+    crossRoad.rotation.x = -Math.PI / 2;
+    crossRoad.position.set(CROSS_X, 0.004, -17);
+    crossRoad.receiveShadow = true;
+    g.add(crossRoad);
+    const crossDashMat = new THREE.MeshStandardMaterial({ color: 0x6e6a55, roughness: 0.85 });
+    for (let dz = -6; dz >= -28; dz -= 2.2) {
+      const dash = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.008, 0.7), crossDashMat);
+      dash.position.set(CROSS_X, 0.01, dz);
+      g.add(dash);
     }
     // wet patches near the curb — low roughness picks up lamp speculars
     const puddleMat = new THREE.MeshStandardMaterial({
@@ -207,11 +231,13 @@ export class ThreeStageView {
     // separate from the walls instead of grey-on-grey mush
     const NEAR_PALETTE = [0x4a3339, 0x2f4548, 0x413c2d, 0x39405c, 0x442f4a];
     const MID_PALETTE = [0x32262b, 0x223034, 0x2d2a22, 0x282e42];
+    // heights tuned so ROOFLINES sit inside the camera frame (20° fov from
+    // y≈2.2): near row tops ~3-4.5m, each deeper row a bit taller
     const rows: { z: number; h: [number, number]; color: number; palette?: number[]; count: number; span: number }[] = [
-      { z: -8.5, h: [3, 7], color: 0x2e3340, palette: NEAR_PALETTE, count: 6, span: stageW + 30 },
-      { z: -13.5, h: [5, 10], color: 0x232734, palette: MID_PALETTE, count: 10, span: stageW + 40 },
-      { z: -20, h: [8, 16], color: 0x181b26, count: 12, span: stageW + 55 },
-      { z: -29, h: [13, 24], color: 0x0e1119, count: 15, span: stageW + 80 },
+      { z: -8.5, h: [2.4, 4.4], color: 0x2e3340, palette: NEAR_PALETTE, count: 6, span: stageW + 30 },
+      { z: -13.5, h: [3.6, 6.4], color: 0x232734, palette: MID_PALETTE, count: 10, span: stageW + 40 },
+      { z: -20, h: [5.5, 9.5], color: 0x181b26, count: 12, span: stageW + 55 },
+      { z: -29, h: [8, 13], color: 0x0e1119, count: 15, span: stageW + 80 },
     ];
     const windowMat = new THREE.MeshBasicMaterial({ color: 0x8f7443 });
     for (const [ri, row] of rows.entries()) {
@@ -220,6 +246,8 @@ export class ThreeStageView {
         const w = 2 + r * 3.5;
         const h = row.h[0] + hash01(ri * 57 + i * 23) * (row.h[1] - row.h[0]);
         const x = -row.span / 2 + (i + 0.5) * (row.span / row.count) + (r - 0.5) * 1.2;
+        // keep the cross-street corridor clear so the road reads to the horizon
+        if (ri <= 2 && Math.abs(x - 9) < 2.8 + ri * 0.4) continue;
         const bColor = row.palette
           ? row.palette[Math.floor(hash01(ri * 211 + i * 41) * row.palette.length)]
           : row.color;
@@ -424,11 +452,11 @@ export class ThreeStageView {
     // rooftop aviation blinkers on the tallest far-row silhouettes
     let blinked = 0;
     for (const [bx, by, bz] of [
-      [-11, 21, -29],
-      [4, 23, -29],
-      [13, 19, -29],
-      [-3, 15, -20],
-      [9, 14, -20],
+      [-11, 12.2, -29],
+      [4, 13.2, -29],
+      [13, 11.4, -29],
+      [-3, 9.6, -20],
+      [6, 9.2, -20],
     ] as const) {
       const mat = new THREE.MeshBasicMaterial({ color: 0xff3b30, transparent: true, fog: false });
       const dot = new THREE.Mesh(new THREE.SphereGeometry(0.12, 6, 5), mat);
@@ -437,13 +465,52 @@ export class ThreeStageView {
       this.blinkers.push({ mat, phase: blinked++ * 47 });
     }
 
-    // manhole grate + steam column on the fight lane
+    // manhole cover: procedural texture — rim, grooves, vent-hole pattern
+    const mhCanvas = document.createElement('canvas');
+    mhCanvas.width = mhCanvas.height = 128;
+    const mh = mhCanvas.getContext('2d')!;
+    mh.fillStyle = '#17181d';
+    mh.beginPath();
+    mh.arc(64, 64, 62, 0, Math.PI * 2);
+    mh.fill();
+    mh.strokeStyle = '#242730';
+    mh.lineWidth = 5;
+    mh.beginPath();
+    mh.arc(64, 64, 58, 0, Math.PI * 2);
+    mh.stroke();
+    mh.strokeStyle = '#1c1e24';
+    mh.lineWidth = 3;
+    for (const rr of [44, 30]) {
+      mh.beginPath();
+      mh.arc(64, 64, rr, 0, Math.PI * 2);
+      mh.stroke();
+    }
+    mh.fillStyle = '#0a0b0e';
+    for (let ring = 0; ring < 2; ring++) {
+      const rr = ring === 0 ? 37 : 22;
+      const n = ring === 0 ? 10 : 6;
+      for (let k = 0; k < n; k++) {
+        const a = (k / n) * Math.PI * 2 + ring * 0.3;
+        mh.beginPath();
+        mh.arc(64 + Math.cos(a) * rr, 64 + Math.sin(a) * rr, 4.4, 0, Math.PI * 2);
+        mh.fill();
+      }
+    }
+    mh.beginPath();
+    mh.arc(64, 64, 5, 0, Math.PI * 2);
+    mh.fill();
     const grate = new THREE.Mesh(
-      new THREE.CircleGeometry(0.42, 12),
-      new THREE.MeshStandardMaterial({ color: 0x15161a, roughness: 0.7, metalness: 0.5 }),
+      new THREE.CircleGeometry(0.5, 20),
+      new THREE.MeshStandardMaterial({
+        map: new THREE.CanvasTexture(mhCanvas),
+        transparent: true,
+        roughness: 0.85,
+        metalness: 0.05,
+      }),
     );
     grate.rotation.x = -Math.PI / 2;
-    grate.position.set(-2.2, 0.003, 1.8);
+    grate.position.set(-2.2, 0.004, 1.8);
+    grate.receiveShadow = true;
     g.add(grate);
     for (let si = 0; si < 3; si++) {
       const mat = new THREE.MeshBasicMaterial({
@@ -454,8 +521,15 @@ export class ThreeStageView {
         transparent: true,
         opacity: 0,
         depthWrite: false,
+        // additive: normal blending darkens the quad's low-alpha rim into a
+        // visible dark square (same fringe issue the projectiles had)
+        blending: THREE.AdditiveBlending,
+        // fog on an additive quad tints its whole rectangle toward the fog
+        // color — THE rim-box artifact when a puff crosses a lamp beam
+        fog: false,
       });
       const puff = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
+      puff.renderOrder = 25; // after beams/pools so it never darkens them
       puff.position.set(-2.2, 0.3, 1.8);
       g.add(puff);
       this.steam.push({ mesh: puff, mat, phase: si * 80 });
@@ -475,6 +549,7 @@ export class ThreeStageView {
         opacity: ho,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
+        fog: false,
       });
       const sheet = new THREE.Mesh(new THREE.PlaneGeometry(26, 5), hazeMat);
       sheet.position.set(0, hy, hz);
@@ -482,26 +557,28 @@ export class ThreeStageView {
       this.haze.push(sheet);
     }
 
-    // distant traffic: head/tail light pairs sliding behind the mid row
-    for (const [dir, y, z, speed, offset] of [
-      [1, 0.5, -17.5, 0.06, 0],
-      [-1, 0.5, -17.8, 0.05, 31],
+    // distant traffic drives the cross street, receding into the depth —
+    // one lane going away (tail lights), one coming toward (headlights)
+    for (const [lane, toward, speed, offset] of [
+      [8.2, false, 0.05, 0],
+      [9.8, true, 0.055, 14],
     ] as const) {
       const car = new THREE.Group();
-      const head = new THREE.Mesh(
+      const front = new THREE.Mesh(
         new THREE.SphereGeometry(0.09, 6, 5),
-        new THREE.MeshBasicMaterial({ color: 0xfff2c8, fog: false }),
+        new THREE.MeshBasicMaterial({ color: toward ? 0xfff2c8 : 0xff3b30, fog: false }),
       );
-      const tail = new THREE.Mesh(
+      const side = new THREE.Mesh(
         new THREE.SphereGeometry(0.07, 6, 5),
-        new THREE.MeshBasicMaterial({ color: 0xff3b30, fog: false }),
+        new THREE.MeshBasicMaterial({ color: toward ? 0xfff2c8 : 0xff3b30, fog: false }),
       );
-      head.position.x = dir * 0.5;
-      tail.position.x = -dir * 0.5;
-      car.add(head, tail);
-      car.position.set(0, y, z);
+      front.position.x = -0.35;
+      side.position.x = 0.35;
+      car.add(front, side);
+      car.position.set(lane, 0.45, -28);
       g.add(car);
-      this.cars.push({ group: car, speed: dir * speed, span: 60, offset });
+      // span runs along Z now: -28 (far) .. -5.5 (mouth of the cross street)
+      this.cars.push({ group: car, speed: toward ? speed : -speed, span: 22.5, offset });
     }
 
     // traffic light on the sidewalk at frame right — cycles, sells "street"

@@ -1,0 +1,138 @@
+{
+ "rig": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/vincent-20k-tripo-mixamo-base-rig.fbx",
+ "basecolor": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/vince-20k-tripo-unrigged/stylized+human+character+3d+model_basecolor.jpg",
+ "out": "/Users/flo/work/code/martian-kombat/public/assets/3d/characters/vincent/vincent.glb",
+ "report": "/Users/flo/work/code/martian-kombat/public/assets/3d/characters/vincent/vincent.report.json",
+ "clips": [
+  {
+   "name": "idle",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Fight Idle.fbx",
+   "stripY": false
+  },
+  {
+   "name": "walk-forward",
+   "file": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing Walk Forward.fbx",
+   "stripY": false
+  },
+  {
+   "name": "walk-back",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Standing Walk Back.fbx",
+   "stripY": false
+  },
+  {
+   "name": "crouch",
+   "file": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Crouch Idle.fbx",
+   "stripY": false
+  },
+  {
+   "name": "prejump",
+   "file": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing Idle To Crouch.fbx",
+   "stripY": false
+  },
+  {
+   "name": "jump",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Jumping Up.fbx",
+   "stripY": true
+  },
+  {
+   "name": "fall",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Falling Idle.fbx",
+   "stripY": false
+  },
+  {
+   "name": "landing",
+   "file": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/action-adventure-pack/hard landing.fbx",
+   "stripY": true
+  },
+  {
+   "name": "getup",
+   "file": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/action-adventure-pack/cover to stand.fbx",
+   "stripY": false
+  },
+  {
+   "name": "hit",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Head Hit.fbx",
+   "stripY": false
+  },
+  {
+   "name": "hit-air",
+   "file": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing React Large From Front.fbx",
+   "stripY": false
+  },
+  {
+   "name": "block-stand",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Standing Block Idle.fbx",
+   "stripY": false
+  },
+  {
+   "name": "knockdown",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Fallen Idle.fbx",
+   "stripY": false
+  },
+  {
+   "name": "ko",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Knocked Out.fbx",
+   "stripY": false
+  },
+  {
+   "name": "dazed",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Stunned.fbx",
+   "stripY": false
+  },
+  {
+   "name": "win",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Taunt Gesture.fbx",
+   "stripY": false
+  },
+  {
+   "name": "attack-generic",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Punching.fbx",
+   "stripY": false
+  },
+  {
+   "name": "attack-air",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Mutant Jump Attack.fbx",
+   "stripY": true
+  },
+  {
+   "name": "attack/lp",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Lead Jab.fbx",
+   "stripY": false
+  },
+  {
+   "name": "attack/mp",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Hook.fbx",
+   "stripY": false
+  },
+  {
+   "name": "attack/hp",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Illegal Elbow Punch.fbx",
+   "stripY": false
+  },
+  {
+   "name": "attack/throw",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Illegal Headbutt.fbx",
+   "stripY": false
+  },
+  {
+   "name": "attack/sigil-bolt",
+   "file": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing 1H Magic Attack 01.fbx",
+   "stripY": false
+  },
+  {
+   "name": "attack/cloud-hands",
+   "file": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing 2H Magic Attack 01.fbx",
+   "stripY": false
+  },
+  {
+   "name": "attack/rising-glyph",
+   "file": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing 2H Magic Attack 03.fbx",
+   "stripY": true
+  },
+  {
+   "name": "attack/redirect",
+   "file": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing 2H Cast Spell 01.fbx",
+   "stripY": false
+  }
+ ]
+}
