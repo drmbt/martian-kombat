@@ -197,7 +197,7 @@ export class ThreeStageView {
             new THREE.PlaneGeometry(w * 0.9, 1.8),
             new THREE.MeshBasicMaterial({
               map: radialTexture([
-                [0, 'rgba(255,178,102,0.22)'],
+                [0, 'rgba(255,178,102,0.34)'],
                 [1, 'rgba(255,178,102,0)'],
               ]),
               transparent: true,
@@ -383,9 +383,9 @@ export class ThreeStageView {
 
     // two colored accent washes on the near wall — lift it off the fighters
     // without brightening the lane (short falloff, no shadows)
-    const warmWash = new THREE.PointLight(0xff8a50, 9, 9, 1.8);
+    const warmWash = new THREE.PointLight(0xff8a50, 18, 13, 1.8);
     warmWash.position.set(-5.5, 2.2, -6.8);
-    const coolWash = new THREE.PointLight(0x4fa8ff, 8, 9, 1.8);
+    const coolWash = new THREE.PointLight(0x4fa8ff, 16, 13, 1.8);
     coolWash.position.set(5.5, 2.6, -6.8);
     g.add(warmWash, coolWash);
 
