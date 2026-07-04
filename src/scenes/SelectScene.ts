@@ -81,6 +81,8 @@ export class SelectScene extends Phaser.Scene {
   private waitingText: Phaser.GameObjects.Text | null = null;
   private stageMode = false;
   private stageIdx = 0;
+  /** online: the option index the REMOTE player voted for (-1 = not yet) */
+  private remoteStageIdx = -1;
   private stageCursor: Phaser.GameObjects.Graphics | null = null;
   // stage-dialog layout, computed by layoutStageGrid for the current count
   private scols = 4;
@@ -298,8 +300,10 @@ export class SelectScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(5);
     net.controller.setHooks({
+      onRemoteCursor: (idx) => this.applyRemoteCursor(idx),
       onRemoteLock: (r) => this.applyRemotePick(r.charId),
       onBothLocked: () => this.onBothLocked(),
+      onRemoteStage: (stageId) => this.applyRemoteStageVote(stageId),
       onStart: (c) => this.launchOnline(c),
       onPhase: (phase, detail) => {
         if (phase === 'error') this.onNetError(detail ?? 'connection lost');
@@ -308,6 +312,22 @@ export class SelectScene extends Phaser.Scene {
     // a pick that landed during the Lobby→Select handoff won't re-fire the
     // hook — reflect it now so the remote slot isn't left blank
     if (net.controller.remotePick) this.applyRemotePick(net.controller.remotePick);
+  }
+
+  /** the remote player's live cursor — move their slot's box before they lock */
+  private applyRemoteCursor(idx: number): void {
+    const remoteSlot: 0 | 1 = this.online!.localSlot === 0 ? 1 : 0;
+    if (this.confirmed[remoteSlot] || idx < 0 || idx >= ROSTER.length) return;
+    this.idx[remoteSlot] = idx;
+    play(this, 's-blip', 0.2);
+    this.redraw();
+  }
+
+  /** the remote player cast a stage vote — mark it in the dialog + call it out */
+  private applyRemoteStageVote(stageId: string): void {
+    this.remoteStageIdx = this.stageOptions().findIndex((o) => o.id === stageId);
+    this.playStageVo(stageId);
+    if (this.stageMode) this.redrawStage();
   }
 
   /** the remote player's fighter arrived — reflect it in their slot */
@@ -376,7 +396,9 @@ export class SelectScene extends Phaser.Scene {
    *  once — the host from its own confirmStart, the guest from the `start` msg. */
   private launchOnline(config: StartConfig): void {
     this.starting = true;
-    this.waitingText?.setText('starting…');
+    this.waitingText?.setText(`stage: ${config.stage.replace(/-/g, ' ').toUpperCase()}`);
+    // announce the resolved stage (the winning vote) as the match kicks off
+    this.playStageVo(config.stage);
     const net = this.online!;
     this.time.delayedCall(400, () => {
       this.scene.start(config.render3d ? 'Fight3D' : 'Fight', {
@@ -405,6 +427,8 @@ export class SelectScene extends Phaser.Scene {
     const n = ROSTER.length;
     this.idx[p] = ((this.idx[p] + d) % n + n) % n;
     play(this, 's-blip', 0.5);
+    // mirror our cursor to the opponent's screen (live remote cursor)
+    if (this.online) this.online.controller.moveCursor(this.idx[p]);
   }
 
   /** idle-a / idle-b sheet frame indices for the side idle animation. */
@@ -589,6 +613,7 @@ export class SelectScene extends Phaser.Scene {
       this.starting = true;
       this.redrawStage();
       this.online.controller.pickStage(stage);
+      this.playStageVo(stage);
       this.setWaiting(`stage locked — waiting for ${this.online.remoteName}…`);
       return;
     }
@@ -605,11 +630,28 @@ export class SelectScene extends Phaser.Scene {
   private redrawStage(): void {
     const g = this.stageCursor;
     if (!g) return;
+    g.clear();
+    // online: colour the local cursor by our slot; draw the opponent's vote in
+    // their colour (nested) so both votes are visible before they resolve
+    const localColor = this.online?.localSlot === 1 ? 0xff5a48 : 0x58e6d9;
+    const remoteColor = this.online?.localSlot === 1 ? 0x58e6d9 : 0xff5a48;
+    if (this.online && this.remoteStageIdx >= 0) {
+      const { x, y } = this.stageCellXY(this.remoteStageIdx);
+      const ty = y - SLABEL_H / 2;
+      g.lineStyle(3, remoteColor, 1);
+      g.strokeRect(x - this.sThumbW / 2 - 8, ty - this.sThumbH / 2 - 8, this.sThumbW + 16, this.sThumbH + 16);
+    }
     const { x, y } = this.stageCellXY(this.stageIdx);
     const ty = y - SLABEL_H / 2;
-    g.clear();
-    g.lineStyle(this.starting ? 5 : 3, 0x58e6d9, 1);
+    g.lineStyle(this.starting ? 5 : 3, localColor, 1);
     g.strokeRect(x - this.sThumbW / 2 - 4, ty - this.sThumbH / 2 - 4, this.sThumbW + 8, this.sThumbH + 8);
+  }
+
+  /** announce a stage by name if its VO exists (mirrors the character name
+   *  call-out; missing clips just stay silent) */
+  private playStageVo(stageId: string): void {
+    const key = `ann-stage-${stageId}`;
+    if (this.cache.audio.exists(key)) play(this, key, 1);
   }
 
   update(): void {

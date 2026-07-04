@@ -72,6 +72,29 @@ const announcerLines = {
   ygor: 'YGOR!',
   'finish-them': 'FINISH THEM!',
   fatality: 'FATALITY!',
+  // stage-name call-outs (announced on stage select, mirrors the fighter
+  // names). Keys must stay in sync with STAGES ids in src/data/stages.ts.
+  // NOTE the announcer voice (Maverick) is an ElevenLabs *library* voice — it
+  // needs a paid plan; on the free tier these 402. Regen when the plan allows.
+  'stage-salton': 'SALTON SHORELINE!',
+  'stage-altar': 'ALTAR!',
+  'stage-bbac': 'B B A C!',
+  'stage-chiba': 'CHIBA!',
+  'stage-chiba-roof': 'CHIBA ROOFTOP!',
+  'stage-dodecahedron': 'DODECAHEDRON!',
+  'stage-dome': 'THE DOME!',
+  'stage-drive-in': 'DRIVE IN!',
+  'stage-estates': 'THE ESTATES!',
+  'stage-institute': 'THE INSTITUTE!',
+  'stage-mars': 'MARS!',
+  'stage-mimos': 'MIMOS!',
+  'stage-neptune': 'NEPTUNE!',
+  'stage-painted-canyon': 'PAINTED CANYON!',
+  'stage-saturn': 'SATURN!',
+  'stage-ski-inn': 'SKI INN!',
+  'stage-shipwreck': 'SHIPWRECK!',
+  'stage-the-range': 'THE RANGE!',
+  'stage-van': 'THE VAN!',
 };
 
 // Voice line takes an id, a voice, then per-category line lists so combat and

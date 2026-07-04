@@ -76,6 +76,8 @@ export interface LobbyHooks {
   onRenderMode?: (render3d: boolean) => void;
   /** compatibility handshake passed — hand off to the shared SelectScene */
   onReady?: (info: { remoteName: string; render3d: boolean }) => void;
+  /** the remote player's live grid cursor moved (before they lock) */
+  onRemoteCursor?: (idx: number) => void;
   /** the remote player locked their fighter in on the select screen */
   onRemoteLock?: (remote: RemotePlayer) => void;
   /** both fighters locked — BOTH players open the stage picker */
@@ -165,6 +167,12 @@ export class LobbyController {
     return this.remoteChar;
   }
 
+  /** the local player's grid cursor moved — mirror it to the peer's screen */
+  moveCursor(idx: number): void {
+    if (this.phase === 'error' || this.started || this.localChar) return;
+    this.transport.send({ t: 'cursor', idx });
+  }
+
   /** the local player locked their fighter on the select screen */
   lockChar(charId: string): void {
     if (this.phase === 'error' || this.started || this.localChar) return;
@@ -235,6 +243,10 @@ export class LobbyController {
         this.remoteVerified = true;
         this.remoteName = m.name;
         this.maybeReady();
+        break;
+      }
+      case 'cursor': {
+        if (!this.remoteChar) this.hooks.onRemoteCursor?.(m.idx); // ignore once they've locked
         break;
       }
       case 'pick': {
