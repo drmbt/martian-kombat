@@ -21,7 +21,8 @@
     "gen:vfx": "node tools/gen-vfx.mjs"
   },
   "dependencies": {
-    "phaser": "^3.87.0"
+    "phaser": "^3.87.0",
+    "three": "^0.185.1"
   },
   "devDependencies": {
     "typescript": "^5.6.0",

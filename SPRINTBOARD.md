@@ -658,6 +658,14 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-04 · renderer3d · 3D spike T1+T2 (branch `spike/3d-renderer`)** —
+  three@0.185.1 installed, real import paths verified (`three/webgpu`,
+  `three/addons/inspector/Inspector.js`, TSL `GTAONode`/`BloomNode`,
+  `GLTFLoader`); `src/renderer3d/threeCoordinates.ts` engine→Three mapping
+  (WORLD_SCALE 0.01, floor→Y0, stage-centered X, ±0.18m lane cuboids) +
+  6 vitests. Spec/tasks in `SPEC.md` (SDD flow), spike doc in
+  `docs/THREE_D_RENDERER_SPIKE.md`. Vincent mesh + ~130 Mixamo clips staged
+  under `public/assets/meshes/vincent/`. — Claude
 - **2026-07-03 · engine+scenes · Sprint 18 shipped: input forgiveness + hit
   feedback** — all six items, engine-core only + renderer presentation.
   (1) Action input buffer: `FighterState.buffered` captures a fresh press in
