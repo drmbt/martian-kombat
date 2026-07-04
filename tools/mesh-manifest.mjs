@@ -34,7 +34,7 @@ export const MESHES = {
       'hit-front-heavy#2': { file: 'Receive Uppercut To The Face.fbx' },
       'hit-front-heavy#3': { file: 'Receiving A Big Uppercut.fbx' },
       'hit-back-heavy': { file: 'Standing React Large From Back.fbx' },
-      'hit-air': { file: 'Standing React Large From Front.fbx' },
+      'hit-air': { file: 'Flying Back Death.fbx' }, // launched: fly back, land on back (SFII knockdown)
       'hit-body': { file: 'Big Stomach Hit.fbx' },
       'hit-body#2': { file: 'Rib Hit.fbx' },
       'hit-body#3': { file: 'Hit To Body.fbx' },

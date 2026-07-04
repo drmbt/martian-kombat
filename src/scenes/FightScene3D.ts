@@ -311,7 +311,14 @@ export class FightScene3D extends Phaser.Scene {
   }
 
   update(_time: number, deltaMs: number): void {
-    this.accumulator += Math.min(deltaMs, 100);
+    // KO slow-mo (2D parity): the round-ending hit plays out at ~1/3 speed —
+    // pure presentation, ticks advance identically, just spaced out
+    const s = this.state;
+    const koSlow =
+      (s.phase === 'roundEnd' || s.phase === 'finisher') &&
+      s.phaseFrame < 55 &&
+      s.fighters.some((f) => f.health <= 0);
+    this.accumulator += Math.min(deltaMs, 100) * (koSlow ? 0.35 : 1);
     while (this.accumulator >= TICK_MS) {
       const prev = snapTick(this.state);
       const p1 = this.inputs.poll(0);

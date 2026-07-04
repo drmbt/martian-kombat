@@ -229,9 +229,9 @@
   },
   {
    "name": "hit-air",
-   "source": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing React Large From Front.fbx",
-   "frames": 41,
-   "seconds": 1.367,
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Flying Back Death.fbx",
+   "frames": 91,
+   "seconds": 3.033,
    "rootStripped": [
     "X",
     "Z"
