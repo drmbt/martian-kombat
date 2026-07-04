@@ -658,6 +658,18 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-04 · renderer3d · 3D spike T10–T12: stage box, light rig, post,
+  settings** — placeholder test stage (grid floor + gridded back wall + side
+  walls + horizon + fog) replaces the black void; three-point rig (warm key
+  w/ shadows, cool fill, rim) + ACES/exposure so black outfits read; TSL post
+  stack GTAO→bloom via `RenderPipeline` (AO on, bloom off by default, both
+  toggleable); `threeRenderSettings.ts` DOM panel (F4: fps, res scale,
+  shadow size, AO/bloom, exposure, per-light intensity, camera presets
+  default/low/high, hitbox+skeleton) + official r185 Inspector on F3.
+  Model facing fixed (GLB authored +X: 0°/180°, not ±90°), dev launch now
+  vincent-vs-vincent to exercise mesh path on both sides. Verified via CDP:
+  both fighters face each other, P2 played `attack/redirect` cast clip
+  unflagged. — Claude
 - **2026-07-04 · renderer3d+tools · 3D spike T7–T9 + T14–T16: vincent GLB
   animated in-game** — `tools/gen-mesh.mjs` (`npm run gen:mesh -- --char
   vincent`) drives headless Blender (`tools/blender_fbx_to_glb.py`): rig FBX +

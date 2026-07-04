@@ -40,9 +40,11 @@ export function randomTraining(): LaunchTarget {
 }
 
 export function random3dFight(): LaunchTarget {
+  // vincent is the only character with a GLB so far — mirror him so both
+  // sides exercise the mesh + animation path
   return {
     scene: 'Fight3D',
-    data: { p1: 'vincent', p2: 'yulia', stage: DEV_STAGE, cpu: true },
+    data: { p1: 'vincent', p2: 'vincent', stage: DEV_STAGE, cpu: true },
   };
 }
 

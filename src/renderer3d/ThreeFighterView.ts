@@ -221,8 +221,9 @@ export class ThreeFighterView {
     this.group.position.set(x, y, 0);
 
     if (this.modelWrapper && this.player) {
-      // GLB authoring forward is +Z (Mixamo); rotate onto the ±X combat lane
-      this.modelWrapper.rotation.y = (f.facing * Math.PI) / 2;
+      // our Blender FBX->GLB export lands the model facing +X (verified
+      // empirically via spawn screenshot) — 0 for right, 180 for left
+      this.modelWrapper.rotation.y = f.facing === 1 ? 0 : Math.PI;
       this.player.update(tick, f, this.def);
       this.snapFeetToGround(f);
       return;

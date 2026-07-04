@@ -11,6 +11,7 @@ import { CpuDriver } from '../ai/bot';
 // three is dev-path-only: type-only import here, the real module loads
 // dynamically in create() so the production 2D bundle never ships it
 import type { ThreeFightRenderer } from '../renderer3d/ThreeFightRenderer';
+import { createSettingsPanel, DEFAULT_SETTINGS } from '../renderer3d/threeRenderSettings';
 
 const PHASE_LABEL: Record<GameState['phase'], string> = {
   intro: 'ROUND',
@@ -32,6 +33,9 @@ export class FightScene3D extends Phaser.Scene {
   private renderer3d: ThreeFightRenderer | null = null;
   private hud: HTMLDivElement | null = null;
   private skeletonOn = false;
+  private settings = { ...DEFAULT_SETTINGS };
+  private panel: ReturnType<typeof createSettingsPanel> | null = null;
+  private inspectorOn = false;
 
   constructor() {
     super('Fight3D');
@@ -52,11 +56,21 @@ export class FightScene3D extends Phaser.Scene {
 
     const kb = this.input.keyboard!;
     kb.on('keydown-F1', () => {
-      if (this.renderer3d) this.renderer3d.hitboxes.visible = !this.renderer3d.hitboxes.visible;
+      this.settings.hitboxes = !this.settings.hitboxes;
+      if (this.renderer3d) this.renderer3d.hitboxes.visible = this.settings.hitboxes;
     });
     kb.on('keydown-F2', () => {
-      this.skeletonOn = !this.skeletonOn;
+      this.settings.skeleton = this.skeletonOn = !this.skeletonOn;
       this.renderer3d?.setSkeletonVisible(this.skeletonOn);
+    });
+    kb.on('keydown-F3', () => {
+      if (this.inspectorOn) return;
+      this.inspectorOn = true;
+      void this.renderer3d?.enableInspector();
+    });
+    kb.on('keydown-F4', () => {
+      if (!this.panel) return;
+      this.panel.el.style.display = this.panel.el.style.display === 'none' ? 'block' : 'none';
     });
     kb.on('keydown-ESC', () => this.scene.start('Menu'));
     kb.on('keydown-F9', () =>
@@ -84,9 +98,17 @@ export class FightScene3D extends Phaser.Scene {
     this.renderer3d = renderer;
     // ?boxes=1 starts with the overlay on — lets headless screenshots verify
     // the debug cuboids without keyboard input
-    renderer.hitboxes.visible = new URLSearchParams(window.location.search).get('boxes') === '1';
+    this.settings.hitboxes = new URLSearchParams(window.location.search).get('boxes') === '1';
+    renderer.hitboxes.visible = this.settings.hitboxes;
     this.mountDom(renderer.canvas);
+    const host = this.game.canvas.parentElement ?? document.body;
+    this.panel = createSettingsPanel(host, this.settings, (s) => this.renderer3d?.applySettings(s));
+    this.events.once('shutdown', () => {
+      this.panel?.el.remove();
+      this.panel = null;
+    });
     await renderer.init(this.stageId);
+    renderer.applySettings(this.settings);
   }
 
   /** Pin the Three canvas + HUD exactly over the Phaser canvas. */
@@ -141,7 +163,7 @@ export class FightScene3D extends Phaser.Scene {
       `${a.charId.toUpperCase()} ${bar(a.health, maxA)}  ${s.wins[0]}★` +
       `  ${label}${clock}  ` +
       `${s.wins[1]}★ ${bar(b.health, maxB)} ${b.charId.toUpperCase()}\n` +
-      `[F1] hitboxes  [F2] skeleton  [F9] rematch  [ESC] menu\n` +
+      `[F1] hitboxes  [F2] skeleton  [F3] inspector  [F4] settings  [F9] rematch  [ESC] menu\n` +
       `clips: ${clip(0)} | ${clip(1)}`;
   }
 
@@ -155,5 +177,6 @@ export class FightScene3D extends Phaser.Scene {
     }
     this.renderer3d?.render(this.state);
     this.drawHud();
+    this.panel?.setFps(this.game.loop.actualFps, deltaMs);
   }
 }
