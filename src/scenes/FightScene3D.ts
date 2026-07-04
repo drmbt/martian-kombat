@@ -185,7 +185,9 @@ export class FightScene3D extends Phaser.Scene {
         `position:absolute;top:0;${slot === 0 ? 'right' : 'left'}:0;height:100%;width:100%;background:#e8c832;`;
       barOuter.append(ghost, bar);
       const wins = document.createElement('span');
-      wins.style.cssText = `display:block;color:#ffd75e;${slot === 1 ? 'text-align:right;' : ''}`;
+      wins.style.cssText =
+        `display:block;color:#ffd75e;font-size:20px;line-height:1.2;letter-spacing:3px;` +
+        `text-shadow:0 1px 3px #000;${slot === 1 ? 'text-align:right;' : ''}`;
       col.append(name, barOuter, wins);
       wrap.append(img, col);
       root.appendChild(wrap);
