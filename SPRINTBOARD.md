@@ -751,6 +751,13 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-04 · net · transport seam + loopback test double (SPEC T36)** —
+  `src/net/transport.ts`: `Transport` interface (send/onMessage/onStatus/
+  close), typed `NetMsg` wire union (hello/start/input/hash/bye, PROTO=1),
+  and `createLoopbackPair` — in-memory pair on a virtual tick clock with
+  seeded-LCG latency/jitter/loss simulation (deterministic, no wall clock).
+  5 vitests incl. seed reproducibility and post-send mutation isolation.
+  NetSession (T37) tests will run entirely on this. — Claude
 - **2026-07-04 · engine · net wire helpers (SPEC T35)** — `unpackInput`
   (inverse of packInput, 1024-combo round-trip vitest) and `hashState`
   (FNV-1a over float64 bit patterns of the numeric core: tick/phase/timer/
