@@ -751,6 +751,16 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-04 · session · extract FightSession (SPEC T34, netplay groundwork)** —
+  the duplicated fixed-timestep loops in FightScene + FightScene3D moved into
+  `src/session/FightSession.ts`: one driver owns accumulator, 100ms delta
+  clamp, KO slow-mo pacing, and the `step()` call; scenes hang presentation
+  off `beforeTick`/`inputs`/`afterTick` hooks (2D keeps its perf split +
+  snapshot diff, 3D keeps snapTick/diffTick order). Zero Phaser imports,
+  5 vitests (tick-for-tick parity vs plain step loop, clamp, koSlow pacing,
+  resetPacing, hook order). Behavior unchanged; NetSession (rollback, SPEC
+  T37) swaps in behind the same `Session` surface. — Claude
+
 - **2026-07-04 · renderer3d+tools · animation stabilization sweep** — root
   motion actually dead now: (1) vertical-axis detection went through
   matrix_world (FBX leaves the armature rotated -90°, so armature-space "up"

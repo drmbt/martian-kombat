@@ -11,13 +11,12 @@ import {
   INTRO_TICKS,
   STAGE_W,
   STAGE_H,
-  TICK_MS,
   FighterState,
   initialState,
   resolveMove,
-  step,
   worldBox,
 } from '../engine';
+import { FightSession } from '../session/FightSession';
 import { characters } from '../data/characters';
 import { stageById } from '../data/stages';
 import { KeyboardSource } from '../input/keyboard';
@@ -168,7 +167,12 @@ export class FightScene extends Phaser.Scene {
   private bgLayers: BgLayer[] = [];
   /** px of background hidden past each screen edge — the parallax travel */
   private bgOverhang = 0;
-  private accumulator = 0;
+  private session!: FightSession;
+  /** captured by the session's beforeTick hook for presentTick's diff */
+  private pendingSnap: TickSnapshot | null = null;
+  private tickStart = 0;
+  private frameTickMs = 0;
+  private framePresentMs = 0;
   private debugBoxes = false;
   private stageGuide = false;
   private sparks: Spark[] = [];
@@ -240,6 +244,30 @@ export class FightScene extends Phaser.Scene {
       winsNeeded: cfg.winsNeeded,
     });
     this.inputs = new KeyboardSource(this);
+    // the one fight-loop driver (SPEC V17/V18): session owns pacing + step();
+    // this scene hangs its presentation diffing off the tick hooks
+    this.session = new FightSession(
+      this.state,
+      {
+        beforeTick: () => {
+          this.tickStart = performance.now();
+          this.pendingSnap = this.snapshot();
+        },
+        inputs: (s) => [
+          this.botP1 ? this.botP1.poll(s) : this.inputs.poll(0),
+          this.bot ? this.bot.poll(s) : this.inputs.poll(1),
+        ],
+        afterTick: (_s, inp) => {
+          if (this.training) this.trainingUpkeep();
+          this.logInputs(inp);
+          this.frameTickMs += performance.now() - this.tickStart;
+          const presentStart = performance.now();
+          this.presentTick(this.pendingSnap!);
+          this.framePresentMs += performance.now() - presentStart;
+        },
+      },
+      characters,
+    );
     this.fighterSprites = [null, null];
     this.hitFlashSprites = [null, null];
     this.fighterShadows = [null, null];
@@ -249,7 +277,6 @@ export class FightScene extends Phaser.Scene {
     this.sparks = [];
     this.vfx = []; // scene.restart destroyed the old images with the scene
     this.dizzySprites = [null, null];
-    this.accumulator = 0;
     this.comboHits = 0;
     this.comboTicks = 0;
     this.perfOn = false;
@@ -551,44 +578,20 @@ export class FightScene extends Phaser.Scene {
   update(_time: number, deltaMs: number): void {
     this.padMenuFrame();
     if (this.paused) {
-      this.accumulator = 0;
+      this.session.resetPacing();
       return;
     }
     const frameStart = performance.now();
-    let tickMs = 0;
-    let presentMs = 0;
-    let tickCount = 0;
-    // fixed timestep: rendering fps may vary, simulation never does.
-    // KO slow-motion: the round-ending hit plays out at ~1/3 speed (pure
-    // presentation — ticks still advance identically, just spaced out)
-    const s = this.state;
-    const koSlow =
-      (s.phase === 'roundEnd' || s.phase === 'finisher') &&
-      s.phaseFrame < 55 &&
-      s.fighters.some((f) => f.health <= 0);
-    this.accumulator += Math.min(deltaMs, 100) * (koSlow ? 0.35 : 1);
-    while (this.accumulator >= TICK_MS) {
-      const tickStart = performance.now();
-      const snap = this.snapshot();
-      const p1 = this.botP1 ? this.botP1.poll(this.state) : this.inputs.poll(0);
-      const p2 = this.bot ? this.bot.poll(this.state) : this.inputs.poll(1);
-      step(this.state, [p1, p2], characters);
-      if (this.training) this.trainingUpkeep();
-      this.logInputs([p1, p2]);
-      this.accumulator -= TICK_MS;
-      tickMs += performance.now() - tickStart;
-      const presentStart = performance.now();
-      this.presentTick(snap);
-      presentMs += performance.now() - presentStart;
-      tickCount++;
-    }
+    this.frameTickMs = 0;
+    this.framePresentMs = 0;
+    const tickCount = this.session.advance(deltaMs);
     this.draw();
     this.recordPerf({
       ...this.perfDraw,
       frame: performance.now() - frameStart,
-      sim: tickMs + presentMs,
-      tick: tickMs,
-      present: presentMs,
+      sim: this.frameTickMs + this.framePresentMs,
+      tick: this.frameTickMs,
+      present: this.framePresentMs,
       ticks: tickCount,
     });
   }

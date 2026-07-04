@@ -5,8 +5,9 @@
 // Presentation events come from the shared pure diffTick (SPEC V15); sounds
 // and music reuse the exact 2D helpers and asset keys.
 import Phaser from 'phaser';
-import { initialState, step, TICK_MS } from '../engine';
+import { initialState } from '../engine';
 import type { GameState } from '../engine';
+import { FightSession } from '../session/FightSession';
 import { characters } from '../data/characters';
 import { KeyboardSource } from '../input/keyboard';
 import { getSettings } from '../settings';
@@ -32,7 +33,9 @@ export class FightScene3D extends Phaser.Scene {
   private state!: GameState;
   private inputs!: KeyboardSource;
   private bot: CpuDriver | null = null;
-  private accumulator = 0;
+  private session!: FightSession;
+  /** captured by the session's beforeTick hook for diffTick */
+  private pendingSnap: ReturnType<typeof snapTick> | null = null;
   private renderer3d: ThreeFightRenderer | null = null;
   private hud: FightHud | null = null;
   private banner: AnnouncerBanner | null = null;
@@ -61,7 +64,6 @@ export class FightScene3D extends Phaser.Scene {
     this.cpu = !!data.cpu;
     this.training = !!data.training;
     this.bot = this.cpu ? new CpuDriver(1) : null;
-    this.accumulator = 0;
     this.comboHits = 0;
     this.comboTicks = 0;
   }
@@ -77,6 +79,36 @@ export class FightScene3D extends Phaser.Scene {
       ...(this.training ? { roundTicks: 0 } : {}),
     });
     this.inputs = new KeyboardSource(this);
+    // the one fight-loop driver (SPEC V17/V18) — same session as FightScene,
+    // different presenter hanging off the tick hooks
+    this.session = new FightSession(
+      this.state,
+      {
+        beforeTick: (s) => {
+          this.pendingSnap = snapTick(s);
+        },
+        inputs: (s) => [this.inputs.poll(0), this.bot ? this.bot.poll(s) : this.inputs.poll(1)],
+        afterTick: (s) => {
+          const prev = this.pendingSnap!;
+          if (prev.phase !== 'fight' && s.phase === 'fight') {
+            this.fightEnteredTick = s.tick;
+          }
+          this.handleEvents(diffTick(prev, s, characters));
+          if (this.training && s.phase === 'fight') {
+            // sandbox upkeep: health snaps back so nothing ever dies
+            for (const f of s.fighters) {
+              f.health = Math.max(f.health, Math.ceil(characters[f.charId].health * 0.4));
+              if (f.action.kind !== 'hitstun' && f.action.kind !== 'airHit' && f.action.kind !== 'knockdown') {
+                f.health = characters[f.charId].health;
+              }
+            }
+          }
+          this.tickGhosts();
+          if (this.comboTicks > 0 && --this.comboTicks === 0) this.comboHits = 0;
+        },
+      },
+      characters,
+    );
     this.ghostHealth = [characters[this.chars[0]].health, characters[this.chars[1]].health];
     this.ghostHoldUntil = [0, 0];
     playMusic([`stages/${this.stageId}`, 'stages/default']);
@@ -371,36 +403,7 @@ export class FightScene3D extends Phaser.Scene {
   }
 
   update(_time: number, deltaMs: number): void {
-    // KO slow-mo (2D parity): the round-ending hit plays out at ~1/3 speed —
-    // pure presentation, ticks advance identically, just spaced out
-    const s = this.state;
-    const koSlow =
-      (s.phase === 'roundEnd' || s.phase === 'finisher') &&
-      s.phaseFrame < 55 &&
-      s.fighters.some((f) => f.health <= 0);
-    this.accumulator += Math.min(deltaMs, 100) * (koSlow ? 0.35 : 1);
-    while (this.accumulator >= TICK_MS) {
-      const prev = snapTick(this.state);
-      const p1 = this.inputs.poll(0);
-      const p2 = this.bot ? this.bot.poll(this.state) : this.inputs.poll(1);
-      step(this.state, [p1, p2], characters);
-      if (prev.phase !== 'fight' && this.state.phase === 'fight') {
-        this.fightEnteredTick = this.state.tick;
-      }
-      this.handleEvents(diffTick(prev, this.state, characters));
-      if (this.training && this.state.phase === 'fight') {
-        // sandbox upkeep: health snaps back so nothing ever dies
-        for (const f of this.state.fighters) {
-          f.health = Math.max(f.health, Math.ceil(characters[f.charId].health * 0.4));
-          if (f.action.kind !== 'hitstun' && f.action.kind !== 'airHit' && f.action.kind !== 'knockdown') {
-            f.health = characters[f.charId].health;
-          }
-        }
-      }
-      this.tickGhosts();
-      if (this.comboTicks > 0 && --this.comboTicks === 0) this.comboHits = 0;
-      this.accumulator -= TICK_MS;
-    }
+    this.session.advance(deltaMs);
     this.renderer3d?.render(this.state);
     this.drawHud();
     this.fatalityOverlay?.sync(this.state);
