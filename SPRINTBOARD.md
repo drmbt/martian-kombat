@@ -658,6 +658,20 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-04 · engine+renderer3d · dash stocks, taunts, variants, entry
+  bow, directional/heavy/body hit reactions** — dash double-tap impulse now
+  gated by a 2-stock pool (150-tick regen, engine + 4 vitests, HUD pips w/
+  recharge fade); T = renderer-side taunt gesture; clip variant shuffle
+  (`name#N`, tick-hash latch) cycles jab/hook/elbow/reaction/taunt
+  alternates; round-1 intro bow; reactions pick side (front/back), weight
+  (small/large), and height (body: stomach/liver) from the actual hit;
+  uppercut landed as rising-glyph; HUD extracted to
+  `src/renderer3d/hud/{FightHud,WinOverlay,FatalityOverlay}`; converter
+  strips fcurves for bones the Tripo rig lacks (no pinkies — zero Blender
+  warnings). GLB: 54 clips / 38 slots / 0 missing. 140 tests. Perf pass:
+  71→112fps (half-res AO G-pass, material-recompile fix, billboard pool,
+  cached HUD writes). Branch pushed to origin. — Claude
+
 - **2026-07-04 · renderer3d · 3D spike T25–T27 + depth/beam/blood pass** —
   depth layers (gradient sky + moon, 4th skyline row, neon signs + halos,
   power cables, foreground bollards/walls), lamps rebuilt w/ TSL
