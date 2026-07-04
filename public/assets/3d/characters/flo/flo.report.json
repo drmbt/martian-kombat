@@ -3,7 +3,7 @@
  "meshes": 1,
  "basecolorApplied": false,
  "hips": "mixamorig:Hips",
- "verticalChannel": 2,
+ "verticalChannel": 1,
  "restSpan": 0.998,
  "scaleFactor": 2.4939,
  "clips": [
@@ -14,7 +14,7 @@
    "seconds": 4.767,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -24,7 +24,7 @@
    "seconds": 1.133,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -34,7 +34,7 @@
    "seconds": 1,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -44,7 +44,7 @@
    "seconds": 1,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -54,7 +54,7 @@
    "seconds": 0.933,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -64,7 +64,7 @@
    "seconds": 1.567,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -74,7 +74,7 @@
    "seconds": 1.367,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -84,8 +84,8 @@
    "seconds": 0.833,
    "rootStripped": [
     "X",
-    "Y",
-    "Zv"
+    "Yv",
+    "Z"
    ]
   },
   {
@@ -95,8 +95,8 @@
    "seconds": 0.833,
    "rootStripped": [
     "X",
-    "Y",
-    "Zv"
+    "Yv",
+    "Z"
    ]
   },
   {
@@ -106,7 +106,7 @@
    "seconds": 0.7,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -116,8 +116,8 @@
    "seconds": 1.1,
    "rootStripped": [
     "X",
-    "Y",
-    "Zv"
+    "Yv",
+    "Z"
    ]
   },
   {
@@ -127,7 +127,7 @@
    "seconds": 1.5,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -137,7 +137,7 @@
    "seconds": 1.433,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -147,7 +147,7 @@
    "seconds": 1.067,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -157,7 +157,7 @@
    "seconds": 1.667,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -167,7 +167,7 @@
    "seconds": 1.2,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -177,7 +177,7 @@
    "seconds": 0.5,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -187,7 +187,7 @@
    "seconds": 1.267,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -197,7 +197,7 @@
    "seconds": 1.367,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -207,7 +207,7 @@
    "seconds": 0.967,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -217,7 +217,7 @@
    "seconds": 2.433,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -227,7 +227,7 @@
    "seconds": 1.667,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -237,7 +237,7 @@
    "seconds": 3.033,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -247,7 +247,7 @@
    "seconds": 1.4,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -257,7 +257,7 @@
    "seconds": 1,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -267,7 +267,7 @@
    "seconds": 1.333,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -277,7 +277,7 @@
    "seconds": 2.2,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -287,7 +287,7 @@
    "seconds": 2.3,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -297,7 +297,7 @@
    "seconds": 1.5,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -307,7 +307,7 @@
    "seconds": 3.633,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -317,7 +317,7 @@
    "seconds": 3.667,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -327,7 +327,7 @@
    "seconds": 1.633,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -337,7 +337,7 @@
    "seconds": 4.5,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -347,7 +347,7 @@
    "seconds": 5.7,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -357,7 +357,7 @@
    "seconds": 8.333,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -367,7 +367,7 @@
    "seconds": 1.4,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -377,7 +377,7 @@
    "seconds": 1.4,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -387,7 +387,7 @@
    "seconds": 8.333,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -397,7 +397,7 @@
    "seconds": 5.7,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -407,7 +407,7 @@
    "seconds": 1.033,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -417,8 +417,8 @@
    "seconds": 2.467,
    "rootStripped": [
     "X",
-    "Y",
-    "Zv"
+    "Yv",
+    "Z"
    ]
   },
   {
@@ -428,7 +428,7 @@
    "seconds": 1.233,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -438,7 +438,7 @@
    "seconds": 1.8,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -448,7 +448,7 @@
    "seconds": 1.833,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -458,7 +458,7 @@
    "seconds": 0.867,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -468,7 +468,7 @@
    "seconds": 1.1,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -478,7 +478,7 @@
    "seconds": 2.267,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -488,7 +488,7 @@
    "seconds": 1.333,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -498,7 +498,7 @@
    "seconds": 2.267,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -508,7 +508,7 @@
    "seconds": 1.967,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -518,7 +518,7 @@
    "seconds": 1.367,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -528,7 +528,7 @@
    "seconds": 2.233,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -538,7 +538,7 @@
    "seconds": 2.2,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -548,7 +548,7 @@
    "seconds": 2.167,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -558,7 +558,7 @@
    "seconds": 2.967,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -568,7 +568,7 @@
    "seconds": 2.633,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   },
   {
@@ -578,7 +578,7 @@
    "seconds": 2.267,
    "rootStripped": [
     "X",
-    "Y"
+    "Z"
    ]
   }
  ],

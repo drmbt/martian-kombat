@@ -79,7 +79,8 @@ export const MESHES = {
     },
   },
   flo: {
-    rig: 'human+character+3d+model.fbx',
+    rig: 'tripo_convert_ae41a37c-baaf-4cc6-b9f8-15f44575777e.fbx',
+    bakeTransform: true, // meter-vert export: force the exporter's skin-bake path
     basecolor: 'flo-20k-tripo-unrigged/flo-20k-tripo-unrigged_basecolor.PNG',
     clips: {
       ...BASE_CLIPS,

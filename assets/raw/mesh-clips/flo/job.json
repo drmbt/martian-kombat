@@ -1,5 +1,5 @@
 {
- "rig": "/Users/flo/work/code/martian-kombat/public/assets/meshes/flo/human+character+3d+model.fbx",
+ "rig": "/Users/flo/work/code/martian-kombat/public/assets/meshes/flo/tripo_convert_ae41a37c-baaf-4cc6-b9f8-15f44575777e.fbx",
  "basecolor": "/Users/flo/work/code/martian-kombat/public/assets/meshes/flo/flo-20k-tripo-unrigged/flo-20k-tripo-unrigged_basecolor.PNG",
  "out": "/Users/flo/work/code/martian-kombat/public/assets/3d/characters/flo/flo.glb",
  "report": "/Users/flo/work/code/martian-kombat/public/assets/3d/characters/flo/flo.report.json",
@@ -291,5 +291,6 @@
   }
  ],
  "targetHeight": 2.489,
- "forward": "x"
+ "forward": "x",
+ "bakeTransform": true
 }
