@@ -126,8 +126,8 @@ T35|x|engine pure helpers: `unpackInput(n)` + `hashState(s)` (FNV over numeric c
 T36|x|`src/net/transport.ts`: Transport iface (send/onMessage/onStatus) + `LoopbackTransport` w/ latency+jitter sim + vitest|V18
 T37|x|`NetSession` rollback core: snapshot ring (W=10, `structuredClone`), predict remote = last input, confirmedTick tracking, mispredict → restore + re-sim to head, input delay D=1–2, stall past W, hash exchange on confirmed ticks; vitest loopback pair w/ latency+jitter: converges, confirmed hashes equal, V25 replay-equivalence|V19,V20,V22,V25
 T38|x|WebRTC transport `src/net/webrtc.ts`: host/join, DataChannel wiring, signaling per §C decision|V18
-T39|~|`LobbyScene`: host → room code display + copy; join → code entry; per-side char pick; ready → hello/start handshake → launch Fight w/ NetSession|V21
-T40|.|scenes accept injected session; online: pause = overlay only, disconnect → V27 grace/rejoin flow, rematch handshake|V23,V27,V7
+T39|x|`LobbyScene`: host → room code display + copy; join → code entry; per-side char pick; ready → hello/start handshake → launch Fight w/ NetSession|V21
+T40|~|scenes accept injected session (DONE: FightScene `online` payload builds NetSession, same hooks as local; online pause disabled = sim never freezes V23) — REMAINING: disconnect → V27 grace/rejoin flow, rematch handshake|V23,V27,V7
 T41|.|net UI: lobby connect-lifecycle states w/ failure reasons; in-fight compact indicator (ping + green/yellow/red quality) via existing HUD component pattern; stall overlay past W; debug detail (rollback count/depth, delay D, ahead/behind) behind toggle|V20,V26,V24
 T42|.|desync harness: two full sessions over loopback, inject forced divergence, assert detect ≤ 60 confirmed ticks|V20
 T43|.|perf audit: worst-case W re-steps + snapshot per frame measured, < 2ms mid laptop else shrink W; 3D route works w/ NetSession unmodified (proof of V18)|V8,V18

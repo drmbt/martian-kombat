@@ -751,6 +751,24 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-04 · net+scenes · online lobby + session injection, live-verified
+  (SPEC T39 done, T40 core)** — `LobbyScene` (registered in main.ts, menu
+  "3 · ONLINE" + `?dev=net`): host → room code + copy + "waiting", join → code
+  entry, per-side character pick, drives the `LobbyController` handshake →
+  launches `Fight` with an `OnlineFightData` payload. FightScene now takes that
+  payload and builds a `NetSession` (rollback) instead of `FightSession` using
+  the SAME tick hooks — proof of V18 (net vs local = session swap, scene code
+  identical). Online disables pause (sim never freezes, V23). peerjs
+  dynamic-imported → code-split into its own 91KB chunk, out of the 2D bundle.
+  Handshake logic (`src/net/lobby.ts` `LobbyController` + `charDataHash`,
+  V21) is unit-tested over loopback (6 vitests). **Live-verified** with a
+  two-Chrome-process CDP harness (scratchpad `net-2proc.mjs`): two peers meet
+  over the real peerjs broker + WebRTC DataChannel, both reach Fight, and their
+  engine heads stay byte-identical in lockstep (tick 180/300/420/540 equal,
+  0 desync, 0 halt) — V25 over the real network path. NOTE headless fully
+  PAUSES non-visible tabs' rAF, so two-player smokes need two separate Chrome
+  processes, not two tabs. REMAINING (T40): disconnect grace/rejoin + rematch.
+  — Claude
 - **2026-07-04 · net · WebRTC transport over PeerJS (SPEC T38, + rejoin spec
   V27/T46)** — `src/net/webrtc.ts`: `WebRtcTransport` wraps a peerjs
   DataConnection behind the same `Transport` iface as the loopback, so

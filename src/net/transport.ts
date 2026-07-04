@@ -2,7 +2,7 @@
 // the WebRTC implementation (src/net/webrtc.ts) and the in-memory loopback
 // below are interchangeable, which is what makes rollback testable in vitest.
 // Zero Phaser imports.
-import type { MatchRules } from '../engine';
+import type { GameState, MatchRules } from '../engine';
 
 /** bump on any wire-format change — checked in the hello handshake (V21) */
 export const PROTO = 1;
@@ -12,6 +12,7 @@ export type NetMsg =
   | { t: 'start'; rules: MatchRules; stage: string; chars: [string, string]; delay: number }
   | { t: 'input'; tick: number; frames: number[] } // packed inputs, oldest first, last-8 redundancy (V22)
   | { t: 'hash'; tick: number; h: number } // confirmed-tick state hash (V20)
+  | { t: 'resync'; tick: number; state: GameState } // host→guest authoritative state on rejoin (V27)
   | { t: 'bye'; reason: string };
 
 export type TransportStatus = 'connecting' | 'open' | 'closed' | 'error';

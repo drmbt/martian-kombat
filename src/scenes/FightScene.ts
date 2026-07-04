@@ -16,7 +16,9 @@ import {
   resolveMove,
   worldBox,
 } from '../engine';
-import { FightSession } from '../session/FightSession';
+import { FightSession, type Session } from '../session/FightSession';
+import { NetSession, type NetIssue } from '../session/NetSession';
+import type { OnlineFightData } from '../net/lobby';
 import { characters } from '../data/characters';
 import { stageById } from '../data/stages';
 import { KeyboardSource } from '../input/keyboard';
@@ -167,7 +169,12 @@ export class FightScene extends Phaser.Scene {
   private bgLayers: BgLayer[] = [];
   /** px of background hidden past each screen edge — the parallax travel */
   private bgOverhang = 0;
-  private session!: FightSession;
+  private session!: Session;
+  /** online payload when this is a netplay match (null = local) */
+  private online: OnlineFightData | null = null;
+  private net: NetSession | null = null;
+  private netIssue: NetIssue | null = null;
+  private netText: Phaser.GameObjects.Text | null = null;
   /** captured by the session's beforeTick hook for presentTick's diff */
   private pendingSnap: TickSnapshot | null = null;
   private tickStart = 0;
@@ -217,12 +224,24 @@ export class FightScene extends Phaser.Scene {
     super('Fight');
   }
 
-  init(data: { p1?: string; p2?: string; cpu?: boolean; training?: boolean; demo?: boolean; stage?: string }): void {
+  init(data: {
+    p1?: string;
+    p2?: string;
+    cpu?: boolean;
+    training?: boolean;
+    demo?: boolean;
+    stage?: string;
+    online?: OnlineFightData;
+  }): void {
     this.chars = [data.p1 ?? 'vincent', data.p2 ?? 'yulia'];
     this.stageId = data.stage ?? 'salton';
-    this.cpu = !!data.cpu;
-    this.training = !!data.training;
-    this.demo = !!data.demo;
+    this.online = data.online ?? null;
+    // online is strictly 2-human: no CPU, no demo, no training upkeep
+    this.cpu = !this.online && !!data.cpu;
+    this.training = !this.online && !!data.training;
+    this.demo = !this.online && !!data.demo;
+    this.net = null;
+    this.netIssue = null;
     this.bot = this.cpu || this.demo ? new CpuDriver(1) : null;
     this.botP1 = this.demo ? new CpuDriver(0) : null;
     this.fatalityPanel = null;
@@ -239,35 +258,60 @@ export class FightScene extends Phaser.Scene {
 
   create(): void {
     const cfg = getSettings();
-    this.state = initialState(this.chars[0], this.chars[1], characters, {
-      roundTicks: cfg.roundSeconds * 60,
-      winsNeeded: cfg.winsNeeded,
-    });
+    // online: BOTH peers build the identical start state from the lobby's
+    // agreed rules — V25 replay-equivalence depends on this being deterministic
+    this.state = initialState(
+      this.chars[0],
+      this.chars[1],
+      characters,
+      this.online
+        ? this.online.rules
+        : { roundTicks: cfg.roundSeconds * 60, winsNeeded: cfg.winsNeeded },
+    );
     this.inputs = new KeyboardSource(this);
     // the one fight-loop driver (SPEC V17/V18): session owns pacing + step();
-    // this scene hangs its presentation diffing off the tick hooks
-    this.session = new FightSession(
-      this.state,
-      {
-        beforeTick: () => {
-          this.tickStart = performance.now();
-          this.pendingSnap = this.snapshot();
-        },
-        inputs: (s) => [
-          this.botP1 ? this.botP1.poll(s) : this.inputs.poll(0),
-          this.bot ? this.bot.poll(s) : this.inputs.poll(1),
-        ],
-        afterTick: (_s, inp) => {
-          if (this.training) this.trainingUpkeep();
-          this.logInputs(inp);
-          this.frameTickMs += performance.now() - this.tickStart;
-          const presentStart = performance.now();
-          this.presentTick(this.pendingSnap!);
-          this.framePresentMs += performance.now() - presentStart;
-        },
+    // this scene hangs its presentation diffing off the tick hooks. The hooks
+    // are IDENTICAL for local and net play — NetSession just consumes the
+    // local slot's input and drives the remote slot over the wire (V18).
+    const hooks = {
+      beforeTick: () => {
+        this.tickStart = performance.now();
+        this.pendingSnap = this.snapshot();
       },
-      characters,
-    );
+      inputs: (s: GameState): [InputFrame, InputFrame] => [
+        this.botP1 ? this.botP1.poll(s) : this.inputs.poll(0),
+        this.bot ? this.bot.poll(s) : this.inputs.poll(1),
+      ],
+      afterTick: (_s: GameState, inp: [InputFrame, InputFrame]) => {
+        if (this.training) this.trainingUpkeep();
+        this.logInputs(inp);
+        this.frameTickMs += performance.now() - this.tickStart;
+        const presentStart = performance.now();
+        this.presentTick(this.pendingSnap!);
+        this.framePresentMs += performance.now() - presentStart;
+      },
+    };
+    if (this.online) {
+      const net = new NetSession(this.state, hooks, characters, {
+        transport: this.online.transport,
+        localSlot: this.online.localSlot,
+        delay: this.online.delay,
+      });
+      net.onIssue((issue) => (this.netIssue = issue));
+      this.net = net;
+      this.session = net;
+      // net status line (T41 turns this into the ping/quality HUD). Kept
+      // always-present so a halt (disconnect/desync) is never silent (V20).
+      this.netText = this.add
+        .text(STAGE_W / 2, 10, '', {
+          fontFamily: 'monospace', fontSize: '14px', color: '#8fe388',
+          stroke: '#000', strokeThickness: 4, align: 'center',
+        })
+        .setOrigin(0.5, 0)
+        .setDepth(10000);
+    } else {
+      this.session = new FightSession(this.state, hooks, characters);
+    }
     this.fighterSprites = [null, null];
     this.hitFlashSprites = [null, null];
     this.fighterShadows = [null, null];
@@ -507,6 +551,9 @@ export class FightScene extends Phaser.Scene {
   // ---------- pause / navigation ----------
 
   private togglePause(): void {
+    // online can't freeze the sim — the other player is still fighting (V23).
+    // Pausing would only stall your own head against the rollback window.
+    if (this.online) return;
     this.paused = !this.paused;
     this.pauseOverlay.setVisible(this.paused);
     if (this.paused) { this.pauseSel = 0; this.highlightPause(); }
@@ -585,6 +632,7 @@ export class FightScene extends Phaser.Scene {
     this.frameTickMs = 0;
     this.framePresentMs = 0;
     const tickCount = this.session.advance(deltaMs);
+    if (this.net) this.updateNetStatus();
     this.draw();
     this.recordPerf({
       ...this.perfDraw,
@@ -594,6 +642,28 @@ export class FightScene extends Phaser.Scene {
       present: this.framePresentMs,
       ticks: tickCount,
     });
+  }
+
+  /** Minimal net readout (T41 replaces with a proper quality indicator). */
+  private updateNetStatus(): void {
+    const net = this.net;
+    const txt = this.netText;
+    if (!net || !txt) return;
+    if (this.netIssue) {
+      const msg =
+        this.netIssue.kind === 'desync'
+          ? `DESYNC — match halted\n${this.netIssue.detail}`
+          : `OPPONENT DISCONNECTED\n${this.netIssue.detail}`;
+      txt.setText(msg).setColor('#ff5a4a');
+      return;
+    }
+    const s = net.stats();
+    if (s.stalls > 0 && s.ahead >= s.delay + 3) {
+      txt.setText('WAITING FOR OPPONENT…').setColor('#ffd24a');
+    } else {
+      // quiet in the healthy case: just a small rollback tick-rate readout
+      txt.setText(s.rollbacks > 0 ? `net · rb ${s.rollbacks}` : 'net').setColor('#8fe388');
+    }
   }
 
   private snapshot(): TickSnapshot {

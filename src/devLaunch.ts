@@ -63,6 +63,7 @@ export function devBootTarget(): LaunchTarget | null {
   if (directFight) return randomFight();
   if (params.get('dev') === 'training') return randomTraining();
   if (params.get('dev') === '3d') return random3dFight();
+  if (params.get('dev') === 'net') return { scene: 'Lobby' };
 
   const saved = window.sessionStorage.getItem(KEY);
   if (!saved) return null;
@@ -79,5 +80,15 @@ export function devBootTarget(): LaunchTarget | null {
 export function rememberDevLaunch(scene: string, data?: LaunchData): void {
   if (!import.meta.env.DEV || typeof window === 'undefined') return;
   if (scene === 'Boot' || scene === 'Volume') return;
-  window.sessionStorage.setItem(KEY, JSON.stringify({ scene, data: data ?? {} }));
+  // an online fight carries a live Transport (peerjs conn) — not serializable
+  // and meaningless to replay on reload. Persist a bare Lobby restart instead.
+  if (data && 'online' in data) {
+    window.sessionStorage.setItem(KEY, JSON.stringify({ scene: 'Lobby' }));
+    return;
+  }
+  try {
+    window.sessionStorage.setItem(KEY, JSON.stringify({ scene, data: data ?? {} }));
+  } catch {
+    // non-serializable payload — don't let dev persistence break scene.start
+  }
 }

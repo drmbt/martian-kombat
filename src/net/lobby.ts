@@ -39,6 +39,16 @@ export interface StartConfig {
   delay: number;
 }
 
+/** what LobbyScene hands FightScene to run an online match (SPEC T40). The
+ *  live transport is passed by reference through scene data — after the
+ *  handshake the NetSession takes over its onMessage. */
+export interface OnlineFightData {
+  transport: Transport;
+  localSlot: 0 | 1;
+  delay: number;
+  rules: MatchRules;
+}
+
 export interface RemotePlayer {
   name: string;
   charId: string;

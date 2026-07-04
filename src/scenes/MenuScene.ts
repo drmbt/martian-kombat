@@ -19,6 +19,10 @@ export class MenuScene extends Phaser.Scene {
   private selIdx = 0;
   /** when the menu was revealed — the revealing press must not also select */
   private revealedAt = -1;
+  /** 3D render mode: left/right (or click) on the title toggles it; the flag
+   *  rides through Select → Versus → Fight3D. Purely a presenter swap. */
+  private render3d = false;
+  private renderChip!: Phaser.GameObjects.Text;
 
   constructor() {
     super('Menu');
@@ -32,6 +36,7 @@ export class MenuScene extends Phaser.Scene {
     this.buttons = [];
     this.selIdx = 0;
     this.revealedAt = -1;
+    this.render3d = false;
     // any human sign of life postpones the attract demo; the first key/click
     // on the title reveals the menu instead of immediately choosing an item.
     this.input.keyboard!.on('keydown', () => this.notePresence());
@@ -55,19 +60,37 @@ export class MenuScene extends Phaser.Scene {
       .setOrigin(0.5);
     const go = (cpu: boolean, training = false) => {
       play(this, 's-blip');
-      this.scene.start('Select', { cpu, training });
+      this.scene.start('Select', { cpu, training, render3d: this.render3d });
     };
+
+    // Render-mode chip between the title and subtitle: ◄ / ► (or click) flips
+    // 2D ⇄ 3D. Hidden with the rest of the menu until the coin drop.
+    this.renderChip = this.add
+      .text(STAGE_W / 2, 250, '', {
+        fontFamily: 'monospace', fontSize: '18px', fontStyle: 'bold', color: '#f5ead9',
+        stroke: '#000', strokeThickness: 4, backgroundColor: '#241b2e', padding: { x: 12, y: 5 },
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => { if (this.canChoose()) this.toggleRender(); });
+    this.menuItems.push(this.renderChip);
+    this.refreshRenderChip();
 
     // clickable menu buttons (mouse) — also 1/2/3 hotkeys + ENTER
     const toSettings = () => {
       play(this, 's-blip');
       this.scene.start('Settings');
     };
+    const toLobby = () => {
+      play(this, 's-blip');
+      this.scene.start('Lobby');
+    };
     const opts: { label: string; act: () => void }[] = [
       { label: '1 · VS CPU', act: () => go(true) },
       { label: '2 · TWO PLAYERS', act: () => go(false) },
-      { label: '3 · TRAINING', act: () => go(false, true) },
-      { label: '4 · SETTINGS', act: toSettings },
+      { label: '3 · ONLINE', act: toLobby },
+      { label: '4 · TRAINING', act: () => go(false, true) },
+      { label: '5 · SETTINGS', act: toSettings },
     ];
     opts.forEach((o, i) => {
       const y = 352 + i * 52;
@@ -108,15 +131,36 @@ export class MenuScene extends Phaser.Scene {
 
     this.input.keyboard!.on('keydown-ONE', () => { if (this.canChoose()) go(true); });
     this.input.keyboard!.on('keydown-TWO', () => { if (this.canChoose()) go(false); });
-    this.input.keyboard!.on('keydown-THREE', () => { if (this.canChoose()) go(false, true); });
-    this.input.keyboard!.on('keydown-FOUR', () => { if (this.canChoose()) toSettings(); });
+    this.input.keyboard!.on('keydown-THREE', () => { if (this.canChoose()) toLobby(); });
+    this.input.keyboard!.on('keydown-FOUR', () => { if (this.canChoose()) go(false, true); });
+    this.input.keyboard!.on('keydown-FIVE', () => { if (this.canChoose()) toSettings(); });
     // arrow / W-S cursor nav mirrors the gamepad; ENTER/SPACE activate the cursor
     for (const k of ['UP', 'W']) this.input.keyboard!.on(`keydown-${k}`, () => this.moveCursor(-1));
     for (const k of ['DOWN', 'S']) this.input.keyboard!.on(`keydown-${k}`, () => this.moveCursor(1));
+    // left/right flips the render mode (mirrors the on-screen ◄ ► chip)
+    for (const k of ['LEFT', 'A', 'RIGHT', 'D']) this.input.keyboard!.on(`keydown-${k}`, () => this.tryToggleRender());
     for (const k of ['ENTER', 'SPACE']) this.input.keyboard!.on(`keydown-${k}`, () => this.activate());
     // any bound punch/kick key also selects the highlighted item
     const atk = attackKeyCodes();
     this.input.keyboard!.on('keydown', (e: KeyboardEvent) => { if (atk.has(e.keyCode)) this.activate(); });
+  }
+
+  /** left/right on the title: wake the menu on the first press, else flip mode. */
+  private tryToggleRender(): void {
+    if (!this.menuReady) { this.notePresence(); return; }
+    this.toggleRender();
+  }
+
+  private toggleRender(): void {
+    this.idleMs = 0;
+    this.render3d = !this.render3d;
+    this.refreshRenderChip();
+    play(this, 's-blip', 0.5);
+  }
+
+  private refreshRenderChip(): void {
+    this.renderChip.setText(`◄  RENDER: ${this.render3d ? '3D' : '2D'}  ►`);
+    this.renderChip.setColor(this.render3d ? '#7fe3ff' : '#f5ead9');
   }
 
   /** Move the selection cursor; the first press just wakes the menu. */
@@ -152,6 +196,7 @@ export class MenuScene extends Phaser.Scene {
     } else {
       if (n.up) this.moveCursor(-1);
       if (n.down) this.moveCursor(1);
+      if (n.left || n.right) this.toggleRender();
       // scene transitions must fire OUTSIDE update() — see navDefer
       if (n.confirm || n.start) navDefer(this, () => this.activate());
     }
