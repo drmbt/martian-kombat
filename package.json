@@ -18,7 +18,8 @@
     "gen:audio": "node tools/gen-audio.mjs",
     "gen:music": "node tools/gen-music-manifest.mjs",
     "gen:fatality": "node tools/gen-fatality.mjs",
-    "gen:vfx": "node tools/gen-vfx.mjs"
+    "gen:vfx": "node tools/gen-vfx.mjs",
+    "gen:mesh": "node tools/gen-mesh.mjs"
   },
   "dependencies": {
     "phaser": "^3.87.0",

@@ -11,6 +11,8 @@ import { STAGE_W, STAGE_H } from '../engine';
 import { engineToWorld, WORLD_SCALE } from './threeCoordinates';
 import { ThreeFighterView } from './ThreeFighterView';
 import { ThreeHitboxDebug } from './ThreeHitboxDebug';
+import { ThreeStageView } from './ThreeStageView';
+import type { ResolvedClip } from './clipContract';
 
 export class ThreeFightRenderer {
   readonly canvas: HTMLCanvasElement;
@@ -19,6 +21,7 @@ export class ThreeFightRenderer {
   private camera: THREE.OrthographicCamera;
   private fighters: [ThreeFighterView, ThreeFighterView];
   readonly hitboxes = new ThreeHitboxDebug();
+  private stage = new ThreeStageView();
   private ready = false;
   private disposed = false;
 
@@ -67,14 +70,33 @@ export class ThreeFightRenderer {
       new ThreeFighterView(defs[charIds[0]]),
       new ThreeFighterView(defs[charIds[1]]),
     ];
-    this.scene.add(this.fighters[0].group, this.fighters[1].group, this.hitboxes.group);
+    this.scene.add(
+      this.fighters[0].group,
+      this.fighters[1].group,
+      this.hitboxes.group,
+      this.stage.group,
+    );
   }
 
   /** WebGPU init is async; render() is a no-op until this resolves. */
-  async init(): Promise<void> {
+  async init(stageId?: string): Promise<void> {
+    // models load in parallel with the backend; each falls back gracefully
+    void this.fighters[0].loadModel();
+    void this.fighters[1].loadModel();
+    if (stageId) void this.stage.load(stageId);
     await this.renderer.init();
     if (this.disposed) return; // scene shut down while the backend was booting
     this.ready = true;
+  }
+
+  /** Active clip per fighter for the debug HUD (SPEC V12). */
+  clipInfo(slot: 0 | 1): ResolvedClip {
+    return this.fighters[slot].clipInfo;
+  }
+
+  setSkeletonVisible(on: boolean): void {
+    this.fighters[0].setSkeletonVisible(on);
+    this.fighters[1].setSkeletonVisible(on);
   }
 
   setSize(w: number, h: number): void {
@@ -92,8 +114,8 @@ export class ThreeFightRenderer {
 
   render(state: GameState): void {
     if (!this.ready || this.disposed) return;
-    this.fighters[0].update(state.fighters[0]);
-    this.fighters[1].update(state.fighters[1]);
+    this.fighters[0].update(state.tick, state.fighters[0]);
+    this.fighters[1].update(state.tick, state.fighters[1]);
     this.hitboxes.update(state, this.defs);
     this.track(state);
     this.renderer.render(this.scene, this.camera);

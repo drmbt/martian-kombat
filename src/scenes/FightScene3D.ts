@@ -31,6 +31,7 @@ export class FightScene3D extends Phaser.Scene {
   private accumulator = 0;
   private renderer3d: ThreeFightRenderer | null = null;
   private hud: HTMLDivElement | null = null;
+  private skeletonOn = false;
 
   constructor() {
     super('Fight3D');
@@ -52,6 +53,10 @@ export class FightScene3D extends Phaser.Scene {
     const kb = this.input.keyboard!;
     kb.on('keydown-F1', () => {
       if (this.renderer3d) this.renderer3d.hitboxes.visible = !this.renderer3d.hitboxes.visible;
+    });
+    kb.on('keydown-F2', () => {
+      this.skeletonOn = !this.skeletonOn;
+      this.renderer3d?.setSkeletonVisible(this.skeletonOn);
     });
     kb.on('keydown-ESC', () => this.scene.start('Menu'));
     kb.on('keydown-F9', () =>
@@ -81,7 +86,7 @@ export class FightScene3D extends Phaser.Scene {
     // the debug cuboids without keyboard input
     renderer.hitboxes.visible = new URLSearchParams(window.location.search).get('boxes') === '1';
     this.mountDom(renderer.canvas);
-    await renderer.init();
+    await renderer.init(this.stageId);
   }
 
   /** Pin the Three canvas + HUD exactly over the Phaser canvas. */
@@ -127,11 +132,17 @@ export class FightScene3D extends Phaser.Scene {
     const maxB = characters[b.charId].health;
     const label = s.phase === 'intro' ? `ROUND ${s.roundNumber}` : PHASE_LABEL[s.phase];
     const clock = s.rules.roundTicks ? ` ${Math.ceil(s.timer / 60)}` : '';
+    // active clip per fighter, PLACEHOLDER-flagged when a fallback plays (V12)
+    const clip = (slot: 0 | 1): string => {
+      const c = this.renderer3d?.clipInfo(slot);
+      return c ? `${c.name}${c.placeholder ? ' *PLACEHOLDER*' : ''}` : '…';
+    };
     this.hud.textContent =
       `${a.charId.toUpperCase()} ${bar(a.health, maxA)}  ${s.wins[0]}★` +
       `  ${label}${clock}  ` +
       `${s.wins[1]}★ ${bar(b.health, maxB)} ${b.charId.toUpperCase()}\n` +
-      `[F1] hitboxes  [F9] rematch  [ESC] menu`;
+      `[F1] hitboxes  [F2] skeleton  [F9] rematch  [ESC] menu\n` +
+      `clips: ${clip(0)} | ${clip(1)}`;
   }
 
   update(_time: number, deltaMs: number): void {

@@ -658,6 +658,21 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-04 · renderer3d+tools · 3D spike T7–T9 + T14–T16: vincent GLB
+  animated in-game** — `tools/gen-mesh.mjs` (`npm run gen:mesh -- --char
+  vincent`) drives headless Blender (`tools/blender_fbx_to_glb.py`): rig FBX +
+  ~130 Mixamo clip FBXs (zips auto-extracted to `assets/raw/mesh-clips/`) →
+  `public/assets/3d/characters/vincent/vincent.glb` (26 clips renamed to
+  contract names, horizontal root motion stripped, vertical kept for pose,
+  self-calibrating vertical-axis detection) + coverage report (24 mapped ·
+  16 fallback · 0 missing). Runtime: `clipContract.ts`+json (action→clip map,
+  V12 fallback chains, V13 class-based tick-sampled playback + crossfades,
+  hitstop freezes clips) with 11 vitests; `ThreeFighterView` swaps capsule →
+  skinned GLB (foot-origin, hurtStand-scaled, facing = rotation not mirror);
+  per-frame lowest-bone ground snap + stage `Floor`-group auto-alignment
+  (V14) so feet neither float nor poke through. HUD shows active clip +
+  PLACEHOLDER flag. Verified via CDP headless Chrome (idle + knockdown).
+  — Claude
 - **2026-07-04 · renderer3d+scenes · 3D spike T3–T6: playable WebGPU scene** —
   `FightScene3D` behind `?dev=3d` (same `step()`/`KeyboardSource`/`CpuDriver`
   loop as FightScene, Three canvas + DOM HUD pinned over the Phaser canvas,

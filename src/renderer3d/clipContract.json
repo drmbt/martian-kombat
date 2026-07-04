@@ -1,0 +1,45 @@
+{
+  "clips": {
+    "idle": { "class": "loop" },
+    "walk-forward": { "class": "loop", "syncToWalkSpeed": true },
+    "walk-back": { "class": "loop", "syncToWalkSpeed": true },
+    "crouch": { "class": "loop" },
+    "prejump": { "class": "oneshot" },
+    "jump": { "class": "oneshot" },
+    "fall": { "class": "loop" },
+    "landing": { "class": "oneshot" },
+    "getup": { "class": "oneshot" },
+    "hit": { "class": "oneshot" },
+    "hit-air": { "class": "oneshot" },
+    "block-stand": { "class": "loop" },
+    "block-crouch": { "class": "loop" },
+    "knockdown": { "class": "loop" },
+    "ko": { "class": "oneshot" },
+    "dazed": { "class": "loop" },
+    "win": { "class": "loop" },
+    "attack-generic": { "class": "window" },
+    "attack-air": { "class": "window" }
+  },
+  "fallbacks": {
+    "prejump": ["crouch"],
+    "jump": ["fall"],
+    "fall": ["jump"],
+    "landing": ["crouch"],
+    "getup": ["crouch"],
+    "hit-air": ["hit"],
+    "block-crouch": ["block-stand", "crouch"],
+    "block-stand": ["hit"],
+    "knockdown": ["ko"],
+    "ko": ["knockdown"],
+    "dazed": ["hit"],
+    "win": ["idle"]
+  },
+  "fadeTicks": {
+    "default": 5,
+    "locomotion": 8,
+    "toAttack": 2,
+    "fromAttack": 4,
+    "toHit": 2,
+    "toBlock": 3
+  }
+}
