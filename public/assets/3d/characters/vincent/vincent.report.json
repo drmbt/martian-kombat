@@ -158,6 +158,26 @@
    ]
   },
   {
+   "name": "hit-body",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Big Stomach Hit.fbx",
+   "frames": 42,
+   "seconds": 1.4,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit-body-heavy",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Livershot Knockdown.fbx",
+   "frames": 66,
+   "seconds": 2.2,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
    "name": "block-stand",
    "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Standing Block Idle.fbx",
    "frames": 69,
@@ -209,9 +229,19 @@
   },
   {
    "name": "win",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Taunt Gesture.fbx",
-   "frames": 59,
-   "seconds": 1.967,
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/gestures/Victory.fbx",
+   "frames": 135,
+   "seconds": 4.5,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
+   "name": "intro",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/gestures/Quick Informal Bow.fbx",
+   "frames": 82,
+   "seconds": 2.733,
    "rootStripped": [
     "Y",
     "Z"
@@ -222,6 +252,36 @@
    "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Punching.fbx",
    "frames": 31,
    "seconds": 1.033,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/lk",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Illegal Knee.fbx",
+   "frames": 68,
+   "seconds": 2.267,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/mk",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Jab Cross.fbx",
+   "frames": 59,
+   "seconds": 1.967,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/hk",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Body Jab Cross.fbx",
+   "frames": 41,
+   "seconds": 1.367,
    "rootStripped": [
     "Y",
     "Z"
@@ -300,9 +360,9 @@
   },
   {
    "name": "attack/rising-glyph",
-   "source": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing 2H Magic Attack 03.fbx",
-   "frames": 129,
-   "seconds": 4.3,
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Uppercut.fbx",
+   "frames": 33,
+   "seconds": 1.1,
    "rootStripped": [
     "Xv",
     "Y",
@@ -320,7 +380,16 @@
    ]
   }
  ],
- "warnings": [],
+ "warnings": [
+  "hit-body: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "hit-body-heavy: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "win: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "intro: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "attack/lk: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "attack/mk: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "attack/hk: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "attack/rising-glyph: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']"
+ ],
  "coverage": {
   "mapped": [
    "idle",
@@ -344,9 +413,15 @@
    "win",
    "hit-front-heavy",
    "hit-back-heavy",
+   "intro",
+   "hit-body",
+   "hit-body-heavy",
    "attack/lp",
    "attack/mp",
    "attack/hp",
+   "attack/lk",
+   "attack/mk",
+   "attack/hk",
    "attack/sigil-bolt",
    "attack/cloud-hands",
    "attack/rising-glyph",
@@ -355,15 +430,12 @@
   ],
   "fallback": [
    "block-crouch -> block-stand",
-   "attack/lk -> attack-generic",
-   "attack/mk -> attack-generic",
-   "attack/hk -> attack-generic",
    "attack/clp -> attack/lp",
    "attack/cmp -> attack/mp",
    "attack/chp -> attack/hp",
-   "attack/clk -> attack-generic",
-   "attack/cmk -> attack-generic",
-   "attack/chk -> attack-generic",
+   "attack/clk -> attack/lk",
+   "attack/cmk -> attack/mk",
+   "attack/chk -> attack/hk",
    "attack/jlp -> attack-air",
    "attack/jmp -> attack-air",
    "attack/jhp -> attack-air",

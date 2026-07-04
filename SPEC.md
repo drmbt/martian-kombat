@@ -83,7 +83,7 @@ T24|x|parallax + mood: perspective cam follow (x=midpoint lerp, dolly ∝ separa
 T28|x|directional hit reactions: hitstun clip picked by attacker side vs victim facing (hit-front/hit-back + fallbacks), pure fn + vitest; GLB gains React From Front/Back clips|V12,V13
 T29|x|HUD componentization: `src/renderer3d/hud/` — FightHud, WinOverlay, FatalityOverlay classes (build/update/dispose), FightScene3D keeps wiring only|V15
 T30|x|blend-glitch pass: action RESTART detection (same moveId re-trigger resets elapsed via frame counter direction), ⊥ mid-fade pops|V13
-T31|.|uppercut: waiting on `Uppercut.fbx` from Mixamo in `animations/` → remap `attack/rising-glyph` + regen|V12
+T31|x|uppercut: `Uppercut.fbx` arrived → `attack/rising-glyph` remapped (stripY, impactNorm 0.4) + regen|V12
 
 ## §B
 

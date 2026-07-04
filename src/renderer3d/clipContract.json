@@ -73,6 +73,15 @@
     },
     "hit-back-heavy": {
       "class": "oneshot"
+    },
+    "intro": {
+      "class": "oneshot"
+    },
+    "hit-body": {
+      "class": "oneshot"
+    },
+    "hit-body-heavy": {
+      "class": "oneshot"
     }
   },
   "fallbacks": {
@@ -132,6 +141,18 @@
       "hit-back",
       "hit-front-heavy",
       "hit"
+    ],
+    "intro": [
+      "idle"
+    ],
+    "hit-body": [
+      "hit-front",
+      "hit"
+    ],
+    "hit-body-heavy": [
+      "hit-body",
+      "hit-front-heavy",
+      "hit"
     ]
   },
   "impactNorm": {
@@ -143,8 +164,11 @@
     "attack/throw": 0.4,
     "attack/sigil-bolt": 0.5,
     "attack/cloud-hands": 0.5,
-    "attack/rising-glyph": 0.45,
-    "attack/redirect": 0.55
+    "attack/rising-glyph": 0.4,
+    "attack/redirect": 0.55,
+    "attack/lk": 0.35,
+    "attack/mk": 0.3,
+    "attack/hk": 0.35
   },
   "fadeTicks": {
     "default": 5,

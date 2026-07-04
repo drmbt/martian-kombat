@@ -46,7 +46,12 @@ export function attackClipTime(
  *  player at reel START — hitstun counts down, so it can't be re-derived
  *  mid-reel without the clip switching underneath) upgrades to the Large
  *  reaction variants (T28 + heavy reactions). */
-export function actionToClipName(f: FighterState, opponent?: FighterState, heavyReel = false): string {
+export function actionToClipName(
+  f: FighterState,
+  opponent?: FighterState,
+  heavyReel = false,
+  bodyReel = false,
+): string {
   const a: Action = f.action;
   switch (a.kind) {
     case 'idle':
@@ -66,6 +71,7 @@ export function actionToClipName(f: FighterState, opponent?: FighterState, heavy
       return `attack/${a.moveId}`;
     case 'hitstun': {
       if (!opponent) return 'hit';
+      if (bodyReel) return heavyReel ? 'hit-body-heavy' : 'hit-body';
       const fromFront = (opponent.x - f.x) * f.facing >= 0;
       const base = fromFront ? 'hit-front' : 'hit-back';
       return heavyReel ? `${base}-heavy` : base;

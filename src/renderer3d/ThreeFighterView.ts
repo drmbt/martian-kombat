@@ -5,6 +5,14 @@
 import * as THREE from 'three/webgpu';
 import type { CharacterDef, FighterState } from '../engine';
 import { resolveMove } from '../engine';
+
+/** per-frame presentation context the renderer passes down */
+export interface ViewContext {
+  opponent?: FighterState;
+  opponentDef?: CharacterDef;
+  /** round-1 intro phase: play the entry gesture instead of idle */
+  intro?: boolean;
+}
 import { engineToWorld, WORLD_SCALE } from './threeCoordinates';
 import { characterGlbUrl, loadGlb } from './threeAssets';
 import {
@@ -41,6 +49,7 @@ class ClipPlayer {
   private lastTick = -1;
   private lastActionFrame = -1;
   private heavyReel = false;
+  private bodyReel = false;
 
   constructor(root: THREE.Object3D, clips: THREE.AnimationClip[]) {
     this.mixer = new THREE.AnimationMixer(root);
@@ -57,8 +66,10 @@ class ClipPlayer {
     return this.current ?? { name: '-', placeholder: false };
   }
 
-  update(tick: number, f: FighterState, def: CharacterDef, opponent?: FighterState): void {
-    const key = `${f.action.kind}/${f.action.moveId ?? ''}`;
+  update(tick: number, f: FighterState, def: CharacterDef, ctx: ViewContext = {}): void {
+    // entry gesture: round-1 intro plays the bow while the engine idles
+    const introGesture = ctx.intro === true && f.action.kind === 'idle';
+    const key = introGesture ? 'intro' : `${f.action.kind}/${f.action.moveId ?? ''}`;
     // RESTART detection (T30): the same action re-triggering (lp lp lp
     // mashing, a fresh reel while already reeling) keeps the key identical
     // but snaps the engine frame counter backwards (up-counters) or upwards
@@ -72,10 +83,17 @@ class ClipPlayer {
       (countsDown ? f.action.frame > this.lastActionFrame : f.action.frame < this.lastActionFrame);
     if (key !== this.actionKey || restarted) {
       this.actionKey = key;
-      this.elapsed = countsDown ? 0 : f.action.frame;
-      // latch reel weight at the moment of impact: long stun or counter =
-      // heavy reaction; frame counts down so this can't be derived later
+      this.elapsed = countsDown || introGesture ? 0 : f.action.frame;
+      // latch reel flavor at the moment of impact (frame counts down, so
+      // neither can be derived later): long stun / counter = heavy; a LOW
+      // attack from the opponent = body reaction (stomach/liver clips)
       this.heavyReel = kind === 'hitstun' && (f.action.frame >= 20 || f.action.counter === true);
+      this.bodyReel = false;
+      const oppA = ctx.opponent?.action;
+      if (kind === 'hitstun' && oppA && ctx.opponentDef && (oppA.kind === 'attack' || oppA.kind === 'airAttack')) {
+        const m = ctx.opponentDef.moves[oppA.moveId!];
+        if (m) this.bodyReel = resolveMove(m, oppA.strength).height === 'low';
+      }
     } else if (this.lastTick >= 0 && f.hitstop <= 0) {
       // hitstop freezes the engine action — freeze the clip with it
       this.elapsed += Math.max(tick - this.lastTick, 0);
@@ -83,7 +101,7 @@ class ClipPlayer {
     this.lastTick = tick;
     this.lastActionFrame = f.action.frame;
 
-    const want = actionToClipName(f, opponent, this.heavyReel);
+    const want = introGesture ? 'intro' : actionToClipName(f, ctx.opponent, this.heavyReel, this.bodyReel);
     const resolved = resolveClipName(this.available, want);
     if (!this.current || this.current.name !== resolved.name || restarted) {
       this.transitionTo(resolved, tick, f, def);
@@ -271,7 +289,7 @@ export class ThreeFighterView {
     this.model.position.y -= worldDelta / scale;
   }
 
-  update(tick: number, f: FighterState, opponent?: FighterState): void {
+  update(tick: number, f: FighterState, ctx: ViewContext = {}): void {
     const [x, y] = engineToWorld(f.x, f.y);
     this.group.position.set(x, y, 0);
 
@@ -279,7 +297,7 @@ export class ThreeFighterView {
       // our Blender FBX->GLB export lands the model facing +X (verified
       // empirically via spawn screenshot) — 0 for right, 180 for left
       this.modelWrapper.rotation.y = f.facing === 1 ? 0 : Math.PI;
-      this.player.update(tick, f, this.def, opponent);
+      this.player.update(tick, f, this.def, ctx);
       this.snapFeetToGround(f);
       this.applyFlash(tick);
       return;

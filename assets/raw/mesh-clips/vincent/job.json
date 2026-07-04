@@ -80,6 +80,16 @@
    "stripY": false
   },
   {
+   "name": "hit-body",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Big Stomach Hit.fbx",
+   "stripY": false
+  },
+  {
+   "name": "hit-body-heavy",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Livershot Knockdown.fbx",
+   "stripY": false
+  },
+  {
    "name": "block-stand",
    "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Standing Block Idle.fbx",
    "stripY": false
@@ -106,12 +116,32 @@
   },
   {
    "name": "win",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Taunt Gesture.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/gestures/Victory.fbx",
+   "stripY": false
+  },
+  {
+   "name": "intro",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/gestures/Quick Informal Bow.fbx",
    "stripY": false
   },
   {
    "name": "attack-generic",
    "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Punching.fbx",
+   "stripY": false
+  },
+  {
+   "name": "attack/lk",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Illegal Knee.fbx",
+   "stripY": false
+  },
+  {
+   "name": "attack/mk",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Jab Cross.fbx",
+   "stripY": false
+  },
+  {
+   "name": "attack/hk",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Body Jab Cross.fbx",
    "stripY": false
   },
   {
@@ -151,7 +181,7 @@
   },
   {
    "name": "attack/rising-glyph",
-   "file": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing 2H Magic Attack 03.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Uppercut.fbx",
    "stripY": true
   },
   {

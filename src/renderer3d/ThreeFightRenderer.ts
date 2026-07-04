@@ -250,8 +250,19 @@ export class ThreeFightRenderer {
 
   render(state: GameState): void {
     if (!this.ready || this.disposed) return;
-    this.fighters[0].update(state.tick, state.fighters[0], state.fighters[1]);
-    this.fighters[1].update(state.tick, state.fighters[1], state.fighters[0]);
+    // round-1 intro plays the entry gesture (later rounds go straight to idle)
+    const intro = state.phase === 'intro' && state.roundNumber === 1;
+    const [fa, fb] = state.fighters;
+    this.fighters[0].update(state.tick, fa, {
+      opponent: fb,
+      opponentDef: this.defs[fb.charId],
+      intro,
+    });
+    this.fighters[1].update(state.tick, fb, {
+      opponent: fa,
+      opponentDef: this.defs[fa.charId],
+      intro,
+    });
     this.hitboxes.update(state, this.defs);
     const dtTicks = this.lastFxTick < 0 ? 0 : Math.max(state.tick - this.lastFxTick, 0);
     this.lastFxTick = state.tick;
