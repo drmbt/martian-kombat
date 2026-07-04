@@ -46,8 +46,8 @@ export function random3dFight(): LaunchTarget {
   return {
     scene: 'Fight3D',
     data: {
-      p1: params.get('p1') ?? 'vincent',
-      p2: params.get('p2') ?? 'vincent',
+      p1: params.get('p1') ?? 'flo',
+      p2: params.get('p2') ?? 'yulia',
       stage: DEV_STAGE,
       cpu: true,
     },

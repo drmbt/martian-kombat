@@ -165,6 +165,9 @@ def main():
     target = job.get('targetHeight', 1.75)
     factor = target / span if span > 1e-6 else 1.0
     arm.scale = tuple(s * factor for s in arm.scale)
+    # normalize authored forward to +X: rigs facing +Z get a world-yaw bake
+    if job.get('forward') == 'z':
+        arm.rotation_euler.rotate_axis('Z', -1.5707963)
     bpy.context.view_layer.update()
 
     rig_bones = {b.name for b in arm.data.bones}

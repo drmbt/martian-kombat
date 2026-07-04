@@ -19,10 +19,10 @@ const BASE_CLIPS = {
   'dash-forward#2': { file: 'Medium Step Forward.fbx' },
   'dash-back': { file: 'Drunk Walk Backwards.fbx' },
   crouch: { file: 'Crouch Idle.fbx' },
-  prejump: { file: 'Standing Idle To Crouch.fbx' },
+  prejump: { file: 'Jumping Up.fbx', stripY: true }, // same clip as jump: anticipation flows into takeoff
   jump: { file: 'Jumping Up.fbx', stripY: true },
   fall: { file: 'Falling Idle.fbx' },
-  landing: { file: 'hard landing.fbx', stripY: true },
+  landing: { file: 'Standing Land To Standing Idle.fbx', stripY: true },
   getup: { file: 'cover to stand.fbx' },
   hit: { file: 'Head Hit.fbx' },
   'hit#2': { file: 'Head Hit (2).fbx' },
@@ -92,6 +92,7 @@ export const MESHES = {
   },
   yulia: {
     rig: 'yulia-20k-tripo-mixamo-base-rig.fbx',
+    forward: 'z', // authored facing +Z (Mixamo default) — tool bakes the -90 yaw
     basecolor: 'yulia-20k-tripo-unrigged/yulia-20k-tripo-unrigged_basecolor.PNG',
     clips: {
       ...BASE_CLIPS,

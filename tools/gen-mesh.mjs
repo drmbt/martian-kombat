@@ -104,6 +104,8 @@ writeFileSync(
       // world meters the standing rig must measure — baked into the GLB's
       // armature node so the runtime needs NO per-rig scale guessing
       targetHeight: (charJson.hurtStand.h / 100) * 0.95,
+      // rigs authored facing +Z get a baked -90 yaw so every GLB faces +X
+      forward: cfg.forward ?? 'x',
     },
     null,
     1,

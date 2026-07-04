@@ -101,10 +101,19 @@ class ClipPlayer {
       this.lastActionFrame >= 0 &&
       (countsDown ? f.action.frame > this.lastActionFrame : f.action.frame < this.lastActionFrame);
     if (key !== this.actionKey || restarted) {
+      // same-clip continuation (prejump -> air both play 'jump'): keep the
+      // clock running instead of snapping the clip back to 0 — the jump jank
+      const sameClip =
+        !restarted &&
+        this.current !== null &&
+        this.current.name.split('#')[0] ===
+          resolveClipName(this.available, override ?? actionToClipName(f, ctx.opponent, this.heavyReel, this.bodyReel)).name;
       this.actionKey = key;
-      // defeated loser (post-fatality matchEnd): start the death clip at its
-      // END — they're already on the floor, no fresh stand-up-and-die replay
-      this.elapsed = ctx.defeated ? 9999 : countsDown || override ? 0 : f.action.frame;
+      if (!sameClip) {
+        // defeated loser (post-fatality matchEnd): start the death clip at its
+        // END — they're already on the floor, no fresh stand-up-and-die replay
+        this.elapsed = ctx.defeated ? 9999 : countsDown || override ? 0 : f.action.frame;
+      }
       // latch reel flavor at the moment of impact (frame counts down, so
       // neither can be derived later): long stun / counter = heavy; a LOW
       // attack from the opponent = body reaction (stomach/liver clips)

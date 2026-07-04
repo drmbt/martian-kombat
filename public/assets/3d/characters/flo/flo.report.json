@@ -9,7 +9,7 @@
  "clips": [
   {
    "name": "idle",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Fight Idle.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/idle/Fight Idle.fbx",
    "frames": 143,
    "seconds": 4.767,
    "rootStripped": [
@@ -29,7 +29,7 @@
   },
   {
    "name": "walk-back",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Standing Walk Back.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/walk/Standing Walk Back.fbx",
    "frames": 30,
    "seconds": 1,
    "rootStripped": [
@@ -39,7 +39,7 @@
   },
   {
    "name": "dash-forward",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Short Step Forward.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/walk/Short Step Forward.fbx",
    "frames": 30,
    "seconds": 1,
    "rootStripped": [
@@ -59,7 +59,7 @@
   },
   {
    "name": "dash-back",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Drunk Walk Backwards.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/walk/Drunk Walk Backwards.fbx",
    "frames": 47,
    "seconds": 1.567,
    "rootStripped": [
@@ -79,17 +79,18 @@
   },
   {
    "name": "prejump",
-   "source": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/shared/pro-magic-pack/Standing Idle To Crouch.fbx",
-   "frames": 30,
-   "seconds": 1,
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/jump/Jumping Up.fbx",
+   "frames": 25,
+   "seconds": 0.833,
    "rootStripped": [
     "X",
-    "Y"
+    "Y",
+    "Zv"
    ]
   },
   {
    "name": "jump",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Jumping Up.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/jump/Jumping Up.fbx",
    "frames": 25,
    "seconds": 0.833,
    "rootStripped": [
@@ -110,9 +111,9 @@
   },
   {
    "name": "landing",
-   "source": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/shared/action-adventure-pack/hard landing.fbx",
-   "frames": 60,
-   "seconds": 2,
+   "source": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/shared/pro-magic-pack/Standing Land To Standing Idle.fbx",
+   "frames": 33,
+   "seconds": 1.1,
    "rootStripped": [
     "X",
     "Y",
@@ -131,7 +132,7 @@
   },
   {
    "name": "hit",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Head Hit.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/hits/Head Hit.fbx",
    "frames": 43,
    "seconds": 1.433,
    "rootStripped": [
@@ -141,7 +142,7 @@
   },
   {
    "name": "hit#2",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Head Hit (2).fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/hits/Head Hit (2).fbx",
    "frames": 32,
    "seconds": 1.067,
    "rootStripped": [
@@ -151,7 +152,7 @@
   },
   {
    "name": "hit#3",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Head Hit (3).fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/hits/Head Hit (3).fbx",
    "frames": 50,
    "seconds": 1.667,
    "rootStripped": [
@@ -171,7 +172,7 @@
   },
   {
    "name": "hit-front#2",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Light Hit To Head.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/hits/Light Hit To Head.fbx",
    "frames": 15,
    "seconds": 0.5,
    "rootStripped": [
@@ -201,7 +202,7 @@
   },
   {
    "name": "hit-front-heavy#2",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Receive Uppercut To The Face.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/hits/Receive Uppercut To The Face.fbx",
    "frames": 29,
    "seconds": 0.967,
    "rootStripped": [
@@ -211,7 +212,7 @@
   },
   {
    "name": "hit-front-heavy#3",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Receiving A Big Uppercut.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/hits/Receiving A Big Uppercut.fbx",
    "frames": 73,
    "seconds": 2.433,
    "rootStripped": [
@@ -231,7 +232,7 @@
   },
   {
    "name": "hit-air",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Flying Back Death.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/knockout/Flying Back Death.fbx",
    "frames": 91,
    "seconds": 3.033,
    "rootStripped": [
@@ -241,7 +242,7 @@
   },
   {
    "name": "hit-body",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Big Stomach Hit.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/hits/Big Stomach Hit.fbx",
    "frames": 42,
    "seconds": 1.4,
    "rootStripped": [
@@ -251,7 +252,7 @@
   },
   {
    "name": "hit-body#2",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Rib Hit.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/hits/Rib Hit.fbx",
    "frames": 30,
    "seconds": 1,
    "rootStripped": [
@@ -261,7 +262,7 @@
   },
   {
    "name": "hit-body#3",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Hit To Body.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/hits/Hit To Body.fbx",
    "frames": 40,
    "seconds": 1.333,
    "rootStripped": [
@@ -281,7 +282,7 @@
   },
   {
    "name": "block-stand",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Standing Block Idle.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/block/Standing Block Idle.fbx",
    "frames": 69,
    "seconds": 2.3,
    "rootStripped": [
@@ -301,7 +302,7 @@
   },
   {
    "name": "ko",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Standing React Death Backward.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/knockout/Standing React Death Backward.fbx",
    "frames": 109,
    "seconds": 3.633,
    "rootStripped": [
@@ -311,7 +312,7 @@
   },
   {
    "name": "ko-forward",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Standing React Death Forward.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/knockout/Standing React Death Forward.fbx",
    "frames": 110,
    "seconds": 3.667,
    "rootStripped": [
@@ -401,7 +402,7 @@
   },
   {
    "name": "attack-generic",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Punching.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Punching.fbx",
    "frames": 31,
    "seconds": 1.033,
    "rootStripped": [
@@ -422,7 +423,7 @@
   },
   {
    "name": "attack/lp",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Lead Jab.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Lead Jab.fbx",
    "frames": 37,
    "seconds": 1.233,
    "rootStripped": [
@@ -432,7 +433,7 @@
   },
   {
    "name": "attack/lp#2",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Lead Jab (2).fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Lead Jab (2).fbx",
    "frames": 54,
    "seconds": 1.8,
    "rootStripped": [
@@ -442,7 +443,7 @@
   },
   {
    "name": "attack/lp#3",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Lead Jab (3).fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Lead Jab (3).fbx",
    "frames": 55,
    "seconds": 1.833,
    "rootStripped": [
@@ -452,7 +453,7 @@
   },
   {
    "name": "attack/mp",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Hook.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Hook.fbx",
    "frames": 26,
    "seconds": 0.867,
    "rootStripped": [
@@ -462,7 +463,7 @@
   },
   {
    "name": "attack/mp#2",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Hook Punch.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Hook Punch.fbx",
    "frames": 33,
    "seconds": 1.1,
    "rootStripped": [
@@ -472,7 +473,7 @@
   },
   {
    "name": "attack/hp",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Illegal Elbow Punch.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Illegal Elbow Punch.fbx",
    "frames": 68,
    "seconds": 2.267,
    "rootStripped": [
@@ -482,7 +483,7 @@
   },
   {
    "name": "attack/hp#2",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Illegal Elbow Punch (1).fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Illegal Elbow Punch (1).fbx",
    "frames": 40,
    "seconds": 1.333,
    "rootStripped": [
@@ -502,7 +503,7 @@
   },
   {
    "name": "attack/mk",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Jab Cross.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Jab Cross.fbx",
    "frames": 59,
    "seconds": 1.967,
    "rootStripped": [
@@ -512,7 +513,7 @@
   },
   {
    "name": "attack/hk",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Body Jab Cross.fbx",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Body Jab Cross.fbx",
    "frames": 41,
    "seconds": 1.367,
    "rootStripped": [
