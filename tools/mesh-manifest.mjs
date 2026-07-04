@@ -66,9 +66,7 @@ const BASE_CLIPS = {
   // "Leg Sweep" (crouch kicks), "Mma Kick".
   'attack/lk': { file: 'Illegal Knee.fbx' },
   'attack/mk': { file: 'Kicking.fbx' },
-  'attack/mk#fallback': { file: 'Illegal Knee.fbx' },
   'attack/hk': { file: 'Roundhouse Kick.fbx' },
-  'attack/hk#fallback': { file: 'Illegal Knee.fbx' },
   'attack/throw': { file: 'Illegal Headbutt.fbx' },
 };
 

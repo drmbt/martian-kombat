@@ -96,13 +96,16 @@ export function actionToClipName(
 
 /** fallback chain for a clip name (SPEC V12: exact -> chain -> idle) */
 export function fallbackChain(want: string): string[] {
+  // explicit data chains win (e.g. kicks fall back to the knee, a LEG
+  // strike, before the generic punch)
+  if (FALLBACKS[want]) return FALLBACKS[want];
   if (want.startsWith('attack/')) {
     const id = want.slice('attack/'.length);
     if (id.startsWith('j')) return ['attack-air', 'attack-generic'];
     if (id.startsWith('c')) return [`attack/${id.slice(1)}`, 'attack-generic'];
     return ['attack-generic'];
   }
-  return FALLBACKS[want] ?? [];
+  return [];
 }
 
 export interface ResolvedClip {

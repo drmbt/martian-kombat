@@ -463,9 +463,9 @@
   },
   {
    "name": "attack/mp#2",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Hook Punch.fbx",
-   "frames": 33,
-   "seconds": 1.1,
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Jab Cross.fbx",
+   "frames": 59,
+   "seconds": 1.967,
    "rootStripped": [
     "X",
     "Z"
@@ -483,9 +483,9 @@
   },
   {
    "name": "attack/hp#2",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Illegal Elbow Punch (1).fbx",
-   "frames": 40,
-   "seconds": 1.333,
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Body Jab Cross.fbx",
+   "frames": 41,
+   "seconds": 1.367,
    "rootStripped": [
     "X",
     "Z"
@@ -496,26 +496,6 @@
    "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Illegal Knee.fbx",
    "frames": 68,
    "seconds": 2.267,
-   "rootStripped": [
-    "X",
-    "Z"
-   ]
-  },
-  {
-   "name": "attack/mk",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Jab Cross.fbx",
-   "frames": 59,
-   "seconds": 1.967,
-   "rootStripped": [
-    "X",
-    "Z"
-   ]
-  },
-  {
-   "name": "attack/hk",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Body Jab Cross.fbx",
-   "frames": 41,
-   "seconds": 1.367,
    "rootStripped": [
     "X",
     "Z"
@@ -616,8 +596,6 @@
    "attack/mp",
    "attack/hp",
    "attack/lk",
-   "attack/mk",
-   "attack/hk",
    "attack/sudo-kill",
    "attack/fork-bomb",
    "attack/smokescreen",
@@ -627,12 +605,14 @@
   ],
   "fallback": [
    "block-crouch -> block-stand",
+   "attack/mk -> attack-generic",
+   "attack/hk -> attack-generic",
    "attack/clp -> attack/lp",
    "attack/cmp -> attack/mp",
    "attack/chp -> attack/hp",
    "attack/clk -> attack/lk",
-   "attack/cmk -> attack/mk",
-   "attack/chk -> attack/hk",
+   "attack/cmk -> attack-generic",
+   "attack/chk -> attack-generic",
    "attack/jlp -> attack-air",
    "attack/jmp -> attack-air",
    "attack/jhp -> attack-air",
@@ -642,5 +622,8 @@
   ],
   "missing": []
  },
- "missingSources": []
+ "missingSources": [
+  "attack/mk <- Kicking.fbx",
+  "attack/hk <- Roundhouse Kick.fbx"
+ ]
 }

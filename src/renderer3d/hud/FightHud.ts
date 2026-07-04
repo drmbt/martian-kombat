@@ -9,6 +9,7 @@ export interface FightHudFrame {
   ghost: [number, number];
   combo: string;
   clips: [string, string];
+  tauntKey: string;
 }
 
 export class FightHud {
@@ -142,7 +143,7 @@ export class FightHud {
       if (frame.combo) this.combo.textContent = frame.combo;
     }
     const info =
-      `[F1] hitboxes  [F2] skeleton  [F3] inspector  [F4] settings  [F9] rematch  [ESC] menu\n` +
+      `[F1] hitboxes  [F2] skeleton  [F3] inspector  [F4] settings  [${frame.tauntKey}] taunt  [F9] rematch  [ESC] menu\n` +
       `clips: ${frame.clips[0]} | ${frame.clips[1]}`;
     if (c.info !== info) {
       c.info = info;

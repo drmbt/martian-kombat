@@ -172,6 +172,14 @@
     ],
     "dash-back": [
       "walk-back"
+    ],
+    "attack/mk": [
+      "attack/lk",
+      "attack-generic"
+    ],
+    "attack/hk": [
+      "attack/lk",
+      "attack-generic"
     ]
   },
   "impactNorm": {

@@ -463,9 +463,9 @@
   },
   {
    "name": "attack/mp#2",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Hook Punch.fbx",
-   "frames": 33,
-   "seconds": 1.1,
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Jab Cross.fbx",
+   "frames": 59,
+   "seconds": 1.967,
    "rootStripped": [
     "X",
     "Z"
@@ -483,9 +483,9 @@
   },
   {
    "name": "attack/hp#2",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Illegal Elbow Punch (1).fbx",
-   "frames": 40,
-   "seconds": 1.333,
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Body Jab Cross.fbx",
+   "frames": 41,
+   "seconds": 1.367,
    "rootStripped": [
     "X",
     "Z"
@@ -496,26 +496,6 @@
    "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Illegal Knee.fbx",
    "frames": 68,
    "seconds": 2.267,
-   "rootStripped": [
-    "X",
-    "Z"
-   ]
-  },
-  {
-   "name": "attack/mk",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Jab Cross.fbx",
-   "frames": 59,
-   "seconds": 1.967,
-   "rootStripped": [
-    "X",
-    "Z"
-   ]
-  },
-  {
-   "name": "attack/hk",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Body Jab Cross.fbx",
-   "frames": 41,
-   "seconds": 1.367,
    "rootStripped": [
     "X",
     "Z"
@@ -533,9 +513,9 @@
   },
   {
    "name": "attack/cossack-spiral",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Back Flip To Uppercut.fbx",
-   "frames": 175,
-   "seconds": 5.833,
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/jump/Cross Jumps Rotation.fbx",
+   "frames": 61,
+   "seconds": 2.033,
    "rootStripped": [
     "X",
     "Yv",
@@ -544,11 +524,12 @@
   },
   {
    "name": "attack/backbend-guillotine",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Body Jab Cross.fbx",
-   "frames": 41,
-   "seconds": 1.367,
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/Back Flip To Uppercut.fbx",
+   "frames": 175,
+   "seconds": 5.833,
    "rootStripped": [
     "X",
+    "Yv",
     "Z"
    ]
   },
@@ -599,10 +580,9 @@
   "taunt: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
   "taunt#2: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
   "taunt#3: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "attack/mp#2: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "attack/hp#2: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
   "attack/lk: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
-  "attack/mk: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
-  "attack/hk: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
-  "attack/cossack-spiral: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
   "attack/backbend-guillotine: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']"
  ],
  "coverage": {
@@ -638,8 +618,6 @@
    "attack/mp",
    "attack/hp",
    "attack/lk",
-   "attack/mk",
-   "attack/hk",
    "attack/cossack-spiral",
    "attack/backbend-guillotine",
    "attack/volga-piledriver",
@@ -649,12 +627,14 @@
   ],
   "fallback": [
    "block-crouch -> block-stand",
+   "attack/mk -> attack-generic",
+   "attack/hk -> attack-generic",
    "attack/clp -> attack/lp",
    "attack/cmp -> attack/mp",
    "attack/chp -> attack/hp",
    "attack/clk -> attack/lk",
-   "attack/cmk -> attack/mk",
-   "attack/chk -> attack/hk",
+   "attack/cmk -> attack-generic",
+   "attack/chk -> attack-generic",
    "attack/jlp -> attack-air",
    "attack/jmp -> attack-air",
    "attack/jhp -> attack-air",
@@ -664,5 +644,8 @@
   ],
   "missing": []
  },
- "missingSources": []
+ "missingSources": [
+  "attack/mk <- Kicking.fbx",
+  "attack/hk <- Roundhouse Kick.fbx"
+ ]
 }

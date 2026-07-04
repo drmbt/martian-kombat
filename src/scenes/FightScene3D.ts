@@ -9,6 +9,7 @@ import { initialState, step, TICK_MS } from '../engine';
 import type { GameState } from '../engine';
 import { characters } from '../data/characters';
 import { KeyboardSource } from '../input/keyboard';
+import { getSettings } from '../settings';
 import { CpuDriver } from '../ai/bot';
 import { stageById } from '../data/stages';
 import { play, playVoice } from './BootScene';
@@ -44,6 +45,7 @@ export class FightScene3D extends Phaser.Scene {
   private settings = { ...DEFAULT_SETTINGS };
   private panel: ReturnType<typeof createSettingsPanel> | null = null;
   private inspectorOn = false;
+  private tauntKey = 'Q';
   private comboHits = 0;
   private comboTicks = 0;
   private ghostHealth: [number, number] = [0, 0];
@@ -98,7 +100,12 @@ export class FightScene3D extends Phaser.Scene {
       if (!this.panel) return;
       this.panel.el.style.display = this.panel.el.style.display === 'none' ? 'block' : 'none';
     });
-    kb.on('keydown-T', () => {
+    // taunt key: picked from keys NOT bound to any fight action (T is P1's
+    // MP by default — never hardcode over the fight rows)
+    const bound = new Set(getSettings().bindings.flatMap((b) => Object.values(b.keys) as number[]));
+    this.tauntKey =
+      ['Q', 'Z', 'X', 'V', 'B', 'N'].find((k) => !bound.has(k.charCodeAt(0))) ?? 'Q';
+    kb.on(`keydown-${this.tauntKey}`, () => {
       this.renderer3d?.taunt(0, this.state.tick);
       this.voice(this.chars[0], 'kiai', 0.6);
     });
@@ -250,6 +257,7 @@ export class FightScene3D extends Phaser.Scene {
       ghost: this.ghostHealth,
       combo: this.comboHits >= 2 && this.comboTicks > 0 ? `${this.comboHits} HITS` : '',
       clips: [clip(0), clip(1)],
+      tauntKey: this.tauntKey,
     });
   }
 

@@ -231,7 +231,7 @@
   },
   {
    "name": "attack/mp#2",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Hook Punch.fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Jab Cross.fbx",
    "stripY": false
   },
   {
@@ -241,22 +241,12 @@
   },
   {
    "name": "attack/hp#2",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Illegal Elbow Punch (1).fbx",
+   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Body Jab Cross.fbx",
    "stripY": false
   },
   {
    "name": "attack/lk",
    "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/Illegal Knee.fbx",
-   "stripY": false
-  },
-  {
-   "name": "attack/mk",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Jab Cross.fbx",
-   "stripY": false
-  },
-  {
-   "name": "attack/hk",
-   "file": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Body Jab Cross.fbx",
    "stripY": false
   },
   {
@@ -282,6 +272,11 @@
   {
    "name": "attack/redirect",
    "file": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing 2H Cast Spell 01.fbx",
+   "stripY": false
+  },
+  {
+   "name": "attack/matrix-teleport",
+   "file": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/standing 1H cast spell 01.fbx",
    "stripY": false
   }
  ],
