@@ -321,19 +321,28 @@ export class SelectScene extends Phaser.Scene {
     this.redraw();
   }
 
-  /** both fighters locked: HOST opens the stage picker, GUEST waits for it */
+  /** both fighters locked: clear the "waiting" notice and BOTH players open
+   *  the stage picker (votes reconcile in the controller) */
   private onBothLocked(): void {
-    if (this.online!.localSlot === 0) {
-      this.time.delayedCall(600, () => this.openStagePick());
-    } else {
+    this.waitingText?.destroy();
+    this.waitingText = null;
+    this.time.delayedCall(600, () => this.openStagePick());
+  }
+
+  /** show/replace the "waiting for the opponent" notice (bottom banner, above
+   *  the stage dialog + everything else) */
+  private setWaiting(text: string): void {
+    if (!this.waitingText) {
       this.waitingText = this.add
-        .text(STAGE_W / 2, STAGE_H / 2, 'waiting for host to choose the stage…', {
-          fontFamily: 'monospace', fontSize: '18px', fontStyle: 'bold', color: '#ffd24a',
-          stroke: '#000', strokeThickness: 5,
+        .text(STAGE_W / 2, STAGE_H - 42, '', {
+          fontFamily: 'monospace', fontSize: '17px', fontStyle: 'bold', color: '#ffd24a',
+          stroke: '#000', strokeThickness: 6, align: 'center',
+          backgroundColor: '#1a1020', padding: { x: 12, y: 5 },
         })
         .setOrigin(0.5)
-        .setDepth(20);
+        .setDepth(30);
     }
+    this.waitingText.setText(text).setVisible(true);
   }
 
   /** leave an online pick: tell the peer, drop the channel, back to menu */
@@ -454,6 +463,12 @@ export class SelectScene extends Phaser.Scene {
     this.redraw();
     if (this.online) {
       this.online.controller.lockChar(entry.id);
+      // picked first → tell them we're waiting on the other player, don't
+      // silently sit (onBothLocked clears this and opens the stage picker)
+      const remoteSlot = this.online.localSlot === 0 ? 1 : 0;
+      if (!this.confirmed[remoteSlot]) {
+        this.setWaiting(`waiting for ${this.online.remoteName} to choose their fighter…`);
+      }
       return;
     }
     if (this.confirmed[0] && this.confirmed[1]) {
@@ -567,14 +582,14 @@ export class SelectScene extends Phaser.Scene {
       ? STAGES[Math.floor(Math.random() * STAGES.length)].id
       : pick.id;
     play(this, 's-blip', 0.8);
-    // online HOST: commit the stage through the controller — the match config
-    // it sends drives BOTH peers' launch (via onStart -> launchOnline), so the
-    // guest starts on the identical stage/rules (V25). Never scene.start here.
+    // online: BOTH players vote for a stage. The host reconciles (agree → that,
+    // disagree → coin flip) and sends the authoritative start, so both peers
+    // launch on the identical stage/rules (V25). Never scene.start here.
     if (this.online) {
       this.starting = true;
       this.redrawStage();
-      this.online.controller.setStage(stage);
-      this.online.controller.confirmStart();
+      this.online.controller.pickStage(stage);
+      this.setWaiting(`stage locked — waiting for ${this.online.remoteName}…`);
       return;
     }
     this.starting = true;

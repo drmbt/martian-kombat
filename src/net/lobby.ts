@@ -78,8 +78,10 @@ export interface LobbyHooks {
   onReady?: (info: { remoteName: string; render3d: boolean }) => void;
   /** the remote player locked their fighter in on the select screen */
   onRemoteLock?: (remote: RemotePlayer) => void;
-  /** both fighters locked — HOST opens the stage picker, GUEST waits */
+  /** both fighters locked — BOTH players open the stage picker */
   onBothLocked?: () => void;
+  /** the remote player cast their stage vote (for a "opponent picked X" note) */
+  onRemoteStage?: (stageId: string) => void;
   /** match config agreed — launch the Fight with a NetSession using this */
   onStart?: (config: StartConfig) => void;
 }
@@ -126,6 +128,8 @@ export class LobbyController {
   private remoteName = '';
   private localChar: string | null = null;
   private remoteChar: string | null = null;
+  private localStage: string | null = null;
+  private remoteStage: string | null = null;
   private readyFired = false;
   private bothLockedFired = false;
   private started = false;
@@ -161,11 +165,6 @@ export class LobbyController {
     return this.remoteChar;
   }
 
-  /** host may re-pick the stage right up until it confirms the start */
-  setStage(stage: string): void {
-    this.stage = stage;
-  }
-
   /** the local player locked their fighter on the select screen */
   lockChar(charId: string): void {
     if (this.phase === 'error' || this.started || this.localChar) return;
@@ -174,8 +173,31 @@ export class LobbyController {
     this.maybeBothLocked();
   }
 
-  /** HOST: both fighters locked + stage chosen → commit the match config */
-  confirmStart(): void {
+  /** the local player cast their stage vote. BOTH players vote; the host
+   *  reconciles (agree → that stage, disagree → coin flip between the two) and
+   *  sends the authoritative `start`. */
+  pickStage(stageId: string): void {
+    if (this.phase === 'error' || this.started || this.localStage) return;
+    this.localStage = stageId;
+    this.transport.send({ t: 'stagePick', stageId });
+    this.maybeResolveStage();
+  }
+
+  private maybeResolveStage(): void {
+    // only the host reconciles, and only once both votes are in
+    if (!this.isHost || this.started || !this.localStage || !this.remoteStage) return;
+    const resolved =
+      this.localStage === this.remoteStage
+        ? this.localStage
+        : Math.random() < 0.5
+          ? this.localStage
+          : this.remoteStage; // disagreement → random pick between the two votes
+    this.stage = resolved;
+    this.confirmStart();
+  }
+
+  /** HOST: both fighters locked + stage resolved → commit the match config */
+  private confirmStart(): void {
     if (!this.isHost || this.started) return;
     if (!this.localChar || !this.remoteChar) return;
     const chars: [string, string] = [this.localChar, this.remoteChar];
@@ -219,6 +241,12 @@ export class LobbyController {
         this.remoteChar = m.charId;
         this.hooks.onRemoteLock?.({ name: this.remoteName, charId: m.charId });
         this.maybeBothLocked();
+        break;
+      }
+      case 'stagePick': {
+        this.remoteStage = m.stageId;
+        this.hooks.onRemoteStage?.(m.stageId);
+        this.maybeResolveStage(); // host reconciles once both votes are in
         break;
       }
       case 'start': {

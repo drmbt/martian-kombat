@@ -751,6 +751,18 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-05 · net+select · online pick-waiting + both-vote stage** — (1) after
+  a player locks their fighter online they now see "waiting for <name> to choose
+  their fighter…" instead of silently sitting/advancing; onBothLocked clears it
+  and BOTH open the stage picker. (2) stage is chosen by BOTH players (was
+  host-only): each casts a `stagePick` vote; the host reconciles (agree → that
+  stage, disagree → coin flip between the two votes) and sends the authoritative
+  `start`, so both launch on the identical stage (V25). `confirmStart` is now
+  host-internal. 4 lobby vitests cover same-vote, disagreement (result ∈ the two
+  votes over 12 trials), lone-guest-no-start. Verified live (two Chrome, prod
+  build): waiting note shown, both peers reach the stage dialog, opposing votes
+  resolve to one shared stage, sync intact. Local select untouched. — Claude
+
 - **2026-07-05 · net+scenes · online reuses the real SelectScene (no duplicate
   picker)** — the custom mini-picker in LobbyScene is gone; online now hands off
   to the SAME `SelectScene` local 2-player uses (grid + side idle sprites +

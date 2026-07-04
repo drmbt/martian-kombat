@@ -64,9 +64,9 @@ describe('LobbyController handshake', () => {
     expect(guest.adoptedRender3d).toBe(true); // guest auto-adopted host's 3D
   });
 
-  it('exchanges picks and starts on the host-authoritative config', () => {
+  it('exchanges picks, both vote the same stage, and starts on it', () => {
     const wire = createLoopbackPair({ latency: 1 });
-    const host = mount(wire.a, true, 'Flo', { stage: 'chiba-roof', delay: 3, render3d: true });
+    const host = mount(wire.a, true, 'Flo', { delay: 3, render3d: true });
     const guest = mount(wire.b, false, 'Yulia');
     wire.run(3);
 
@@ -77,10 +77,12 @@ describe('LobbyController handshake', () => {
     expect(guest.bothLocked).toBe(true);
     expect(host.remoteLock).toEqual({ name: 'Yulia', charId: 'yulia' });
     expect(guest.remoteLock).toEqual({ name: 'Flo', charId: 'vincent' });
-    expect(host.start).toBeNull(); // nothing starts until the host confirms the stage
+    expect(host.start).toBeNull(); // nothing starts until both vote the stage
 
-    host.ctrl.setStage('van');
-    host.ctrl.confirmStart();
+    host.ctrl.pickStage('van');
+    wire.run(2);
+    expect(host.start).toBeNull(); // still waiting on the guest's vote
+    guest.ctrl.pickStage('van');
     wire.run(3);
     expect(host.start).toEqual(guest.start);
     expect(host.start).toEqual({
@@ -92,7 +94,25 @@ describe('LobbyController handshake', () => {
     });
   });
 
-  it('only the host can start the match', () => {
+  it('on a stage disagreement the winner is one of the two votes', () => {
+    for (let trial = 0; trial < 12; trial++) {
+      const wire = createLoopbackPair({ latency: 1 });
+      const host = mount(wire.a, true, 'Host');
+      const guest = mount(wire.b, false, 'Guest');
+      wire.run(3);
+      host.ctrl.lockChar('vincent');
+      guest.ctrl.lockChar('yulia');
+      wire.run(3);
+      host.ctrl.pickStage('van'); // host votes van
+      guest.ctrl.pickStage('chiba-roof'); // guest votes chiba-roof
+      wire.run(3);
+      // both peers launch on the SAME resolved stage, and it's one of the votes
+      expect(host.start?.stage).toBe(guest.start?.stage);
+      expect(['van', 'chiba-roof']).toContain(host.start?.stage);
+    }
+  });
+
+  it('only the host reconciles — a lone guest vote never starts', () => {
     const wire = createLoopbackPair({ latency: 1 });
     const host = mount(wire.a, true, 'Host');
     const guest = mount(wire.b, false, 'Guest');
@@ -100,8 +120,8 @@ describe('LobbyController handshake', () => {
     host.ctrl.lockChar('kirby');
     guest.ctrl.lockChar('gene');
     wire.run(3);
-    guest.ctrl.confirmStart(); // guest cannot start — no-op
-    wire.run(2);
+    guest.ctrl.pickStage('van'); // only the guest voted
+    wire.run(3);
     expect(host.start).toBeNull();
     expect(guest.start).toBeNull();
   });
