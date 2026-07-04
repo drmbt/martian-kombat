@@ -31,6 +31,8 @@ export function snapTick(s: GameState): TickSnap {
 
 export type FightEvent =
   | { type: 'round-intro'; round: number }
+  /** READY? 3-2-1 countdown pips on long first intros (n = 3, 2, 1) */
+  | { type: 'count'; n: number }
   | { type: 'fight-start' }
   | { type: 'round-end'; winner: 0 | 1 | null; timeUp: boolean; perfect: boolean }
   | { type: 'match-end'; winner: 0 | 1 }
@@ -53,7 +55,13 @@ export function diffTick(prev: TickSnap, s: GameState, defs: Defs): FightEvent[]
   if (s.phase === 'intro' && s.phaseFrame === 1 && s.tick > 1) {
     events.push({ type: 'round-intro', round: s.roundNumber });
   }
-  if (s.phase === 'intro' && s.phaseFrame === Math.floor(INTRO_TICKS * 0.6)) {
+  const introLen = s.roundNumber === 1 ? s.rules.introTicks : INTRO_TICKS;
+  if (s.phase === 'intro' && introLen >= 240) {
+    for (const n of [3, 2, 1]) {
+      if (s.phaseFrame === introLen - n * 60) events.push({ type: 'count', n });
+    }
+  }
+  if (s.phase === 'intro' && s.phaseFrame === introLen - Math.ceil(INTRO_TICKS * 0.4)) {
     events.push({ type: 'fight-start' });
   }
   if (prev.phase === 'fight' && s.phase === 'roundEnd') {

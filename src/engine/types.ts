@@ -400,6 +400,9 @@ export interface MatchRules {
   /** walkable x range — wider arenas (3D stage) widen it symmetrically
    *  around STAGE_W/2 so renderer centering stays put */
   stage: { minX: number; maxX: number };
+  /** ROUND 1 intro length in ticks (later rounds keep INTRO_TICKS) — longer
+   *  first intros give entry gestures + a READY? 3-2-1 countdown room */
+  introTicks: number;
 }
 
 export interface GameState {

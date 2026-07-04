@@ -607,7 +607,7 @@ describe('round flow', () => {
 describe('match rules', () => {
   it('defaults to the classic 99s / best-of-3 rules', () => {
     const s = initialState(P1, P2, characters);
-    expect(s.rules).toEqual({ roundTicks: ROUND_TICKS, winsNeeded: 2, stage: { minX: 50, maxX: 910 } });
+    expect(s.rules).toEqual({ roundTicks: ROUND_TICKS, winsNeeded: 2, stage: { minX: 50, maxX: 910 }, introTicks: 90 });
     expect(s.timer).toBe(ROUND_TICKS);
   });
 

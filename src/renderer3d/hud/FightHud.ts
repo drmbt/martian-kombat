@@ -149,7 +149,18 @@ export class FightHud {
       c.timer = timer;
       this.timer.textContent = timer;
     }
-    const label = s.phase === 'intro' ? `ROUND ${s.roundNumber}` : PHASE_LABEL[s.phase];
+    let label = s.phase === 'intro' ? `ROUND ${s.roundNumber}` : PHASE_LABEL[s.phase];
+    if (s.phase === 'intro' && s.roundNumber === 1 && s.rules.introTicks >= 240) {
+      const left = s.rules.introTicks - s.phaseFrame;
+      label =
+        left > 180
+          ? 'READY?'
+          : left > 120
+            ? '3'
+            : left > 60
+              ? '2'
+              : '1';
+    }
     if (c.label !== label) {
       c.label = label;
       this.label.textContent = label;

@@ -91,6 +91,7 @@ export function initialState(
     roundTicks: rules?.roundTicks ?? ROUND_TICKS,
     winsNeeded: rules?.winsNeeded ?? WINS_NEEDED,
     stage: rules?.stage ?? { minX: STAGE_MIN_X, maxX: STAGE_MAX_X },
+    introTicks: rules?.introTicks ?? INTRO_TICKS,
   };
   return {
     tick: 0,
@@ -1205,8 +1206,9 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
   }
 
   if (s.phase === 'intro') {
+    const introLen = s.roundNumber === 1 ? s.rules.introTicks : INTRO_TICKS;
     s.phaseFrame++;
-    if (s.phaseFrame >= INTRO_TICKS) {
+    if (s.phaseFrame >= introLen) {
       s.phase = 'fight';
       s.phaseFrame = 0;
     }

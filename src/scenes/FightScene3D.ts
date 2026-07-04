@@ -61,6 +61,8 @@ export class FightScene3D extends Phaser.Scene {
     // the engine->Three mapping stays put (engine V: rules.stage)
     this.state = initialState(this.chars[0], this.chars[1], characters, {
       stage: { minX: -110, maxX: 1070 },
+      // room for the entry gesture + READY? 3-2-1 before FIGHT
+      introTicks: 300,
     });
     this.inputs = new KeyboardSource(this);
     this.ghostHealth = [characters[this.chars[0]].health, characters[this.chars[1]].health];
@@ -204,6 +206,9 @@ export class FightScene3D extends Phaser.Scene {
         case 'round-intro':
           play(this, e.round === 2 ? 'ann-round-2' : 'ann-final-round');
           nextTrack();
+          break;
+        case 'count':
+          this.snd('s-block', 0.35); // countdown blip
           break;
         case 'fight-start':
           play(this, 'ann-fight', 1);

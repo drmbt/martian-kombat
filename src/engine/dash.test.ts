@@ -40,6 +40,16 @@ describe('stage bounds (MatchRules.stage)', () => {
   });
 });
 
+describe('intro length (MatchRules.introTicks)', () => {
+  it('round 1 honors the rule, later rounds fall back to the default 90', () => {
+    const s = initialState('vincent', 'yulia', characters, { introTicks: 300 });
+    for (let t = 0; t < 299; t++) step(s, [inp(), inp()], characters);
+    expect(s.phase).toBe('intro');
+    step(s, [inp(), inp()], characters);
+    expect(s.phase).toBe('fight');
+  });
+});
+
 describe('dash stocks', () => {
   it('spends a stock per dash and applies the impulse', () => {
     const s = fresh();
