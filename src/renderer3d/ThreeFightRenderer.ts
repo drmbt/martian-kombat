@@ -118,6 +118,13 @@ export class ThreeFightRenderer {
     this.fighters[slot].flash(tick, ticks, color);
   }
 
+  private tauntUntil: [number, number] = [-1, -1];
+
+  /** Presentation-only taunt gesture — plays while the engine stays idle. */
+  taunt(slot: 0 | 1, tick: number, ticks = 110): void {
+    this.tauntUntil[slot] = tick + ticks;
+  }
+
   /** Presentation-only camera shake (T21) — never touches gameplay coords. */
   shake(tick: number, ticks: number, amplitude: number): void {
     this.shakeUntil = tick + ticks;
@@ -257,11 +264,13 @@ export class ThreeFightRenderer {
       opponent: fb,
       opponentDef: this.defs[fb.charId],
       intro,
+      taunt: state.tick < this.tauntUntil[0],
     });
     this.fighters[1].update(state.tick, fb, {
       opponent: fa,
       opponentDef: this.defs[fa.charId],
       intro,
+      taunt: state.tick < this.tauntUntil[1],
     });
     this.hitboxes.update(state, this.defs);
     const dtTicks = this.lastFxTick < 0 ? 0 : Math.max(state.tick - this.lastFxTick, 0);

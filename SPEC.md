@@ -85,6 +85,8 @@ T29|x|HUD componentization: `src/renderer3d/hud/` — FightHud, WinOverlay, Fata
 T30|x|blend-glitch pass: action RESTART detection (same moveId re-trigger resets elapsed via frame counter direction), ⊥ mid-fade pops|V13
 T31|x|uppercut: `Uppercut.fbx` arrived → `attack/rising-glyph` remapped (stripY, impactNorm 0.4) + regen|V12
 
+T32|x|taunt button (T): renderer-side gesture override while idle, ⊥ engine change; variant shuffle system (`name#N` clips, tick-hash latch per action instance) spreads Lead Jab×3/Hook×2/Elbow×2, reaction flavors, taunts×3|V1,V12
+T33|x|dash stocks: engine `dashStocks`/`dashRegen` (2 stocks, 150-tick regen) gate the existing double-tap impulse + 4 vitests; HUD ◆ pips w/ recharge fade; dash-forward/back clips read off vx|V1,V15
 ## §B
 
 id|date|cause|fix

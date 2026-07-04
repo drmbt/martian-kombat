@@ -14,7 +14,7 @@ const IMPACT_NORM = contract.impactNorm as Record<string, number>;
 
 /** where in the authored clip the hit visually lands (0..1), if declared */
 export function impactNorm(name: string): number | undefined {
-  return IMPACT_NORM[name];
+  return IMPACT_NORM[name.split('#')[0]];
 }
 
 /**
@@ -57,9 +57,10 @@ export function actionToClipName(
     case 'idle':
       return 'idle';
     case 'walkF':
-      return 'walk-forward';
+      // a dash is walkF carrying a big friction-bled impulse — read it off vx
+      return f.vx * f.facing > 4 ? 'dash-forward' : 'walk-forward';
     case 'walkB':
-      return 'walk-back';
+      return f.vx * f.facing < -3.5 ? 'dash-back' : 'walk-back';
     case 'crouch':
       return 'crouch';
     case 'prejump':
@@ -119,13 +120,28 @@ export function resolveClipName(available: ReadonlySet<string>, want: string): R
   return { name: 'idle', placeholder: true };
 }
 
+/**
+ * Variant shuffle: a GLB may ship `name`, `name#2`, `name#3`… — pick one
+ * deterministically from the seed (tick-hashed at action start) so repeated
+ * jabs and reels don't always play the same clip.
+ */
+export function pickVariant(available: ReadonlySet<string>, name: string, seed: number): string {
+  const variants = [name];
+  for (let n = 2; available.has(`${name}#${n}`); n++) variants.push(`${name}#${n}`);
+  if (variants.length === 1) return name;
+  let h = (seed | 0) * 2654435761;
+  h ^= h >>> 15;
+  return variants[(h >>> 0) % variants.length];
+}
+
 export function clipClass(name: string): ClipClass {
-  if (name.startsWith('attack/')) return 'window';
-  return CLIPS[name]?.class ?? 'oneshot';
+  const base = name.split('#')[0];
+  if (base.startsWith('attack/')) return 'window';
+  return CLIPS[base]?.class ?? 'oneshot';
 }
 
 export function syncToWalkSpeed(name: string): boolean {
-  return CLIPS[name]?.syncToWalkSpeed === true;
+  return CLIPS[name.split('#')[0]]?.syncToWalkSpeed === true;
 }
 
 /**

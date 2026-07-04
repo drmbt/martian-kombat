@@ -3,6 +3,7 @@
 // 2D portrait pngs (V15). All DOM writes are cached — the DOM is only
 // touched when a value actually changes (perf pass).
 import type { Defs, GameState, Phase } from '../../engine';
+import { DASH_REGEN_TICKS, DASH_STOCKS } from '../../engine';
 
 const PHASE_LABEL: Record<Phase, string> = {
   intro: 'ROUND',
@@ -24,6 +25,7 @@ export class FightHud {
   private bars: [HTMLDivElement, HTMLDivElement];
   private ghosts: [HTMLDivElement, HTMLDivElement];
   private wins: [HTMLSpanElement, HTMLSpanElement];
+  private dashes: [HTMLSpanElement, HTMLSpanElement];
   private timer: HTMLDivElement;
   private label: HTMLDivElement;
   private combo: HTMLDivElement;
@@ -40,7 +42,9 @@ export class FightHud {
       'position:absolute;pointer-events:none;color:#e8e4d8;font:12px monospace;' +
       'text-shadow:0 1px 2px #000;overflow:hidden;';
 
-    const side = (slot: 0 | 1): { bar: HTMLDivElement; ghost: HTMLDivElement; wins: HTMLSpanElement } => {
+    const side = (
+      slot: 0 | 1,
+    ): { bar: HTMLDivElement; ghost: HTMLDivElement; wins: HTMLSpanElement; dash: HTMLSpanElement } => {
       const id = chars[slot];
       const wrap = document.createElement('div');
       wrap.style.cssText =
@@ -69,10 +73,15 @@ export class FightHud {
       wins.style.cssText =
         `display:block;color:#ffd75e;font-size:20px;line-height:1.2;letter-spacing:3px;` +
         `text-shadow:0 1px 3px #000;${slot === 1 ? 'text-align:right;' : ''}`;
-      col.append(name, barOuter, wins);
+      const dash = document.createElement('span');
+      dash.style.cssText =
+        `display:block;color:#7fd0ff;font-size:13px;letter-spacing:2px;` +
+        `text-shadow:0 1px 2px #000;${slot === 1 ? 'text-align:right;' : ''}`;
+      dash.title = 'dash stocks (double-tap ←/→)';
+      col.append(name, barOuter, wins, dash);
       wrap.append(img, col);
       this.root.appendChild(wrap);
-      return { bar, ghost, wins };
+      return { bar, ghost, wins, dash };
     };
 
     const l = side(0);
@@ -80,6 +89,7 @@ export class FightHud {
     this.bars = [l.bar, r.bar];
     this.ghosts = [l.ghost, r.ghost];
     this.wins = [l.wins, r.wins];
+    this.dashes = [l.dash, r.dash];
 
     this.timer = document.createElement('div');
     this.timer.style.cssText =
@@ -110,6 +120,18 @@ export class FightHud {
       if (c[`ghost${slot}`] !== ghostW) {
         c[`ghost${slot}`] = ghostW;
         this.ghosts[slot].style.width = `${ghostW}%`;
+      }
+      const regenDecile = Math.floor((f.dashRegen / DASH_REGEN_TICKS) * 10);
+      const dashKey = f.dashStocks * 100 + regenDecile;
+      if (c[`dash${slot}`] !== dashKey) {
+        c[`dash${slot}`] = dashKey;
+        const missing = Math.max(0, DASH_STOCKS - f.dashStocks);
+        // recharging pip brightens with progress; spent ones stay dim
+        const charging = missing
+          ? `<span style="opacity:${(0.25 + regenDecile * 0.05).toFixed(2)};">◇</span>` +
+            '<span style="opacity:.25;">◇</span>'.repeat(missing - 1)
+          : '';
+        this.dashes[slot].innerHTML = '◆'.repeat(f.dashStocks) + charging;
       }
       if (c[`wins${slot}`] !== s.wins[slot]) {
         c[`wins${slot}`] = s.wins[slot];

@@ -82,6 +82,15 @@
     },
     "hit-body-heavy": {
       "class": "oneshot"
+    },
+    "taunt": {
+      "class": "oneshot"
+    },
+    "dash-forward": {
+      "class": "oneshot"
+    },
+    "dash-back": {
+      "class": "oneshot"
     }
   },
   "fallbacks": {
@@ -153,6 +162,16 @@
       "hit-body",
       "hit-front-heavy",
       "hit"
+    ],
+    "taunt": [
+      "win",
+      "idle"
+    ],
+    "dash-forward": [
+      "walk-forward"
+    ],
+    "dash-back": [
+      "walk-back"
     ]
   },
   "impactNorm": {

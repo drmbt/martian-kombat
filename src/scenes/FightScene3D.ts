@@ -82,6 +82,10 @@ export class FightScene3D extends Phaser.Scene {
       if (!this.panel) return;
       this.panel.el.style.display = this.panel.el.style.display === 'none' ? 'block' : 'none';
     });
+    kb.on('keydown-T', () => {
+      this.renderer3d?.taunt(0, this.state.tick);
+      this.voice(this.chars[0], 'kiai', 0.6);
+    });
     kb.on('keydown-ESC', () => this.scene.start('Menu'));
     kb.on('keydown-F9', () =>
       this.scene.restart({ p1: this.chars[0], p2: this.chars[1], cpu: this.cpu, stage: this.stageId }),

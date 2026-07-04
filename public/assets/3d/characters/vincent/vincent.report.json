@@ -26,6 +26,36 @@
    ]
   },
   {
+   "name": "dash-forward",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Short Step Forward.fbx",
+   "frames": 30,
+   "seconds": 1,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
+   "name": "dash-forward#2",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Medium Step Forward.fbx",
+   "frames": 28,
+   "seconds": 0.933,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
+   "name": "dash-back",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Drunk Walk Backwards.fbx",
+   "frames": 47,
+   "seconds": 1.567,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
    "name": "walk-back",
    "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Standing Walk Back.fbx",
    "frames": 30,
@@ -108,10 +138,40 @@
    ]
   },
   {
+   "name": "hit#2",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Head Hit (2).fbx",
+   "frames": 32,
+   "seconds": 1.067,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit#3",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Head Hit (3).fbx",
+   "frames": 50,
+   "seconds": 1.667,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
    "name": "hit-front",
    "source": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing React Small From Front.fbx",
    "frames": 36,
    "seconds": 1.2,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit-front#2",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Light Hit To Head.fbx",
+   "frames": 15,
+   "seconds": 0.5,
    "rootStripped": [
     "Y",
     "Z"
@@ -132,6 +192,26 @@
    "source": "/Users/flo/work/code/martian-kombat/assets/raw/mesh-clips/vincent/pro-magic-pack/Standing React Large From Front.fbx",
    "frames": 41,
    "seconds": 1.367,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit-front-heavy#2",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Receive Uppercut To The Face.fbx",
+   "frames": 29,
+   "seconds": 0.967,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit-front-heavy#3",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Receiving A Big Uppercut.fbx",
+   "frames": 73,
+   "seconds": 2.433,
    "rootStripped": [
     "Y",
     "Z"
@@ -162,6 +242,26 @@
    "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Big Stomach Hit.fbx",
    "frames": 42,
    "seconds": 1.4,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit-body#2",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Rib Hit.fbx",
+   "frames": 30,
+   "seconds": 1,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
+   "name": "hit-body#3",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Hit To Body.fbx",
+   "frames": 40,
+   "seconds": 1.333,
    "rootStripped": [
     "Y",
     "Z"
@@ -248,6 +348,36 @@
    ]
   },
   {
+   "name": "taunt",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/gestures/Whatever Gesture.fbx",
+   "frames": 42,
+   "seconds": 1.4,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
+   "name": "taunt#2",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/gestures/Yawn.fbx",
+   "frames": 250,
+   "seconds": 8.333,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
+   "name": "taunt#3",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/gestures/Charge.fbx",
+   "frames": 171,
+   "seconds": 5.7,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
    "name": "attack-generic",
    "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Punching.fbx",
    "frames": 31,
@@ -309,6 +439,26 @@
    ]
   },
   {
+   "name": "attack/lp#2",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Lead Jab (2).fbx",
+   "frames": 54,
+   "seconds": 1.8,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/lp#3",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Lead Jab (3).fbx",
+   "frames": 55,
+   "seconds": 1.833,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
    "name": "attack/mp",
    "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Hook.fbx",
    "frames": 26,
@@ -319,10 +469,30 @@
    ]
   },
   {
+   "name": "attack/mp#2",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Hook Punch.fbx",
+   "frames": 33,
+   "seconds": 1.1,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
    "name": "attack/hp",
    "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Illegal Elbow Punch.fbx",
    "frames": 68,
    "seconds": 2.267,
+   "rootStripped": [
+    "Y",
+    "Z"
+   ]
+  },
+  {
+   "name": "attack/hp#2",
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/meshes/vincent/animations/Illegal Elbow Punch (1).fbx",
+   "frames": 40,
+   "seconds": 1.333,
    "rootStripped": [
     "Y",
     "Z"
@@ -381,10 +551,18 @@
   }
  ],
  "warnings": [
+  "dash-forward: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "dash-forward#2: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "hit-front-heavy#3: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
   "hit-body: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "hit-body#2: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "hit-body#3: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
   "hit-body-heavy: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
   "win: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
   "intro: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "taunt: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "taunt#2: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
+  "taunt#3: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
   "attack/lk: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
   "attack/mk: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
   "attack/hk: unmapped bones ['mixamorig8:LeftHandPinky1', 'mixamorig8:LeftHandPinky2', 'mixamorig8:LeftHandPinky3', 'mixamorig8:RightHandPinky1', 'mixamorig8:RightHandPinky2']",
@@ -416,6 +594,9 @@
    "intro",
    "hit-body",
    "hit-body-heavy",
+   "taunt",
+   "dash-forward",
+   "dash-back",
    "attack/lp",
    "attack/mp",
    "attack/hp",

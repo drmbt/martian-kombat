@@ -12,6 +12,8 @@ export interface ViewContext {
   opponentDef?: CharacterDef;
   /** round-1 intro phase: play the entry gesture instead of idle */
   intro?: boolean;
+  /** taunt button held recently: play a taunt gesture while idle */
+  taunt?: boolean;
 }
 import { engineToWorld, WORLD_SCALE } from './threeCoordinates';
 import { characterGlbUrl, loadGlb } from './threeAssets';
@@ -22,6 +24,7 @@ import {
   clipTimeSec,
   fadeTicksFor,
   impactNorm,
+  pickVariant,
   resolveClipName,
   syncToWalkSpeed,
   type ResolvedClip,
@@ -67,9 +70,11 @@ class ClipPlayer {
   }
 
   update(tick: number, f: FighterState, def: CharacterDef, ctx: ViewContext = {}): void {
-    // entry gesture: round-1 intro plays the bow while the engine idles
-    const introGesture = ctx.intro === true && f.action.kind === 'idle';
-    const key = introGesture ? 'intro' : `${f.action.kind}/${f.action.moveId ?? ''}`;
+    // presentation-only overrides while the engine idles: intro bow, taunts.
+    // The engine keeps its idle hitboxes — these are pure gestures (V1).
+    const override =
+      f.action.kind === 'idle' ? (ctx.intro ? 'intro' : ctx.taunt ? 'taunt' : null) : null;
+    const key = override ?? `${f.action.kind}/${f.action.moveId ?? ''}`;
     // RESTART detection (T30): the same action re-triggering (lp lp lp
     // mashing, a fresh reel while already reeling) keeps the key identical
     // but snaps the engine frame counter backwards (up-counters) or upwards
@@ -83,7 +88,7 @@ class ClipPlayer {
       (countsDown ? f.action.frame > this.lastActionFrame : f.action.frame < this.lastActionFrame);
     if (key !== this.actionKey || restarted) {
       this.actionKey = key;
-      this.elapsed = countsDown || introGesture ? 0 : f.action.frame;
+      this.elapsed = countsDown || override ? 0 : f.action.frame;
       // latch reel flavor at the moment of impact (frame counts down, so
       // neither can be derived later): long stun / counter = heavy; a LOW
       // attack from the opponent = body reaction (stomach/liver clips)
@@ -101,10 +106,14 @@ class ClipPlayer {
     this.lastTick = tick;
     this.lastActionFrame = f.action.frame;
 
-    const want = introGesture ? 'intro' : actionToClipName(f, ctx.opponent, this.heavyReel, this.bodyReel);
+    const want = override ?? actionToClipName(f, ctx.opponent, this.heavyReel, this.bodyReel);
     const resolved = resolveClipName(this.available, want);
-    if (!this.current || this.current.name !== resolved.name || restarted) {
-      this.transitionTo(resolved, tick, f, def);
+    // variant shuffle (jab #1/#2/#3, reaction flavors) — latched per action
+    // instance so the clip doesn't hop mid-swing
+    if (!this.current || this.current.name.split('#')[0] !== resolved.name || restarted) {
+      const seed = tick * 131 + (Math.round(f.x) | 0);
+      const variant = pickVariant(this.available, resolved.name, seed);
+      this.transitionTo({ ...resolved, name: variant }, tick, f, def);
     }
     const cur = this.current!;
 

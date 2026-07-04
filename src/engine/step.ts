@@ -20,6 +20,8 @@ import {
   CHARGE_TICKS,
   COUNTER_HITSTOP_BONUS,
   COUNTER_HITSTUN_MULT,
+  DASH_REGEN_TICKS,
+  DASH_STOCKS,
   DIZZY_TICKS,
   FATALITY_RANGE,
   FATALITY_TICKS,
@@ -69,6 +71,8 @@ function initFighter(charId: string, def: CharacterDef, slot: 0 | 1): FighterSta
     stun: 0,
     hitstop: 0,
     buffered: null,
+    dashStocks: DASH_STOCKS,
+    dashRegen: 0,
   };
 }
 
@@ -646,12 +650,19 @@ function updateFighter(
       } else if (input.down) {
         f.action = { kind: 'crouch', frame: 0 };
       } else if (holdingForward(f, input)) {
-        // double-tap forward = dash: an impulse the ground friction bleeds off
-        if (doubleTapped(f, 'f')) f.vx = f.facing * DASH_SPEED;
+        // double-tap forward = dash: an impulse the ground friction bleeds
+        // off — gated by the stock pool so it can't be spammed
+        if (doubleTapped(f, 'f') && f.dashStocks > 0) {
+          f.dashStocks--;
+          f.vx = f.facing * DASH_SPEED;
+        }
         f.action = { kind: 'walkF', frame: 0 };
         f.x += f.facing * def.walkSpeed;
       } else if (holdingBack(f, input)) {
-        if (doubleTapped(f, 'b')) f.vx = -f.facing * BACKDASH_SPEED;
+        if (doubleTapped(f, 'b') && f.dashStocks > 0) {
+          f.dashStocks--;
+          f.vx = -f.facing * BACKDASH_SPEED;
+        }
         f.action = { kind: 'walkB', frame: 0 };
         f.x -= f.facing * def.backSpeed;
       } else {
@@ -1060,6 +1071,11 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
     // bank charge while holding down; bleed it fast on release (short grace
     // window to flick ↓→↑ without losing the charge)
     f.charge = inputs[slot].down ? Math.min(f.charge + 1, 600) : Math.max(0, f.charge - 8);
+    // dash stock regen: one at a time, only while short (see DASH_STOCKS)
+    if (f.dashStocks < DASH_STOCKS && ++f.dashRegen >= DASH_REGEN_TICKS) {
+      f.dashStocks++;
+      f.dashRegen = 0;
+    }
     // action buffer: a button tapped while unactionable (or frozen in
     // hitstop) resolves its attack pick NOW — motions and chords are read at
     // press time so wakeup reversals keep their input window — and fires on

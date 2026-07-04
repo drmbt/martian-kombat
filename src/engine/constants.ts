@@ -67,3 +67,8 @@ export const LANDING_WHIFF_TICKS = 6;
 // ground-impact bounce: knockdowns pop back up off the floor with this
 // vertical speed before settling (the renderer puffs dust on each impact)
 export const BOUNCE_VY = 3.2;
+
+// dash (double-tap ←/→): a friction-bled impulse, limited by a stock pool so
+// it can't be spammed — each dash spends a stock, stocks regen one at a time
+export const DASH_STOCKS = 2;
+export const DASH_REGEN_TICKS = 150; // 2.5s per stock

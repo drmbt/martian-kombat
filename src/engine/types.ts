@@ -298,6 +298,10 @@ export interface FighterState {
   hitstop: number;
   /** action input buffer — null once consumed or expired */
   buffered: BufferedAction | null;
+  /** dash stocks remaining (double-tap dashes spend one; see DASH_STOCKS) */
+  dashStocks: number;
+  /** ticks accumulated toward the next stock regen (counts only when short) */
+  dashRegen: number;
 }
 
 /** A techable throw mid-hold: the victim is frozen while this counts down.
