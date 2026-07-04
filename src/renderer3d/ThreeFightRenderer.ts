@@ -15,7 +15,7 @@ import { engineToWorld, WORLD_SCALE } from './threeCoordinates';
 import { DEFAULT_SETTINGS, type RenderSettings } from './threeRenderSettings';
 import { ThreeFighterView } from './ThreeFighterView';
 import { ThreeHitboxDebug } from './ThreeHitboxDebug';
-import { ThreeStageView, type PlaceholderKind } from './ThreeStageView';
+import { ThreeStageView, type PlaceholderKind, type Stage2DLayer } from './ThreeStageView';
 import { ThreeFxSystem } from './ThreeFxSystem';
 import type { ResolvedClip } from './clipContract';
 
@@ -53,6 +53,7 @@ export class ThreeFightRenderer {
     private defs: Defs,
     charIds: [string, string],
     private roomKind: PlaceholderKind = 'test-room',
+    private stage2d?: Stage2DLayer[],
   ) {
     this.charIds = charIds;
     this.renderer = new THREE.WebGPURenderer({ antialias: true });
@@ -79,7 +80,8 @@ export class ThreeFightRenderer {
 
     // mood per room: the street is a dark night scene the lamps carry; the
     // test room is a neutral, evenly lit chamber for structure readouts
-    const testRoom = this.roomKind === 'test-room';
+    // the 2D bridge keeps neutral-bright lighting so painted art reads true
+    const testRoom = this.roomKind === 'test-room' || this.roomKind === '2d';
     this.scene.background = new THREE.Color(testRoom ? 0x1a1a1e : 0x0b0e17);
     if (!testRoom) this.scene.fog = new THREE.Fog(0x0e1120, 11, 30);
 
@@ -105,7 +107,7 @@ export class ThreeFightRenderer {
     this.lights = { key, fill, rim };
     this.renderer.toneMappingExposure = DEFAULT_SETTINGS.exposure;
 
-    this.stage.buildPlaceholder(this.roomKind);
+    this.stage.buildPlaceholder(this.roomKind, this.stage2d);
 
     this.fighters = [
       new ThreeFighterView(defs[charIds[0]]),

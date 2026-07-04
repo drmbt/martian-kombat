@@ -78,7 +78,13 @@ function makeLabel(text: string, x: number, y: number, z: number): THREE.Mesh {
   return m;
 }
 
-export type PlaceholderKind = 'test-room' | 'street';
+export type PlaceholderKind = 'test-room' | 'street' | '2d';
+
+/** one painted 2D stage layer to mount in 3D (see build2DBridge) */
+export interface Stage2DLayer {
+  file: string;
+  factor: number;
+}
 
 export class ThreeStageView {
   readonly group = new THREE.Group();
@@ -133,9 +139,58 @@ export class ThreeStageView {
     });
   }
 
-  buildPlaceholder(kind: PlaceholderKind = 'test-room'): void {
-    if (kind === 'test-room') this.buildTestRoom();
-    else this.buildStreet();
+  buildPlaceholder(kind: PlaceholderKind = 'test-room', stage2d?: Stage2DLayer[]): void {
+    if (kind === '2d' && stage2d?.length) this.build2DBridge(stage2d);
+    else if (kind === 'street') this.buildStreet();
+    else this.buildTestRoom();
+  }
+
+  /** 2D-stage bridge: mounts the existing painted stage art as billboards
+   *  whose DEPTHS reproduce the 2D parallax factors under the perspective
+   *  camera — a layer with factor f at reference distance D0 sits at D0/f.
+   *  Layered stages (chiba-roof) get all four planes; single-jpg stages get
+   *  one far billboard. A ShadowMaterial ground plane catches the fighters'
+   *  shadows so the 3D characters seat into the painted world. */
+  private build2DBridge(layers: Stage2DLayer[]): void {
+    const g = new THREE.Group();
+    const D0 = 16.5; // reference camera distance to the combat lane
+    const VFOV = (20 * Math.PI) / 180;
+    // stage art contract: 1680x720, the fighters' floor line lands at art row
+    // ~613 (FLOOR_Y 460 of the 540px screen) — 14.86% up from the bottom
+    const FLOOR_FRACTION = 0.1486;
+    const loader = new THREE.TextureLoader();
+
+    for (const layer of layers) {
+      const f = Math.min(Math.max(layer.factor, 0.05), 1);
+      const z = f >= 0.999 ? -0.25 : -(D0 / f - D0);
+      const dist = D0 - z;
+      const h = 2 * Math.tan(VFOV / 2) * dist * 1.15; // slight overscan
+      const w = h * (1680 / 720);
+      const tex = loader.load(`${import.meta.env.BASE_URL}${layer.file}`);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      const plane = new THREE.Mesh(
+        new THREE.PlaneGeometry(w, h),
+        new THREE.MeshBasicMaterial({ map: tex, transparent: layer.file.endsWith('.png'), fog: false }),
+      );
+      // the art's floor row sits exactly on the world ground plane
+      plane.position.set(0, h / 2 - h * FLOOR_FRACTION, z);
+      plane.renderOrder = -10;
+      g.add(plane);
+    }
+
+    // invisible ground that renders ONLY the fighters' shadows — this is
+    // what seats the 3D characters into the painted stage
+    const catcher = new THREE.Mesh(
+      new THREE.PlaneGeometry(40, 14),
+      new THREE.ShadowMaterial({ opacity: 0.4 }),
+    );
+    catcher.rotation.x = -Math.PI / 2;
+    catcher.position.set(0, 0.001, 0);
+    catcher.receiveShadow = true;
+    g.add(catcher);
+
+    this.placeholder = g;
+    this.group.add(g);
   }
 
   /** Dev test chamber (default while the 3D engine is under construction):

@@ -10,6 +10,7 @@ import type { GameState } from '../engine';
 import { characters } from '../data/characters';
 import { KeyboardSource } from '../input/keyboard';
 import { CpuDriver } from '../ai/bot';
+import { stageById } from '../data/stages';
 import { play, playVoice } from './BootScene';
 import { nextTrack, playMusic } from '../audio/music';
 import { diffTick, snapTick, type FightEvent } from '../presentation/tickEvents';
@@ -62,7 +63,7 @@ export class FightScene3D extends Phaser.Scene {
     this.state = initialState(this.chars[0], this.chars[1], characters, {
       stage: { minX: -110, maxX: 1070 },
       // room for the entry gesture + READY? 3-2-1 before FIGHT
-      introTicks: 300,
+      introTicks: 240,
     });
     this.inputs = new KeyboardSource(this);
     this.ghostHealth = [characters[this.chars[0]].health, characters[this.chars[1]].health];
@@ -115,10 +116,27 @@ export class FightScene3D extends Phaser.Scene {
 
   private async bootRenderer(): Promise<void> {
     const { ThreeFightRenderer } = await import('../renderer3d/ThreeFightRenderer');
-    // dev placeholder room: grey test chamber by default, ?room=street for
-    // the night-street mood stage
-    const room = new URLSearchParams(window.location.search).get('room') === 'street' ? 'street' : 'test-room';
-    const renderer = new ThreeFightRenderer(characters, this.chars, room);
+    // dev placeholder rooms: grey test chamber (default), ?room=street for
+    // the night-street stage, ?room=2d for the painted-2D-stage bridge
+    // (billboards at parallax-matched depths; uses this match's stageId)
+    const roomParam = new URLSearchParams(window.location.search).get('room');
+    const room = roomParam === 'street' ? 'street' : roomParam === '2d' ? '2d' : 'test-room';
+    let stage2d;
+    if (room === '2d') {
+      const entry = stageById(this.stageId);
+      const l = entry?.layers;
+      stage2d = l
+        ? [
+            { file: l.sky!.file, factor: l.sky?.factor ?? 0.14 },
+            { file: l.far!.file, factor: l.far?.factor ?? 0.34 },
+            { file: l.near!.file, factor: l.near?.factor ?? 0.68 },
+            { file: l.floor!.file, factor: l.floor?.factor ?? 1 },
+          ]
+        : entry
+          ? [{ file: entry.file, factor: 0.32 }]
+          : undefined;
+    }
+    const renderer = new ThreeFightRenderer(characters, this.chars, room, stage2d);
     // the scene may have shut down while the chunk was loading
     if (!this.scene.isActive()) {
       renderer.dispose();
