@@ -5,6 +5,7 @@ import { MenuScene } from './scenes/MenuScene';
 import { SelectScene } from './scenes/SelectScene';
 import { VersusScene } from './scenes/VersusScene';
 import { FightScene } from './scenes/FightScene';
+import { FightScene3D } from './scenes/FightScene3D';
 import { SettingsScene } from './scenes/SettingsScene';
 import { ControlsScene } from './scenes/ControlsScene';
 import { VolumeOverlayScene } from './scenes/VolumeOverlayScene';
@@ -61,7 +62,7 @@ const game = new Phaser.Game({
   // scene transition. All pad input reads navigator.getGamepads() directly
   // (src/input/keyboard.ts + src/input/menu-nav.ts).
   input: { gamepad: false },
-  scene: [BootScene, MenuScene, SelectScene, VersusScene, FightScene, SettingsScene, ControlsScene, VolumeOverlayScene],
+  scene: [BootScene, MenuScene, SelectScene, VersusScene, FightScene, FightScene3D, SettingsScene, ControlsScene, VolumeOverlayScene],
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,

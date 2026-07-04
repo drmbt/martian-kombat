@@ -51,10 +51,10 @@ V13: anim transitions crossfade, ⊥ pose-snap. Clip classes in `clipContract.ts
 id|status|task|cites
 T1|x|install `three@0.185.1`; inspect real webgpu/GLTFLoader/post/inspector export paths, note in code|I.dep
 T2|x|`threeCoordinates.ts` engine→Three mapping + vitest|I.coords
-T3|.|`FightScene3D` skeleton, register `Fight3D` in `src/main.ts`, `?dev=3d` + `random3dFight()` in `devLaunch.ts`|I.url,V7
-T4|.|drive scene from same `initialState`/`step`/`KeyboardSource`/`CpuDriver` flow as `FightScene`|V1
-T5|.|WebGPU renderer + ortho camera + placeholder capsule fighters + simple floor|V10
-T6|.|`ThreeHitboxDebug`: cuboids from `worldBox`, color-coded, ±0.18m depth, toggle|V2
+T3|x|`FightScene3D` skeleton, register `Fight3D` in `src/main.ts`, `?dev=3d` + `random3dFight()` in `devLaunch.ts`|I.url,V7
+T4|x|drive scene from same `initialState`/`step`/`KeyboardSource`/`CpuDriver` flow as `FightScene`|V1
+T5|x|WebGPU renderer + ortho camera + placeholder capsule fighters + simple floor|V10
+T6|x|`ThreeHitboxDebug`: cuboids from `worldBox`, color-coded, ±0.18m depth, toggle|V2
 T7|.|`threeAssets.ts`: stage GLB load (`chiba-roof`), graceful skip when file ∄|I.asset
 T8|.|char GLB load (vincent): scale to `hurtStand.h`, foot origin|V9,V6
 T9|.|`AnimationMixer` + action→clip map (per doc table), tick-sampled; V13 crossfade + clip classes; missing clip → V12 fallback chain|V4,V5,V12,V13

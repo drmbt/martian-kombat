@@ -39,12 +39,20 @@ export function randomTraining(): LaunchTarget {
   };
 }
 
+export function random3dFight(): LaunchTarget {
+  return {
+    scene: 'Fight3D',
+    data: { p1: 'vincent', p2: 'yulia', stage: DEV_STAGE, cpu: true },
+  };
+}
+
 export function devBootTarget(): LaunchTarget | null {
   if (!import.meta.env.DEV || typeof window === 'undefined') return null;
   const params = new URLSearchParams(window.location.search);
   const directFight = params.get('fight') === 'random' || params.get('dev') === 'fight';
   if (directFight) return randomFight();
   if (params.get('dev') === 'training') return randomTraining();
+  if (params.get('dev') === '3d') return random3dFight();
 
   const saved = window.sessionStorage.getItem(KEY);
   if (!saved) return null;

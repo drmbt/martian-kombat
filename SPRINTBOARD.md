@@ -658,6 +658,16 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-04 · renderer3d+scenes · 3D spike T3–T6: playable WebGPU scene** —
+  `FightScene3D` behind `?dev=3d` (same `step()`/`KeyboardSource`/`CpuDriver`
+  loop as FightScene, Three canvas + DOM HUD pinned over the Phaser canvas,
+  F1 hitboxes / F9 rematch / ESC menu, `&boxes=1` for headless verification);
+  `ThreeFightRenderer` (WebGPU, ortho camera, camera x-tracking, work lights,
+  shadow floor), capsule `ThreeFighterView` placeholders sized off
+  `hurtStand`, `ThreeHitboxDebug` cuboid pool straight from `worldBox`
+  (hurt/body/startup/active/recovery/projectile/throw palette). three loads
+  as a lazy chunk — production 2D bundle unchanged. Verified in headless
+  Chrome WebGPU (`--enable-unsafe-webgpu --use-angle=metal`). — Claude
 - **2026-07-04 · renderer3d · 3D spike T1+T2 (branch `spike/3d-renderer`)** —
   three@0.185.1 installed, real import paths verified (`three/webgpu`,
   `three/addons/inspector/Inspector.js`, TSL `GTAONode`/`BloomNode`,
