@@ -751,6 +751,25 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-05 · net+scenes · online reuses the real SelectScene (no duplicate
+  picker)** — the custom mini-picker in LobbyScene is gone; online now hands off
+  to the SAME `SelectScene` local 2-player uses (grid + side idle sprites +
+  stage dialog). Split the net handshake: `hello` (proto+charHash+name) verifies
+  on connect → `onReady` hands off to Select; `pick {charId}` is sent when a
+  player locks their fighter on the shared grid; the HOST picks the stage and
+  `confirmStart` commits the host-authoritative config. One `LobbyController`
+  spans Lobby→Select (passed by reference, `setHooks` merges the pick/stage/
+  start hooks). SelectScene online mode: local controls only its slot, the
+  remote fighter fills from the wire, only the host drives the stage dialog
+  (guest shows "waiting…"), then it launches Fight/Fight3D itself with the
+  online payload — Versus is skipped online. Local/CPU/training select paths
+  untouched (verified: both picks → stage → Versus, `online:false`). Verified
+  live over two Chrome processes on the production build: both peers land in
+  the shared selector, pick their own fighters (both slots reflect both picks),
+  host picks stage, both launch in lockstep — chars identical, heads within
+  1 tick, 0 desync. lobby.test rewritten for verify→ready→picks→start (7
+  tests). — Claude
+
 - **2026-07-04 · net · 3D-aware multiplayer + paste-anywhere (public 3D/MP)** —
   online now respects the renderer: the host announces its 2D/3D mode the
   instant the channel opens (new `mode` wire msg), the guest AUTO-ADOPTS it

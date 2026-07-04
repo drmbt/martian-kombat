@@ -9,7 +9,8 @@ export const PROTO = 1;
 
 export type NetMsg =
   | { t: 'mode'; render3d: boolean } // host announces its renderer on connect; guest auto-adopts (2D/3D never cross-join)
-  | { t: 'hello'; proto: number; charHash: number; charId: string; name: string }
+  | { t: 'hello'; proto: number; charHash: number; name: string } // compatibility handshake on connect (V21) — char picked later, in Select
+  | { t: 'pick'; charId: string } // a player locked their fighter on the (shared) character-select screen
   | { t: 'start'; rules: MatchRules; stage: string; chars: [string, string]; delay: number; render3d: boolean }
   | { t: 'input'; tick: number; frames: number[] } // packed inputs, oldest first, last-8 redundancy (V22)
   | { t: 'hash'; tick: number; h: number } // confirmed-tick state hash (V20)

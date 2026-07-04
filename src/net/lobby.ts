@@ -28,8 +28,9 @@ export function charDataHash(defs: Defs): number {
 
 export type LobbyPhase =
   | 'connecting' // transport not open yet
-  | 'picking' // connected; players choosing/locking characters
-  | 'starting' // both locked + agreed; match config emitted
+  | 'verifying' // open; exchanging + checking the compatibility handshake
+  | 'selecting' // verified; players on the shared character/stage select
+  | 'starting' // both locked + host confirmed the stage; match config emitted
   | 'error'; // incompatible or transport died
 
 export interface StartConfig {
@@ -56,14 +57,30 @@ export interface RemotePlayer {
   charId: string;
 }
 
+/** what LobbyScene hands the shared SelectScene to run an online pick. The
+ *  controller (with its live transport) is passed by reference; SelectScene
+ *  adds its pick/stage/start hooks via setHooks and hands the transport on to
+ *  the Fight when the match starts. */
+export interface OnlineSelectData {
+  controller: LobbyController;
+  transport: Transport;
+  localSlot: 0 | 1;
+  render3d: boolean;
+  remoteName: string;
+}
+
 export interface LobbyHooks {
   onPhase?: (phase: LobbyPhase, detail?: string) => void;
-  /** the remote player locked in (name + character) */
-  onRemoteLock?: (remote: RemotePlayer) => void;
-  /** GUEST only: the host announced its renderer — adopt it before picking a
-   *  character (so the roster pool + launched scene match, no cross-join) */
+  /** GUEST only: the host announced its renderer — adopt it before selecting
+   *  (so the roster pool + launched scene match, no cross-join) */
   onRenderMode?: (render3d: boolean) => void;
-  /** handshake complete — launch the Fight with a NetSession using this */
+  /** compatibility handshake passed — hand off to the shared SelectScene */
+  onReady?: (info: { remoteName: string; render3d: boolean }) => void;
+  /** the remote player locked their fighter in on the select screen */
+  onRemoteLock?: (remote: RemotePlayer) => void;
+  /** both fighters locked — HOST opens the stage picker, GUEST waits */
+  onBothLocked?: () => void;
+  /** match config agreed — launch the Fight with a NetSession using this */
   onStart?: (config: StartConfig) => void;
 }
 
@@ -99,17 +116,22 @@ export class LobbyController {
   private render3d: boolean;
   private stage: string;
 
+  private hooks: LobbyHooks;
   private phase: LobbyPhase = 'connecting';
   private open = false;
+  /** guest: host's renderer arrived. host: always known. Gates readiness so
+   *  the guest never launches Select before it can pool the right roster. */
+  private modeKnown: boolean;
+  private remoteVerified = false;
+  private remoteName = '';
   private localChar: string | null = null;
-  private remote: RemotePlayer | null = null;
-  private remoteProtoOk = false;
+  private remoteChar: string | null = null;
+  private readyFired = false;
+  private bothLockedFired = false;
   private started = false;
 
-  constructor(
-    private readonly hooks: LobbyHooks,
-    opts: LobbyOptions,
-  ) {
+  constructor(hooks: LobbyHooks, opts: LobbyOptions) {
+    this.hooks = hooks;
     this.transport = opts.transport;
     this.isHost = opts.isHost;
     this.charHash = charDataHash(opts.defs);
@@ -117,43 +139,67 @@ export class LobbyController {
     this.delay = opts.delay ?? 2;
     this.rules = opts.rules ?? DEFAULT_RULES;
     this.render3d = opts.render3d ?? false;
+    this.modeKnown = opts.isHost; // host sets its own mode; guest awaits `mode`
     this.stage = opts.stage ?? 'salton';
     this.transport.onMessage((m) => this.receive(m));
     this.transport.onStatus((s, d) => this.onStatus(s, d));
   }
 
-  /** host may re-pick the stage until the match starts (guest gets it in start) */
+  /** merge in more hooks (Lobby wires connection hooks; SelectScene adds the
+   *  pick/stage/start hooks when it takes over the same controller) */
+  setHooks(more: Partial<LobbyHooks>): void {
+    this.hooks = { ...this.hooks, ...more };
+  }
+
+  get renderMode(): boolean {
+    return this.render3d;
+  }
+
+  /** the remote fighter if it already arrived (e.g. a pick that landed during
+   *  the Lobby→Select scene handoff) — Select reflects it on setup */
+  get remotePick(): string | null {
+    return this.remoteChar;
+  }
+
+  /** host may re-pick the stage right up until it confirms the start */
   setStage(stage: string): void {
     this.stage = stage;
   }
 
-  /** the local player locked their character — fire the hello and maybe start */
+  /** the local player locked their fighter on the select screen */
   lockChar(charId: string): void {
-    if (this.phase === 'error' || this.started) return;
+    if (this.phase === 'error' || this.started || this.localChar) return;
     this.localChar = charId;
-    if (this.open) this.sendHello();
-    this.maybeStart();
+    this.transport.send({ t: 'pick', charId });
+    this.maybeBothLocked();
   }
 
-  private sendHello(): void {
-    if (!this.localChar) return;
+  /** HOST: both fighters locked + stage chosen → commit the match config */
+  confirmStart(): void {
+    if (!this.isHost || this.started) return;
+    if (!this.localChar || !this.remoteChar) return;
+    const chars: [string, string] = [this.localChar, this.remoteChar];
     this.transport.send({
-      t: 'hello',
-      proto: PROTO,
-      charHash: this.charHash,
-      charId: this.localChar,
-      name: this.localName,
+      t: 'start',
+      rules: this.rules,
+      stage: this.stage,
+      chars,
+      delay: this.delay,
+      render3d: this.render3d,
     });
+    this.beginMatch(this.rules, this.stage, chars, this.delay, this.render3d);
   }
 
   private receive(m: NetMsg): void {
     if (this.phase === 'error') return;
     switch (m.t) {
       case 'mode': {
-        // guest adopts the host's renderer before picking (auto-switch)
+        // guest adopts the host's renderer before selecting (auto-switch)
         if (!this.isHost) {
           this.render3d = m.render3d;
+          this.modeKnown = true;
           this.hooks.onRenderMode?.(m.render3d);
+          this.maybeReady();
         }
         break;
       }
@@ -164,10 +210,15 @@ export class LobbyController {
         if (m.charHash !== this.charHash) {
           return this.fail('character data mismatch — both players need the same game version');
         }
-        this.remoteProtoOk = true;
-        this.remote = { name: m.name, charId: m.charId };
-        this.hooks.onRemoteLock?.(this.remote);
-        this.maybeStart();
+        this.remoteVerified = true;
+        this.remoteName = m.name;
+        this.maybeReady();
+        break;
+      }
+      case 'pick': {
+        this.remoteChar = m.charId;
+        this.hooks.onRemoteLock?.({ name: this.remoteName, charId: m.charId });
+        this.maybeBothLocked();
         break;
       }
       case 'start': {
@@ -186,23 +237,18 @@ export class LobbyController {
     }
   }
 
-  private maybeStart(): void {
-    if (this.started || !this.open) return;
-    if (!this.localChar || !this.remote || !this.remoteProtoOk) return;
-    // both sides locked + verified. Host is authoritative: it defines the
-    // config, sends `start`, and both begin on it. Guest waits for `start`.
-    if (this.isHost) {
-      const chars: [string, string] = [this.localChar, this.remote.charId];
-      this.transport.send({
-        t: 'start',
-        rules: this.rules,
-        stage: this.stage,
-        chars,
-        delay: this.delay,
-        render3d: this.render3d,
-      });
-      this.beginMatch(this.rules, this.stage, chars, this.delay, this.render3d);
-    }
+  /** compatibility verified on both sides → hand off to the shared select */
+  private maybeReady(): void {
+    if (this.readyFired || !this.open || !this.remoteVerified || !this.modeKnown) return;
+    this.readyFired = true;
+    this.setPhase('selecting');
+    this.hooks.onReady?.({ remoteName: this.remoteName, render3d: this.render3d });
+  }
+
+  private maybeBothLocked(): void {
+    if (this.bothLockedFired || !this.localChar || !this.remoteChar) return;
+    this.bothLockedFired = true;
+    this.hooks.onBothLocked?.();
   }
 
   private beginMatch(
@@ -221,13 +267,12 @@ export class LobbyController {
   private onStatus(s: TransportStatus, detail?: string): void {
     if (s === 'open') {
       this.open = true;
-      if (this.phase === 'connecting') this.setPhase('picking');
-      // host announces its renderer immediately so the guest adopts it before
-      // picking a character (2D/3D never cross-join)
+      if (this.phase === 'connecting') this.setPhase('verifying');
+      // host announces its renderer first so the guest can pool the right
+      // roster; then both send the compatibility handshake (V21)
       if (this.isHost) this.transport.send({ t: 'mode', render3d: this.render3d });
-      // a char locked before the channel opened still needs its hello
-      if (this.localChar) this.sendHello();
-      this.maybeStart();
+      this.transport.send({ t: 'hello', proto: PROTO, charHash: this.charHash, name: this.localName });
+      this.maybeReady();
     } else if (s === 'closed' || s === 'error') {
       if (!this.started) this.fail(detail ?? 'connection lost');
     }

@@ -1,6 +1,8 @@
-// SPEC V21 — the handshake must let compatible peers start on ONE agreed
-// config and refuse incompatible ones with a shown reason (never silently
-// start a match that will desync). Driven over the loopback pair.
+// SPEC V21 — the handshake must let compatible peers reach the shared select
+// (onReady), exchange picks, and start on ONE host-authoritative config — and
+// refuse incompatible peers with a shown reason (never silently start a match
+// that will desync). Char + stage picking lives in the reused SelectScene now,
+// so the controller drives: verify → ready → picks → host-confirmed start.
 import { describe, expect, it } from 'vitest';
 import { characters } from '../data/characters';
 import { createLoopbackPair } from './transport';
@@ -10,18 +12,30 @@ import { PROTO, type NetMsg, type Transport } from './transport';
 interface Captured {
   ctrl: LobbyController;
   phases: [string, string?][];
+  ready: { remoteName: string; render3d: boolean } | null;
+  remoteLock: { name: string; charId: string } | null;
+  bothLocked: boolean;
   start: StartConfig | null;
-  remote: { name: string; charId: string } | null;
   adoptedRender3d: boolean | null;
 }
 
 function mount(transport: Transport, isHost: boolean, name: string, extra: Record<string, unknown> = {}): Captured {
-  const cap: Captured = { ctrl: null as never, phases: [], start: null, remote: null, adoptedRender3d: null };
+  const cap: Captured = {
+    ctrl: null as never,
+    phases: [],
+    ready: null,
+    remoteLock: null,
+    bothLocked: false,
+    start: null,
+    adoptedRender3d: null,
+  };
   cap.ctrl = new LobbyController(
     {
       onPhase: (p, d) => cap.phases.push([p, d]),
+      onReady: (i) => (cap.ready = i),
+      onRemoteLock: (r) => (cap.remoteLock = r),
+      onBothLocked: () => (cap.bothLocked = true),
       onStart: (c) => (cap.start = c),
-      onRemoteLock: (r) => (cap.remote = r),
       onRenderMode: (r) => (cap.adoptedRender3d = r),
     },
     { transport, isHost, defs: characters, localName: name, ...extra },
@@ -39,62 +53,68 @@ describe('charDataHash', () => {
 });
 
 describe('LobbyController handshake', () => {
-  it('compatible peers agree on one start config (host authoritative)', () => {
+  it('verifies then reaches the shared select on both sides', () => {
+    const wire = createLoopbackPair({ latency: 1 });
+    const host = mount(wire.a, true, 'Flo', { render3d: true });
+    const guest = mount(wire.b, false, 'Yulia');
+    wire.run(3); // mode + hellos cross
+
+    expect(host.ready).toEqual({ remoteName: 'Yulia', render3d: true });
+    expect(guest.ready).toEqual({ remoteName: 'Flo', render3d: true });
+    expect(guest.adoptedRender3d).toBe(true); // guest auto-adopted host's 3D
+  });
+
+  it('exchanges picks and starts on the host-authoritative config', () => {
     const wire = createLoopbackPair({ latency: 1 });
     const host = mount(wire.a, true, 'Flo', { stage: 'chiba-roof', delay: 3, render3d: true });
     const guest = mount(wire.b, false, 'Yulia');
-    wire.run(2); // transports open
+    wire.run(3);
+
     host.ctrl.lockChar('vincent');
     guest.ctrl.lockChar('yulia');
-    wire.run(4); // hellos + start cross
+    wire.run(3); // picks cross
+    expect(host.bothLocked).toBe(true);
+    expect(guest.bothLocked).toBe(true);
+    expect(host.remoteLock).toEqual({ name: 'Yulia', charId: 'yulia' });
+    expect(guest.remoteLock).toEqual({ name: 'Flo', charId: 'vincent' });
+    expect(host.start).toBeNull(); // nothing starts until the host confirms the stage
 
+    host.ctrl.setStage('van');
+    host.ctrl.confirmStart();
+    wire.run(3);
     expect(host.start).toEqual(guest.start);
     expect(host.start).toEqual({
       rules: expect.any(Object),
-      stage: 'chiba-roof',
+      stage: 'van',
       chars: ['vincent', 'yulia'], // [host slot 0, guest slot 1]
       delay: 3,
-      render3d: true, // guest adopts host's renderer — no cross-join
+      render3d: true,
     });
-    expect(host.remote).toEqual({ name: 'Yulia', charId: 'yulia' });
-    expect(guest.remote).toEqual({ name: 'Flo', charId: 'vincent' });
   });
 
-  it('guest auto-adopts the host renderer on connect (no 2D/3D cross-join)', () => {
+  it('only the host can start the match', () => {
     const wire = createLoopbackPair({ latency: 1 });
-    const host = mount(wire.a, true, 'Flo', { render3d: true });
-    const guest = mount(wire.b, false, 'Yulia'); // guest never asked for 3D
-    wire.run(3); // host's `mode` reaches the guest
-    expect(guest.adoptedRender3d).toBe(true);
-    host.ctrl.lockChar('vincent');
-    guest.ctrl.lockChar('yulia');
-    wire.run(4);
-    expect(guest.start?.render3d).toBe(true);
-    expect(host.start?.render3d).toBe(true);
-  });
-
-  it('order independence: a char locked before the channel opens still starts', () => {
-    const wire = createLoopbackPair({ latency: 2 });
     const host = mount(wire.a, true, 'Host');
     const guest = mount(wire.b, false, 'Guest');
-    host.ctrl.lockChar('kirby'); // locked while still connecting
+    wire.run(3);
+    host.ctrl.lockChar('kirby');
     guest.ctrl.lockChar('gene');
-    wire.run(6);
-    expect(host.start?.chars).toEqual(['kirby', 'gene']);
-    expect(guest.start?.chars).toEqual(['kirby', 'gene']);
+    wire.run(3);
+    guest.ctrl.confirmStart(); // guest cannot start — no-op
+    wire.run(2);
+    expect(host.start).toBeNull();
+    expect(guest.start).toBeNull();
   });
 
-  it('refuses a protocol mismatch with a reason, never starts', () => {
+  it('refuses a protocol mismatch with a reason, never readies', () => {
     const wire = createLoopbackPair({ latency: 1 });
     const guest = mount(wire.b, false, 'Guest');
-    // a peer on an incompatible proto version
     wire.a.onStatus(() => undefined);
-    const badHello: NetMsg = { t: 'hello', proto: PROTO + 99, charHash: charDataHash(characters), charId: 'flo', name: 'Old' };
-    guest.ctrl.lockChar('yulia');
+    const badHello: NetMsg = { t: 'hello', proto: PROTO + 99, charHash: charDataHash(characters), name: 'Old' };
     wire.run(1);
     wire.a.send(badHello);
     wire.run(2);
-    expect(guest.start).toBeNull();
+    expect(guest.ready).toBeNull();
     expect(guest.phases.some(([p, d]) => p === 'error' && /version mismatch/.test(d ?? ''))).toBe(true);
   });
 
@@ -102,12 +122,11 @@ describe('LobbyController handshake', () => {
     const wire = createLoopbackPair({ latency: 1 });
     const guest = mount(wire.b, false, 'Guest');
     wire.a.onStatus(() => undefined);
-    const badHello: NetMsg = { t: 'hello', proto: PROTO, charHash: 0xdeadbeef, charId: 'flo', name: 'Modded' };
-    guest.ctrl.lockChar('yulia');
+    const badHello: NetMsg = { t: 'hello', proto: PROTO, charHash: 0xdeadbeef, name: 'Modded' };
     wire.run(1);
     wire.a.send(badHello);
     wire.run(2);
-    expect(guest.start).toBeNull();
+    expect(guest.ready).toBeNull();
     expect(guest.phases.some(([p, d]) => p === 'error' && /character data/.test(d ?? ''))).toBe(true);
   });
 

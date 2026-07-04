@@ -10,15 +10,14 @@ import Phaser from 'phaser';
 import { STAGE_H, STAGE_W } from '../engine';
 import { play } from './BootScene';
 import { playMusic } from '../audio/music';
-import { ROSTER } from '../data/roster';
 import { characters } from '../data/characters';
-import { menuNav, navDefer, attackKeyCodes } from '../input/menu-nav';
+import { menuNav, navDefer } from '../input/menu-nav';
 import { getSettings } from '../settings';
-import { LobbyController, type LobbyPhase, type OnlineFightData, type StartConfig } from '../net/lobby';
+import { LobbyController, type OnlineSelectData } from '../net/lobby';
 import type { PeerLink } from '../net/webrtc';
 import type { Transport } from '../net/transport';
 
-type Screen = 'choose' | 'host' | 'join' | 'pick' | 'error';
+type Screen = 'choose' | 'host' | 'join' | 'error';
 
 export class LobbyScene extends Phaser.Scene {
   private screen: Screen = 'choose';
@@ -27,19 +26,14 @@ export class LobbyScene extends Phaser.Scene {
   private controller: LobbyController | null = null;
   private isHost = false;
   private localSlot: 0 | 1 = 0;
-  /** renderer for this session. Host picks it (carried from the menu toggle);
-   *  a guest ADOPTS the host's mode from the start message, so 2D and 3D can
-   *  never cross-join. `roster` is the pool the char picker draws from. */
+  /** renderer for this session — host carries the menu toggle in; the guest's
+   *  is adopted from the host over the wire (inside the controller) before the
+   *  SelectScene hand-off, so 2D and 3D can never cross-join. */
   private render3d = false;
-  private roster = ROSTER.filter((r) => r.playable);
   /** the paste-anywhere handler, detached on shutdown */
   private pasteHandler: ((e: ClipboardEvent) => void) | null = null;
 
   private joinCode = '';
-  private pickIdx = 0;
-  private locked = false;
-  private remoteName: string | null = null;
-  private remoteReady = false;
   private statusLine = '';
   private launched = false;
 
@@ -53,16 +47,9 @@ export class LobbyScene extends Phaser.Scene {
   }
 
   init(data: { render3d?: boolean }): void {
-    // host carries the menu's render toggle in; a guest starts 2D and adopts
-    // the host's mode on connect (onRenderMode)
+    // host carries the menu's render toggle in; the guest's mode is adopted
+    // from the host inside the controller before Select
     this.render3d = !!data.render3d;
-    this.roster = this.rosterFor(this.render3d);
-  }
-
-  /** the character pool for a renderer: 3D can only field fighters with a
-   *  baked GLB, 2D fields everyone playable */
-  private rosterFor(render3d: boolean): typeof ROSTER {
-    return ROSTER.filter((r) => (render3d ? r.playable && r.mesh3d : r.playable));
   }
 
   create(): void {
@@ -87,10 +74,6 @@ export class LobbyScene extends Phaser.Scene {
     this.transport = null;
     this.controller = null;
     this.joinCode = '';
-    this.pickIdx = 0;
-    this.locked = false;
-    this.remoteName = null;
-    this.remoteReady = false;
     this.statusLine = '';
     this.launched = false;
     this.selIdx = 0;
@@ -207,7 +190,7 @@ export class LobbyScene extends Phaser.Scene {
     }
   }
 
-  // ---------- connected: character pick + handshake ----------
+  // ---------- connected: compatibility handshake, then hand off to Select ----
 
   private onConnected(transport: Transport): void {
     this.transport = transport;
@@ -218,15 +201,13 @@ export class LobbyScene extends Phaser.Scene {
     const hostStage = this.render3d ? 'chiba-roof' : 'salton';
     this.controller = new LobbyController(
       {
-        onPhase: (phase, detail) => this.onLobbyPhase(phase, detail),
-        onRemoteLock: (r) => {
-          this.remoteName = r.name;
-          this.remoteReady = true;
-          play(this, 's-blip', 0.5);
-          this.setStatus(`${r.name} locked in`);
+        onPhase: (phase, detail) => {
+          if (phase === 'error') this.fail(detail ?? 'lobby error');
+          else if (phase === 'verifying') this.setStatus('connected — verifying…');
         },
-        onRenderMode: (render3d) => this.adoptRenderMode(render3d),
-        onStart: (c) => this.launch(c),
+        // once compatibility is verified, hand the live match off to the SAME
+        // character/stage selector local play uses — no duplicate picker
+        onReady: (info) => this.launchSelect(info.render3d, info.remoteName),
       },
       {
         transport,
@@ -240,111 +221,25 @@ export class LobbyScene extends Phaser.Scene {
         stage: this.isHost ? hostStage : undefined,
       },
     );
-    this.renderPick();
+    this.setStatus('connected — verifying…');
   }
 
-  /** GUEST auto-adopts the host's renderer: re-pool the roster and, if a pick
-   *  is already showing, rebuild it so the fighters match the mode. */
-  private adoptRenderMode(render3d: boolean): void {
-    if (this.render3d === render3d) return;
-    this.render3d = render3d;
-    this.roster = this.rosterFor(render3d);
-    if (this.pickIdx >= this.roster.length) this.pickIdx = 0;
-    if (this.screen === 'pick' && !this.locked) this.renderPick();
-  }
-
-  private renderPick(): void {
-    this.screen = 'pick';
-    this.clearLayer();
-    this.title('CHOOSE YOUR MARTIAN');
-    this.subtitle(
-      `${this.modeTag()} match · ${this.isHost ? 'you are Player 1' : "you are Player 2 (host's mode)"}`,
-    );
-    this.buttons = [];
-    // horizontal roster strip of portraits
-    const n = this.roster.length;
-    const cell = Math.min(96, Math.floor((STAGE_W - 80) / n));
-    const totalW = cell * n;
-    const startX = (STAGE_W - totalW) / 2 + cell / 2;
-    const y = 250;
-    this.roster.forEach((entry, i) => {
-      const x = startX + i * cell;
-      const bg = this.add.rectangle(x, y, cell - 6, cell - 6, 0x14101a, 0.9).setStrokeStyle(2, 0x594566).setDepth(2);
-      if (this.textures.exists(`portrait-${entry.id}`)) {
-        this.layer.push(this.add.image(x, y, `portrait-${entry.id}`).setDisplaySize(cell - 12, cell - 12).setDepth(3));
-      }
-      bg.setInteractive({ useHandCursor: true });
-      bg.on('pointerover', () => { if (!this.locked) { this.pickIdx = i; this.highlightPick(); } });
-      bg.on('pointerdown', () => { if (!this.locked) { this.pickIdx = i; this.lockPick(); } });
-      this.layer.push(bg);
-      // reuse the button-cursor highlight machinery for the strip
-      this.buttons.push({ bg, label: this.add.text(0, 0, '').setVisible(false), act: () => this.lockPick() });
-    });
-    const nameText = this.add
-      .text(STAGE_W / 2, y + cell, this.roster[this.pickIdx].name, {
-        fontFamily: 'monospace', fontSize: '28px', fontStyle: 'bold', color: '#ffd24a', stroke: '#000', strokeThickness: 5,
-      })
-      .setOrigin(0.5);
-    this.layer.push(nameText);
-    this.pickNameText = nameText;
-    this.highlightPick();
-    this.setStatus('ENTER / any attack to lock in');
-  }
-
-  private pickNameText: Phaser.GameObjects.Text | null = null;
-
-  private highlightPick(): void {
-    this.buttons.forEach(({ bg }, i) => {
-      const on = i === this.pickIdx;
-      bg.setStrokeStyle(on ? 4 : 2, on ? 0xffb347 : 0x594566);
-      bg.setScale(on && !this.locked ? 1.12 : 1);
-    });
-    if (this.pickNameText) this.pickNameText.setText(this.roster[this.pickIdx].name);
-  }
-
-  private movePick(d: number): void {
-    if (this.locked) return;
-    this.pickIdx = (this.pickIdx + d + this.roster.length) % this.roster.length;
-    play(this, 's-blip', 0.4);
-    this.highlightPick();
-  }
-
-  private lockPick(): void {
-    if (this.locked || !this.controller) return;
-    this.locked = true;
-    const charId = this.roster[this.pickIdx].id;
-    play(this, 's-blip', 0.6);
-    this.controller.lockChar(charId);
-    this.highlightPick();
-    this.setStatus(this.remoteReady ? 'starting…' : 'locked — waiting for opponent…');
-  }
-
-  // ---------- lobby controller callbacks ----------
-
-  private onLobbyPhase(phase: LobbyPhase, detail?: string): void {
-    if (phase === 'error') this.fail(detail ?? 'lobby error');
-    else if (phase === 'picking') this.setStatus('connected — choose your fighter');
-  }
-
-  private launch(config: StartConfig): void {
-    if (this.launched || !this.transport) return;
+  /** Hand off to the reused SelectScene in online mode. It drives char + stage
+   *  picking over the same controller and launches the Fight itself. */
+  private launchSelect(render3d: boolean, remoteName: string): void {
+    if (this.launched || !this.transport || !this.controller) return;
     this.launched = true;
-    const online: OnlineFightData = {
+    play(this, 's-blip', 0.7);
+    const online: OnlineSelectData = {
+      controller: this.controller,
       transport: this.transport,
       localSlot: this.localSlot,
-      delay: config.delay,
-      rules: config.rules,
+      render3d,
+      remoteName,
     };
-    // hand the live transport to the fight; don't tear it down on shutdown
+    // the controller + transport live on into Select/Fight — don't tear down
     this.transport = null;
-    play(this, 's-blip', 0.7);
-    // host-authoritative renderer — both peers launch the SAME scene (V18/V25)
-    this.scene.start(config.render3d ? 'Fight3D' : 'Fight', {
-      p1: config.chars[0],
-      p2: config.chars[1],
-      stage: config.stage,
-      online,
-    });
+    this.scene.start('Select', { online });
   }
 
   // ---------- paste-anywhere ----------
@@ -352,7 +247,7 @@ export class LobbyScene extends Phaser.Scene {
   /** Accept the room code pasted anywhere on the page: jump to the join
    *  screen if needed, fill up to 5 valid chars, auto-connect when complete. */
   private onPaste(e: ClipboardEvent): void {
-    if (this.isHost || this.screen === 'pick' || this.screen === 'error') return;
+    if (this.isHost || this.screen === 'error' || this.launched) return;
     const raw = e.clipboardData?.getData('text') ?? '';
     const code = raw
       .toUpperCase()
@@ -383,12 +278,6 @@ export class LobbyScene extends Phaser.Scene {
       }
       return;
     }
-    if (this.screen === 'pick') {
-      if (e.key === 'ArrowLeft') this.movePick(-1);
-      else if (e.key === 'ArrowRight') this.movePick(1);
-      else if (e.key === 'Enter' || attackKeyCodes().has(e.keyCode)) this.lockPick();
-      return;
-    }
     // choose / host: ENTER activates the highlighted button
     if (e.key === 'Enter') this.activateButton();
     else if (e.key === 'ArrowUp' || e.key === 'w') this.moveButton(-1);
@@ -406,13 +295,6 @@ export class LobbyScene extends Phaser.Scene {
 
   update(): void {
     const nav = menuNav.poll();
-    if (this.screen === 'pick') {
-      if (nav.left) this.movePick(-1);
-      if (nav.right) this.movePick(1);
-      if (nav.confirm || nav.start) navDefer(this, () => this.lockPick());
-      if (nav.menu) navDefer(this, () => this.leave());
-      return;
-    }
     if (this.screen === 'choose' || this.screen === 'host' || this.screen === 'join') {
       if (nav.up) this.moveButton(-1);
       if (nav.down) this.moveButton(1);
@@ -507,7 +389,6 @@ export class LobbyScene extends Phaser.Scene {
     for (const o of this.layer) o.destroy();
     this.layer = [];
     this.buttons = [];
-    this.pickNameText = null;
   }
 
   private fail(reason: string): void {
