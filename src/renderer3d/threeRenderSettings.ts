@@ -21,11 +21,11 @@ export const DEFAULT_SETTINGS: RenderSettings = {
   shadowMapSize: 2048,
   aoEnabled: true,
   bloomEnabled: true, // night scene: lamp glow + magic projectiles want it (V8: watch fps)
-  bloomStrength: 0.3,
-  exposure: 1.1,
-  keyIntensity: 0.9,
-  fillIntensity: 0.25,
-  rimIntensity: 1.6,
+  bloomStrength: 0.35,
+  exposure: 0.88, // dark base so the lamps and neon actually carry the scene
+  keyIntensity: 0.45,
+  fillIntensity: 0.12,
+  rimIntensity: 1.2,
   cameraPreset: 'default',
   hitboxes: false,
   skeleton: false,

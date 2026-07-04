@@ -44,25 +44,69 @@ export class ThreeStageView {
   readonly group = new THREE.Group();
   loaded = false;
   private placeholder: THREE.Group | null = null;
+  private train: THREE.Group | null = null;
+
+  /** ambient stage motion (the elevated train) — tick-driven, render-side */
+  update(tick: number): void {
+    if (this.train) {
+      const span = 70;
+      this.train.position.x = ((tick * 0.045) % span) - span / 2;
+    }
+  }
 
   buildPlaceholder(): void {
     const g = new THREE.Group();
     const stageW = STAGE_W * WORLD_SCALE;
 
-    // asphalt fight lane + lighter sidewalk band behind it
+    // asphalt fight lane + raised sidewalk with a real curb face + joints
     const asphalt = new THREE.Mesh(
       new THREE.BoxGeometry(stageW + 30, 0.1, 9),
-      new THREE.MeshStandardMaterial({ color: 0x2b2d33, roughness: 0.94 }),
+      new THREE.MeshStandardMaterial({ color: 0x232529, roughness: 0.94 }),
     );
     asphalt.position.set(0, -0.05, 0.5);
     asphalt.receiveShadow = true;
     const sidewalk = new THREE.Mesh(
-      new THREE.BoxGeometry(stageW + 30, 0.16, 3.4),
-      new THREE.MeshStandardMaterial({ color: 0x4a4a50, roughness: 0.9 }),
+      new THREE.BoxGeometry(stageW + 30, 0.22, 3.4),
+      new THREE.MeshStandardMaterial({ color: 0x3a3a40, roughness: 0.9 }),
     );
-    sidewalk.position.set(0, -0.08 + 0.06, -5.5);
+    sidewalk.position.set(0, 0.11 - 0.1, -5.7);
     sidewalk.receiveShadow = true;
-    g.add(asphalt, sidewalk);
+    // curb: lighter worn top edge + darker vertical face at the lane boundary
+    const curbTop = new THREE.Mesh(
+      new THREE.BoxGeometry(stageW + 30, 0.03, 0.22),
+      new THREE.MeshStandardMaterial({ color: 0x55555c, roughness: 0.8 }),
+    );
+    curbTop.position.set(0, 0.12, -3.95);
+    const curbFace = new THREE.Mesh(
+      new THREE.BoxGeometry(stageW + 30, 0.14, 0.04),
+      new THREE.MeshStandardMaterial({ color: 0x1a1b20, roughness: 0.95 }),
+    );
+    curbFace.position.set(0, 0.05, -3.85);
+    g.add(asphalt, sidewalk, curbTop, curbFace);
+    // sidewalk expansion joints — cheap lines that sell the concrete slabs
+    const jointMat = new THREE.MeshStandardMaterial({ color: 0x232329, roughness: 1 });
+    for (let jx = -14; jx <= 14; jx += 1.4) {
+      const joint = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.012, 3.3), jointMat);
+      joint.position.set(jx, 0.125, -5.7);
+      g.add(joint);
+    }
+    // wet patches near the curb — low roughness picks up lamp speculars
+    const puddleMat = new THREE.MeshStandardMaterial({
+      color: 0x101318,
+      roughness: 0.08,
+      metalness: 0.55,
+    });
+    for (const [px, pw] of [
+      [-4.2, 2.4],
+      [2.6, 1.8],
+      [8.5, 2.8],
+    ] as const) {
+      const puddle = new THREE.Mesh(new THREE.CircleGeometry(1, 12), puddleMat);
+      puddle.rotation.x = -Math.PI / 2;
+      puddle.scale.set(pw, 0.55, 1);
+      puddle.position.set(px, 0.002, -3.1);
+      g.add(puddle);
+    }
 
     // faded center-line dashes give x-travel a read without a debug grid
     const dashMat = new THREE.MeshStandardMaterial({ color: 0x8f8a6a, roughness: 0.8 });
@@ -109,12 +153,14 @@ export class ThreeStageView {
     moonGlow.position.set(-9, 13, -33.4);
     g.add(sky, moon, moonGlow);
 
-    // building rows at staggered depths — the parallax layers (near → skyline)
+    // building rows at staggered depths — the parallax layers (near → skyline).
+    // near row deliberately sparse: the GAPS are where the deeper rows peek
+    // through and the parallax actually reads during camera travel
     const rows: { z: number; h: [number, number]; color: number; count: number; span: number }[] = [
-      { z: -8.5, h: [3, 7], color: 0x363b49, count: 9, span: stageW + 26 },
-      { z: -15, h: [6, 12], color: 0x252936, count: 11, span: stageW + 40 },
-      { z: -24, h: [10, 20], color: 0x181b26, count: 13, span: stageW + 60 },
-      { z: -31, h: [14, 26], color: 0x0e1119, count: 15, span: stageW + 80 },
+      { z: -8.5, h: [3, 7], color: 0x2e3340, count: 6, span: stageW + 30 },
+      { z: -13.5, h: [5, 10], color: 0x232734, count: 10, span: stageW + 40 },
+      { z: -20, h: [8, 16], color: 0x181b26, count: 12, span: stageW + 55 },
+      { z: -29, h: [13, 24], color: 0x0e1119, count: 15, span: stageW + 80 },
     ];
     const windowMat = new THREE.MeshBasicMaterial({ color: 0x8f7443 });
     for (const [ri, row] of rows.entries()) {
@@ -168,6 +214,34 @@ export class ThreeStageView {
       }
     }
 
+    // elevated rail viaduct behind the near row + a train that crosses it —
+    // the moving layer that makes the parallax impossible to miss
+    const viaductMat = new THREE.MeshStandardMaterial({ color: 0x14161e, roughness: 0.9 });
+    const deck = new THREE.Mesh(new THREE.BoxGeometry(stageW + 44, 0.5, 1.6), viaductMat);
+    deck.position.set(0, 5.4, -11);
+    g.add(deck);
+    for (let px = -16; px <= 16; px += 4) {
+      const pylon = new THREE.Mesh(new THREE.BoxGeometry(0.5, 5.2, 1.1), viaductMat);
+      pylon.position.set(px, 2.6, -11);
+      g.add(pylon);
+    }
+    const train = new THREE.Group();
+    const trainBody = new THREE.Mesh(
+      new THREE.BoxGeometry(9, 0.9, 0.9),
+      new THREE.MeshStandardMaterial({ color: 0x1d222e, roughness: 0.7 }),
+    );
+    trainBody.position.y = 6.1;
+    train.add(trainBody);
+    const trainWinMat = new THREE.MeshBasicMaterial({ color: 0xb8c6e8 });
+    for (let wx = -4; wx <= 4; wx += 0.8) {
+      const tw = new THREE.Mesh(new THREE.PlaneGeometry(0.45, 0.3), trainWinMat);
+      tw.position.set(wx, 6.15, 0.46);
+      train.add(tw);
+    }
+    train.position.z = -11;
+    g.add(train);
+    this.train = train;
+
     // sagging power cables across the street — cheap lines, lots of depth
     const cableMat = new THREE.LineBasicMaterial({ color: 0x05060a });
     for (const [x1, x2, y, zc] of [
@@ -213,45 +287,53 @@ export class ThreeStageView {
     // both shadow casters (point-light shadows are 6 cube faces each — the
     // whole reason we don't scatter five of them around)
     for (const x of [-3.2, 3.2]) {
+      const HEAD_Y = 6.4;
+      const CONE_ANGLE = 0.34; // rad — beam mesh and SpotLight share this
+      const baseR = Math.tan(CONE_ANGLE) * HEAD_Y;
       const lamp = new THREE.Group();
-      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.07, 3.6, 8), poleMat);
-      pole.position.y = 1.8;
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.09, HEAD_Y - 0.1, 8), poleMat);
+      pole.position.y = (HEAD_Y - 0.1) / 2;
       pole.castShadow = true;
       const arm = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 1.7), poleMat);
-      arm.position.set(0, 3.55, 0.85);
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), headMat);
-      head.position.set(0, 3.5, 1.6);
-      // lamps carry the scene light (cozy pools, not flat fill)
-      const light = new THREE.PointLight(0xffc37a, 30, 11, 1.7);
+      arm.position.set(0, HEAD_Y + 0.05, 0.85);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), headMat);
+      head.position.set(0, HEAD_Y, 1.6);
+      // SpotLight, not a 360° point: the lit world follows the visible cone
+      const light = new THREE.SpotLight(0xffc37a, 260, HEAD_Y + 6, CONE_ANGLE, 0.45, 1.6);
       light.position.copy(head.position);
       light.castShadow = true;
       light.shadow.mapSize.set(1024, 1024);
       light.shadow.bias = -0.002;
-      // fake-volumetric shaft: fresnel-faded additive cone (see beamMaterial)
+      const target = new THREE.Object3D();
+      target.position.set(0, 0, 1.6); // straight down from the head
+      light.target = target;
+      // fake-volumetric shaft matching the SpotLight frustum exactly
       const beam = new THREE.Group();
-      const cone = new THREE.Mesh(new THREE.ConeGeometry(1, 1, 24, 1, true), beamMaterial(0xffb765, 0.22));
-      cone.scale.set(1.0, 3.5, 1.0);
-      cone.position.set(0, 3.5 / 2 + 0.02, 0);
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(1, 1, 24, 1, true), beamMaterial(0xffb765, 0.2));
+      cone.scale.set(baseR, HEAD_Y, baseR);
+      cone.position.set(0, HEAD_Y / 2 + 0.02, 0);
       beam.add(cone);
       beam.position.set(0, 0, 1.6);
       const headGlow = new THREE.Mesh(
-        new THREE.PlaneGeometry(1.5, 1.5),
+        new THREE.PlaneGeometry(1.8, 1.8),
         new THREE.MeshBasicMaterial({
           map: radialTexture(),
           color: 0xffc37a,
           transparent: true,
-          opacity: 0.8,
+          opacity: 0.85,
           blending: THREE.AdditiveBlending,
           depthWrite: false,
         }),
       );
-      headGlow.position.set(0, 3.5, 1.62);
+      headGlow.position.set(0, HEAD_Y, 1.62);
+      // subtle pool decal sized to the beam footprint (the real pool now
+      // comes from the SpotLight itself)
       const pool = new THREE.Mesh(
-        new THREE.PlaneGeometry(4.6, 3.2),
+        new THREE.PlaneGeometry(baseR * 2.3, baseR * 1.7),
         new THREE.MeshBasicMaterial({
           map: radialTexture([
-            [0, 'rgba(255,205,140,0.34)'],
-            [0.55, 'rgba(255,190,120,0.13)'],
+            [0, 'rgba(255,205,140,0.16)'],
+            [0.55, 'rgba(255,190,120,0.07)'],
             [1, 'rgba(255,190,120,0)'],
           ]),
           transparent: true,
@@ -261,7 +343,7 @@ export class ThreeStageView {
       );
       pool.rotation.x = -Math.PI / 2;
       pool.position.set(0, 0.004, 1.6);
-      lamp.add(pole, arm, head, light, beam, headGlow, pool);
+      lamp.add(pole, arm, head, light, target, beam, headGlow, pool);
       lamp.position.set(x, 0, -1.6);
       g.add(lamp);
     }
