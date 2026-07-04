@@ -751,6 +751,21 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-04 · net · 3D-aware multiplayer + paste-anywhere (public 3D/MP)** —
+  online now respects the renderer: the host announces its 2D/3D mode the
+  instant the channel opens (new `mode` wire msg), the guest AUTO-ADOPTS it
+  before picking (so 2D/3D can never cross-join and the guest's roster +
+  launched scene always match the host). Lobby filters the char pool to
+  mesh-capable fighters (vincent/yulia/flo) in 3D and launches `Fight3D` vs
+  `Fight` per the agreed `render3d` in the start config. `FightScene3D` gained
+  the same `online`→NetSession injection as `FightScene` (identical hooks,
+  V18), with the 3D stage bounds baked into the host's rules so V25 holds in
+  either renderer. Pasting a room code anywhere on the page jumps to join +
+  fills it. Confirmed 3D + online are NOT dev-gated — reachable in the
+  production build via the menu render toggle + ONLINE entry; verified in
+  `npm run preview`: 3D fight renders (WebGPU), lobby 3D pools the 3 mesh
+  chars, paste fills. Test-room + debug hotkeys kept as-is (per user). — Claude
+
 - **2026-07-04 · net+scenes · online lobby + session injection, live-verified
   (SPEC T39 done, T40 core)** — `LobbyScene` (registered in main.ts, menu
   "3 · ONLINE" + `?dev=net`): host → room code + copy + "waiting", join → code
