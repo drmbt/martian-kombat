@@ -113,6 +113,7 @@ class ClipPlayer {
 
 /** action kinds where the engine says we're airborne — no ground snap */
 const AIRBORNE = new Set(['air', 'airAttack', 'airHit']);
+const BLACK = new THREE.Color(0x000000);
 
 export class ThreeFighterView {
   readonly group = new THREE.Group();
@@ -125,6 +126,9 @@ export class ThreeFighterView {
   private bones: THREE.Bone[] = [];
   private modelBaseY = 0;
   private v = new THREE.Vector3();
+  private materials: THREE.MeshStandardMaterial[] = [];
+  private flashUntil = -1;
+  private flashColor = new THREE.Color(0xffffff);
 
   constructor(private def: CharacterDef) {
     const h = def.hurtStand.h * WORLD_SCALE;
@@ -152,15 +156,32 @@ export class ThreeFighterView {
     if (this.skeleton) this.skeleton.visible = on;
   }
 
-  async loadModel(): Promise<void> {
+  /** Emissive impact flash (SPEC T21) — white pop, red + longer on counter. */
+  flash(tick: number, ticks: number, color: number): void {
+    this.flashUntil = tick + ticks;
+    this.flashColor.setHex(color);
+  }
+
+  private applyFlash(tick: number): void {
+    const active = tick < this.flashUntil;
+    for (const m of this.materials) {
+      m.emissive.copy(active ? this.flashColor : BLACK);
+      m.emissiveIntensity = active ? 0.9 : 0;
+    }
+  }
+
+  /** `sceneRoot`: SkeletonHelper computes world matrices itself, so it must
+   *  hang off the scene root — inside the (moving) fighter group it would be
+   *  double-transformed and drift away from the mesh. */
+  async loadModel(sceneRoot: THREE.Object3D): Promise<void> {
     try {
-      await this.swapInModel();
+      await this.swapInModel(sceneRoot);
     } catch (err) {
       console.error(`[3d] model swap failed for ${this.def.id}:`, err);
     }
   }
 
-  private async swapInModel(): Promise<void> {
+  private async swapInModel(sceneRoot: THREE.Object3D): Promise<void> {
     const gltf = await loadGlb(characterGlbUrl(this.def.id));
     if (!gltf) return;
 
@@ -178,6 +199,10 @@ export class ThreeFighterView {
       if (o instanceof THREE.Mesh) {
         o.castShadow = true;
         o.frustumCulled = false; // skinned bounds lag the pose; never blink
+        const mats = Array.isArray(o.material) ? o.material : [o.material];
+        for (const m of mats) {
+          if (m instanceof THREE.MeshStandardMaterial) this.materials.push(m);
+        }
       }
       if ((o as THREE.Bone).isBone) this.bones.push(o as THREE.Bone);
     });
@@ -188,7 +213,8 @@ export class ThreeFighterView {
 
     this.group.remove(this.placeholder);
     this.group.scale.set(1, 1, 1); // model facing is rotation, not mirror-scale
-    this.group.add(wrapper, this.skeleton);
+    this.group.add(wrapper);
+    sceneRoot.add(this.skeleton);
     this.modelWrapper = wrapper;
     this.model = model;
     this.modelBaseY = model.position.y;
@@ -226,6 +252,7 @@ export class ThreeFighterView {
       this.modelWrapper.rotation.y = f.facing === 1 ? 0 : Math.PI;
       this.player.update(tick, f, this.def);
       this.snapFeetToGround(f);
+      this.applyFlash(tick);
       return;
     }
 

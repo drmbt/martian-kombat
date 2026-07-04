@@ -658,6 +658,23 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-04 · renderer3d+presentation · 3D spike T17–T24: full presentation
+  parity + gore** — pure `src/presentation/tickEvents.ts` (`snapTick`/`diffTick`
+  → typed events, 6 vitests; 2D migrates onto it post-Sprint-19). Fight3D now
+  has: full audio parity via existing helpers (announcer cues, hit/block/
+  whoosh/jump/projectile SFX, hurt/kiai voices, stage/victory music), DOM HUD
+  with portrait pngs + ghost health bars + win pips + combo counter, spark/
+  per-move-overlay billboards from the 2D vfx pngs, victim emissive flash
+  (red+longer on counter), camera shake, MK blood (instanced ellipse drops,
+  cone along impact velocity, dmg-scaled count/size w/ fat blobs, floor
+  splats thinned + 4s fade, KO gush), projectiles as additive billboards
+  (fixes black-fringe squares) + radial glow + PointLight that lights street
+  and fighters. Perspective follow-cam default (V10 amended): midpoint lerp +
+  separation dolly = real parallax vs depth-staggered building rows; night
+  street placeholder stage (asphalt, sidewalk, lit windows, 2 overhead street
+  lamps w/ shadow-casting warm pools + fake-volumetric cones, dense fog, dim
+  moon key). Bloom default on. SkeletonHelper moved to scene root (was
+  double-transformed). vincent-vs-vincent dev launch. — Claude
 - **2026-07-04 · renderer3d · 3D spike T10–T12: stage box, light rig, post,
   settings** — placeholder test stage (grid floor + gridded back wall + side
   walls + horizon + fog) replaces the black void; three-point rig (warm key

@@ -1,0 +1,402 @@
+// Impact presentation for the 3D path (SPEC T20/T22/T23, V15/V16):
+// - billboard quads reusing the 2D spark/per-move overlay art
+// - instanced blood spray (gore greenlit — direction follows impact velocity)
+// - projectile pool reusing the 2D projectile pngs + additive glow + light
+// Everything is renderer-side; randomness is tick-hashed, never engine RNG.
+import * as THREE from 'three/webgpu';
+import type { CharacterDef, GameState, Projectile } from '../engine';
+import { FLOOR_Y } from '../engine';
+import type { Defs } from '../engine';
+import { engineToWorld, WORLD_SCALE } from './threeCoordinates';
+
+const BASE = import.meta.env.BASE_URL;
+
+/** deterministic-enough presentation rand: hash a seed into [0,1) */
+function hash01(seed: number): number {
+  let h = (seed | 0) * 2654435761;
+  h ^= h >>> 16;
+  h = Math.imul(h, 2246822519);
+  h ^= h >>> 13;
+  return ((h >>> 0) % 100000) / 100000;
+}
+
+interface Billboard {
+  mesh: THREE.Mesh;
+  mat: THREE.MeshBasicMaterial;
+  life: number;
+  max: number;
+  grow: number;
+}
+
+interface BloodDrop {
+  alive: boolean;
+  x: number;
+  y: number;
+  z: number;
+  vx: number;
+  vy: number;
+  vz: number;
+  size: number;
+}
+
+const BLOOD_CAP = 512;
+const SPLAT_CAP = 64;
+const GRAVITY = 14; // m/s² — heavier than earth reads punchier
+const TICK = 1 / 60;
+
+export class ThreeFxSystem {
+  readonly group = new THREE.Group();
+  private loader = new THREE.TextureLoader();
+  private textures = new Map<string, THREE.Texture | 'loading' | 'missing'>();
+
+  private billboards: Billboard[] = [];
+
+  private blood: THREE.InstancedMesh;
+  private drops: BloodDrop[] = [];
+  private splats: THREE.InstancedMesh;
+  private splatLives: number[] = [];
+  private splatCursor = 0;
+  private dummy = new THREE.Object3D();
+
+  private projMeshes: {
+    sprite: THREE.Mesh;
+    mat: THREE.MeshBasicMaterial;
+    glow: THREE.Mesh;
+    glowMat: THREE.MeshBasicMaterial;
+    light: THREE.PointLight;
+  }[] = [];
+  private glowTexture: THREE.Texture;
+
+  constructor(private defs: Defs) {
+    // circle, not quad: stretched drops read as ellipses instead of rectangles
+    const dropGeo = new THREE.CircleGeometry(0.5, 7);
+    const dropMat = new THREE.MeshBasicMaterial({ color: 0x9e0e12, transparent: true, opacity: 0.95 });
+    this.blood = new THREE.InstancedMesh(dropGeo, dropMat, BLOOD_CAP);
+    this.blood.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.blood.count = 0;
+    this.blood.frustumCulled = false;
+    for (let i = 0; i < BLOOD_CAP; i++) this.drops.push({ alive: false, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, size: 0 });
+
+    const splatGeo = new THREE.CircleGeometry(0.5, 8);
+    const splatMat = new THREE.MeshBasicMaterial({ color: 0x6d090c, transparent: true, opacity: 0.85 });
+    this.splats = new THREE.InstancedMesh(splatGeo, splatMat, SPLAT_CAP);
+    this.splats.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.splats.count = 0;
+    this.splats.frustumCulled = false;
+    this.splatLives = new Array(SPLAT_CAP).fill(0);
+
+    this.group.add(this.blood, this.splats);
+
+    // procedural radial falloff for projectile glow halos
+    const c = document.createElement('canvas');
+    c.width = c.height = 64;
+    const ctx = c.getContext('2d')!;
+    const grad = ctx.createRadialGradient(32, 32, 2, 32, 32, 32);
+    grad.addColorStop(0, 'rgba(255,255,255,1)');
+    grad.addColorStop(0.4, 'rgba(255,255,255,0.35)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 64, 64);
+    this.glowTexture = new THREE.CanvasTexture(c);
+  }
+
+  // ---------- textures ----------
+
+  private texture(url: string): THREE.Texture | null {
+    const cached = this.textures.get(url);
+    if (cached === 'missing' || cached === 'loading') return null;
+    if (cached) return cached;
+    this.textures.set(url, 'loading');
+    this.loader.load(
+      url,
+      (t) => {
+        t.colorSpace = THREE.SRGBColorSpace;
+        this.textures.set(url, t);
+      },
+      undefined,
+      () => this.textures.set(url, 'missing'),
+    );
+    return null;
+  }
+
+  /** warm the cache so first-hit sparks don't miss their art */
+  preload(charIds: string[]): void {
+    for (const k of ['spark-hit', 'spark-heavy', 'spark-block']) this.texture(`${BASE}assets/vfx/${k}.png`);
+    for (const id of charIds) {
+      this.texture(`${BASE}assets/sprites/${id}/projectile.png`);
+      const def = this.defs[id];
+      for (const [moveId, m] of Object.entries(def.moves)) {
+        if (m.projectile) {
+          this.texture(`${BASE}assets/sprites/${id}/projectile-${moveId}.png`);
+          if (m.projectile.detonate) this.texture(`${BASE}assets/sprites/${id}/projectile-${moveId}-burst.png`);
+        }
+        if (m.vfx) this.texture(`${BASE}assets/sprites/${id}/vfx-${moveId}.png`);
+      }
+    }
+  }
+
+  // ---------- billboards (sparks + per-move overlays) ----------
+
+  spawnBillboard(
+    url: string | null,
+    ex: number,
+    ey: number,
+    sizePx: number,
+    opts: { tint?: number; flip?: boolean; additive?: boolean } = {},
+  ): void {
+    const tex = url ? this.texture(url) : null;
+    const mat = new THREE.MeshBasicMaterial({
+      map: tex,
+      color: opts.tint ?? 0xffffff,
+      transparent: true,
+      depthWrite: false,
+      blending: opts.additive || !tex ? THREE.AdditiveBlending : THREE.NormalBlending,
+      side: THREE.DoubleSide,
+    });
+    const size = sizePx * WORLD_SCALE;
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
+    const [x, y] = engineToWorld(ex, ey);
+    mesh.position.set(x, y, 0.25);
+    mesh.scale.set(opts.flip ? -size : size, size, 1);
+    mesh.renderOrder = 20;
+    this.group.add(mesh);
+    this.billboards.push({ mesh, mat, life: 14, max: 14, grow: size * 0.04 });
+  }
+
+  /** hit spark parity with FightScene.spawnHitVfx (per-move art > spark) */
+  spawnHitFx(state: GameState, slot: 0 | 1, counter: boolean, heavy: boolean): void {
+    const f = state.fighters[slot];
+    const atk = state.fighters[slot === 0 ? 1 : 0];
+    const atkDef = this.defs[atk.charId];
+    const a = atk.action;
+    const move = a.kind === 'attack' || a.kind === 'airAttack' ? atkDef.moves[a.moveId!] : undefined;
+    const ix = f.x - f.facing * 20;
+    const iy = f.y - 150;
+
+    if (counter) {
+      this.spawnBillboard(`${BASE}assets/vfx/spark-heavy.png`, ix, iy, 155, {
+        tint: 0xff3b30,
+        flip: atk.facing === -1,
+        additive: true,
+      });
+      return;
+    }
+    if (move?.vfx) {
+      const size = move.vfx.size ?? 160;
+      const ground = move.vfx.anchor === 'ground';
+      this.spawnBillboard(
+        `${BASE}assets/sprites/${atk.charId}/vfx-${a.moveId}.png`,
+        ground ? f.x : ix,
+        ground ? FLOOR_Y - size * 0.3 : iy,
+        size,
+        { flip: atk.facing === -1 },
+      );
+      return;
+    }
+    const tint = new THREE.Color(atkDef.color).getHex();
+    this.spawnBillboard(
+      `${BASE}assets/vfx/${heavy ? 'spark-heavy' : 'spark-hit'}.png`,
+      ix,
+      iy,
+      heavy ? 135 : 90,
+      { tint, additive: true },
+    );
+  }
+
+  spawnBlockFx(state: GameState, slot: 0 | 1): void {
+    const f = state.fighters[slot];
+    this.spawnBillboard(`${BASE}assets/vfx/spark-block.png`, f.x + f.facing * 42, f.y - 130, 95, {
+      tint: 0xa8c8ff,
+      flip: f.facing === 1,
+      additive: true,
+    });
+  }
+
+  spawnDust(state: GameState, slot: 0 | 1): void {
+    const f = state.fighters[slot];
+    this.spawnBillboard(`${BASE}assets/vfx/spark-hit.png`, f.x, FLOOR_Y - 16, 95, {
+      tint: 0xcbb894,
+      additive: true,
+    });
+  }
+
+  // ---------- blood (SPEC V16) ----------
+
+  /** dir: +1 spray right, -1 left (impact velocity direction = attacker facing) */
+  spawnBlood(ex: number, ey: number, dir: 1 | -1, amount: number, tick: number): void {
+    const [x, y] = engineToWorld(ex, ey);
+    let spawned = 0;
+    for (let i = 0; i < BLOOD_CAP && spawned < amount; i++) {
+      const d = this.drops[i];
+      if (d.alive) continue;
+      const r1 = hash01(tick * 131 + i * 7);
+      const r2 = hash01(tick * 733 + i * 13);
+      const r3 = hash01(tick * 397 + i * 29);
+      d.alive = true;
+      d.x = x;
+      d.y = y + (r1 - 0.5) * 0.25;
+      d.z = (r2 - 0.5) * 0.35;
+      // cone toward `dir`, MK-style: fast forward, upward scatter, some depth
+      d.vx = dir * (1.2 + r1 * 3.6);
+      d.vy = 0.8 + r2 * 3.4;
+      d.vz = (r3 - 0.5) * 1.8;
+      // mostly droplets, occasional fat blob that lobs out slower
+      d.size = 0.035 + r3 * r3 * 0.12;
+      if (r2 > 0.86) {
+        d.size *= 2.4;
+        d.vx *= 0.55;
+        d.vy *= 0.8;
+      }
+      spawned++;
+    }
+  }
+
+  private simBlood(dtTicks: number): void {
+    const dt = dtTicks * TICK;
+    if (dt <= 0) return;
+    let count = 0;
+    for (const d of this.drops) {
+      if (!d.alive) continue;
+      d.vy -= GRAVITY * dt;
+      d.x += d.vx * dt;
+      d.y += d.vy * dt;
+      d.z += d.vz * dt;
+      if (d.y <= 0) {
+        d.alive = false;
+        // only fat drops leave a mark — light hits shouldn't repaint the street
+        if (d.size > 0.055 || hash01((d.x * 977 + d.z * 389) | 0) < 0.22) {
+          this.addSplat(d.x, d.z, d.size);
+        }
+        continue;
+      }
+      // stretch along velocity ∝ speed — fast droplets streak, blobs stay fat
+      // and readable from the side view instead of thinning into slivers
+      const speed = Math.hypot(d.vx, d.vy);
+      this.dummy.position.set(d.x, d.y, d.z);
+      this.dummy.scale.set(d.size * Math.min(1 + speed * 0.12, 1.6), d.size, 1);
+      this.dummy.rotation.z = Math.atan2(d.vy, d.vx);
+      this.dummy.updateMatrix();
+      this.blood.setMatrixAt(count++, this.dummy.matrix);
+    }
+    this.blood.count = count;
+    this.blood.instanceMatrix.needsUpdate = true;
+  }
+
+  private addSplat(x: number, z: number, size: number): void {
+    const i = this.splatCursor;
+    this.splatCursor = (this.splatCursor + 1) % SPLAT_CAP;
+    this.splatLives[i] = 240; // ~4s
+    this.dummy.position.set(x, 0.002, z);
+    this.dummy.rotation.set(-Math.PI / 2, 0, 0);
+    const s = size * (1.7 + hash01(i * 97) * 1.6);
+    this.dummy.scale.set(s * 1.15, s, 1);
+    this.dummy.updateMatrix();
+    this.splats.setMatrixAt(i, this.dummy.matrix);
+    this.splats.count = Math.max(this.splats.count, i + 1);
+    this.splats.instanceMatrix.needsUpdate = true;
+  }
+
+  private simSplats(dtTicks: number): void {
+    for (let i = 0; i < this.splats.count; i++) {
+      if (this.splatLives[i] <= 0) continue;
+      this.splatLives[i] -= dtTicks;
+      if (this.splatLives[i] <= 0) {
+        this.dummy.position.set(0, -10, 0); // park expired splats out of view
+        this.dummy.scale.setScalar(0.0001);
+        this.dummy.updateMatrix();
+        this.splats.setMatrixAt(i, this.dummy.matrix);
+        this.splats.instanceMatrix.needsUpdate = true;
+      }
+    }
+  }
+
+  // ---------- projectiles (SPEC T23) ----------
+
+  private projTexture(p: Projectile, ownerChar: string): THREE.Texture | null {
+    return (
+      this.texture(`${BASE}assets/sprites/${ownerChar}/projectile-${p.moveId}.png`) ??
+      this.texture(`${BASE}assets/sprites/${ownerChar}/projectile.png`)
+    );
+  }
+
+  private syncProjectiles(state: GameState): void {
+    while (this.projMeshes.length < state.projectiles.length) {
+      // additive: magic reads as energy AND black-fringed pngs lose the fringe
+      // (black adds nothing) — fixes the ugly dark squares around projectiles
+      const mat = new THREE.MeshBasicMaterial({
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+      });
+      const sprite = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
+      sprite.renderOrder = 15;
+      const glowMat = new THREE.MeshBasicMaterial({
+        map: this.glowTexture,
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      });
+      const glow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), glowMat);
+      glow.renderOrder = 14;
+      // the light is what makes the bolt illuminate street + fighters
+      const light = new THREE.PointLight(0xffffff, 0, 7, 1.8);
+      sprite.add(light);
+      this.group.add(sprite, glow);
+      this.projMeshes.push({ sprite, mat, glow, glowMat, light });
+    }
+    this.projMeshes.forEach((entry, i) => {
+      const p = state.projectiles[i];
+      if (!p) {
+        entry.sprite.visible = false;
+        entry.glow.visible = false;
+        entry.light.intensity = 0;
+        return;
+      }
+      const ownerChar = state.fighters[p.owner].charId;
+      const [x, y] = engineToWorld(p.x + p.box.x + p.box.w / 2, p.y + p.box.y + p.box.h / 2);
+      const w = Math.max(p.box.w, 24) * WORLD_SCALE * 1.6;
+      const h = Math.max(p.box.h, 24) * WORLD_SCALE * 1.6;
+      const color = new THREE.Color(this.defs[ownerChar].color);
+      entry.sprite.visible = true;
+      entry.sprite.position.set(x, y, 0.1);
+      entry.sprite.scale.set(p.vx < 0 ? -w : w, h, 1);
+      entry.mat.map = this.projTexture(p, ownerChar);
+      entry.mat.opacity = p.field ? 0.5 : p.fuse > 0 ? 0.75 : 1;
+      entry.mat.needsUpdate = true;
+      entry.glow.visible = !p.field;
+      entry.glow.position.set(x, y, 0.05);
+      const gs = Math.max(w, h) * 2.6;
+      entry.glow.scale.set(gs, gs, 1);
+      entry.glowMat.color = color;
+      entry.glowMat.opacity = 0.85;
+      entry.light.color = color;
+      entry.light.intensity = i < 4 && !p.field ? 18 : 0;
+    });
+  }
+
+  // ---------- per-frame ----------
+
+  update(dtTicks: number, state: GameState): void {
+    for (let i = this.billboards.length - 1; i >= 0; i--) {
+      const b = this.billboards[i];
+      b.life -= dtTicks;
+      if (b.life <= 0) {
+        this.group.remove(b.mesh);
+        b.mat.dispose();
+        (b.mesh.geometry as THREE.BufferGeometry).dispose();
+        this.billboards.splice(i, 1);
+        continue;
+      }
+      const t = b.life / b.max;
+      b.mat.opacity = t;
+      // grow-and-fade like the 2D overlay sprites
+      const growFactor = 1 + b.grow * dtTicks;
+      b.mesh.scale.x *= growFactor;
+      b.mesh.scale.y *= growFactor;
+    }
+    this.simBlood(dtTicks);
+    this.simSplats(dtTicks);
+    this.syncProjectiles(state);
+  }
+}

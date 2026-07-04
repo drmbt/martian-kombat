@@ -16,16 +16,29 @@ import { DEFAULT_SETTINGS, type RenderSettings } from './threeRenderSettings';
 import { ThreeFighterView } from './ThreeFighterView';
 import { ThreeHitboxDebug } from './ThreeHitboxDebug';
 import { ThreeStageView } from './ThreeStageView';
+import { ThreeFxSystem } from './ThreeFxSystem';
 import type { ResolvedClip } from './clipContract';
 
 export class ThreeFightRenderer {
   readonly canvas: HTMLCanvasElement;
   private renderer: THREE.WebGPURenderer;
   private scene = new THREE.Scene();
-  private camera: THREE.OrthographicCamera;
+  /** active camera: perspective by default (real parallax), ortho preset for debug */
+  private camera: THREE.PerspectiveCamera | THREE.OrthographicCamera;
+  private persp: THREE.PerspectiveCamera;
+  private ortho: THREE.OrthographicCamera;
+  /** smoothed follow state (world meters) */
+  private camX = 0;
+  private camZ = 17;
   private fighters: [ThreeFighterView, ThreeFighterView];
   readonly hitboxes = new ThreeHitboxDebug();
+  readonly fx: ThreeFxSystem;
   private stage = new ThreeStageView();
+  private lastFxTick = -1;
+  private shakeUntil = -1;
+  private shakeDur = 0;
+  private shakeAmp = 0;
+  private baseCamY = 0;
   private ready = false;
   private disposed = false;
   private lights!: { key: THREE.DirectionalLight; fill: THREE.DirectionalLight; rim: THREE.DirectionalLight };
@@ -51,29 +64,32 @@ export class ThreeFightRenderer {
     const viewW = STAGE_W * WORLD_SCALE + 0.9;
     const viewH = viewW * (STAGE_H / STAGE_W);
     this.viewH = viewH;
-    this.camera = new THREE.OrthographicCamera(-viewW / 2, viewW / 2, viewH / 2, -viewH / 2, 0.1, 60);
+    // perspective default (V10 amended): low FOV keeps fighter proportions
+    // honest while depth-staggered stage layers parallax for real
+    this.persp = new THREE.PerspectiveCamera(20, STAGE_W / STAGE_H, 0.1, 80);
+    this.ortho = new THREE.OrthographicCamera(-viewW / 2, viewW / 2, viewH / 2, -viewH / 2, 0.1, 80);
+    this.camera = this.persp;
     this.applyCameraPreset('default');
 
-    this.scene.background = new THREE.Color(0x171b26);
-    this.scene.fog = new THREE.Fog(0x171b26, 14, 34);
+    // night street mood (T24): dark blue ambience + haze; the street lamps
+    // carry the scene — key/fill stay low so their warm pools read cozy
+    this.scene.background = new THREE.Color(0x0b0e17);
+    this.scene.fog = new THREE.Fog(0x0e1120, 11, 30);
 
-    // three-point rig (SPEC T10): warm key with shadows, cool fill from the
-    // camera side so black outfits keep detail, rim from behind to separate
-    // fighters from the stage, hemisphere ambient for the rest
-    const key = new THREE.DirectionalLight(0xfff0dd, 3.2);
-    key.position.set(-3.5, 6, 4.5);
+    const key = new THREE.DirectionalLight(0xcfd8ff, 0.9); // dim cool moon
+    key.position.set(-3.5, 7, 4.5);
     key.castShadow = true;
     key.shadow.mapSize.set(2048, 2048);
     key.shadow.camera.left = -7;
     key.shadow.camera.right = 7;
-    key.shadow.camera.top = 6;
+    key.shadow.camera.top = 8;
     key.shadow.camera.bottom = -2;
     key.shadow.bias = -0.0005;
-    const fill = new THREE.DirectionalLight(0xbfd4ff, 1.3);
+    const fill = new THREE.DirectionalLight(0x7a86b8, 0.25);
     fill.position.set(4, 2.5, 7);
-    const rim = new THREE.DirectionalLight(0x9fc4ff, 2.4);
+    const rim = new THREE.DirectionalLight(0x8fb4ff, 1.6);
     rim.position.set(1, 4.5, -6);
-    const ambient = new THREE.HemisphereLight(0x9fb4d4, 0x3a332b, 0.7);
+    const ambient = new THREE.HemisphereLight(0x232c4a, 0x120e0a, 0.35);
     this.scene.add(key, fill, rim, ambient);
     this.lights = { key, fill, rim };
     this.renderer.toneMappingExposure = DEFAULT_SETTINGS.exposure;
@@ -84,19 +100,34 @@ export class ThreeFightRenderer {
       new ThreeFighterView(defs[charIds[0]]),
       new ThreeFighterView(defs[charIds[1]]),
     ];
+    this.fx = new ThreeFxSystem(defs);
+    this.fx.preload([charIds[0], charIds[1]]);
     this.scene.add(
       this.fighters[0].group,
       this.fighters[1].group,
       this.hitboxes.group,
       this.stage.group,
+      this.fx.group,
     );
+  }
+
+  /** Victim impact flash (T21). */
+  flashFighter(slot: 0 | 1, tick: number, ticks: number, color: number): void {
+    this.fighters[slot].flash(tick, ticks, color);
+  }
+
+  /** Presentation-only camera shake (T21) — never touches gameplay coords. */
+  shake(tick: number, ticks: number, amplitude: number): void {
+    this.shakeUntil = tick + ticks;
+    this.shakeDur = ticks;
+    this.shakeAmp = amplitude;
   }
 
   /** WebGPU init is async; render() is a no-op until this resolves. */
   async init(stageId?: string): Promise<void> {
     // models load in parallel with the backend; each falls back gracefully
-    void this.fighters[0].loadModel();
-    void this.fighters[1].loadModel();
+    void this.fighters[0].loadModel(this.scene);
+    void this.fighters[1].loadModel(this.scene);
     if (stageId) void this.stage.load(stageId);
     await this.renderer.init();
     if (this.disposed) return; // scene shut down while the backend was booting
@@ -118,20 +149,44 @@ export class ThreeFightRenderer {
     this.baseSize = { w, h };
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2) * this.settings.resolutionScale);
     this.renderer.setSize(w, h, false);
+    this.persp.aspect = w / h;
+    this.persp.updateProjectionMatrix();
   }
 
   applyCameraPreset(preset: RenderSettings['cameraPreset']): void {
-    // ortho: position sets the tilt, the frustum stays honest to hitboxes
-    if (preset === 'low') {
-      this.camera.position.set(0, 2.6, 11);
-      this.camera.lookAt(0, this.viewH / 2 - 0.45, 0);
-    } else if (preset === 'high') {
-      this.camera.position.set(0, 7, 12);
-      this.camera.lookAt(0, this.viewH / 2 - 1.1, 0);
-    } else {
+    if (preset === 'ortho') {
+      this.camera = this.ortho;
       this.camera.position.set(0, 4.6, 11);
       this.camera.lookAt(0, this.viewH / 2 - 0.75, 0);
+    } else {
+      this.camera = this.persp;
+      // presets shift the eye height/tilt; follow logic drives x/z each frame
+      const y = preset === 'low' ? 1.4 : preset === 'high' ? 4.6 : 2.2;
+      this.camera.position.set(this.camX, y, this.camZ);
+      this.camera.lookAt(this.camX * 0.85, 1.3, 0);
     }
+    this.baseCamY = this.camera.position.y;
+    if (this.ready && this.post) this.buildPost(); // post pass binds the camera
+  }
+
+  /** Perspective follow (T24): midpoint x with soft lerp, dolly ∝ separation. */
+  private followCamera(state: GameState): void {
+    if (this.camera !== this.persp) {
+      // ortho debug: simple clamped pan like the old behavior
+      const [a, b] = state.fighters;
+      const [cx] = engineToWorld((a.x + b.x) / 2, 0);
+      this.camera.position.x = cx * 0.4;
+      return;
+    }
+    const [a, b] = state.fighters;
+    const [mx] = engineToWorld((a.x + b.x) / 2, 0);
+    const sep01 = Math.min(Math.abs(a.x - b.x) / 700, 1);
+    const targetX = mx * 0.8;
+    const targetZ = 13.5 + sep01 * 4.5; // dolly out as they spread
+    this.camX += (targetX - this.camX) * 0.08;
+    this.camZ += (targetZ - this.camZ) * 0.05;
+    this.camera.position.set(this.camX, this.baseCamY, this.camZ);
+    this.camera.lookAt(this.camX * 0.85, 1.3, 0);
   }
 
   applySettings(s: RenderSettings): void {
@@ -182,20 +237,21 @@ export class ThreeFightRenderer {
     this.post.outputNode = color;
   }
 
-  /** Camera drifts to keep both fighters framed (ortho pan only, no zoom yet). */
-  private track(state: GameState): void {
-    const [a, b] = state.fighters;
-    const [cx] = engineToWorld((a.x + b.x) / 2, 0);
-    const limit = (STAGE_W * WORLD_SCALE) / 2 - (this.camera.right - this.camera.left) / 2;
-    this.camera.position.x = limit > 0 ? Math.max(-limit, Math.min(limit, cx * 0.4)) : 0;
-  }
-
   render(state: GameState): void {
     if (!this.ready || this.disposed) return;
     this.fighters[0].update(state.tick, state.fighters[0]);
     this.fighters[1].update(state.tick, state.fighters[1]);
     this.hitboxes.update(state, this.defs);
-    this.track(state);
+    const dtTicks = this.lastFxTick < 0 ? 0 : Math.max(state.tick - this.lastFxTick, 0);
+    this.lastFxTick = state.tick;
+    this.fx.update(dtTicks, state);
+    this.followCamera(state); // sets pos + aim; shake jitters on top
+    if (state.tick < this.shakeUntil && this.shakeDur > 0) {
+      const decay = (this.shakeUntil - state.tick) / this.shakeDur;
+      const j = (seed: number): number => (((seed * 2654435761) >>> 13) % 1000) / 500 - 1;
+      this.camera.position.x += j(state.tick * 3 + 1) * this.shakeAmp * decay;
+      this.camera.position.y += j(state.tick * 7 + 5) * this.shakeAmp * decay;
+    }
     if (this.post) this.post.render();
     else this.renderer.render(this.scene, this.camera);
   }

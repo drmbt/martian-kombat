@@ -41,10 +41,12 @@ V6: GLB root-in-place X/Z — engine state controls translation. Vertical root m
 V7: 2D routes (menu/select/versus/2D fight, `main.ts` defaults) untouched.
 V8: 60fps holds with enabled effects — else effect defaults off.
 V9: model root origin between feet @ ground contact; standing height = `hurtStand.h * WORLD_SCALE`; feet @ local Y=0 in grounded poses.
-V10: first camera orthographic; perspective only after GLB proportions stable.
+V10: ~~ortho first~~ AMENDED 2026-07-04: GLB proportions proven → low-FOV perspective default (real 3D parallax + camera follow/dolly on fighter midpoint+separation). Ortho stays as `camera: ortho` preset for hitbox-honest debugging.
 V11: ∀ post/light controls toggleable from debug UI (`threeRenderSettings.ts` isolates controls from renderer logic).
 V12: contract clip set + fallback chain defined once (data map, ⊥ scattered ifs). Lookup: exact clip → chain fallback → idle. Missing clip ⊥ crash, ⊥ T-pose, ⊥ silent — debug HUD shows active clip name + `PLACEHOLDER` flag. Fill-in later = drop clip w/ contract name into T14 input, rerun, no code change.
 V14: visual ground = engine ground, enforced not hoped. Stage GLB `Floor` group top surface auto-shifted to world Y=0 (`FLOOR_Y`) on load. Grounded fighters: lowest skeleton bone snapped to fighter ground per frame (clip hip-height drift ⊥ float, ⊥ poke-through). Airborne kinds (air/airAttack/airHit): no snap — engine owns arc.
+V15: presentation parity w/o asset duplication. 3D reuses: `play`/`playVoice` (BootScene), `playMusic` (audio/music.ts), portrait pngs (`assets/portraits/`), spark pngs (`assets/vfx/`), per-move overlay pngs (`vfx-<char>-<move>`), projectile pngs (`assets/sprites/<id>/projectile*.png`). Event detection = pure `diffTick` in `src/presentation/` (vitest) — 2D FightScene migrates onto it post-Sprint-19, ⊥ touch now (V7).
+V16: gore greenlit (legal ✓). Blood spray per hit: direction = knockback dir (attacker facing), volume ∝ damage; KO/heavy → gush. Renderer-side only; tick-hashed seeds, ⊥ engine RNG.
 V13: anim transitions crossfade, ⊥ pose-snap. Clip classes in `clipContract.ts`: loop (phase = frame/60 % dur, walk timeScale ∝ walkSpeed), window (attacks: timeScale fits startup+active+recovery, optional `impactNorm` warp keeps impact on active frames), oneshot (natural speed, clamp). Pair-class fade table (ticks) data-driven. ∀ weights/times = fn(tick state) — mixer ⊥ free-run (`mixer.update(0)`), renderer-side transition record OK, engine untouched.
 
 ## §T
@@ -66,6 +68,14 @@ T13|x|writeup: extract shared fight-loop/presentation events from `FightScene`? 
 T14|x|`tools/` convert script: vincent rig FBX + Mixamo clip FBXs → `public/assets/3d/characters/vincent/vincent.glb`, clips renamed per anim map, in-place root verified/stripped, idempotent + `--force` (tool: Blender headless \| FBX2glTF `?`)|I.asset,V6,V9
 T15|x|clip-name map Mixamo→contract (Fight Idle→idle, Punching→attack/punch, Fireball→attack/fireball, Jumping Up→jump, Falling Idle→fall, hits→hit, Stunned→dazed, Fallen Idle→knockdown, Taunt→win) — lives in T14 script config|V4
 T16|x|T14 emits clip coverage report: contract clips present \| missing \| fallback-mapped per char; T12 debug HUD shows active clip + `PLACEHOLDER` flag|V12
+T17|x|`src/presentation/tickEvents.ts`: pure snapshot + `diffTick` → typed events (hit/block/attackStart/jump/dust/bounce/projectile-spawn/throw/phase cues) + vitest|V15
+T18|x|Fight3D audio parity: `playMusic` stage contexts, announcer cues, s-hit/block/whoosh/jump/projectile, hurt/kiai voices — existing helpers only|V15
+T19|x|Fight3D DOM HUD parity: portraits, health+ghost bars, timer, win pips, combo counter — `<img>` from existing pngs|V15
+T20|x|`ThreeFxSystem`: additive billboard quads — spark-hit/heavy/block tinted attacker color, per-move overlay art (impact\|ground anchor)|V15
+T21|x|mesh impact feedback: victim emissive flash (counter = red, longer) + camera shake (render offset, ⊥ gameplay coords)|V15
+T22|x|blood: instanced particle spray per hit — cone toward impact velocity, gravity, floor kill; volume ∝ damage; KO gush|V16
+T23|x|3D projectiles: billboard pool from `proj-*` textures (moveId→texture fallback like 2D), additive glow + PointLight, driven by `state.projectiles`|V15
+T24|x|parallax + mood: perspective cam follow (x=midpoint lerp, dolly ∝ separation, clamp) replicating 2D layer-factor feel via real depth; night street placeholder stage (building rows @ staggered depth, street lamps w/ warm pools, dim key/ambient); projectile glow quad + light illuminate env+chars; bloom default on (V8 fps watch)|V10,V8,V16
 
 ## §B
 

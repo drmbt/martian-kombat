@@ -11,7 +11,7 @@ export interface RenderSettings {
   keyIntensity: number;
   fillIntensity: number;
   rimIntensity: number;
-  cameraPreset: 'default' | 'low' | 'high';
+  cameraPreset: 'default' | 'low' | 'high' | 'ortho';
   hitboxes: boolean;
   skeleton: boolean;
 }
@@ -20,12 +20,12 @@ export const DEFAULT_SETTINGS: RenderSettings = {
   resolutionScale: 1,
   shadowMapSize: 2048,
   aoEnabled: true,
-  bloomEnabled: false, // bloom is for effects, not the whole scene (spike doc)
-  bloomStrength: 0.25,
-  exposure: 1.15,
-  keyIntensity: 3.2,
-  fillIntensity: 1.3,
-  rimIntensity: 2.4,
+  bloomEnabled: true, // night scene: lamp glow + magic projectiles want it (V8: watch fps)
+  bloomStrength: 0.3,
+  exposure: 1.1,
+  keyIntensity: 0.9,
+  fillIntensity: 0.25,
+  rimIntensity: 1.6,
   cameraPreset: 'default',
   hitboxes: false,
   skeleton: false,
@@ -113,7 +113,7 @@ export function createSettingsPanel(
   slider('key light', 'keyIntensity', 0, 8, 0.1);
   slider('fill light', 'fillIntensity', 0, 5, 0.1);
   slider('rim light', 'rimIntensity', 0, 8, 0.1);
-  select('camera', 'cameraPreset', ['default', 'low', 'high']);
+  select('camera', 'cameraPreset', ['default', 'low', 'high', 'ortho']);
   check('hitboxes', 'hitboxes');
   check('skeleton', 'skeleton');
 
