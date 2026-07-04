@@ -164,6 +164,23 @@ export function packInput(i: InputFrame): number {
   );
 }
 
+/** Inverse of packInput — rebuilds the InputFrame a net packet carried
+ *  (SPEC V22: inputs travel as packed numbers, never objects). */
+export function unpackInput(n: number): InputFrame {
+  return {
+    left: (n & BIT.left) !== 0,
+    right: (n & BIT.right) !== 0,
+    up: (n & BIT.up) !== 0,
+    down: (n & BIT.down) !== 0,
+    lp: (n & BIT.lp) !== 0,
+    mp: (n & BIT.mp) !== 0,
+    hp: (n & BIT.hp) !== 0,
+    lk: (n & BIT.lk) !== 0,
+    mk: (n & BIT.mk) !== 0,
+    hk: (n & BIT.hk) !== 0,
+  };
+}
+
 /** True when any bit of `mask` is down this tick but was up last tick. */
 function freshPress(f: FighterState, mask: number): boolean {
   const buf = f.inputBuffer;

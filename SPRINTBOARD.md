@@ -751,6 +751,13 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-04 · engine · net wire helpers (SPEC T35)** — `unpackInput`
+  (inverse of packInput, 1024-combo round-trip vitest) and `hashState`
+  (FNV-1a over float64 bit patterns of the numeric core: tick/phase/timer/
+  wins + per-fighter x/y/vx/vy/facing/health/stun/hitstop/action +
+  projectiles/pendingThrow) for netplay desync detection (V20/V22). Math-op
+  audit: engine uses only abs/floor/max/min — exact IEEE ops, no trig/pow,
+  cross-browser deterministic. — Claude
 - **2026-07-04 · session · extract FightSession (SPEC T34, netplay groundwork)** —
   the duplicated fixed-timestep loops in FightScene + FightScene3D moved into
   `src/session/FightSession.ts`: one driver owns accumulator, 100ms delta

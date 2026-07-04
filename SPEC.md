@@ -121,7 +121,7 @@ T31|x|uppercut: `Uppercut.fbx` arrived → `attack/rising-glyph` remapped (strip
 T32|x|taunt button (T): renderer-side gesture override while idle, ⊥ engine change; variant shuffle system (`name#N` clips, tick-hash latch per action instance) spreads Lead Jab×3/Hook×2/Elbow×2, reaction flavors, taunts×3|V1,V12
 T33|x|dash stocks: engine `dashStocks`/`dashRegen` (2 stocks, 150-tick regen) gate the existing double-tap impulse + 4 vitests; HUD ◆ pips w/ recharge fade; dash-forward/back clips read off vx|V1,V15
 T34|x|extract `FightSession` (local impl): accumulator, KeyboardSource/CpuDriver gather, `step`, koSlow pacing; FightScene + FightScene3D consume it; behavior unchanged (executes T13 decision)|V17,V18
-T35|.|engine pure helpers: `unpackInput(n)` + `hashState(s)` (FNV over numeric core: tick, phase, fighters x/y/vx/vy/health/action.kind+frame, wins, timer, projectiles) + vitests; audit engine for impl-varying Math ops|V20
+T35|x|engine pure helpers: `unpackInput(n)` + `hashState(s)` (FNV over numeric core: tick, phase, fighters x/y/vx/vy/health/action.kind+frame, wins, timer, projectiles) + vitests; audit engine for impl-varying Math ops|V20
 T36|.|`src/net/transport.ts`: Transport iface (send/onMessage/onStatus) + `LoopbackTransport` w/ latency+jitter sim + vitest|V18
 T37|.|`NetSession` rollback core: snapshot ring (W=10, `structuredClone`), predict remote = last input, confirmedTick tracking, mispredict → restore + re-sim to head, input delay D=1–2, stall past W, hash exchange on confirmed ticks; vitest loopback pair w/ latency+jitter: converges, confirmed hashes equal, V25 replay-equivalence|V19,V20,V22,V25
 T38|.|WebRTC transport `src/net/webrtc.ts`: host/join, DataChannel wiring, signaling per §C decision|V18
