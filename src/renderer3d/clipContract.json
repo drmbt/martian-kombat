@@ -187,7 +187,10 @@
     "attack/redirect": 0.55,
     "attack/lk": 0.35,
     "attack/mk": 0.3,
-    "attack/hk": 0.35
+    "attack/hk": 0.35,
+    "attack/matrix-teleport": 0.4,
+    "attack/backbend-guillotine": 0.45,
+    "attack/cossack-spiral": 0.5
   },
   "fadeTicks": {
     "default": 5,

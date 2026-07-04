@@ -57,12 +57,18 @@ const BASE_CLIPS = {
   'attack/lp#2': { file: 'Lead Jab (2).fbx' },
   'attack/lp#3': { file: 'Lead Jab (3).fbx' },
   'attack/mp': { file: 'Hook.fbx' },
-  'attack/mp#2': { file: 'Hook Punch.fbx' },
+  'attack/mp#2': { file: 'Jab Cross.fbx' },
   'attack/hp': { file: 'Illegal Elbow Punch.fbx' },
-  'attack/hp#2': { file: 'Illegal Elbow Punch (1).fbx' },
+  'attack/hp#2': { file: 'Body Jab Cross.fbx' },
+  // kicks: library has no true kick clips yet — knee covers all three (leg
+  // strikes beat arm-punches on K buttons). Swap when these Mixamo clips
+  // land in animations/kicks/: "Kicking" (mk), "Roundhouse Kick" (hk),
+  // "Leg Sweep" (crouch kicks), "Mma Kick".
   'attack/lk': { file: 'Illegal Knee.fbx' },
-  'attack/mk': { file: 'Jab Cross.fbx' },
-  'attack/hk': { file: 'Body Jab Cross.fbx' },
+  'attack/mk': { file: 'Kicking.fbx' },
+  'attack/mk#fallback': { file: 'Illegal Knee.fbx' },
+  'attack/hk': { file: 'Roundhouse Kick.fbx' },
+  'attack/hk#fallback': { file: 'Illegal Knee.fbx' },
   'attack/throw': { file: 'Illegal Headbutt.fbx' },
 };
 
@@ -76,6 +82,7 @@ export const MESHES = {
       'attack/cloud-hands': { file: 'Standing 2H Magic Attack 01.fbx' },
       'attack/rising-glyph': { file: 'Uppercut.fbx', stripY: true },
       'attack/redirect': { file: 'Standing 2H Cast Spell 01.fbx' },
+      'attack/matrix-teleport': { file: 'standing 1H cast spell 01.fbx' },
     },
   },
   flo: {
@@ -97,8 +104,8 @@ export const MESHES = {
     basecolor: 'yulia-20k-tripo-unrigged/yulia-20k-tripo-unrigged_basecolor.PNG',
     clips: {
       ...BASE_CLIPS,
-      'attack/cossack-spiral': { file: 'Back Flip To Uppercut.fbx', stripY: true },
-      'attack/backbend-guillotine': { file: 'Body Jab Cross.fbx' },
+      'attack/cossack-spiral': { file: 'Cross Jumps Rotation.fbx', stripY: true },
+      'attack/backbend-guillotine': { file: 'Back Flip To Uppercut.fbx', stripY: true },
       'attack/volga-piledriver': { file: 'Illegal Headbutt.fbx' },
       'attack/braid-lariat': { file: 'Hook Punch.fbx' },
       'attack/spinning-star-kick': { file: 'Mutant Jump Attack.fbx', stripY: true },
