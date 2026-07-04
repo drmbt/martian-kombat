@@ -751,6 +751,15 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-04 · session · NetSession rollback core (SPEC T37)** — GGPO-style
+  netplay behind the same Session surface as FightSession: predicted remote
+  inputs (repeat-last), structuredClone snapshot ring, mispredict → restore
+  at divergence + silent re-sim to head (presentation hooks fire once per
+  tick, V24), input delay D=2, stall only past window W=10, confirmed-tick
+  hash exchange (V20), stats() for the net HUD, onIssue for desync/
+  disconnect. 7 vitests over loopback incl. the V25 keystone: confirmed
+  timeline hash-equal to an offline step() replay of the same input log,
+  under latency+jitter+15% loss. — Claude
 - **2026-07-04 · net · transport seam + loopback test double (SPEC T36)** —
   `src/net/transport.ts`: `Transport` interface (send/onMessage/onStatus/
   close), typed `NetMsg` wire union (hello/start/input/hash/bye, PROTO=1),
