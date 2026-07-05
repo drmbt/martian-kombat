@@ -173,6 +173,15 @@ export class FightScene3D extends Phaser.Scene {
       this.settings.skeleton = this.skeletonOn = !this.skeletonOn;
       this.renderer3d?.setSkeletonVisible(this.skeletonOn);
     });
+    // backtick: free mouse orbit/zoom/pan inspection cam + game-frustum gizmo.
+    // While on, the 3D canvas takes pointer events so the mouse drives OrbitControls.
+    kb.on('keydown-BACKTICK', () => {
+      const r = this.renderer3d;
+      if (!r) return;
+      void r.toggleInspectorCam(r.canvas).then((on) => {
+        r.canvas.style.pointerEvents = on ? 'auto' : 'none';
+      });
+    });
     kb.on('keydown-F3', () => {
       if (this.inspectorOn) return;
       this.inspectorOn = true;
@@ -188,8 +197,10 @@ export class FightScene3D extends Phaser.Scene {
     this.tauntKey =
       ['Q', 'Z', 'X', 'V', 'B', 'N'].find((k) => !bound.has(k.charCodeAt(0))) ?? 'Q';
     kb.on(`keydown-${this.tauntKey}`, () => {
-      this.renderer3d?.taunt(0, this.state.tick);
-      this.voice(this.chars[0], 'kiai', 0.6);
+      // taunt the LOCAL player's fighter (online: their slot; offline: P1)
+      const slot = this.online ? this.online.localSlot : 0;
+      this.renderer3d?.taunt(slot, this.state.tick);
+      this.voice(this.chars[slot], 'kiai', 0.6);
     });
     kb.on('keydown-ESC', () => {
       if (this.online) {
