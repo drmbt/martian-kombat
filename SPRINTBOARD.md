@@ -6,7 +6,8 @@
 > Unchecked boxes in the active sprint = the backlog. Do not silently add scope;
 > new ideas go to the Icebox.
 
-**Current sprint: 21 (Cat) SHIPPED — roster now 12 playable (Bodhi, Chebel, Ygor added)** · MVP shipped
+**Current: Sprint 22 (renderer parity + shared presentation shell) SHIPPED —
+roster now 13 playable (Rapha added, 4 with 3D meshes)** · MVP shipped
 2026-07-02 (8/8 fighters playable, 19 stages, full music loop, fatalities,
 CPU + training modes, settings). Sprint 19 (cancels & chains) shipped +
 committed + pushed 2026-07-04 (`a27fa90`). Sprint 20 (personality specials +
@@ -37,6 +38,20 @@ hold an idle-loop frame static — the model turns "idle-b, chest risen" into a
 knee-raise action pose; pin it hard ("BOTH feet flat, NOT an attack, NO raised
 knee/kick/lunge") or it flickers against idle-a. Long-term RFEs live in their
 own roadmap section.
+
+**Since Sprint 21 (2026-07-04→05):** the 3D renderer went from a spike to a
+production, menu-selectable mode and reached 2D feature parity — Sprint 22
+(shared presentation shell) extracted the duplicated fight plumbing into
+`src/presentation` (pure event/HUD/banner/move-log logic), `src/ui` (DOM
+chrome both renderers mount), and `src/scenes/fightShell.ts` (pause/keys/nav),
+so new presentation features land in both renderers at once; it also closed
+the ESC-pause / F2-move-log / matchEnd-nav / gamepad-menu gaps in 3D and added
+live GLB idle previews to character select. Online multiplayer shipped fully
+(WebRTC over PeerJS, rollback timesync V26/T45, shared SelectScene, both-vote
+stage, same-channel rematch — 2D + 3D). **Rapha** (RJ's raccoon-wrangler) is
+the 13th playable fighter — a full 7-step-pipeline character (23 moves, 4
+named specials + throw, Scrap Compactor fatality, portraits/KO/bust,
+projectiles) AND the 4th baked 3D mesh. All 233 vitests green, tsc clean.
 
 ---
 
@@ -694,6 +709,87 @@ review — chains/cancels/scaling promoted to Sprint 19)
 - [ ] CRT/scanline filter toggle in Settings (post-process; leans into the
       16-bit pixel-art stages)
 
+### Sprint 22 — Renderer parity + shared presentation shell (user-directed 2026-07-04)
+Goal: 3D reaches 2D feature parity by extracting the duplicated presentation
+plumbing into shared modules — build each missing piece ONCE, both renderers
+inherit it. User-approved direction: 2D adopts the DOM UI chrome.
+- [x] **Phase 1 — pure presentation layer** (2026-07-04): 2D FightScene
+      migrated off its private presentTick diff onto the shared
+      `snapTick`/`diffTick` (the acknowledged post-Sprint-19 debt — the two
+      detectors had already drifted on FIGHT! timing). New pure modules in
+      `src/presentation/`: `soundDirector` (event→audio-cue table, executed
+      by `runCues` in BootScene — sounds are now defined exactly once for
+      both renderers), `hudModel` (SF2 ghost bar + combo counter; 3D's
+      slower flat-2/tick drain unified onto 2D's 0.008·maxHealth/tick),
+      `banner` (pure bannerFor(state) — 3D's READY? 3-2-1 + the 2D short
+      intro in one function; 2D still renders its own msgText until Phase
+      2), `notation` (motion glyphs, move labels, pause-menu move list) and
+      `moveLog` (F2 input ticker + move FIFO). 3D stage bounds hoisted to
+      `STAGE3D_BOUNDS` in threeCoordinates (was duplicated in FightScene3D +
+      LobbyScene); FightScene3D's redundant focus-gate snd()/voice()
+      wrappers deleted (play() gates centrally). 27 new vitests (233 total).
+      Verified live on the static prod build: full 2D CPU match (hits, ghost
+      drain, combo, F2 log, fatality, win screen, victory-music → char
+      select) and full 3D CPU match (WinOverlay, FATALITY banner slam), zero
+      console errors.
+- [x] **Phase 2 — shared DOM UI chrome** (2026-07-05): `renderer3d/hud/*`
+      moved to `src/ui/` + new `UiLayer` (canvas-tracking DOM layer both
+      renderers mount chrome into; killed the anchor-copying hack). New
+      shared components: PauseMenu (buttons + native-scroll move lists +
+      pad/mouse nav), MoveLogOverlay (F2), RematchPrompt, DemoHint,
+      LoadingOverlay; WinOverlay upgraded to full 2D parity (colored
+      "<NAME> WINS", FATALITY tag, KO portrait, quote, configurable prompt,
+      onFirstShow victory-voice hook — 3D gains the voice + reveal beat).
+      2D FightScene dropped its Phaser pause container/win container/log
+      texts for the DOM components (~200 lines gone); 3D dropped its inline
+      loading/rematch/demo DOM. Verified live: DOM pause menu opens on ESC
+      mid-fight (all 4 actions, both move lists), F2 overlay ticks inputs +
+      moves, win overlay shows with fatality tag + quote, 3D fight renders
+      HUD/banner on the shared layer. tsc clean, 233/233, 0 console errors.
+- [x] **Phase 3 — fightShell** (2026-07-05): `src/scenes/fightShell.ts` —
+      ONE shared shell composed by both fight scenes owning: pause state +
+      the PauseMenu, the canonical keymap (ESC pause · F2 move log ·
+      R/ENTER/F9/click matchEnd nav), gamepad menu navigation, demo-mode
+      exits + hint, endNav arming, and the online rematch handshake +
+      prompt. 3D parity gaps CLOSED: ESC now opens the pause menu in 3D
+      (was: exit to menu), F2 shows the move log in 3D (skeleton moved to
+      F3, inspector to F5, canonical keymap: F1 hitboxes · F2 move log ·
+      F3 stage-guide(2D)/skeleton(3D) · F4 3D settings · F5 inspector ·
+      ` perf(2D)/orbit(3D)), local R restart + ENTER→character-select at
+      matchEnd in 3D (was online-only), pad menu nav in 3D, F9 quick
+      restart in 2D. 3D pause freezes the sim but keeps presenting the
+      frame. FightScene lost ~150 lines of nav/pause/rematch code; 3D ~90.
+      Verified live both renderers: ESC pause (sim frozen, resume works),
+      F2 log in 3D, ENTER at 3D matchEnd → Select with render3d preserved.
+- [x] **Phase 4 — stragglers** (2026-07-05): character select in 3D mode
+      now shows the portrait bust on each side instead of the 2D sheet idle
+      (matches the renderer; also covers future mesh-only fighters with no
+      sheet); win-quote
+      behavior already unified by the shared WinOverlay (Phase 2); 2D hint
+      bar + 3D HUD legend aligned on the canonical keymap (ESC pause · F2
+      move log); FightScene3D's stale "dev-only" header rewritten.
+      **SPRINT 22 COMPLETE** — 3D is at 2D feature parity for pause, debug
+      overlays, match-end navigation, gamepad menus, and select previews,
+      and every new presentation feature now lands in both renderers via
+      src/presentation + src/ui + fightShell.
+- [x] **Encore — LIVE 3D idle previews on character select** (2026-07-05,
+      user-requested): `renderer3d/SelectPreview3D.ts` (DanceRenderer's
+      lightweight sibling) renders both picks' GLBs playing their own idle
+      clips on a transparent full-viewport canvas over the select screen,
+      framed onto the same side slots the 2D sprites use (close-plane trick:
+      fighters ride z=+3.5 toward a fov-24 camera). Dynamically imported so
+      three stays out of the 2D bundle; loaded views are cached per slot so
+      cursor flicks are instant; portrait bust stays up while a GLB streams
+      or when a fighter has no mesh (Phase-4 fallback chain intact); hidden
+      behind the full-screen stage dialog; driven from the scene's Phaser
+      update() (works headless). BONUS FIX en route: threeAssets' GLB gate
+      rejected any content-type that wasn't `gltf-binary`, which silently
+      capsule'd ALL models on static hosts serving .glb as octet-stream
+      (python http.server, some CDNs) — now it rejects only `text/html`
+      (the actual vite-SPA-fallback failure it guards against). Verified
+      live: both meshes idle on the sides, cursor swap, portrait fallback
+      on a 3D SOON fighter, hidden during stage pick, 0 console errors.
+
 ### Long-term RFEs (roadmap, not scheduled)
 - [ ] **Custom character designer dialog** — in-game UI that runs the
       photo→fighter pipeline: upload an inspo photo, pick a kit archetype,
@@ -750,6 +846,122 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-05 · data+assets+renderer3d · Rapha, 13th fighter (full pipeline +
+  3D mesh)** — RJ's raccoon-wrangler joins the roster (`playable:true`,
+  `mesh3d:true`). Full 7-step build: `rapha.json` (23 moves; four named
+  specials — Claw Machine, Tubs Fetch!, Pop-Tab Chain, Wind-Up — + throw; 5
+  win quotes; Scrap Compactor fatality), 62-cell painted sheet + four
+  projectile arts, portrait/KO/bust, 4 fatality panels, and a baked
+  `rapha.glb` (4th 3D-capable fighter after vincent/yulia/flo). Backfills
+  laubsauger's `a207272 added rapha` + the crouch-frame re-roll below.
+  — laubsauger + Claude (parallel sessions)
+
+- **2026-07-05 · renderer3d+engine+net+audio · 3D→production + online polish
+  (changelog backfill)** — logging laubsauger's committed-today work that
+  shipped without a SPRINTBOARD entry: **sub-tick render interpolation**
+  (`2dee05f`) so 3D clip playback interpolates between engine ticks for
+  smooth animation at any refresh; **renderer warmup during VS + a loading
+  screen** (`9883404`) holding the sim behind LOADING… until models/stage/
+  pipelines are up (no more fight-over-black-screen); **distinct per-character
+  idle animations** in 3D (`e345958`); a **3D test scene / test-room**
+  (`a082b42`); **taunt promoted to a real engine input** (`be06120`,
+  deterministic + net-synced) and **taunt targeting the local player's
+  fighter online** (`80ce97b`, was always slot 0); **net timesync** so both
+  peers hold the same tick (`7fe2092`, V26/T45); **announcer VOs only on the
+  final pick, louder + music-ducked** (`df6c5ce`); and a **GLB conversion
+  fix** (`ba5e4eb`). — laubsauger (backfilled by Claude)
+
+- **2026-07-05 · assets · Rapha crouch frames re-roll** — cells 29
+  (clp-active), 36 (clk-recovery), 37 (cmk-active), 39 (chk-active), 40
+  (chk-recovery) had rendered standing instead of the low crouch the pose
+  text called for; re-rolled all five with `gen:frames --cells` using the
+  low-pose anchor (fixed chk-active anchors the rest). First chk-recovery
+  re-roll came back with a missing-arms artifact — re-rolled once more,
+  clean. Also found `04-crouch.png` missing from `assets/raw/frames/rapha/`
+  entirely (deleted pre-session, unrelated to this ask) which was silently
+  dropping the "crouch" idle cell from the packed sheet/meta.json —
+  regenerated it (took two tries, same standing-not-crouching failure mode)
+  and repacked; `gen:pack` now reports the full 62/62 frames. — Claude
+
+- **2026-07-05 · renderer3d+scenes · live 3D idle previews on character
+  select** — new `SelectPreview3D` (transparent WebGPU canvas over the select
+  screen, ThreeFighterView idle clips, close-plane framing onto the 2D side
+  slots); SelectScene boots it via dynamic import in 3D mode, keeps the
+  portrait bust as the streaming/no-mesh fallback, hides it behind the stage
+  dialog, and drives it from update(). Views cached per slot — cursor flicks
+  are instant, mirror picks get two instances. FIX: threeAssets GLB fetch now
+  rejects only `text/html` (the vite SPA-fallback guard) instead of requiring
+  `gltf-binary` — static hosts serving .glb as octet-stream were silently
+  getting capsules everywhere. Verified live: meshes idle on both sides,
+  swap on cursor move, portrait fallback for 3D SOON fighters, 0 errors.
+  — Claude (Sprint 22 session)
+
+- **2026-07-05 · scenes+ui · Sprint 22 Phase 4 (SPRINT COMPLETE): parity
+  stragglers** — 3D-mode character select shows portrait busts on the sides
+  (was: 2D sheet idles that didn't match the renderer and would break for
+  mesh-only fighters); hint bar (2D) + HUD legend (3D) aligned on the
+  canonical keymap; FightScene3D header updated (no longer "dev-only").
+  Sprint 22 outcome: 3D at 2D feature parity (pause menu, F2 move log,
+  match-end nav, pad menus, select previews) with the presentation stack
+  shared end-to-end — pure logic in src/presentation, DOM chrome in src/ui,
+  scene glue in fightShell. tsc clean, 233/233, verified live, 0 console
+  errors. — Claude (Sprint 22 session)
+
+- **2026-07-05 · scenes · Sprint 22 Phase 3: the shared FightShell** — new
+  `src/scenes/fightShell.ts` composed by BOTH fight scenes: pause state +
+  PauseMenu, the canonical keymap (ESC pause · F1 hitboxes · F2 move log ·
+  R/ENTER/F9/click matchEnd nav), pad menu navigation, demo exits + hint,
+  online rematch handshake/prompt, endNav guard. All the 3D→2D parity gaps
+  this sprint was opened for are CLOSED: ESC in 3D opens the pause menu
+  instead of dumping to the main menu, F2 is the move log in both renderers
+  (3D skeleton→F3, inspector→F5), local R/ENTER work at 3D matchEnd,
+  gamepads can drive the 3D pause/win screens, and 2D gains F9 quick
+  restart. 3D pause halts the sim but keeps rendering the frame; nav out of
+  3D preserves render3d into character select. FightScene/FightScene3D lost
+  ~240 lines of duplicated nav code between them. Verified live in both
+  renderers (pause freeze + resume, F2 log, ENTER→Select). tsc clean,
+  233/233, zero console errors. — Claude (Sprint 22 session)
+
+- **2026-07-05 · ui+scenes · Sprint 22 Phase 2: shared DOM UI chrome** —
+  `renderer3d/hud/*` → `src/ui/`; new `UiLayer` (one canvas-tracking DOM
+  layer per fight scene; components mount `inset:0` inside it — the
+  anchor-style-copying hack is gone). New shared components: PauseMenu
+  (action buttons + both fighters' native-scroll move lists via
+  presentation/notation, pad/mouse nav), MoveLogOverlay (F2 input ticker +
+  move FIFO, change-cached writes), RematchPrompt, DemoHint, LoadingOverlay.
+  WinOverlay leveled up to the 2D feature set (winner-colored title,
+  FATALITY tag, KO-portrait fallback chain, win quote, configurable prompt,
+  onFirstShow hook) — 3D now gets the victory voice line + the 72-frame
+  reveal beat it was missing. 2D FightScene swapped its Phaser pause
+  container, win-screen container, and log texts for the shared DOM chrome
+  (buildPauseOverlay/showWinScreen deleted); FightScene3D swapped its inline
+  loading/rematch/demo-hint DOM for the components. Verified live on the
+  static prod build (manual loop-step pump): ESC opens the DOM pause menu
+  mid-fight, F2 shows live input tickers + move log, DOM win screen with
+  fatality tag + Russian win quote, 3D fight renders HUD/banner/legend on
+  the shared layer. tsc clean, 233/233 vitest, zero console errors.
+  — Claude (Sprint 22 session)
+
+- **2026-07-04 · presentation+scenes · Sprint 22 Phase 1: shared presentation
+  layer (2D+3D)** — FightScene (2D) migrated onto the shared
+  `snapTick`/`diffTick` (its private ~180-line presentTick detector deleted —
+  the acknowledged post-Sprint-19 debt; the two copies had drifted on FIGHT!
+  timing). New pure vitested modules in `src/presentation/`: `soundDirector`
+  (the ONE event→audio table for both renderers; scenes execute cues via
+  `runCues` in BootScene, victory-music behavior injectable — 2D keeps its
+  onEnd→char-select), `hudModel` (ghost bar + combo, shared; drain unified on
+  2D's rate), `banner` (pure bannerFor; 3D consumes it now, 2D in Phase 2),
+  `notation` + `moveLog` (F2 log model + pause-menu move-list text).
+  FightScene3D: handleEvents reduced to renderer fx only, snd()/voice()
+  focus-gate wrappers deleted (play() gates centrally), ghost/combo fields
+  replaced by HudModel, stage bounds now `STAGE3D_BOUNDS` in threeCoordinates
+  (shared with LobbyScene). tsc clean, 233/233 vitest (27 new). Verified live
+  (static prod build, headless — NOTE: preview tab is hidden so Phaser's RAF
+  never fires; drive `window.__game.loop.step()` manually): full 2D CPU match
+  end-to-end incl. fatality + win screen + victory-music navigation, full 3D
+  CPU match incl. FATALITY banner slam + WinOverlay, zero console errors.
+  — Claude (Sprint 22 session)
 
 - **2026-07-05 · audio · stage-name announcer VO (Clyde)** — all 19 stages now
   have a spoken name call-out (`public/assets/audio/announcer/stage-<id>.mp3`),

@@ -5,7 +5,8 @@ import { STAGE_H, STAGE_W } from '../engine';
 import { ROSTER } from '../data/roster';
 import { characters } from '../data/characters';
 import { STAGES } from '../data/stages';
-import { initMusic, duckMusic } from '../audio/music';
+import { initMusic, duckMusic, nextTrack, playMusic } from '../audio/music';
+import type { AudioCue } from '../presentation/soundDirector';
 import { applyMusicVolume, effectiveSfxVolume } from '../audio/volume';
 import { devBootTarget, rememberDevLaunch } from '../devLaunch';
 
@@ -138,6 +139,34 @@ export function announce(scene: Phaser.Scene, key: string, volume = 1.3): void {
   duckMusic(durMs + 250);
   snd.once('complete', () => snd.destroy());
   snd.play({ volume: v });
+}
+
+/** Execute the pure sound director's cues (see presentation/soundDirector).
+ *  Shared by both fight presenters — the only per-scene difference is what
+ *  the one-shot victory theme does when it ends (2D navigates away). */
+export function runCues(
+  scene: Phaser.Scene,
+  cues: AudioCue[],
+  opts: { onVictoryMusic?: () => void } = {},
+): void {
+  for (const c of cues) {
+    switch (c.kind) {
+      case 'sfx':
+        if (c.delayMs) {
+          const { key, volume } = c;
+          scene.time.delayedCall(c.delayMs, () => play(scene, key, volume));
+        } else play(scene, c.key, c.volume);
+        break;
+      case 'voice':
+        playVoice(scene, c.charId, c.line, c.volume);
+        break;
+      case 'music':
+        if (c.action === 'next') nextTrack();
+        else if (opts.onVictoryMusic) opts.onVictoryMusic();
+        else playMusic('victory', { keepOnMiss: true, once: true });
+        break;
+    }
+  }
 }
 
 /** Play a random numbered variant of a character voice line (kiai/hurt/victory)

@@ -45,7 +45,9 @@ async function fetchGlbBytes(url: string): Promise<ArrayBuffer | null> {
   try {
     // no-cache: regenerated GLBs must never be served stale from HTTP cache
     const res = await fetch(url, { cache: 'no-cache' });
-    if (!res.ok || !(res.headers.get('content-type') ?? '').includes('gltf-binary')) {
+    // reject the vite/SPA fallback (missing file -> 200 with index.html) but
+    // accept any binary type — static hosts often serve .glb as octet-stream
+    if (!res.ok || (res.headers.get('content-type') ?? '').includes('text/html')) {
       console.info(`[3d] no asset at ${url} — placeholder stays`);
       return null;
     }

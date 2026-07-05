@@ -12,6 +12,9 @@ import { playMusic } from '../audio/music';
 import { menuNav, navDefer } from '../input/menu-nav';
 import { BindAction, getSettings } from '../settings';
 import type { OnlineSelectData, StartConfig } from '../net/lobby';
+import { UiLayer } from '../ui/layer';
+// type-only: the real module (and three) loads dynamically on the 3D path
+import type { SelectPreview3D } from '../renderer3d/SelectPreview3D';
 
 const ATTACK_ACTIONS: BindAction[] = ['lp', 'mp', 'hp', 'lk', 'mk', 'hk'];
 
@@ -74,6 +77,8 @@ export class SelectScene extends Phaser.Scene {
   private cpu = false;
   private training = false;
   private render3d = false;
+  /** live 3D idle previews on the side slots (3D mode; loaded dynamically) */
+  private preview3d: SelectPreview3D | null = null;
   /** online payload when this is a netplay pick (null = local). In online the
    *  local player controls only `online.localSlot`; the other side is filled
    *  from the wire, and only the host (slot 0) drives the stage dialog. */
@@ -102,6 +107,38 @@ export class SelectScene extends Phaser.Scene {
     this.cpu = !this.online && !!data.cpu;
     this.training = !this.online && !!data.training;
     this.render3d = this.online ? this.online.render3d : !!data.render3d;
+    this.preview3d = null; // rebuilt per create(); disposed on shutdown
+  }
+
+  /** Boot the live 3D side previews (3D mode): dynamic import keeps three
+   *  out of the 2D bundle; portraits stay up until each GLB actually lands. */
+  private async boot3dPreview(): Promise<void> {
+    const { SelectPreview3D } = await import('../renderer3d/SelectPreview3D');
+    if (!this.scene.isActive()) return;
+    const preview = new SelectPreview3D(characters, () => {
+      // a model finished loading — swap the portrait out on the next redraw
+      if (this.scene.isActive() && !this.stageMode) this.redraw();
+    });
+    await preview.init();
+    if (!this.scene.isActive()) {
+      preview.dispose();
+      return;
+    }
+    this.preview3d = preview;
+    const layer = new UiLayer(this);
+    layer.root.appendChild(preview.canvas);
+    const size = (): void => {
+      const r = this.game.canvas.getBoundingClientRect();
+      preview.setSize(r.width, r.height);
+    };
+    size();
+    this.scale.on('resize', size);
+    this.events.once('shutdown', () => {
+      this.scale.off('resize', size);
+      preview.dispose();
+      this.preview3d = null;
+    });
+    this.redraw();
   }
 
   /** the slot the LOCAL player controls (online: fixed; local: the P1-first
@@ -144,6 +181,7 @@ export class SelectScene extends Phaser.Scene {
         })
         .setOrigin(1, 0)
         .setDepth(8);
+      void this.boot3dPreview(); // live GLB idles on the side slots
     }
 
     // World map banner across the top.
@@ -680,6 +718,10 @@ export class SelectScene extends Phaser.Scene {
     this.padFrame();
     if (this.stageMode) this.redrawStage();
     else this.redraw();
+    // 3D side previews: hidden behind the (full-screen Phaser) stage dialog;
+    // driven off the Phaser loop so pacing matches the rest of the scene
+    this.preview3d?.setVisible(!this.stageMode);
+    if (!this.stageMode) this.preview3d?.render(this.time.now);
   }
 
   /** Gamepad drives the same picks the keyboard does (shared cursor). A single
@@ -738,7 +780,24 @@ export class SelectScene extends Phaser.Scene {
       const sx = p === 0 ? SIDE_P1_X : SIDE_P2_X;
       const spr = this.sideSprites[p];
       const sheetKey = `sheet-${entry.id}`;
-      if (spr && this.textures.exists(sheetKey)) {
+      // 3D mode, best-available preview: live GLB idle (SelectPreview3D) →
+      // portrait bust while it streams / for sheet-only fighters → 2D sheet.
+      this.preview3d?.setChar(p, this.render3d && entry.mesh3d ? entry.id : null);
+      const portraitKey = `portrait-${entry.id}`;
+      if (spr && this.render3d && this.preview3d?.active(p)) {
+        spr.setVisible(false);
+        this.sideSheet[p] = ''; // force a re-texture when we fall back later
+      } else if (spr && this.render3d && this.textures.exists(portraitKey)) {
+        spr.setVisible(true);
+        if (this.sideSheet[p] !== portraitKey) {
+          this.sideSheet[p] = portraitKey;
+          spr.setTexture(portraitKey);
+          spr.setDisplaySize(SIDE_SPRITE_H * 0.8, SIDE_SPRITE_H * 0.8);
+          spr.setFlipX(p === 1);
+          if (!this.pickable(entry)) spr.setAlpha(0.5).setTint(0x8a8aa0);
+          else spr.setAlpha(1).clearTint();
+        }
+      } else if (spr && this.textures.exists(sheetKey)) {
         spr.setVisible(true);
         if (this.sideSheet[p] !== sheetKey) {
           this.sideSheet[p] = sheetKey;

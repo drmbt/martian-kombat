@@ -3,7 +3,6 @@
 // the deterministic core in src/engine/ stays pure and silent.
 import Phaser from 'phaser';
 import {
-  EMPTY_INPUT,
   FATALITY_TICKS,
   FLOOR_Y,
   InputFrame,
@@ -19,15 +18,19 @@ import {
 import { FightSession, type Session } from '../session/FightSession';
 import { NetSession, type NetIssue } from '../session/NetSession';
 import type { OnlineFightData } from '../net/lobby';
-import { RematchLink, type RematchState } from '../net/rematch';
 import { characters } from '../data/characters';
 import { stageById } from '../data/stages';
 import { KeyboardSource } from '../input/keyboard';
-import { menuNav, navDefer } from '../input/menu-nav';
 import { CpuDriver } from '../ai/bot';
-import { play, playVoice } from './BootScene';
-import { nextTrack, playMusic } from '../audio/music';
+import { play, playVoice, runCues } from './BootScene';
+import { playMusic } from '../audio/music';
 import { getSettings } from '../settings';
+import { diffTick, snapTick, type FightEvent, type TickSnap } from '../presentation/tickEvents';
+import { soundCues } from '../presentation/soundDirector';
+import { HudModel } from '../presentation/hudModel';
+import { UiLayer } from '../ui/layer';
+import { WinOverlay } from '../ui/WinOverlay';
+import { FightShell } from './fightShell';
 
 // Cells are looked up BY NAME from each sheet's meta.json (written by
 // tools/pack-sheet.mjs), so v2 six-button sheets and legacy 23-cell sheets
@@ -86,17 +89,6 @@ interface VfxSprite {
   max: number;
   /** display-size growth per render frame, px */
   grow: number;
-}
-
-interface TickSnapshot {
-  phase: GameState['phase'];
-  kinds: [string, string];
-  moveIds: [string | undefined, string | undefined];
-  healths: [number, number];
-  /** airHit ground-bounce flags — a false→true flip is the floor impact */
-  bounced: [boolean, boolean];
-  projectiles: number;
-  pendingThrow: boolean;
 }
 
 interface BgLayer {
@@ -176,12 +168,8 @@ export class FightScene extends Phaser.Scene {
   private net: NetSession | null = null;
   private netIssue: NetIssue | null = null;
   private netText: Phaser.GameObjects.Text | null = null;
-  /** online rematch opt-in (post-match, same channel): armed at matchEnd */
-  private rematch: RematchLink | null = null;
-  private rematchLeft = false;
-  private rematchText: Phaser.GameObjects.Text | null = null;
   /** captured by the session's beforeTick hook for presentTick's diff */
-  private pendingSnap: TickSnapshot | null = null;
+  private pendingSnap: TickSnap | null = null;
   private tickStart = 0;
   private frameTickMs = 0;
   private framePresentMs = 0;
@@ -191,35 +179,22 @@ export class FightScene extends Phaser.Scene {
   private vfx: VfxSprite[] = [];
   /** persistent circling-stars overlay per fighter, shown while dazed */
   private dizzySprites: [Phaser.GameObjects.Image | null, Phaser.GameObjects.Image | null] = [null, null];
-  private comboHits = 0;
-  private comboTicks = 0;
+  /** shared ghost-bar + combo bookkeeping (see presentation/hudModel) */
+  private hudModel!: HudModel;
   private cellMaps: [Map<string, number>, Map<string, number>] = [new Map(), new Map()];
-  private paused = false;
-  private pauseOverlay!: Phaser.GameObjects.Container;
-  private pauseScroll: { txt: Phaser.GameObjects.Text; top: number; maxScroll: number; scroll: number }[] = [];
-  // pause-menu button navigation (keyboard/gamepad); mouse hover overrides
-  private pauseButtons: { bg: Phaser.GameObjects.Rectangle; label: Phaser.GameObjects.Text; act: () => void }[] = [];
-  private pauseSel = 0;
-  private endNavArmedAt = 0; // guard: ignore pad "advance" for a beat after matchEnd
+  /** shared DOM chrome layer + the fight shell (pause/keys/nav/pad/log) */
+  private uiLayer!: UiLayer;
+  private shell!: FightShell;
   private cpu = false;
   private training = false;
   private demo = false;
   private bot: CpuDriver | null = null;
   private botP1: CpuDriver | null = null;
   private fatalityPanel: Phaser.GameObjects.Image | null = null;
-  /** SFII-style post-match taunt: winner portrait, beaten loser portrait, quote */
-  private winScreen: Phaser.GameObjects.Container | null = null;
-  private moveLogOn = false;
-  private moveLog: string[] = [];
-  private moveLogText!: Phaser.GameObjects.Text;
-  private inputHist: [string[], string[]] = [[], []];
-  private inputHistTexts: Phaser.GameObjects.Text[] = [];
+  /** SFII-style post-match taunt screen (shared DOM WinOverlay) */
+  private winOverlay!: WinOverlay;
   private stageGuideTexts: Phaser.GameObjects.Text[] = [];
-  private prevInputs: [InputFrame, InputFrame] = [{ ...EMPTY_INPUT }, { ...EMPTY_INPUT }];
   private lastDamageTick: [number, number] = [0, 0];
-  /** SF2 ghost bar: trails real health, holds a beat, then drains in red */
-  private ghostHealth: [number, number] = [0, 0];
-  private ghostHoldUntil: [number, number] = [0, 0];
   private perfOn = false;
   private perfText!: Phaser.GameObjects.Text;
   private perfSamples: PerfFrameSample[] = [];
@@ -247,20 +222,11 @@ export class FightScene extends Phaser.Scene {
     this.demo = !this.online && !!data.demo;
     this.net = null;
     this.netIssue = null;
-    this.rematch = null;
-    this.rematchLeft = false;
     this.bot = this.cpu || this.demo ? new CpuDriver(1) : null;
     this.botP1 = this.demo ? new CpuDriver(0) : null;
     this.fatalityPanel = null;
-    this.moveLogOn = this.training; // sandbox shows the move log by default
-    this.moveLog = [];
     this.lastDamageTick = [0, 0];
     this.stageGuide = false;
-    // scene instances are reused across matches — reset transient UI state so a
-    // match entered from a *paused* one doesn't start frozen
-    this.paused = false;
-    this.pauseButtons = [];
-    this.pauseSel = 0;
   }
 
   create(): void {
@@ -281,9 +247,9 @@ export class FightScene extends Phaser.Scene {
     // are IDENTICAL for local and net play — NetSession just consumes the
     // local slot's input and drives the remote slot over the wire (V18).
     const hooks = {
-      beforeTick: () => {
+      beforeTick: (s: GameState) => {
         this.tickStart = performance.now();
-        this.pendingSnap = this.snapshot();
+        this.pendingSnap = snapTick(s);
       },
       inputs: (s: GameState): [InputFrame, InputFrame] => [
         this.botP1 ? this.botP1.poll(s) : this.inputs.poll(0),
@@ -324,15 +290,36 @@ export class FightScene extends Phaser.Scene {
     this.fighterShadows = [null, null];
     this.hudPortraitShadows = [];
     this.projSprites = [];
-    this.winScreen = null; // rebuilt lazily on matchEnd (scene.restart destroys it)
+    // shared DOM chrome: layer + shell + overlays (auto-disposed on shutdown)
+    this.uiLayer = new UiLayer(this);
+    this.shell = new FightShell(this, {
+      layer: this.uiLayer,
+      defs: characters,
+      chars: this.chars,
+      stageId: this.stageId,
+      online: this.online,
+      cpu: this.cpu,
+      training: this.training,
+      demo: this.demo,
+      render3d: false,
+      state: () => this.state,
+      debugKeys: [
+        { key: 'F1', act: () => (this.debugBoxes = !this.debugBoxes) },
+        { key: 'F3', act: () => (this.stageGuide = !this.stageGuide) },
+      ],
+      pauseHint:
+        'ESC/START resume · ◄► choose, attack confirms · F1 hitboxes · F2 move log · F3 stage guide · ` perf',
+    });
+    this.winOverlay = new WinOverlay(this.uiLayer.root, characters, {
+      revealFrame: 72, // the K.O./victory beat lands first
+      prompt: this.online ? 'R  REMATCH   ·   ESC  QUIT' : 'R  REMATCH   ·   ENTER  SELECT',
+      onFirstShow: (id) => playVoice(this, id, 'victory', 0.85),
+    });
     this.sparks = [];
     this.vfx = []; // scene.restart destroyed the old images with the scene
     this.dizzySprites = [null, null];
-    this.comboHits = 0;
-    this.comboTicks = 0;
     this.perfOn = false;
-    this.ghostHealth = [characters[this.chars[0]].health, characters[this.chars[1]].health];
-    this.ghostHoldUntil = [0, 0];
+    this.hudModel = new HudModel(characters, this.chars);
 
     // per-stage fight music; a rematch on the same stage keeps the track going
     playMusic([`stages/${this.stageId}`, 'stages/default']);
@@ -435,31 +422,12 @@ export class FightScene extends Phaser.Scene {
       .setOrigin(1, 0)
       .setDepth(6);
     this.add
-      .text(STAGE_W / 2, STAGE_H - 14, 'P1: WASD + RTY punches FGH kicks   P2: ARROWS + UIO punches JKL kicks   ESC menu · F2 moves · F3 stage · ` perf', {
+      .text(STAGE_W / 2, STAGE_H - 14, 'P1: WASD + RTY punches FGH kicks   P2: ARROWS + UIO punches JKL kicks   ESC pause · F2 move log · F3 stage · ` perf', {
         ...font, fontSize: '12px', color: '#e8dcc8', stroke: '#000', strokeThickness: 3,
       })
       .setOrigin(0.5)
       .setDepth(6);
 
-    // overlays live in the upper corners so the bottom on-screen pad is clear
-    this.moveLogText = this.add
-      .text(16, 96, '', {
-        fontFamily: 'monospace', fontSize: '13px', color: '#9ef7a0',
-        stroke: '#000', strokeThickness: 3, lineSpacing: 3,
-      })
-      .setOrigin(0, 0)
-      .setDepth(6);
-    this.inputHist = [[], []];
-    this.inputHistTexts = [0, 1].map((slot) =>
-      this.add
-        .text(STAGE_W - 16, 96 + slot * 22, '', {
-          fontFamily: 'monospace', fontSize: '15px',
-          color: slot === 0 ? '#58e6d9' : '#ff8a7a',
-          stroke: '#000', strokeThickness: 3,
-        })
-        .setOrigin(1, 0)
-        .setDepth(6),
-    );
     this.stageGuideTexts = [
       this.add.text(10, (260 / 720) * STAGE_H - 16, 'horizon y=260', {
         fontFamily: 'monospace', fontSize: '11px', color: '#ffffff', stroke: '#000', strokeThickness: 3,
@@ -502,144 +470,15 @@ export class FightScene extends Phaser.Scene {
       this.perfText.setVisible(this.perfOn);
     });
 
-    if (this.demo) {
-      // attract mode: a blinking banner, and ANY input returns to the title
-      const banner = this.add
-        .text(STAGE_W / 2, STAGE_H - 44, 'DEMO — PRESS ANY KEY', {
-          fontFamily: 'monospace', fontSize: '26px', fontStyle: 'bold', color: '#ffd24a',
-          stroke: '#000', strokeThickness: 6,
-        })
-        .setOrigin(0.5)
-        .setDepth(30);
-      this.tweens.add({ targets: banner, alpha: 0.15, duration: 550, yoyo: true, repeat: -1 });
-      this.input.keyboard!.on('keydown', (e: KeyboardEvent) => {
-        if (e.key !== '`') this.toMainMenu();
-      });
-      this.input.on('pointerdown', () => this.toMainMenu());
-      // (pad exit handled by polling in padMenuFrame — Phaser's per-scene pad
-      // events can drop input after scene changes; see src/input/menu-nav.ts)
-      return; // none of the human-match keybinds below apply to the demo
-    }
+    // demo exits, pause menu, F-keys, matchEnd nav, pointer nav: all live in
+    // the shared FightShell (constructed above) — identical in 2D and 3D
 
-    this.buildPauseOverlay();
-    this.input.keyboard!.on('keydown-F2', () => {
-      this.moveLogOn = !this.moveLogOn;
-      if (!this.moveLogOn) {
-        this.moveLogText.setText('');
-        for (const t of this.inputHistTexts) t.setText('');
-      }
-    });
-    this.input.keyboard!.on('keydown-ESC', () => this.togglePause());
-    this.input.keyboard!.on('keydown-F1', () => (this.debugBoxes = !this.debugBoxes));
-    this.input.keyboard!.on('keydown-F3', () => (this.stageGuide = !this.stageGuide));
-    this.input.keyboard!.on('keydown-R', () => {
-      if (this.state.phase !== 'matchEnd') return;
-      if (this.online) this.optInRematch();
-      else this.restartMatch();
-    });
-    this.input.keyboard!.on('keydown-ENTER', () => {
-      if (this.online && this.state.phase === 'matchEnd') this.optInRematch();
-      else if (this.training) this.toCharacterSelect();
-      else if (this.state.phase === 'matchEnd') this.toCharacterSelect();
-    });
-    // online: ESC at matchEnd quits the match (disconnect); otherwise pauses
-    this.input.keyboard!.on('keydown-ESC', () => {
-      if (this.online && this.state.phase === 'matchEnd') this.leaveOnline('you left');
-    });
-    // clicking through the win-quote screen: rematch online, else char select
-    this.input.on('pointerdown', () => {
-      if (this.state.phase !== 'matchEnd') return;
-      if (this.online) this.optInRematch();
-      else this.toCharacterSelect();
-    });
-
-    play(this, 'ann-round-1');
-  }
-
-  // ---------- pause / navigation ----------
-
-  private togglePause(): void {
-    // online can't freeze the sim — the other player is still fighting (V23).
-    // Pausing would only stall your own head against the rollback window.
-    if (this.online) return;
-    this.paused = !this.paused;
-    this.pauseOverlay.setVisible(this.paused);
-    if (this.paused) { this.pauseSel = 0; this.highlightPause(); }
-  }
-
-  /** Gamepad handling for everything that isn't the fight itself: the attract
-   *  demo, the pause dialog, the win screen, and Start/Select opening the
-   *  pause menu mid-match. */
-  private padMenuFrame(): void {
-    const n = menuNav.poll();
-    if (this.demo) {
-      // attract mode: any fresh pad input returns to the title
-      if (n.confirm || n.start || n.menu || n.up || n.down || n.left || n.right) {
-        navDefer(this, () => this.toMainMenu());
-      }
-      return;
-    }
-    if (this.paused) {
-      if (n.left || n.up) this.movePause(-1);
-      if (n.right || n.down) this.movePause(1);
-      if (n.confirm) {
-        play(this, 's-blip', 0.5);
-        // the button may restart / change scenes — defer, see navDefer
-        navDefer(this, () => this.pauseButtons[this.pauseSel]?.act());
-        return;
-      }
-      if (n.start || n.menu) this.togglePause(); // Start/Select resumes
-      return;
-    }
-    if (this.state.phase === 'matchEnd') {
-      // online: confirm = opt into a rematch, Select = quit the match
-      if (this.online) {
-        if (this.time.now < this.endNavArmedAt) return;
-        if (n.confirm || n.start) navDefer(this, () => this.optInRematch());
-        else if (n.menu) navDefer(this, () => this.leaveOnline('you left'));
-        return;
-      }
-      // Select brings up the full menu (rematch / char select / main menu)
-      if (n.menu) { this.togglePause(); return; }
-      if (this.time.now < this.endNavArmedAt) return;
-      if (n.confirm || n.start) navDefer(this, () => this.toCharacterSelect()); // any attack advances
-      return;
-    }
-    // live match: Start or Select opens the pause menu
-    if (n.start || n.menu) this.togglePause();
-  }
-
-  private movePause(d: number): void {
-    const n = this.pauseButtons.length;
-    if (!n) return;
-    this.pauseSel = (this.pauseSel + d + n) % n;
-    play(this, 's-blip', 0.4);
-    this.highlightPause();
-  }
-
-  private highlightPause(): void {
-    this.pauseButtons.forEach(({ bg, label }, i) => {
-      const on = i === this.pauseSel;
-      bg.setFillStyle(on ? 0x3a2b40 : 0x241b2e).setStrokeStyle(2, on ? 0xffb347 : 0x7a6a86);
-      label.setColor(on ? '#ffd24a' : '#f5ead9');
-    });
-  }
-
-  private restartMatch(): void {
-    this.scene.restart({ p1: this.chars[0], p2: this.chars[1], cpu: this.cpu, training: this.training, stage: this.stageId });
-  }
-
-  private toCharacterSelect(): void {
-    this.scene.start('Select', { cpu: this.cpu, training: this.training });
-  }
-
-  private toMainMenu(): void {
-    this.scene.start('Menu');
+    if (!this.demo) play(this, 'ann-round-1');
   }
 
   update(_time: number, deltaMs: number): void {
-    this.padMenuFrame();
-    if (this.paused) {
+    // shell: pad nav, pause state, move-log redraw, online rematch arming
+    if (!this.shell.frame()) {
       this.session.resetPacing();
       return;
     }
@@ -648,8 +487,6 @@ export class FightScene extends Phaser.Scene {
     this.framePresentMs = 0;
     const tickCount = this.session.advance(deltaMs);
     if (this.net) this.updateNetStatus();
-    // online: the match is over — offer a rematch on the same channel
-    if (this.online && this.state.phase === 'matchEnd') this.armRematch();
     this.draw();
     this.recordPerf({
       ...this.perfDraw,
@@ -683,189 +520,74 @@ export class FightScene extends Phaser.Scene {
     }
   }
 
-  // ---------- online rematch (post-match, reuses the live channel) ----------
+  // (online rematch handshake + prompt: FightShell.armRematch)
 
-  /** at matchEnd, take the channel back from the (finished) NetSession and
-   *  offer a rematch — both agree → back to the shared select, no code re-entry.
-   *  All the transport/handshake logic lives in RematchLink (shared with 3D). */
-  private armRematch(): void {
-    if (this.rematch || !this.online) return;
-    this.rematch = new RematchLink(
-      this.online,
-      characters,
-      this.stageId,
-      {
-        onPrompt: (st) => this.drawRematchPrompt(st),
-        onLaunch: (online) => this.scene.start('Select', { online }),
-        onLeave: (reason) => this.onRematchLeave(reason),
-      },
-      (fn) => this.time.delayedCall(0, fn),
-    );
-  }
-
-  private optInRematch(): void {
-    play(this, 's-blip', 0.6);
-    this.rematch?.optIn();
-  }
-
-  private leaveOnline(reason: string): void {
-    this.rematch?.leave(reason);
-  }
-
-  private drawRematchPrompt(st: RematchState): void {
-    const msg = st.localReady
-      ? st.remoteReady
-        ? 'REMATCH! back to select…'
-        : `waiting for ${st.remoteName}…`
-      : st.remoteReady
-        ? `${st.remoteName} wants a REMATCH!\n[R] accept   ·   [ESC] quit`
-        : 'REMATCH?  [R] play again   ·   [ESC] quit';
-    if (!this.rematchText) {
-      this.rematchText = this.add
-        .text(STAGE_W / 2, STAGE_H - 40, '', {
-          fontFamily: 'monospace', fontSize: '18px', fontStyle: 'bold', color: '#ffd24a',
-          stroke: '#000', strokeThickness: 6, align: 'center', backgroundColor: '#1a1020',
-          padding: { x: 12, y: 6 },
-        })
-        .setOrigin(0.5)
-        .setDepth(10001);
-    }
-    this.rematchText.setText(msg).setColor(st.localReady && st.remoteReady ? '#8fe388' : '#ffd24a');
-  }
-
-  private onRematchLeave(reason: string): void {
-    if (this.rematchLeft) return;
-    this.rematchLeft = true;
-    if (this.rematchText) this.rematchText.setText(reason).setColor('#ff5a4a');
-    this.time.delayedCall(1200, () => this.scene.start('Menu'));
-  }
-
-  private snapshot(): TickSnapshot {
-    const [a, b] = this.state.fighters;
-    return {
-      phase: this.state.phase,
-      kinds: [a.action.kind, b.action.kind],
-      moveIds: [a.action.moveId, b.action.moveId],
-      healths: [a.health, b.health],
-      bounced: [a.action.bounced === true, b.action.bounced === true],
-      projectiles: this.state.projectiles.length,
-      pendingThrow: this.state.pendingThrow !== null,
-    };
-  }
-
-  /** Diff pre/post tick state into sounds, sparks, and combo bookkeeping. */
-  private presentTick(prev: TickSnapshot): void {
+  /** Diff pre/post tick state (shared diffTick) into audio cues (shared
+   *  soundCues table), HUD bookkeeping (shared HudModel), and this
+   *  renderer's own sparks/shakes/flashes. */
+  private presentTick(prev: TickSnap): void {
     const s = this.state;
-
-    // announcer cues
-    if (s.phase === 'intro' && s.phaseFrame === 1 && s.tick > 1) {
-      play(this, s.roundNumber === 2 ? 'ann-round-2' : 'ann-final-round');
-      nextTrack(); // fresh stage track between rounds (no-op for single-track folders)
-    }
-    if (s.phase === 'intro' && s.phaseFrame === Math.floor(INTRO_TICKS * 0.6)) {
-      play(this, 'ann-fight', 1);
-    }
-    if (prev.phase === 'fight' && s.phase === 'roundEnd') {
-      if (s.rules.roundTicks > 0 && s.timer <= 0) play(this, 'ann-time-up');
-      else if (s.roundWinner === null) play(this, 'ann-double-ko');
-      else {
-        play(this, 'ann-ko', 1);
-        const w = s.fighters[s.roundWinner];
-        if (w.health === characters[w.charId].health) {
-          this.time.delayedCall(800, () => play(this, 'ann-perfect'));
-        }
-      }
-    }
-    if (
-      (prev.phase === 'roundEnd' || prev.phase === 'fatality') &&
-      s.phase === 'matchEnd' &&
-      s.roundWinner !== null
-    ) {
-      play(this, `ann-${s.fighters[s.roundWinner].charId}`, 1);
-      // don't let the KO-causing punch (still held) instantly skip the win screen
-      this.endNavArmedAt = this.time.now + 700;
-      this.time.delayedCall(900, () => play(this, 'ann-victory', 1));
+    const events = diffTick(prev, s, characters);
+    runCues(this, soundCues(events, this.chars), {
       // victory theme plays once over the win-quote screen, then the game
       // returns to character select (any click/ENTER skips ahead, R rematches)
-      playMusic('victory', {
-        keepOnMiss: true,
-        once: true,
-        onEnd: () => {
-          if (this.state.phase !== 'matchEnd') return;
-          if (this.demo) this.toMainMenu();
-          else this.toCharacterSelect();
-        },
-      });
-    }
-    // attract demo loops back to the title once the win screen has had its beat
-    if (this.demo && s.phase === 'matchEnd' && s.phaseFrame === 300) {
-      this.toMainMenu();
-    }
-    if (prev.phase === 'fight' && s.phase === 'finisher') {
-      play(this, 'ann-finish-them', 1);
-      this.cameras.main.shake(150, 0.006);
-    }
-    if (prev.phase === 'finisher' && s.phase === 'fatality') {
-      play(this, 'ann-fatality', 1);
-      this.cameras.main.flash(300, 255, 30, 30);
-      this.cameras.main.shake(400, 0.01);
-    }
+      onVictoryMusic: () =>
+        playMusic('victory', {
+          keepOnMiss: true,
+          once: true,
+          onEnd: () => {
+            if (this.state.phase !== 'matchEnd') return;
+            if (this.demo) this.shell.toMainMenu();
+            else this.shell.toCharacterSelect();
+          },
+        }),
+    });
+    this.hudModel.tick(events, s);
 
-    // per-fighter transitions
-    for (const slot of [0, 1] as const) {
-      const f = s.fighters[slot];
-      const kind = f.action.kind;
-      const was = prev.kinds[slot];
-      const other = slot === 0 ? 1 : 0;
-
-      if (f.health < prev.healths[slot]) {
-        // counterhit: distinct red spark, a sharper layered crack, a harder
-        // shake (the engine flags the reel; see applyHit)
-        const counter = f.action.counter === true;
-        this.ghostHoldUntil[slot] = s.tick + 32; // ghost bar hangs, then drains
-        play(this, 's-hit', counter ? 1 : undefined);
-        if (counter) play(this, 's-whoosh', 0.9);
-        playVoice(this, f.charId, 'hurt', 0.7);
-        this.spawnHitVfx(slot, prev.healths[slot] - f.health, counter);
-        this.cameras.main.shake(counter ? 100 : 60, counter ? 0.006 : 0.004);
-        // combo: consecutive hits while the defender never left stun
-        this.comboHits = was === 'hitstun' || was === 'airHit' ? this.comboHits + 1 : 1;
-        this.comboTicks = 90;
-        if (this.comboHits >= 2) {
-          this.comboText.setX(s.fighters[other].x).setText(`${this.comboHits} HITS`);
+    for (const e of events) {
+      switch (e.type) {
+        case 'match-end':
+          // don't let the KO-causing punch (still held) instantly skip the win screen
+          this.shell.armEndNav();
+          break;
+        case 'finisher':
+          this.cameras.main.shake(150, 0.006);
+          break;
+        case 'fatality-start':
+          this.cameras.main.flash(300, 255, 30, 30);
+          this.cameras.main.shake(400, 0.01);
+          break;
+        case 'hit': {
+          // counterhit: distinct red spark, a sharper layered crack, a harder
+          // shake (the engine flags the reel; see applyHit)
+          this.spawnHitVfx(e.slot, e.damage, e.counter);
+          this.cameras.main.shake(e.counter ? 100 : 60, e.counter ? 0.006 : 0.004);
+          // the counter anchors over the attacker
+          this.comboText.setX(s.fighters[e.slot === 0 ? 1 : 0].x).setText(this.hudModel.comboLabel);
+          break;
+        }
+        case 'block': {
+          // icy shield ripple on the guarding side
+          const f = s.fighters[e.slot];
+          this.spawnVfx('vfx-spark-block', f.x + f.facing * 42, f.y - 130, 95, 0xa8c8ff, f.facing === 1);
+          break;
+        }
+        case 'attack-start':
+          this.logMove(e.slot);
+          break;
+        case 'dust': {
+          // sandy cloud at the feet (airHit floor bounce / settling knockdown)
+          const f = s.fighters[e.slot];
+          this.spawnVfx('vfx-spark-hit', f.x, FLOOR_Y - 16, 95, 0xcbb894);
+          break;
         }
       }
-      if (kind === 'blockstun' && was !== 'blockstun') {
-        play(this, 's-block', 0.6);
-        // icy shield ripple on the guarding side
-        this.spawnVfx('vfx-spark-block', f.x + f.facing * 42, f.y - 130, 95, 0xa8c8ff, f.facing === 1);
-      }
-      if (
-        (kind === 'attack' || kind === 'airAttack') &&
-        (was !== kind || prev.moveIds[slot] !== f.action.moveId)
-      ) {
-        play(this, 's-whoosh', 0.4);
-        if (characters[f.charId].moves[f.action.moveId!]?.input) playVoice(this, f.charId, 'kiai', 0.8);
-        this.logMove(slot);
-      }
-      if (kind === 'air' && was === 'prejump') play(this, 's-jump', 0.35);
-
-      // ground-impact dust: the airHit bounce (flag flip) and the settling
-      // knockdown each puff a sandy cloud at the feet with a soft thud
-      const bouncedNow = f.action.kind === 'airHit' && f.action.bounced === true;
-      if ((bouncedNow && !prev.bounced[slot]) || (kind === 'knockdown' && was !== 'knockdown')) {
-        this.spawnVfx('vfx-spark-hit', f.x, FLOOR_Y - 16, 95, 0xcbb894);
-        play(this, 's-hit', 0.3);
-      }
     }
 
-    if (s.projectiles.length > prev.projectiles) play(this, 's-projectile', 0.6);
-
-    // universal throw connecting (the hold starting) gets its grab thunk now —
-    // the damage (and its own hit sound) only lands when the tech window closes
-    if (s.pendingThrow && !prev.pendingThrow) play(this, 's-hit', 0.8);
-
-    if (this.comboTicks > 0 && --this.comboTicks === 0) this.comboHits = 0;
+    // attract demo loops back to the title once the win screen has had its beat
+    if (this.demo && s.phase === 'matchEnd' && s.phaseFrame === 300) {
+      this.shell.toMainMenu();
+    }
   }
 
   // ---------- impact VFX (renderer-side; engine state is never touched) ----------
@@ -919,55 +641,14 @@ export class FightScene extends Phaser.Scene {
     }
   }
 
-  /** Raw-input ticker: arrows for held direction + freshly pressed buttons,
-   *  one line per player — shows what the engine actually registered. */
+  /** Raw-input ticker (shell MoveLogModel): what the engine registered. */
   private logInputs(frames: [InputFrame, InputFrame]): void {
-    for (const slot of [0, 1] as const) {
-      const i = frames[slot];
-      const prev = this.prevInputs[slot];
-      const dir =
-        i.up && i.left ? '↖' : i.up && i.right ? '↗'
-        : i.down && i.left ? '↙' : i.down && i.right ? '↘'
-        : i.up ? '↑' : i.down ? '↓' : i.left ? '←' : i.right ? '→' : '';
-      const btns = (['lp', 'mp', 'hp', 'lk', 'mk', 'hk'] as const)
-        .filter((b) => i[b] && !prev[b])
-        .map((b) => b.toUpperCase())
-        .join('+');
-      this.prevInputs[slot] = { ...i };
-      const token = btns ? `${dir}${dir ? '+' : ''}${btns}` : dir;
-      const hist = this.inputHist[slot];
-      if (token && token !== hist[hist.length - 1]) {
-        hist.push(token);
-        if (hist.length > 10) hist.shift();
-        if (this.moveLogOn) this.inputHistTexts[slot].setText(`P${slot + 1} ▸ ${hist.join(' ')}`);
-      }
-    }
+    this.shell.logInputs(frames);
   }
 
-  /** FIFO overlay of triggered moves: "P1 Rising Glyph (H)" / "P2 cr.MK". */
+  /** FIFO of triggered moves: "P1 Rising Glyph (H)" / "P2 cr.MK". */
   private logMove(slot: 0 | 1): void {
-    const f = this.state.fighters[slot];
-    const id = f.action.moveId!;
-    const def = characters[f.charId].moves[id];
-    let label: string;
-    if (def?.input) {
-      const str = f.action.strength ? ` (${f.action.strength.toUpperCase()})` : '';
-      const M: Record<string, string> = {
-        qcf: '↓↘→', qcb: '↓↙←', bf: '←→', dp: '→↓↘', hcb: '→↓←', hcf: '←↓→', '360': '360°',
-      };
-      const inp = def.input.motion ? M[def.input.motion] : '';
-      const btn =
-        def.input.button === 'punch' ? 'P'
-        : def.input.button === 'kick' ? 'K'
-        : def.input.button === 'LPLK' ? 'LP+LK'
-        : def.input.button;
-      label = `${def.name ?? id}${str} · ${inp}${inp ? '+' : ''}${btn}`;
-    } else if (id.startsWith('c')) label = `cr.${id.slice(1).toUpperCase()}`;
-    else if (id.startsWith('j')) label = `j.${id.slice(1).toUpperCase()}`;
-    else label = id.toUpperCase();
-    this.moveLog.push(`P${slot + 1}  ${label}`);
-    if (this.moveLog.length > 8) this.moveLog.shift();
-    if (this.moveLogOn) this.moveLogText.setText(this.moveLog.join('\n'));
+    this.shell.logMove(slot);
   }
 
   /** Sandbox rules: frozen clock, refilling health, rounds never end. */
@@ -1237,18 +918,17 @@ export class FightScene extends Phaser.Scene {
       this.fatalityPanel.setVisible(false);
     }
 
-    // Post-match win-quote screen: after the K.O./victory beat lands, the winner
-    // portrait taunts the beaten loser portrait with a quote (SFII win screen).
+    // Post-match win-quote screen (shared DOM WinOverlay): after the K.O./
+    // victory beat lands, the winner portrait taunts the beaten loser.
+    this.winOverlay.sync(s); // shows past revealFrame, hides otherwise
     if (s.phase === 'matchEnd' && s.roundWinner !== null && s.phaseFrame > 72) {
       for (const sh of this.fighterShadows) sh?.setVisible(false);
       for (const dz of this.dizzySprites) dz?.setVisible(false);
-      this.showWinScreen(s.roundWinner);
       perf.cutscene = performance.now() - sectionStart;
       perf.draw = performance.now() - drawStart;
       this.perfDraw = perf;
       return;
     }
-    if (this.winScreen) this.winScreen.setVisible(false);
 
     if (!this.hasBg) {
       gU.fillStyle(0x241b2e, 1).fillRect(0, 0, STAGE_W, STAGE_H);
@@ -1381,16 +1061,14 @@ export class FightScene extends Phaser.Scene {
     perf.sparks = performance.now() - sectionStart;
     sectionStart = performance.now();
 
-    this.comboText.setVisible(this.comboHits >= 2 && this.comboTicks > 0);
-    this.comboText.setAlpha(Math.min(1, this.comboTicks / 30));
+    this.comboText.setVisible(this.hudModel.comboLabel !== '');
+    this.comboText.setAlpha(this.hudModel.comboAlpha);
 
     if (this.stageGuide) this.drawStageGuide();
     else for (const t of this.stageGuideTexts) t.setVisible(false);
     if (this.debugBoxes) this.drawDebug();
     perf.debug = performance.now() - sectionStart;
     sectionStart = performance.now();
-    this.moveLogText.setVisible(this.moveLogOn);
-    for (const t of this.inputHistTexts) t.setVisible(this.moveLogOn);
     this.drawHud();
     perf.hud = performance.now() - sectionStart;
     perf.draw = performance.now() - drawStart;
@@ -1451,67 +1129,6 @@ export class FightScene extends Phaser.Scene {
     }
     this.msgText.setText('');
     this.timerText.setText('');
-  }
-
-  /** Build (once) and reveal the SFII-style post-match taunt screen: winner
-   *  portrait on the left, beaten-and-bloodied loser portrait on the right, and
-   *  one of the winner's random win quotes printed at the bottom. */
-  private showWinScreen(winner: 0 | 1): void {
-    if (this.winScreen) {
-      this.winScreen.setVisible(true);
-      return;
-    }
-    const loser: 0 | 1 = winner === 0 ? 1 : 0;
-    const winId = this.chars[winner];
-    const loseId = this.chars[loser];
-    const winDef = characters[winId];
-    const quotes = winDef.winQuotes ?? [];
-    const quote = quotes.length ? Phaser.Utils.Array.GetRandom(quotes) : '...';
-    playVoice(this, winId, 'victory', 0.85);
-    const font = { fontFamily: 'monospace', color: '#f5ead9' };
-
-    const c = this.add.container(0, 0).setDepth(20);
-
-    c.add(this.add.rectangle(0, 0, STAGE_W, STAGE_H, 0x05030a, 1).setOrigin(0, 0));
-
-    // winner portrait (faces right, toward the loser)
-    const winKey = this.textures.exists(`portrait-${winId}`) ? `portrait-${winId}` : null;
-    if (winKey) c.add(this.add.image(288, 232, winKey).setDisplaySize(300, 300));
-    // loser portrait: beaten-and-bloodied variant if it exists, else greyed normal
-    const koKey = this.textures.exists(`portrait-ko-${loseId}`)
-      ? `portrait-ko-${loseId}`
-      : this.textures.exists(`portrait-${loseId}`) ? `portrait-${loseId}` : null;
-    if (koKey) {
-      const l = this.add.image(672, 232, koKey).setDisplaySize(300, 300).setFlipX(true);
-      if (koKey === `portrait-${loseId}`) l.setTint(0x777277); // no KO art: grey them out
-      c.add(l);
-    }
-
-    c.add(
-      this.add
-        .text(STAGE_W / 2, 64, `${winDef.name} WINS`, {
-          ...font, fontSize: '44px', fontStyle: 'bold', color: winDef.color,
-          stroke: '#000', strokeThickness: 8,
-        })
-        .setOrigin(0.5),
-    );
-    c.add(
-      this.add
-        .text(STAGE_W / 2, 452, quote, {
-          ...font, fontSize: '26px', fontStyle: 'bold', color: '#ffd24a', align: 'center',
-          stroke: '#000', strokeThickness: 6, wordWrap: { width: STAGE_W - 120 },
-        })
-        .setOrigin(0.5),
-    );
-    c.add(
-      this.add
-        .text(STAGE_W / 2, STAGE_H - 26, 'R  REMATCH        ENTER  SELECT', {
-          ...font, fontSize: '15px', color: '#e8dcc8', stroke: '#000', strokeThickness: 3,
-        })
-        .setOrigin(0.5),
-    );
-
-    this.winScreen = c;
   }
 
   private drawCapsule(slot: 0 | 1): void {
@@ -1625,13 +1242,8 @@ export class FightScene extends Phaser.Scene {
       g.lineStyle(2, 0x594566, 1).strokeRect(px - 25, 21, 50, 50);
       g.fillStyle(0x14101a, 0.9).fillRect(x - 2, 26, BAR_W + 4, 22);
       // SF2 ghost bar: recently lost health lingers in red behind the live
-      // bar, then drains toward it (snaps up instantly on refill/round reset)
-      const gh = this.ghostHealth;
-      if (gh[slot] < f.health) gh[slot] = f.health;
-      else if (gh[slot] > f.health && s.tick >= this.ghostHoldUntil[slot]) {
-        gh[slot] = Math.max(f.health, gh[slot] - def.health * 0.008);
-      }
-      const ghostW = BAR_W * Math.max(0, gh[slot] / def.health);
+      // bar, then drains toward it (bookkeeping lives in the shared HudModel)
+      const ghostW = BAR_W * Math.max(0, this.hudModel.ghost[slot] / def.health);
       g.fillStyle(0xb3271b, 1).fillRect(slot === 0 ? x + BAR_W - ghostW : x, 28, ghostW, 18);
       const fillW = BAR_W * ratio;
       const color = ratio > 0.5 ? 0x7ee06e : ratio > 0.25 ? 0xffd24a : 0xff5a48;
@@ -1667,137 +1279,4 @@ export class FightScene extends Phaser.Scene {
     }
   }
 
-  // ---------- pause / move list ----------
-
-  private moveListText(slot: 0 | 1): string {
-    const def = characters[this.chars[slot]];
-    const m = def.moves;
-    const cell = (id: string) => {
-      const mv = m[id];
-      if (!mv) return '—'.padEnd(14);
-      const kd = mv.knockdown ? ' KD' : '';
-      return `${mv.damage}dmg ${mv.startup}f${kd}`.padEnd(14);
-    };
-    const notate = (input: { motion?: string; button: string }) => {
-      const M: Record<string, string> = {
-        qcf: '↓↘→', qcb: '↓↙←', bf: '← →', dp: '→↓↘', hcb: '→↓←', hcf: '←↓→', '360': '360°',
-      };
-      const btn =
-        input.button === 'punch' ? 'P'
-        : input.button === 'kick' ? 'K'
-        : input.button === 'LPLK' ? 'LP+LK'
-        : input.button;
-      return `${input.motion ? M[input.motion] + '+' : ''}${btn}`;
-    };
-    const specials = Object.values(m)
-      .filter((mv) => mv.input)
-      .map((mv) => `★ ${mv.name}: ${notate(mv.input!)}`);
-    const fatality = def.fatality
-      ? [`☠ ${def.fatality.name}: ${notate(def.fatality.input)}  (when they hear FINISH THEM!)`]
-      : [];
-    return [
-      def.name,
-      ...specials,
-      ...fatality,
-      '',
-      '        PUNCH         KICK',
-      ` L      ${cell('lp')}${cell('lk')}`,
-      ` M      ${cell('mp')}${cell('mk')}`,
-      ` H      ${cell('hp')}${cell('hk')}`,
-      '',
-      '↓+button   crouching versions',
-      '           (↓+kicks hit LOW: crouch-block them)',
-      'jump+button air versions',
-      '           (overheads: block them STANDING)',
-    ].join('\n');
-  }
-
-  private buildPauseOverlay(): void {
-    const font = { fontFamily: 'monospace', color: '#f5ead9' };
-    const PW = STAGE_W - 70;
-    const PH = STAGE_H - 60;
-    const px = 35; // panel left
-    const py = 30; // panel top
-    const items: Phaser.GameObjects.GameObject[] = [];
-
-    items.push(
-      this.add.rectangle(STAGE_W / 2, STAGE_H / 2, PW, PH, 0x0c0910, 0.95).setStrokeStyle(2, 0x594566),
-    );
-    items.push(
-      this.add.text(STAGE_W / 2, py + 26, 'PAUSED', { ...font, fontSize: '26px', fontStyle: 'bold' }).setOrigin(0.5),
-    );
-
-    // --- menu buttons row (clickable + keyboard) ---
-    const menu: { label: string; act: () => void }[] = [
-      { label: 'RESUME', act: () => this.togglePause() },
-      { label: 'RESTART', act: () => this.restartMatch() },
-      { label: 'CHARACTER SELECT', act: () => this.toCharacterSelect() },
-      { label: 'MAIN MENU', act: () => this.toMainMenu() },
-    ];
-    const btnY = py + 66;
-    const gap = 14;
-    const btnW = (PW - 40 - gap * (menu.length - 1)) / menu.length;
-    menu.forEach((mi, i) => {
-      const bx = px + 20 + i * (btnW + gap) + btnW / 2;
-      const bg = this.add
-        .rectangle(bx, btnY, btnW, 40, 0x241b2e, 1)
-        .setStrokeStyle(2, 0x7a6a86)
-        .setInteractive({ useHandCursor: true });
-      const label = this.add
-        .text(bx, btnY, mi.label, { ...font, fontSize: '14px', fontStyle: 'bold' })
-        .setOrigin(0.5);
-      // mouse hover moves the shared cursor so pad + mouse stay in sync
-      bg.on('pointerover', () => { this.pauseSel = i; this.highlightPause(); });
-      bg.on('pointerdown', () => { play(this, 's-blip', 0.5); mi.act(); });
-      this.pauseButtons.push({ bg, label, act: mi.act });
-      items.push(bg, label);
-    });
-
-    // --- move-list columns, contained + wheel-scrollable ---
-    const listTop = py + 100;
-    const listBottom = py + PH - 44;
-    const listH = listBottom - listTop;
-    const colW = (PW - 60) / 2;
-    const colX = [px + 20, px + 20 + colW + 20];
-    this.pauseScroll = [];
-    for (const slot of [0, 1] as const) {
-      const x = colX[slot];
-      const txt = this.add.text(x, listTop, this.moveListText(slot), {
-        ...font, fontSize: '13px', lineSpacing: 5, wordWrap: { width: colW - 8 },
-      });
-      const mask = this.add
-        .rectangle(x + colW / 2, listTop + listH / 2, colW, listH, 0x000000, 0)
-        .setVisible(false);
-      txt.setMask(mask.createGeometryMask());
-      const state = { txt, top: listTop, maxScroll: Math.max(0, txt.height - listH), scroll: 0 };
-      this.pauseScroll.push(state);
-      // wheel over this column scrolls it
-      mask.setInteractive(
-        new Phaser.Geom.Rectangle(x, listTop, colW, listH),
-        Phaser.Geom.Rectangle.Contains,
-      );
-      mask.on('wheel', (_p: unknown, _dx: number, dy: number) => {
-        state.scroll = Phaser.Math.Clamp(state.scroll + dy * 0.5, 0, state.maxScroll);
-        txt.setY(listTop - state.scroll);
-      });
-      if (state.maxScroll > 0) {
-        items.push(
-          this.add.text(x + colW - 4, listBottom + 2, '▼ scroll', {
-            ...font, fontSize: '10px', color: '#9a8fa8',
-          }).setOrigin(1, 0),
-        );
-      }
-      items.push(txt, mask);
-    }
-
-    items.push(
-      this.add
-        .text(STAGE_W / 2, py + PH - 20, 'ESC/START resume · ◄► choose, attack confirms · F1 hitboxes · F2 move log · F3 stage guide · ` perf', {
-          ...font, fontSize: '11px', color: '#9a8fa8',
-        })
-        .setOrigin(0.5),
-    );
-
-    this.pauseOverlay = this.add.container(0, 0, items).setDepth(10).setVisible(false);
-  }
 }

@@ -11,6 +11,12 @@ import { FLOOR_Y, STAGE_W } from '../engine';
 /** meters per engine pixel */
 export const WORLD_SCALE = 0.01;
 
+/** engine-space walkable bounds of the 3D arena — wider than the 2D 960px
+ *  stage, symmetric around center so the engine→Three mapping stays put.
+ *  The ONE definition: FightScene3D's local rules and the online host's
+ *  baked rules (LobbyScene) must agree or V25 replay-equivalence breaks. */
+export const STAGE3D_BOUNDS = { minX: -110, maxX: 1070 } as const;
+
 /** half-depth of debug cuboids around the combat lane, in meters */
 export const LANE_DEPTH = 0.18;
 
