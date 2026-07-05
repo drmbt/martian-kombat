@@ -25,3 +25,7 @@ assets/frame-dumps/
 .idea/
 *.swp
 .lh/
+
+# Python tool cache
+__pycache__/
+*.pyc

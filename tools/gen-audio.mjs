@@ -3,7 +3,7 @@
 // Idempotent; --force regens.  node tools/gen-audio.mjs [--force]
 
 import { join } from 'node:path';
-import { ROOT, loadEnv, saveAsset, skip, pool, concurrencyArg } from './lib.mjs';
+import { ROOT, loadEnv, saveAsset, skip, pool, concurrencyArg, loadVoices, fishTTS } from './lib.mjs';
 
 const env = loadEnv();
 const force = process.argv.includes('--force');
@@ -14,6 +14,12 @@ const only = process.argv.includes('--char') ? process.argv[process.argv.indexOf
 const KEY = env.ELEVENLABS_API_KEY;
 // ElevenLabs caps concurrent requests by plan tier; keep this modest.
 const CONCURRENCY = concurrencyArg(4);
+
+// Characters with a cloned real voice (tools/voices.json via gen-voice.mjs)
+// get their kiai/hurt/victory VO synthesized through the clone; everyone else
+// stays on the stock ElevenLabs voices below. Announcer lines never route
+// through clones.
+const CLONED = loadVoices();
 
 const ANNOUNCER = 'V33LkP9pVLdcjeB2y5Na'; // Maverick — epic heroic legend (rounds, KO, fighter names)
 const STAGE_VOICE = 'QMJTqaMXmGnG8TCm8WQG'; // Clyde — vintage male radio announcer (stage name call-outs only)
@@ -59,6 +65,7 @@ const announcerLines = {
   'double-ko': 'DOUBLE K O!',
   perfect: 'PERFECT!',
   victory: 'MARTIAN VICTORY!',
+  wins: 'WINS!', // played right after the winner's name at match-end ("<NAME>… WINS!")
   vincent: 'VINCENT!',
   yulia: 'YULIA!',
   catherine: 'CATHERINE!',
@@ -72,6 +79,7 @@ const announcerLines = {
   chebel: 'CHEBEL!',
   ygor: 'YGOR!',
   rapha: 'RAPHA!',
+  vanessa: 'VANESSA!',
   'finish-them': 'FINISH THEM!',
   fatality: 'FATALITY!',
   // stage-name call-outs (announced on stage select, mirrors the fighter
@@ -97,6 +105,14 @@ const announcerLines = {
   'stage-shipwreck': 'SHIPWRECK!',
   'stage-the-range': 'THE RANGE!',
   'stage-van': 'THE VAN!',
+  'stage-ai-kitchen': 'A I KITCHEN!',
+  'stage-dojo': 'THE DOJO!',
+  'stage-escapes': 'THE ESCAPES!',
+  'stage-hyperion': 'HYPERION!',
+  'stage-last-resort': 'LAST RESORT!',
+  'stage-museum': 'THE MUSEUM!',
+  'stage-star-beach': 'STAR BEACH!',
+  'stage-tvs': 'TEE VEES!',
 };
 
 // Voice line takes an id, a voice, then per-category line lists so combat and
@@ -154,9 +170,12 @@ const voiceLines = {
   },
   gene: {
     voice: VOICE_GENE,
-    kiai: ['Ship it!', 'Mana Blast!', 'Yeah!', 'Oh yeah!', 'Deploy!', 'Zero-shot!'],
-    hurt: ['Ow!', 'Ugh, 429.', 'Nope!', 'Rate limited!', 'Segfault!', 'Bad output!'],
+    kiai: ['Ship it!', 'Force push!', 'Straight to prod!', 'Deploy!', 'Zero-shot!', 'Mana Blast!'],
+    hurt: ['Ow!', 'Ah, fuck.', "Eden's down!", 'Segfault!', 'Bad output!', 'Nope!'],
     victory: ['Yeah! Shipped it.', "Oh yeah — that's a merge.", 'Mana Blast secured.', 'Your context window just closed.'],
+    // per-move call-outs: v-<char>-move-<moveId>, played when that move fires
+    // (see soundDirector). rate-limit is the "Line Goes Up" special.
+    moves: { 'rate-limit': 'Line goes up!' },
   },
   // Marzipan is a laid-back dreadlocked vegan biologist; mellow + earthy, not fierce
   marzipan: {
@@ -213,13 +232,39 @@ const voiceLines = {
     hurt: ['Agh!', 'Ow!', 'Tubs—!', 'Hey!', 'Hnh!', 'My tabs!'],
     victory: ['The TabBastard has spoken.', "Tubs, we're done here.", 'Built to last.', 'Add it to the chain.'],
   },
+  vanessa: {
+    voice: VOICE_F, // fallback; her Fish clone (voices.json) overrides kiai/hurt/victory
+    style: 0.3,
+    kiai: ['Verdelis!', 'Little Martians!', 'Cacao!', 'Awaken!', 'The ancestors!', 'Hah!'],
+    hurt: ['Ai!', 'Merda!', 'Caralho!', 'Porra!', 'Ai, não!', 'Puta que pariu!'],
+    victory: ['The Little Martians dreamed this.', 'Say thank you. The ceremony requires it.', 'The ancestors are pleased.', 'Dear human: you are forgettable.'],
+    moves: { teleportal: 'Dream.' },
+  },
 };
+
+// Route one grunt line: cloned fish voice when registered, ElevenLabs stock
+// voice otherwise (style maps loosely onto fish temperature).
+function speak(charId, voice, text, style, stability) {
+  const cloned = CLONED[charId];
+  if (cloned?.provider === 'fish' && env.FISH_API_KEY) {
+    return fishTTS({ apiKey: env.FISH_API_KEY, referenceId: cloned.modelId, text, temperature: style ?? 0.7 });
+  }
+  return tts(voice, text, style ?? 0.9, stability);
+}
 
 const grunts = Object.entries(voiceLines).flatMap(([id, def]) =>
   Object.entries({ kiai: def.kiai, hurt: def.hurt, victory: def.victory }).flatMap(
     ([category, lines]) =>
-      lines.map((text, i) => [`${id}-${category}-${i + 1}`, def.voice, text, def.style, def.stability])
+      lines.map((text, i) => [id, `${id}-${category}-${i + 1}`, def.voice, text, def.style, def.stability])
   )
+);
+
+// per-move voice call-outs (id `<char>-move-<moveId>`) — a character can name a
+// line for a specific move; played instead of a random kiai when it fires
+const moveGrunts = Object.entries(voiceLines).flatMap(([id, def]) =>
+  Object.entries(def.moves ?? {}).map(([moveId, text]) => [
+    id, `${id}-move-${moveId}`, def.voice, text, def.style, def.stability,
+  ])
 );
 
 const sounds = [
@@ -243,13 +288,13 @@ const announcerTasks = Object.entries(announcerLines)
     // keeps Maverick
     run: () => tts(id.startsWith('stage-') ? STAGE_VOICE : ANNOUNCER, text, 0.9),
   }));
-const gruntTasks = grunts
-  .filter(([id]) => !only || id.startsWith(`${only}-`))
-  .map(([id, voice, text, style, stability]) => ({
+const gruntTasks = [...grunts, ...moveGrunts]
+  .filter(([charId]) => !only || charId === only)
+  .map(([charId, id, voice, text, style, stability]) => ({
     out: join(AUDIO, 'voice', `${id}.mp3`),
-    label: `grunt ${id}`,
+    label: `grunt ${id}${CLONED[charId] ? ' (cloned voice)' : ''}`,
     prompt: text,
-    run: () => tts(voice, text, style ?? 0.9, stability),
+    run: () => speak(charId, voice, text, style, stability),
   }));
 const soundTasks = only
   ? []

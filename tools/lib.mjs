@@ -90,6 +90,38 @@ export async function geminiImage({ apiKey, model, prompt, referencePaths = [], 
   return Buffer.from(part.inlineData.data, 'base64');
 }
 
+// --- Fish Audio voice cloning (https://docs.fish.audio) -------------------
+// Cloned-voice registry: char id -> { provider, modelId, ... }, written by
+// tools/gen-voice.mjs and read by gen-audio.mjs to route a character's VO
+// through their cloned voice instead of a stock ElevenLabs voice.
+export const VOICES_PATH = join(ROOT, 'tools', 'voices.json');
+
+export function loadVoices() {
+  return existsSync(VOICES_PATH) ? JSON.parse(readFileSync(VOICES_PATH, 'utf8')) : {};
+}
+
+export function saveVoices(voices) {
+  writeFileSync(VOICES_PATH, JSON.stringify(voices, null, 2) + '\n');
+}
+
+/** Fish Audio TTS with a cloned voice model. Returns an audio Buffer. */
+export async function fishTTS({ apiKey, referenceId, text, temperature = 0.7, topP = 0.7, model = 's1', format = 'mp3' }) {
+  const res = await fetch('https://api.fish.audio/v1/tts', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json', model },
+    body: JSON.stringify({
+      text,
+      reference_id: referenceId,
+      format,
+      mp3_bitrate: 128,
+      temperature,
+      top_p: topP,
+    }),
+  });
+  if (!res.ok) throw new Error(`fish tts ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  return Buffer.from(await res.arrayBuffer());
+}
+
 /** OpenAI image generation (gpt-image-2). */
 export async function openaiImage({ apiKey, prompt, size = '1536x1024', model = 'gpt-image-2' }) {
   const res = await fetch('https://api.openai.com/v1/images/generations', {

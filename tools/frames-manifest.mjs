@@ -425,9 +425,11 @@ export const CHARACTERS = {
           prompt:
             'A burst of overlapping glowing amber-orange holographic terminal windows exploding outward from a center point, filled with abstract unreadable glyph fragments, painted cel-shaded anime style, centered, on solid flat chroma-key green background #00B140, no character, no readable words, no watermark.',
         },
+        // "Flame War" (qcb+P) — a short Yoga-Flame-style flame breath (was the
+        // static Smokescreen field). Orange/red flame keys cleanly off green.
         smokescreen: {
           prompt:
-            'A single thick billowing cloud of grey-white smoke, dense and opaque in the center with curling wisps at the edges, painted cel-shaded anime style, centered, on solid flat chroma-key green background #00B140, no character, no text, no watermark.',
+            'A billowing cone-shaped burst of bright orange-and-red FLAME breath roaring forward to the right, curling heat wisps, a scatter of glowing embers, threaded with faint wisps of grey smoke, painted cel-shaded anime style, on solid flat chroma-key green background #00B140, no character, no text, no watermark.',
         },
         'root-access': {
           prompt:
@@ -888,9 +890,13 @@ export const CHARACTERS = {
           prompt:
             'A human-silhouette-shaped explosion of MAGENTA, HOT PINK and AMBER glitch pixels and scanline fragments bursting outward, no recognizable person left, painted cel-shaded anime style, centered, on solid flat chroma-key green background #00B140, no character, no text, no watermark.',
         },
+        // "Line Goes Up" (qcb+P) — a short-range rising green candlestick curve
+        // (was the static Rate Limit slow field). GREEN art can't key off green,
+        // so it's painted on MAGENTA and keyed with `key` below.
         'rate-limit': {
+          key: '0xFF00FF',
           prompt:
-            'A large translucent AMBER holographic rectangular barrier pane floating upright, hot-pink glowing border, subtle scanlines, the number "429" glowing large in the center in a blocky digital font, painted cel-shaded anime style, centered, on solid flat chroma-key green background #00B140, no character, no other text, no watermark.',
+            'A steeply rising GREEN candlestick stock chart: four or five bright emerald-green bullish trading candles ascending in a staircase to the upper right, a glowing green up-trend arrow line sweeping upward through them, faint sparkline glints and a few amber pixel-sort flecks, painted cel-shaded anime style, centered, on solid flat chroma-key MAGENTA background #FF00FF, no character, no readable text, no numbers, no watermark.',
         },
         'mana-burst': {
           refPaths: ['assets/character-inspo/eden-mana-logo.png'],
