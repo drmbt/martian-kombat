@@ -965,6 +965,36 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-05 · assets · portrait bust re-crop pass** — reran
+  `tools/qa/portrait_crop.py --all` across the roster so every `-bust.png`
+  is framed pose-centered off the character's head keypoints (fixed
+  eye-line, consistent scale) instead of a fixed crop box — keeps the
+  roster visually matched now that Vanessa is in the mix. Straight-on
+  selector icons untouched. — Claude
+
+- **2026-07-05 · scenes+vite · dev-only Stage Pin editor + world-map
+  wiring (Sprint 23)** — first slice of the planned dev-mode front-end
+  editor. Vite dev-server middleware plugin (`editorApi()`, `apply:
+  'serve'`) POSTs `/__editor/stage-pins` to write `src/data/stage-
+  pins.json`, dev-only/no-op in prod — the reusable write backbone the
+  character creator will build on. New `EditorMenuScene` (title's
+  "6 · DEV EDITOR", dev-only) and `StagePinEditorScene` (click-place/
+  drag pins, auto-advance, SAVE). SelectScene now renders all 27
+  authored pins as dim dots on the world map, lighting the hovered/held
+  fighter's home-stage pin with a player-colored ring + name label +
+  side-gutter thumbnail. Also fixed a malformed-JFIF `van.jpg` (old file
+  had a broken density header some decoders rejected) and a
+  `music.ts` volume-clamp crash found while exercising the map. tsc
+  clean, 251 vitest green. — Claude
+
+- **2026-07-05 · assets+data · Sprint 23 stages: 8 new stages + home-stage
+  reassignment** — generated TVS, STAR BEACH, LAST RESORT, MUSEUM,
+  AI KITCHEN, DOJO, HYPERION, and ESCAPES (21:9 pixel-art from
+  `assets/stage-inspo/`, registered in `src/data/stages.ts` with
+  matching announcer VO lines). Reassigned bodhi/cat/catherine/freeman/
+  kirby/marzipan/rapha/vincent/ygor/yulia to their canonical Martian
+  Lore home stage. Also replaced `van.jpg` with a clean redraw. — Claude
+
 - **2026-07-05 · data+assets · Vanessa, 14th fighter (full pipeline)** —
   full 7-step build: `vanessa.json` (24 moves), fatality "Fired and Glazed"
   (4 panels), Fish-cloned VO (kiai/hurt/victory + a per-move call-out) plus
