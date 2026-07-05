@@ -677,6 +677,21 @@ review — chains/cancels/scaling promoted to Sprint 19)
       covered — knockdown/getup are fully invulnerable)
 - [ ] CPU difficulty levels (easy/medium/hard bot — feeds arcade mode and
       makes attract-mode demos look better)
+**Art QA:**
+- [ ] **Marzipan sprite regen** — a lot of Marzipan's sprite frames need
+      regenerating (flagged 2026-07-05, playtest QA). Re-roll the weak cells
+      via `gen:frames --char marzipan --cells <ids>` (low-pose anchor trick
+      for crouch/lying) then `gen:pack --char marzipan`; inspect the montage
+      per the verify-new-character workflow before repacking.
+- [ ] **Bodhi attack-frame regen** — his hitboxes are present + rendering
+      correctly (verified via F1, 2026-07-05), but several `*-active` cells
+      read as a WIND-UP (fist cocked back/high) rather than a strike EXTENDED
+      to the hitbox, so his attacks look "hitbox-less" even though they
+      connect. Re-roll the `-active` cells for the normals (esp. `hp-active`
+      + the kicks) with prompts showing the limb fully extended toward the
+      opponent at the hitbox height, then repack. (His 3 grabs —
+      deep-tissue/table-work/throw — correctly show no hitbox; by design.)
+
 **Presentation / UX:**
 - [ ] Round-intro animations (fighters walk in / strike a pose before
       "ROUND 1… FIGHT!") + in-fight victory pose at round end
@@ -790,6 +805,109 @@ inherit it. User-approved direction: 2D adopts the DOM UI chrome.
       live: both meshes idle on the sides, cursor swap, portrait fallback
       on a 3D SOON fighter, hidden during stage pick, 0 console errors.
 
+### Sprint 23 — Home stages + world-map pin editor (user-directed 2026-07-05, IN PROGRESS)
+Goal: every fighter has a defined home stage (SFII-style — hovering a fighter on
+select lights their home-stage pin on a Mars/Bombay-Beach map; arcade mode ends
+there), and we get a local-dev **front-end editor** to place those map pins (the
+first slice of a bigger creator tool). Feeds the **Arcade story mode** RFE's
+"overhead map zooms to each stage's map location" beat.
+
+**Done this turn — home-stage (re)assignments** (the `stage` field on each
+CharacterDef; missing stages fail gracefully to RANDOM/default today):
+- [x] Reassigned all 13 built fighters to their canonical home stage:
+      vincent→van, catherine→ai-kitchen, freeman→chiba, kirby→neptune,
+      marzipan→salton, yulia→chiba-roof, ygor→painted-canyon, flo→ski-inn,
+      gene→hyperion, bodhi→dojo, chebel→mimos, rapha→escapes, cat→shipwreck.
+      (All 13 built fighters now resolve to a real generated home stage.)
+- [x] **Four new stages generated** from existing `assets/stage-inspo/` folders
+      (Bombay Beach photo refs → 21:9 pixel-art per the locked stage look):
+      **TVS** (painted-CRT outsider-art wall), **STAR BEACH** (lattice star
+      pavilion on the salt flats), **LAST RESORT** (the "LAST STOP FOR THE BOMBAY
+      BEACH RESORT" billboard), and **MUSEUM** (the stacked-shipping-container
+      "Museum of Bombay Beach"). SCENES prompts added to `tools/gen-stage.mjs`,
+      registered in `src/data/stages.ts`, QA'd by eye. tsc clean.
+- [x] **AI KITCHEN** stage generated (2026-07-05) from `assets/stage-inspo/AI KITCHEN/`
+      — the off-grid communal camp kitchen (orange pallet-racking beams, bulk-food
+      shelves, desert-playa window). Catherine's home stage (was temporarily uranus).
+- [x] **DOJO** stage generated (2026-07-05) from `assets/stage-inspo/DOJO/` — the
+      acro-yoga/martial-arts training hall (black foam mats, lotus gong, taped
+      instruction cards, crystal altar). Bodhi's home stage; art now exists.
+- [x] **HYPERION** stage generated (2026-07-05) from `assets/stage-inspo/HYPERION/`
+      — the neon-lit hacker/maker den (green+magenta LED strips, workbenches,
+      3D printer, roll-up door). Gene's home stage; art now exists.
+- [x] **THE ESCAPES** (id `escapes`) stage generated (2026-07-05) from
+      `assets/stage-inspo/ESCAPES/` — the graffiti-bombed ghost-town compound
+      (tagged shed + "BANK" sign, Mars salvage racking, blue trailer, red truck).
+      Rapha's home stage; repointed rapha from the placeholder `the-escapes` →
+      `escapes` (folder id). Re-rolled once for a crunchier pixel look + clear
+      foreground.
+
+**NEEDS CREATING — characters referenced but not yet built** (each is a full
+7-step pipeline run + roster wiring; re-check the Martian Lore "privacy opt out"
+column before starting — do NOT scaffold anyone marked NO AI PLEASE):
+- [x] **vanessa** → saturn — 14th fighter, full pipeline built (24 moves,
+      fatality "Fired and Glazed" w/ 4 panels, cloned/announcer VO incl.
+      per-move call-out, sprite sheet + 3 projectiles). Wired into
+      `roster.ts` (`playable:true`) and `characters/index.ts`.
+- [ ] **earl** → star-beach   - [ ] **haidai** → altar
+- [ ] **jack** → tvs   - [ ] **tao** → institute   - [ ] **jordan** → dome
+- [ ] **neil** → the-range   - [ ] **dulcinee** → museum   - [ ] **puddles** → last-resort
+      (Tao & Puddles already listed under the "Unlockable hidden characters" RFE.)
+
+**NEEDS CREATING — stages referenced but no art yet:**
+- [x] All home stages for the 13 built fighters now have art (escapes, hyperion,
+      dojo, ai-kitchen generated 2026-07-05). None outstanding.
+- [x] **museum** — generated (owner dulcinee still needs building).
+- [ ] Orphan folder `assets/stage-inspo/BOMBAY BEACH/` exists with no owner
+      (marzipan moved to salton) — user said leave dormant for now.
+
+**Front-end dev editor — BUILT 2026-07-05 (dev-only; the Stage Pin tool):**
+- [x] **Dev-write backbone: Vite dev-server middleware plugin** (`editorApi()`
+      in `vite.config.ts`, `apply: 'serve'`). POST `/__editor/stage-pins` →
+      validates/clamps the body to `{x,y}∈[0,1]` and rewrites
+      `src/data/stage-pins.json`. Exists ONLY under `npm run dev`; absent from
+      the prod build. This is the shared backbone the future character creator
+      reuses. Verified: 200 + file written + out-of-range values clamped.
+- [x] **Editor hub scene** (`EditorMenuScene`, key `EditorMenu`) — the "sub menu"
+      reached from the title's **6 · DEV EDITOR** item (only pushed when
+      `import.meta.env.DEV`; both editor scenes are only registered in dev in
+      `main.ts`). Lists tools (today: STAGE PINS) + BACK; mouse/keyboard/pad nav.
+- [x] **Stage Pin editor** (`StagePinEditorScene`, key `StagePinEditor`): the
+      `ui-world-map` up top, a scrollable-free auto-fit list of all stages, ●/○
+      placed markers. Click a stage → click the map to drop its pin (normalized
+      0..1); pins are draggable; first placement auto-advances to the next
+      unplaced stage; CLEAR PIN / SAVE / BACK buttons; live "N/M placed · unsaved"
+      status. SAVE POSTs to the middleware. `StageEntry.pin` + a merge loop in
+      `stages.ts` load the saved coords back onto the registry. tsc clean,
+      237 vitest green. Verified live (render + place + auto-advance + save→disk).
+- [x] **Select-screen wiring — DONE 2026-07-05.** All 27 authored pins render on
+      the SelectScene world map as dim amber dots (no labels). Each side's
+      currently hovered/held fighter lights its home-stage pin with a
+      player-colored ring + the stage NAME label + a stage THUMBNAIL beneath the
+      pin (connector line + colored border), driven per-frame from `redrawPins()`
+      off `idx[p]` → `characters[id].stage` → `stageById().pin`. P2 shows once its
+      pick is in play (always in 2P/online; after P1 locks in CPU/training/
+      showcase); the shared-pin case nests P2's ring + tucks its label. All pin
+      objects sit at depth < 10 so the stage-pick dialog's opaque overlay hides
+      them. tsc clean, 251 vitest green; verified live (salton + hyperion
+      highlights, thumbnails, dots all correct).
+      Thumbnail layout revised 2026-07-05 (user call): thumbnails moved OFF the
+      map into the left (P1) / right (P2) gutters flanking the map, each in a
+      player-colored frame; the map itself now only shows the highlighted pin
+      (ring) + stage-name label. `SIDE_THUMB_*` constants in SelectScene.
+      Also replaced `van.jpg` with a cleaner full-van redraw (was `van2.png`)
+      and re-encoded it to a standard baseline JPEG — the old file had a
+      malformed JFIF density (11880x11879) that some decoders rejected; new one
+      is density 1x1 and loads via both `<img>` and `createImageBitmap`.
+- [x] **Music volume crash fixed** (same session): `HTMLMediaElement.volume`
+      IndexSizeError from float rounding on the fade/duck interpolation landing a
+      hair outside [0,1] — `src/audio/music.ts` now clamps every computed volume
+      assignment via `clamp01()`.
+- [ ] **Character creator** (skeleton not built yet — deferred): name /
+      bring-or-generate art / **voice cloning** (VibeVoice / OmniVoice) / bio +
+      move-list prompt / sprite gen / per-frame re-roll, reusing the dev-write
+      backbone above. Ties into the **Custom character designer** RFE below.
+
 ### Long-term RFEs (roadmap, not scheduled)
 - [ ] **Custom character designer dialog** — in-game UI that runs the
       photo→fighter pipeline: upload an inspo photo, pick a kit archetype,
@@ -846,6 +964,100 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-05 · data+assets · Vanessa, 14th fighter (full pipeline)** —
+  full 7-step build: `vanessa.json` (24 moves), fatality "Fired and Glazed"
+  (4 panels), Fish-cloned VO (kiai/hurt/victory + a per-move call-out) plus
+  ElevenLabs announcer line, sprite sheet + 3 named-special projectiles
+  (chocolate-head / little-helper / little-martian), home stage `saturn`
+  (art already existed). Wired into `roster.ts` (`playable:true`) and
+  `characters/index.ts`. — Claude
+
+- **2026-07-05 · tools · third-party handlers: CorridorKey keyer + Fish voice
+  cloning** — user-directed. (1) **`npm run gen:key` (`tools/corridorkey.mjs`
+  + `corridorkey-helper.py`)**: one-command CorridorKey neural green-screen
+  handler — self-bootstraps the sibling clone (git clone → `uv sync`, MLX
+  extra on Apple Silicon), fetches the MLX weights via the working
+  dead-repo workaround (env-var repo override, tag `v1.0.0`, sha256-checked),
+  auto-resolves the green-checkpoint collision by stashing the unused
+  backend's file in `checkpoints/.stash/`, then batches a character's raw
+  frames (coarse chroma alpha hints → tiled MLX inference `--skip-existing` →
+  EXR FG+Matte composed to straight-alpha PNGs in `assets/raw/keyed/<char>/`).
+  Green-keyed projectiles included; custom-key (non-green) projectiles stay on
+  ffmpeg. `pack-sheet.mjs` gains `--keyer corridor` (packs from keyed frames,
+  scale/pad only; hard-fails on missing frames so a release bake can't
+  silently mix in halo'd chromakey cells). Smoke-tested end-to-end on MLX
+  (gene 20-lk-startup: glitch-FX keyed to real translucent color, no green
+  halo; ~12s/frame). Full-roster re-key still parked for the release pass —
+  docs/CORRIDORKEY.md updated. (2) **`npm run gen:voice`
+  (`tools/gen-voice.mjs`)**: Fish Audio voice cloning (`FISH_API_KEY`) — drop
+  real voice samples in `assets/voice-inspo/<char>/` (new README; privacy
+  opt-out rule applies), clone registers a private model id in
+  `tools/voices.json`; `gen-audio.mjs` now routes a registered fighter's
+  kiai/hurt/victory/move VO through the clone via `fishTTS()` in `lib.mjs`
+  (announcer + stage call-outs stay ElevenLabs). `--say "text"` writes test
+  synths to `assets/raw/voice-tests/`. Untested against the live clone path
+  (no samples on disk yet) — first real use: drop clips + `gen:voice --char
+  <name>` + `gen:audio --char <name> --force`.
+- **2026-07-05 · tools+scenes · clean boot: asset-existence manifest** — kills
+  the boot-console errors (11 legacy `proj-<char>` images that only vincent/
+  catherine actually have, 8 stage-name VOs that were never authored, a
+  `vfx-bodhi-deep-tissue` that doesn't exist) — the audio ones were UNCAUGHT
+  `EncodingError`s (a 404'd mp3 throws, not harmless). New
+  `tools/gen-asset-manifest.mjs` scans `public/assets/` and writes
+  `src/data/assetManifest.json` (stage VOs, legacy projectiles, per-move
+  projectile/burst/vfx art that actually exist); BootScene imports it and
+  gates every drift-prone load so the loader only requests real files. Wired
+  into predev/prebuild next to gen-music (+ `npm run gen:assets`). Permanently
+  ends the "blind-load → 404" class the memory note kept flagging. Verified on
+  the prod build: boot completes with `failed: 0` (was 12), console clean
+  (only the Phaser banner). — Claude
+
+- **2026-07-05 · scenes+ai+data+assets · showcase demo + Flo/Gene polish**
+  — user-directed (UNCOMMITTED; part of the same feel-pass push). (1)
+  **CPU-vs-CPU showcase demo**: new main-menu "5 · DEMO MATCH" → pick both
+  fighters + stage → a single-round CPU-vs-CPU match where both bots walk
+  their FULL moveset (new `CpuDriver` showcase reel: every normal, a couple
+  crouch normals, a jump, then each special) and the winner ALWAYS lands the
+  fatality. Flows Menu→Select(showcase)→Versus→Fight with a `showcase` flag
+  (winsNeeded 1, both bots). Verified by headless sim across 7 matchups:
+  every one reaches `fatality` (not the mercy collapse) with 21-27 distinct
+  moves shown. **BUG FIXED en route**: `enqueueMotion` never handled `hcb`,
+  so the 7 hcb-fatality fighters (bodhi/cat/chebel/freeman/kirby/rapha/ygor)
+  could NEVER land their fatality in ANY demo — now all motions
+  (qcf/qcb/bf/hcb/hcf) are supported and the finisher retries until it lands.
+  (2) **Flo Flame War** flame graphic offset to mouth height (render-only
+  `PROJ_RENDER_OFFSET_Y`, -125) so it reads as fire-breathing; Flo + Gene
+  sheets repacked from the user's edited raw frames. (3) **Gene VO** (new
+  ElevenLabs lines): kiai "Force push!" / "Straight to prod!", hurt "Ah,
+  fuck." / "Eden's down!", and a per-move call-out "Line goes up!" that
+  fires on the move (new data-driven `MoveDef.voice` + `v-<char>-move-<id>`
+  files + `attack-start.voiceLine` event → soundDirector). (4) **Gene win
+  quotes**: bullish / context / out-of-tokens added; stale "rate-limited"
+  quote dropped. tsc + build clean, 237/237, verified live (menu item,
+  flame at mouth height, VO loaded, showcase runs). — Claude
+
+- **2026-07-05 · engine+data+assets+renderer3d · feel & mechanics pass (SF2/MK
+  UX)** — user-directed batch (UNCOMMITTED as of this entry; see handoff). (1)
+  **Throws** toss SF2-style: the victim launches on a long high arc
+  (`TOSS_VY`/`TOSS_KNOCKBACK_MULT`), slams, rebounds bigger (`TOSS_BOUNCE_VY`)
+  — displaced across the screen, not a short knockdown (new `toss` HitPayload +
+  `Action.tossed`). (2) **Finisher** = MK behavior: fumble the fatality and
+  just LAND a normal on the dazed loser → they collapse, round ends (was:
+  attacks whiffed in FINISH THEM). (3) **Jumps** higher (`JUMP_VEL_MULT` 1.12)
+  and forward jumps cover ground (`jumpSpeedX`, default walk×`JUMP_SPEED_MULT`
+  1.6, per-char overridable — no more walk-speed floaty hops). (4)
+  **Projectiles** rescaled: sigil-bolt 72→112, fork-bomb 64→104, pop-tab-chain
+  →104. (5) **Flo/Gene static field-mines swapped**: Smokescreen → **Flame
+  War** (short-range Yoga-Flame breath); Rate Limit → **Line Goes Up**
+  (short-range rising green-candlestick burst) — real short-range projectiles
+  now, keeping the `qcb+P` slot so Burn One / 404 fatalities still fire; new
+  projectile art generated (Gene's green candles on MAGENTA + `key` 0xFF00FF)
+  + packed. (6) **3D camera** dollies back AND rises on vertical height (high
+  jumps) on top of the horizontal-separation dolly. 3 new engine vitests + 2
+  field-mine tests rewritten; 236/236, tsc + build clean, verified live.
+  DEFERRED (own tasks): 2D dynamic camera (needs a world/HUD camera-split),
+  wall/double-jumps (Cat/Kirby), close-range balance pass. — Claude
 
 - **2026-07-05 · data+assets+renderer3d · Rapha, 13th fighter (full pipeline +
   3D mesh)** — RJ's raccoon-wrangler joins the roster (`playable:true`,

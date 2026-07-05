@@ -35,7 +35,12 @@ loop, announcer + SFX, VS screen and win-quote screen, CPU opponent, training
 mode, settings (volumes, round clock, match length), full keyboard +
 gamepad support (fight, menus, and pause/settings navigation all wired to
 both). Current focus: smoothness and playability — game feel, impact VFX,
-attract mode, control remapping. Roadmap, task state, and changelog live in
+attract mode, control remapping. On the roadmap: a local **dev-mode front-end
+editor** (a Vite dev-server write path) — first a world-map pin tool that places
+each fighter's home stage on the character-select map (SFII-style), then a
+full in-browser **character creator** (name, bring-or-generate art, voice
+cloning, bio + move-list prompt, sprite gen with per-frame re-rolls) wrapping the
+existing asset pipeline. Roadmap, task state, and changelog live in
 [SPRINTBOARD.md](SPRINTBOARD.md).
 
 ## Stack
