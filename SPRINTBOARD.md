@@ -751,6 +751,21 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-05 · net+scenes · online rematch on the same channel** — at the end
+  of an online match each player sees a REMATCH prompt; press R/ENTER (or
+  click/pad-confirm) to opt in, ESC to quit. When BOTH opt in it goes straight
+  back to the shared character select — no room-code re-entry, no re-sync. Core
+  logic is a Phaser-free `src/net/rematch.ts` `RematchLink` shared by FightScene
+  (2D) and FightScene3D: it takes the finished match's transport, exchanges a
+  `rematch` opt-in, and on agreement spins a fresh `LobbyController` on the SAME
+  connection with `skipVerify` (peers already handshaked this session) →
+  onReady → Select. Gotcha fixed: skipVerify makes onReady fire SYNCHRONOUSLY
+  during controller construction, so the launch is deferred a tick (scene
+  clock) — else it reads the not-yet-assigned controller ref (TDZ). bye/close
+  → forfeit to menu. Verified live (two Chrome, prod build): match1 → both opt
+  in → back in shared select (no code) → match2 runs in sync (chars identical,
+  heads within 1 tick, 0 desync). — Claude
+
 - **2026-07-05 · net+select · online pick-waiting + both-vote stage** — (1) after
   a player locks their fighter online they now see "waiting for <name> to choose
   their fighter…" instead of silently sitting/advancing; onBothLocked clears it

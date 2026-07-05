@@ -10,6 +10,7 @@ import type { GameState, InputFrame } from '../engine';
 import { FightSession, type Session } from '../session/FightSession';
 import { NetSession, type NetIssue } from '../session/NetSession';
 import type { OnlineFightData } from '../net/lobby';
+import { RematchLink, type RematchState } from '../net/rematch';
 import { characters } from '../data/characters';
 import { KeyboardSource } from '../input/keyboard';
 import { getSettings } from '../settings';
@@ -41,6 +42,9 @@ export class FightScene3D extends Phaser.Scene {
   private online: OnlineFightData | null = null;
   private net: NetSession | null = null;
   private netIssue: NetIssue | null = null;
+  private rematch: RematchLink | null = null;
+  private rematchLeft = false;
+  private rematchEl: HTMLDivElement | null = null;
   /** captured by the session's beforeTick hook for diffTick */
   private pendingSnap: ReturnType<typeof snapTick> | null = null;
   private renderer3d: ThreeFightRenderer | null = null;
@@ -83,6 +87,9 @@ export class FightScene3D extends Phaser.Scene {
     this.training = !this.online && !!data.training;
     this.net = null;
     this.netIssue = null;
+    this.rematch = null;
+    this.rematchLeft = false;
+    this.rematchEl = null;
     // demo = attract mode: both sides are bots
     this.bot = this.cpu || this.demo ? new CpuDriver(1) : null;
     this.botP1 = this.demo ? new CpuDriver(0) : null;
@@ -184,10 +191,24 @@ export class FightScene3D extends Phaser.Scene {
       this.renderer3d?.taunt(0, this.state.tick);
       this.voice(this.chars[0], 'kiai', 0.6);
     });
-    kb.on('keydown-ESC', () => this.scene.start('Menu'));
-    kb.on('keydown-F9', () =>
-      this.scene.restart({ p1: this.chars[0], p2: this.chars[1], cpu: this.cpu, stage: this.stageId }),
-    );
+    kb.on('keydown-ESC', () => {
+      if (this.online) {
+        if (this.state.phase === 'matchEnd') this.rematch?.leave('you left');
+      } else this.scene.start('Menu');
+    });
+    // online: R / ENTER at matchEnd opts into a rematch on the same channel
+    const rematchKey = (): void => {
+      if (this.online && this.state.phase === 'matchEnd') {
+        play(this, 's-blip', 0.6);
+        this.rematch?.optIn();
+      }
+    };
+    kb.on('keydown-R', rematchKey);
+    kb.on('keydown-ENTER', rematchKey);
+    kb.on('keydown-F9', () => {
+      if (this.online) return; // online rematches via R, not a local restart
+      this.scene.restart({ p1: this.chars[0], p2: this.chars[1], cpu: this.cpu, stage: this.stageId });
+    });
 
     if (this.demo) {
       // attract mode: any input drops back to the title (` stays free for the
@@ -466,10 +487,61 @@ export class FightScene3D extends Phaser.Scene {
 
   update(_time: number, deltaMs: number): void {
     this.session.advance(deltaMs);
+    if (this.online && this.state.phase === 'matchEnd') this.armRematch();
     this.renderer3d?.render(this.state);
     this.drawHud();
     this.fatalityOverlay?.sync(this.state);
     this.winOverlay?.sync(this.state);
     this.panel?.setFps(this.game.loop.actualFps, deltaMs);
+  }
+
+  // ---------- online rematch (shared RematchLink; see FightScene) ----------
+
+  private armRematch(): void {
+    if (this.rematch || !this.online) return;
+    this.rematch = new RematchLink(
+      this.online,
+      characters,
+      this.stageId,
+      {
+        onPrompt: (st) => this.drawRematchPrompt(st),
+        onLaunch: (online) => this.scene.start('Select', { online }),
+        onLeave: (reason) => this.onRematchLeave(reason),
+      },
+      (fn) => this.time.delayedCall(0, fn),
+    );
+  }
+
+  private drawRematchPrompt(st: RematchState): void {
+    const msg = st.localReady
+      ? st.remoteReady
+        ? 'REMATCH! back to select…'
+        : `waiting for ${st.remoteName}…`
+      : st.remoteReady
+        ? `${st.remoteName} wants a REMATCH!  ·  [R] accept   [ESC] quit`
+        : 'REMATCH?  [R] play again   ·   [ESC] quit';
+    if (!this.rematchEl) {
+      const host = this.game.canvas.parentElement ?? document.body;
+      const el = document.createElement('div');
+      el.style.cssText =
+        'position:absolute;left:50%;bottom:26px;transform:translateX(-50%);z-index:60;' +
+        'font:bold 18px monospace;color:#ffd24a;background:#1a1020;padding:6px 12px;border-radius:4px;' +
+        'text-shadow:0 2px 4px #000;pointer-events:none;white-space:nowrap;';
+      host.appendChild(el);
+      this.rematchEl = el;
+      this.events.once('shutdown', () => el.remove());
+    }
+    this.rematchEl.textContent = msg;
+    this.rematchEl.style.color = st.localReady && st.remoteReady ? '#8fe388' : '#ffd24a';
+  }
+
+  private onRematchLeave(reason: string): void {
+    if (this.rematchLeft) return;
+    this.rematchLeft = true;
+    if (this.rematchEl) {
+      this.rematchEl.textContent = reason;
+      this.rematchEl.style.color = '#ff5a4a';
+    }
+    this.time.delayedCall(1200, () => this.scene.start('Menu'));
   }
 }

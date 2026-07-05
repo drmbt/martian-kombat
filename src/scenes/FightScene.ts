@@ -18,7 +18,8 @@ import {
 } from '../engine';
 import { FightSession, type Session } from '../session/FightSession';
 import { NetSession, type NetIssue } from '../session/NetSession';
-import { LobbyController, type OnlineFightData, type OnlineSelectData } from '../net/lobby';
+import type { OnlineFightData } from '../net/lobby';
+import { RematchLink, type RematchState } from '../net/rematch';
 import { characters } from '../data/characters';
 import { stageById } from '../data/stages';
 import { KeyboardSource } from '../input/keyboard';
@@ -176,10 +177,8 @@ export class FightScene extends Phaser.Scene {
   private netIssue: NetIssue | null = null;
   private netText: Phaser.GameObjects.Text | null = null;
   /** online rematch opt-in (post-match, same channel): armed at matchEnd */
-  private rematchArmed = false;
-  private rematchLocal = false;
-  private rematchRemote = false;
-  private rematchStarted = false;
+  private rematch: RematchLink | null = null;
+  private rematchLeft = false;
   private rematchText: Phaser.GameObjects.Text | null = null;
   /** captured by the session's beforeTick hook for presentTick's diff */
   private pendingSnap: TickSnapshot | null = null;
@@ -248,10 +247,8 @@ export class FightScene extends Phaser.Scene {
     this.demo = !this.online && !!data.demo;
     this.net = null;
     this.netIssue = null;
-    this.rematchArmed = false;
-    this.rematchLocal = false;
-    this.rematchRemote = false;
-    this.rematchStarted = false;
+    this.rematch = null;
+    this.rematchLeft = false;
     this.bot = this.cpu || this.demo ? new CpuDriver(1) : null;
     this.botP1 = this.demo ? new CpuDriver(0) : null;
     this.fatalityPanel = null;
@@ -536,15 +533,24 @@ export class FightScene extends Phaser.Scene {
     this.input.keyboard!.on('keydown-F1', () => (this.debugBoxes = !this.debugBoxes));
     this.input.keyboard!.on('keydown-F3', () => (this.stageGuide = !this.stageGuide));
     this.input.keyboard!.on('keydown-R', () => {
-      if (this.state.phase === 'matchEnd') this.restartMatch();
+      if (this.state.phase !== 'matchEnd') return;
+      if (this.online) this.optInRematch();
+      else this.restartMatch();
     });
     this.input.keyboard!.on('keydown-ENTER', () => {
-      if (this.training) this.toCharacterSelect();
+      if (this.online && this.state.phase === 'matchEnd') this.optInRematch();
+      else if (this.training) this.toCharacterSelect();
       else if (this.state.phase === 'matchEnd') this.toCharacterSelect();
     });
-    // clicking through the win-quote screen skips back to character select
+    // online: ESC at matchEnd quits the match (disconnect); otherwise pauses
+    this.input.keyboard!.on('keydown-ESC', () => {
+      if (this.online && this.state.phase === 'matchEnd') this.leaveOnline('you left');
+    });
+    // clicking through the win-quote screen: rematch online, else char select
     this.input.on('pointerdown', () => {
-      if (this.state.phase === 'matchEnd') this.toCharacterSelect();
+      if (this.state.phase !== 'matchEnd') return;
+      if (this.online) this.optInRematch();
+      else this.toCharacterSelect();
     });
 
     play(this, 'ann-round-1');
@@ -586,6 +592,13 @@ export class FightScene extends Phaser.Scene {
       return;
     }
     if (this.state.phase === 'matchEnd') {
+      // online: confirm = opt into a rematch, Select = quit the match
+      if (this.online) {
+        if (this.time.now < this.endNavArmedAt) return;
+        if (n.confirm || n.start) navDefer(this, () => this.optInRematch());
+        else if (n.menu) navDefer(this, () => this.leaveOnline('you left'));
+        return;
+      }
       // Select brings up the full menu (rematch / char select / main menu)
       if (n.menu) { this.togglePause(); return; }
       if (this.time.now < this.endNavArmedAt) return;
@@ -635,6 +648,8 @@ export class FightScene extends Phaser.Scene {
     this.framePresentMs = 0;
     const tickCount = this.session.advance(deltaMs);
     if (this.net) this.updateNetStatus();
+    // online: the match is over — offer a rematch on the same channel
+    if (this.online && this.state.phase === 'matchEnd') this.armRematch();
     this.draw();
     this.recordPerf({
       ...this.perfDraw,
@@ -666,6 +681,63 @@ export class FightScene extends Phaser.Scene {
       // quiet in the healthy case: just a small rollback tick-rate readout
       txt.setText(s.rollbacks > 0 ? `net · rb ${s.rollbacks}` : 'net').setColor('#8fe388');
     }
+  }
+
+  // ---------- online rematch (post-match, reuses the live channel) ----------
+
+  /** at matchEnd, take the channel back from the (finished) NetSession and
+   *  offer a rematch — both agree → back to the shared select, no code re-entry.
+   *  All the transport/handshake logic lives in RematchLink (shared with 3D). */
+  private armRematch(): void {
+    if (this.rematch || !this.online) return;
+    this.rematch = new RematchLink(
+      this.online,
+      characters,
+      this.stageId,
+      {
+        onPrompt: (st) => this.drawRematchPrompt(st),
+        onLaunch: (online) => this.scene.start('Select', { online }),
+        onLeave: (reason) => this.onRematchLeave(reason),
+      },
+      (fn) => this.time.delayedCall(0, fn),
+    );
+  }
+
+  private optInRematch(): void {
+    play(this, 's-blip', 0.6);
+    this.rematch?.optIn();
+  }
+
+  private leaveOnline(reason: string): void {
+    this.rematch?.leave(reason);
+  }
+
+  private drawRematchPrompt(st: RematchState): void {
+    const msg = st.localReady
+      ? st.remoteReady
+        ? 'REMATCH! back to select…'
+        : `waiting for ${st.remoteName}…`
+      : st.remoteReady
+        ? `${st.remoteName} wants a REMATCH!\n[R] accept   ·   [ESC] quit`
+        : 'REMATCH?  [R] play again   ·   [ESC] quit';
+    if (!this.rematchText) {
+      this.rematchText = this.add
+        .text(STAGE_W / 2, STAGE_H - 40, '', {
+          fontFamily: 'monospace', fontSize: '18px', fontStyle: 'bold', color: '#ffd24a',
+          stroke: '#000', strokeThickness: 6, align: 'center', backgroundColor: '#1a1020',
+          padding: { x: 12, y: 6 },
+        })
+        .setOrigin(0.5)
+        .setDepth(10001);
+    }
+    this.rematchText.setText(msg).setColor(st.localReady && st.remoteReady ? '#8fe388' : '#ffd24a');
+  }
+
+  private onRematchLeave(reason: string): void {
+    if (this.rematchLeft) return;
+    this.rematchLeft = true;
+    if (this.rematchText) this.rematchText.setText(reason).setColor('#ff5a4a');
+    this.time.delayedCall(1200, () => this.scene.start('Menu'));
   }
 
   private snapshot(): TickSnapshot {
