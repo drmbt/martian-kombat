@@ -7,7 +7,6 @@ import * as THREE from 'three/webgpu';
 import type { CharacterDef, Defs, FighterState } from '../engine';
 import { FLOOR_Y, STAGE_W } from '../engine';
 import { ThreeFighterView } from './ThreeFighterView';
-import { ThreeStageView } from './ThreeStageView';
 
 /** ordered Thriller sequence + each part's length in seconds (baked 30fps clip
  *  durations) — the row advances part→part in lockstep, looping. */
@@ -48,7 +47,6 @@ export class DanceRenderer {
   private renderer: THREE.WebGPURenderer;
   private scene = new THREE.Scene();
   private camera: THREE.PerspectiveCamera;
-  private stage = new ThreeStageView();
   private dancers: ThreeFighterView[];
   private slots: number[];
   private ready = false;
@@ -59,6 +57,8 @@ export class DanceRenderer {
   private partIdx = 0;
   private partStartTick = 0;
   private zoomLevel = 1;
+  private spots: THREE.SpotLight[] = [];
+  private tmp = new THREE.Vector3();
 
   constructor(defs: Defs, private ids: string[]) {
     this.renderer = new THREE.WebGPURenderer({ antialias: true });
@@ -89,23 +89,29 @@ export class DanceRenderer {
     const ambient = new THREE.HemisphereLight(0xb0b0b8, 0x40404a, 1.05);
     this.scene.add(key, fill, ambient);
 
-    // test-room floor + NEAR/FAR annotations (kept — they aren't the problem);
-    // a transparent ShadowMaterial catcher just above it grounds the dancers
-    // without a second opaque floor z-fighting the first.
-    this.stage.buildPlaceholder('test-room');
-    this.scene.add(this.stage.group);
-    const shadowCatcher = new THREE.Mesh(
-      new THREE.PlaneGeometry(30, 20),
-      new THREE.ShadowMaterial({ opacity: 0.32 }),
+    // flat open stage — a single large floor, dark space around and behind the
+    // row (no test-room walls boxing them in)
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(80, 80),
+      new THREE.MeshStandardMaterial({ color: 0x2b2833, roughness: 0.96, metalness: 0 }),
     );
-    shadowCatcher.rotation.x = -Math.PI / 2;
-    shadowCatcher.position.y = 0.003;
-    shadowCatcher.receiveShadow = true;
-    this.scene.add(shadowCatcher);
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    this.scene.add(floor);
 
     this.slots = rowPositions(ids.length);
     this.dancers = ids.map((id) => new ThreeFighterView(defs[id] as CharacterDef));
     for (const d of this.dancers) this.scene.add(d.group);
+
+    // one follow-spot per dancer, angled from BEHIND-above (upstage) rather than
+    // straight down — rakes each dancer, throws a long shadow toward the camera,
+    // and tracks them as they roam. Repositioned each frame in drawFrame.
+    for (let i = 0; i < this.dancers.length; i++) {
+      const spot = new THREE.SpotLight(0xfff0dc, 55, 28, 0.5, 0.5, 1.2);
+      spot.castShadow = false;
+      this.scene.add(spot, spot.target);
+      this.spots.push(spot);
+    }
   }
 
   private applyZoom(): void {
@@ -153,6 +159,12 @@ export class DanceRenderer {
       d.update(this.danceTick, danceState(this.slots[i]), { override: clip });
       // GLBs face +X; turn the row a quarter so they face the camera (+Z).
       d.group.rotation.y = -Math.PI / 2;
+      // follow-spot tracks the roaming dancer, angled from behind-above (−Z)
+      d.rootWorldPosition(this.tmp);
+      const spot = this.spots[i];
+      spot.position.set(this.tmp.x, 6.5, this.tmp.z - 4.5);
+      spot.target.position.set(this.tmp.x, 1.1, this.tmp.z);
+      spot.target.updateMatrixWorld();
     }
     this.renderer.render(this.scene, this.camera);
   }

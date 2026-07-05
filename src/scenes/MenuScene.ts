@@ -5,6 +5,7 @@ import { playMusic } from '../audio/music';
 import { ROSTER } from '../data/roster';
 import { STAGES } from '../data/stages';
 import { menuNav, navDefer, attackKeyCodes } from '../input/menu-nav';
+import { getSettings, updateSettings } from '../settings';
 
 /** idle this long on the title -> CPU-vs-CPU attract-mode demo */
 const ATTRACT_AFTER_MS = 20_000;
@@ -36,7 +37,7 @@ export class MenuScene extends Phaser.Scene {
     this.buttons = [];
     this.selIdx = 0;
     this.revealedAt = -1;
-    this.render3d = false;
+    this.render3d = getSettings().render3d; // persisted — survives fights/demos/reloads
     // any human sign of life postpones the attract demo; the first key/click
     // on the title reveals the menu instead of immediately choosing an item.
     this.input.keyboard!.on('keydown', () => this.notePresence());
@@ -167,6 +168,7 @@ export class MenuScene extends Phaser.Scene {
   private toggleRender(): void {
     this.idleMs = 0;
     this.render3d = !this.render3d;
+    updateSettings({ render3d: this.render3d }); // persist the choice
     this.refreshRenderChip();
     play(this, 's-blip', 0.5);
   }
@@ -239,9 +241,9 @@ export class MenuScene extends Phaser.Scene {
   /** Arcade attract mode: two random fighters demo the game on a random stage
    *  until any key/click/pad button brings the player back to the title. */
   private startAttractDemo(): void {
-    // 3D attract alternates: half the time the Thriller dance formation, half a
-    // bot fight. 2D always demos a fight.
-    if (this.render3d && Math.random() < 0.5) {
+    // 3D attract is mostly bot fights, with the Thriller dance formation only
+    // ~1 in 4 times. 2D always demos a fight.
+    if (this.render3d && Math.random() < 0.28) {
       this.scene.start('Dance');
       return;
     }

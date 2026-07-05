@@ -153,44 +153,112 @@ export class ThreeStageView {
    *  shadows so the 3D characters seat into the painted world. */
   private build2DBridge(layers: Stage2DLayer[]): void {
     const g = new THREE.Group();
-    const D0 = 16.5; // reference camera distance to the combat lane
-    const VFOV = (20 * Math.PI) / 180;
-    // stage art contract: 1680x720, the fighters' floor line lands at art row
-    // ~613 (FLOOR_Y 460 of the 540px screen) — 14.86% up from the bottom
-    const FLOOR_FRACTION = 0.1486;
-    const loader = new THREE.TextureLoader();
+    const load = (file: string): THREE.Texture => {
+      const t = new THREE.TextureLoader().load(`${import.meta.env.BASE_URL}${file}`);
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+      return t;
+    };
+    // A single flat jpg gets SLICED per the stage-art contract (bottom quarter =
+    // walkable ground): the floor band lies flat and recedes to a back wall built
+    // from the upper band. Stages that ship separated parallax layers keep the
+    // depth-staggered billboard treatment.
+    if (layers.length <= 1 && layers[0]) this.buildSlicedStage(g, load, layers[0].file);
+    else this.buildLayeredStage(g, load, layers);
 
-    for (const layer of layers) {
-      const f = Math.min(Math.max(layer.factor, 0.05), 1);
-      const z = f >= 0.999 ? -0.25 : -(D0 / f - D0);
-      const dist = D0 - z;
-      const h = 2 * Math.tan(VFOV / 2) * dist * 1.15; // slight overscan
-      const w = h * (1680 / 720);
-      const tex = loader.load(`${import.meta.env.BASE_URL}${layer.file}`);
-      tex.colorSpace = THREE.SRGBColorSpace;
-      const plane = new THREE.Mesh(
-        new THREE.PlaneGeometry(w, h),
-        new THREE.MeshBasicMaterial({ map: tex, transparent: layer.file.endsWith('.png'), fog: false }),
-      );
-      // the art's floor row sits exactly on the world ground plane
-      plane.position.set(0, h / 2 - h * FLOOR_FRACTION, z);
-      plane.renderOrder = -10;
-      g.add(plane);
-    }
-
-    // invisible ground that renders ONLY the fighters' shadows — this is
-    // what seats the 3D characters into the painted stage
+    // invisible ground that renders ONLY the fighters' shadows so they seat into
+    // the painted world
     const catcher = new THREE.Mesh(
-      new THREE.PlaneGeometry(40, 14),
+      new THREE.PlaneGeometry(40, 20),
       new THREE.ShadowMaterial({ opacity: 0.4 }),
     );
     catcher.rotation.x = -Math.PI / 2;
-    catcher.position.set(0, 0.001, 0);
+    catcher.position.set(0, 0.002, 0);
     catcher.receiveShadow = true;
     g.add(catcher);
 
     this.placeholder = g;
     this.group.add(g);
+  }
+
+  /** stage-art contract: 1680x720, bottom quarter is the walkable ground plane */
+  private static readonly FLOOR_BAND = 0.25;
+  private static readonly ART_ASPECT = 1680 / 720;
+
+  /** Single flat jpg → floor band laid HORIZONTAL (receding to the back) + upper
+   *  band standing as a VERTICAL back wall. The two share the art's horizon so
+   *  they read as one continuous 3D room. */
+  private buildSlicedStage(g: THREE.Group, load: (f: string) => THREE.Texture, file: string): void {
+    const BAND = ThreeStageView.FLOOR_BAND;
+    const W = 26; // world width the stage spans (arena + generous margin)
+    const FRONT_Z = 6; // floor front edge, in front of the fighters (z=0)
+    const BACK_Z = -13; // back wall depth
+    const floorDepth = FRONT_Z - BACK_Z;
+
+    // FLOOR — bottom band, flat, receding from the fighters to the wall
+    const floorTex = load(file);
+    floorTex.offset.set(0, 0);
+    floorTex.repeat.set(1, BAND);
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(W, floorDepth),
+      new THREE.MeshBasicMaterial({ map: floorTex, fog: false }),
+    );
+    // rotate so the art's NEAR floor edge (v=0) is at FRONT_Z, far edge at the wall
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.set(0, 0, (FRONT_Z + BACK_Z) / 2);
+    floor.renderOrder = -12;
+    g.add(floor);
+
+    // BACK WALL — upper band, vertical, sitting on the floor's far edge
+    const wallTex = load(file);
+    wallTex.offset.set(0, BAND);
+    wallTex.repeat.set(1, 1 - BAND);
+    const wallH = (W * (1 - BAND)) / ThreeStageView.ART_ASPECT;
+    const wall = new THREE.Mesh(
+      new THREE.PlaneGeometry(W, wallH),
+      new THREE.MeshBasicMaterial({ map: wallTex, fog: false }),
+    );
+    wall.position.set(0, wallH / 2, BACK_Z);
+    wall.renderOrder = -11;
+    g.add(wall);
+  }
+
+  /** Separated parallax layers → depth-staggered vertical billboards (chiba-roof
+   *  et al). The floor layer (factor ~1) is laid flat; the rest stand back. */
+  private buildLayeredStage(g: THREE.Group, load: (f: string) => THREE.Texture, layers: Stage2DLayer[]): void {
+    const D0 = 16.5; // reference camera distance to the combat lane
+    const VFOV = (20 * Math.PI) / 180;
+    const FLOOR_FRACTION = 0.1486; // fighters' floor line, 14.86% up the art
+    for (const layer of layers) {
+      const f = Math.min(Math.max(layer.factor, 0.05), 1);
+      const isFloor = f >= 0.999;
+      const tex = load(layer.file);
+      const transparent = layer.file.endsWith('.png');
+      if (isFloor) {
+        // floor layer laid FLAT so fighters stand on painted ground, not a wall
+        const W = 26;
+        const floor = new THREE.Mesh(
+          new THREE.PlaneGeometry(W, W / ThreeStageView.ART_ASPECT),
+          new THREE.MeshBasicMaterial({ map: tex, fog: false, transparent }),
+        );
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.set(0, 0, -3);
+        floor.renderOrder = -12;
+        g.add(floor);
+        continue;
+      }
+      const z = -(D0 / f - D0);
+      const dist = D0 - z;
+      const h = 2 * Math.tan(VFOV / 2) * dist * 1.15; // slight overscan
+      const w = h * ThreeStageView.ART_ASPECT;
+      const plane = new THREE.Mesh(
+        new THREE.PlaneGeometry(w, h),
+        new THREE.MeshBasicMaterial({ map: tex, transparent, fog: false }),
+      );
+      plane.position.set(0, h / 2 - h * FLOOR_FRACTION, z);
+      plane.renderOrder = -10;
+      g.add(plane);
+    }
   }
 
   /** Dev test chamber (default while the 3D engine is under construction):

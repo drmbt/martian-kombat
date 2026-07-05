@@ -5,6 +5,7 @@
 import Phaser from 'phaser';
 import { characters } from '../data/characters';
 import { ROSTER } from '../data/roster';
+import { STAGES } from '../data/stages';
 import { playMusic } from '../audio/music';
 import type { DanceRenderer } from '../renderer3d/DanceRenderer';
 
@@ -17,8 +18,10 @@ export class DanceScene extends Phaser.Scene {
   }
 
   create(): void {
-    // something hype to dance to — our versus/menu tracks, looped like a demo
-    playMusic(['versus', 'menu', 'stages/default']);
+    // dance to an actual STAGE track (never menu blips) — a random stage each
+    // time for variety; the whole stage-music pool, else the default stage track
+    const stage = Phaser.Utils.Array.GetRandom(STAGES);
+    playMusic([`stages/${stage.id}`, 'stages/default']);
     void this.boot();
 
     // attract: any key/click returns to the title (` stays free for perf); it

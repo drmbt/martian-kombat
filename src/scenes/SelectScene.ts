@@ -504,7 +504,10 @@ export class SelectScene extends Phaser.Scene {
 
   /** RANDOM tile first, then every stage — index space of the dialog. */
   private stageOptions(): { id: string; name: string }[] {
-    return [{ id: 'random', name: 'RANDOM' }, ...STAGES];
+    // 3D-only: a pseudo-tile for the grey test chamber (no real STAGES entry,
+    // no slot conflict — the grid auto-sizes). Maps to room='test-room' in 3D.
+    const testRoom = this.render3d ? [{ id: 'test-room', name: '3D TEST ROOM' }] : [];
+    return [{ id: 'random', name: 'RANDOM' }, ...testRoom, ...STAGES];
   }
 
   /**
@@ -575,10 +578,13 @@ export class SelectScene extends Phaser.Scene {
       if (opt.id === 'random') {
         this.add.text(x, ty, '?', { ...font, fontSize: `${Math.round(th * 0.55)}px`, fontStyle: 'bold', color: '#ffd24a' })
           .setOrigin(0.5).setDepth(12);
+      } else if (opt.id === 'test-room') {
+        this.add.text(x, ty, '▦', { ...font, fontSize: `${Math.round(th * 0.5)}px`, fontStyle: 'bold', color: '#7fe3ff' })
+          .setOrigin(0.5).setDepth(12);
       } else if (this.textures.exists(`bg-stage-${opt.id}`)) {
         this.add.image(x, ty, `bg-stage-${opt.id}`).setDisplaySize(tw, th).setDepth(12);
       }
-      const owner = opt.id === 'random' ? null : stageOwner(opt.id, picked, characters);
+      const owner = opt.id === 'random' || opt.id === 'test-room' ? null : stageOwner(opt.id, picked, characters);
       const label = owner ? `${opt.name} · ${characters[owner].name}` : opt.name;
       this.add
         .text(x, ty + th / 2 + 3, label, {
