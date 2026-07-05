@@ -1,0 +1,145 @@
+{
+  "version": 1,
+  "fps": 24,
+  "sparks": {
+    "spark-scatter": {
+      "frames": 16,
+      "fw": 128,
+      "fh": 128,
+      "tags": [
+        "light",
+        "spark"
+      ]
+    },
+    "dust-puff": {
+      "frames": 9,
+      "fw": 128,
+      "fh": 128,
+      "tags": [
+        "impact",
+        "dust",
+        "body"
+      ]
+    },
+    "slash-arc": {
+      "frames": 16,
+      "fw": 128,
+      "fh": 128,
+      "tags": [
+        "slash"
+      ]
+    },
+    "ki-scatter": {
+      "frames": 16,
+      "fw": 128,
+      "fh": 128,
+      "tags": [
+        "light",
+        "energy",
+        "spark"
+      ]
+    },
+    "energy-flare": {
+      "frames": 16,
+      "fw": 128,
+      "fh": 128,
+      "tags": [
+        "heavy",
+        "energy"
+      ]
+    },
+    "grit-debris": {
+      "frames": 16,
+      "fw": 128,
+      "fh": 128,
+      "tags": [
+        "heavy",
+        "dust",
+        "noise"
+      ]
+    },
+    "ki-lightning": {
+      "frames": 16,
+      "fw": 128,
+      "fh": 128,
+      "tags": [
+        "energy",
+        "electric"
+      ]
+    },
+    "double-shockstar": {
+      "frames": 9,
+      "fw": 128,
+      "fh": 128,
+      "tags": [
+        "heavy",
+        "impact"
+      ]
+    },
+    "diag-slash": {
+      "frames": 9,
+      "fw": 128,
+      "fh": 128,
+      "tags": [
+        "slash",
+        "light"
+      ]
+    },
+    "cross-slash": {
+      "frames": 9,
+      "fw": 128,
+      "fh": 128,
+      "tags": [
+        "slash"
+      ]
+    },
+    "ember-flick": {
+      "frames": 9,
+      "fw": 128,
+      "fh": 128,
+      "tags": [
+        "light",
+        "spark",
+        "sparse"
+      ]
+    },
+    "splinter-shard": {
+      "frames": 9,
+      "fw": 128,
+      "fh": 128,
+      "tags": [
+        "heavy",
+        "shard",
+        "sparse"
+      ]
+    },
+    "claw-rake": {
+      "frames": 16,
+      "fw": 128,
+      "fh": 128,
+      "tags": [
+        "slash",
+        "heavy"
+      ]
+    },
+    "spark-spit": {
+      "frames": 16,
+      "fw": 128,
+      "fh": 128,
+      "tags": [
+        "spark",
+        "sparse"
+      ]
+    },
+    "noise-fizz": {
+      "frames": 16,
+      "fw": 128,
+      "fh": 128,
+      "tags": [
+        "noise",
+        "sparse",
+        "light"
+      ]
+    }
+  }
+}
