@@ -191,17 +191,11 @@ export class FightScene3D extends Phaser.Scene {
       if (!this.panel) return;
       this.panel.el.style.display = this.panel.el.style.display === 'none' ? 'block' : 'none';
     });
-    // taunt key: picked from keys NOT bound to any fight action (T is P1's
-    // MP by default — never hardcode over the fight rows)
-    const bound = new Set(getSettings().bindings.flatMap((b) => Object.values(b.keys) as number[]));
-    this.tauntKey =
-      ['Q', 'Z', 'X', 'V', 'B', 'N'].find((k) => !bound.has(k.charCodeAt(0))) ?? 'Q';
-    kb.on(`keydown-${this.tauntKey}`, () => {
-      // taunt the LOCAL player's fighter (online: their slot; offline: P1)
-      const slot = this.online ? this.online.localSlot : 0;
-      this.renderer3d?.taunt(slot, this.state.tick);
-      this.voice(this.chars[slot], 'kiai', 0.6);
-    });
+    // taunt is now a real engine input (bound key, default V/P1) so it's
+    // deterministic + net-synced — no scene-level keypress needed. The HUD hint
+    // just shows the local player's bound taunt key.
+    const tauntSlot = this.online ? this.online.localSlot : 0;
+    this.tauntKey = String.fromCharCode(getSettings().bindings[tauntSlot].keys.taunt);
     kb.on('keydown-ESC', () => {
       if (this.online) {
         if (this.state.phase === 'matchEnd') this.rematch?.leave('you left');
@@ -262,7 +256,14 @@ export class FightScene3D extends Phaser.Scene {
     // ground) — the real stage in 3D, no grey test chamber. Dev overrides:
     // ?room=test for the grid chamber, ?room=street for the night-street set.
     const roomParam = new URLSearchParams(window.location.search).get('room');
-    const room = roomParam === 'street' ? 'street' : roomParam === 'test' ? 'test-room' : '2d';
+    // the '3D TEST ROOM' stage pick (or ?room=test) → grey chamber; else the
+    // picked stage's painted art as the 2D→3D bridge
+    const room =
+      this.stageId === 'test-room' || roomParam === 'test'
+        ? 'test-room'
+        : roomParam === 'street'
+          ? 'street'
+          : '2d';
     let stage2d;
     if (room === '2d') {
       const entry = stageById(this.stageId);
@@ -471,6 +472,9 @@ export class FightScene3D extends Phaser.Scene {
           break;
         case 'jump':
           play(this, 's-jump', 0.35);
+          break;
+        case 'taunt':
+          playVoice(this, s.fighters[e.slot].charId, 'kiai', 0.7);
           break;
         case 'dust':
           r?.fx.spawnDust(s, e.slot);

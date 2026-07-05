@@ -3,7 +3,7 @@
 // engine via initialState's MatchRules, never read from inside src/engine/.
 
 /** Every remappable in-game action (movement + the six attack buttons). */
-export const BIND_ACTIONS = ['up', 'down', 'left', 'right', 'lp', 'mp', 'hp', 'lk', 'mk', 'hk'] as const;
+export const BIND_ACTIONS = ['up', 'down', 'left', 'right', 'lp', 'mp', 'hp', 'lk', 'mk', 'hk', 'taunt'] as const;
 export type BindAction = (typeof BIND_ACTIONS)[number];
 
 export interface PlayerBindings {
@@ -19,17 +19,18 @@ const DEFAULT_PAD: Record<BindAction, number> = {
   up: 12, down: 13, left: 14, right: 15,
   lp: 2, mp: 3, hp: 5,
   lk: 0, mk: 1, hk: 7,
+  taunt: 4, // left bumper
 };
 
 export const DEFAULT_BINDINGS: [PlayerBindings, PlayerBindings] = [
   {
-    // WASD + R/T/Y punches, F/G/H kicks
-    keys: { up: 87, down: 83, left: 65, right: 68, lp: 82, mp: 84, hp: 89, lk: 70, mk: 71, hk: 72 },
+    // WASD + R/T/Y punches, F/G/H kicks, V taunt
+    keys: { up: 87, down: 83, left: 65, right: 68, lp: 82, mp: 84, hp: 89, lk: 70, mk: 71, hk: 72, taunt: 86 },
     pad: { ...DEFAULT_PAD },
   },
   {
-    // arrows + U/I/O punches, J/K/L kicks
-    keys: { up: 38, down: 40, left: 37, right: 39, lp: 85, mp: 73, hp: 79, lk: 74, mk: 75, hk: 76 },
+    // arrows + U/I/O punches, J/K/L kicks, M taunt
+    keys: { up: 38, down: 40, left: 37, right: 39, lp: 85, mp: 73, hp: 79, lk: 74, mk: 75, hk: 76, taunt: 77 },
     pad: { ...DEFAULT_PAD },
   },
 ];
@@ -49,6 +50,8 @@ export interface Settings {
   winsNeeded: number;
   /** per-player keyboard + gamepad bindings (Settings → Controls) */
   bindings: [PlayerBindings, PlayerBindings];
+  /** 3D render mode — persisted so it survives scene changes + reloads */
+  render3d: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -59,6 +62,7 @@ export const DEFAULT_SETTINGS: Settings = {
   roundSeconds: 60,
   winsNeeded: 2,
   bindings: DEFAULT_BINDINGS,
+  render3d: false,
 };
 
 export const ROUND_SECONDS_CHOICES = [0, 30, 60, 99] as const; // 0 = OFF
@@ -95,6 +99,7 @@ function sanitize(raw: Partial<Settings>): Settings {
     roundSeconds: pickFrom(ROUND_SECONDS_CHOICES, raw.roundSeconds, DEFAULT_SETTINGS.roundSeconds),
     winsNeeded: pickFrom(WINS_NEEDED_CHOICES, raw.winsNeeded, DEFAULT_SETTINGS.winsNeeded),
     bindings: sanitizeBindings(raw.bindings),
+    render3d: typeof raw.render3d === 'boolean' ? raw.render3d : DEFAULT_SETTINGS.render3d,
   };
 }
 

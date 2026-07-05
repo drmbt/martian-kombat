@@ -15,6 +15,7 @@ import {
   LANDING_WHIFF_TICKS,
   ROUND_TICKS,
   STUN_THRESHOLD,
+  TAUNT_TICKS,
   initialState,
   resolveMove,
   step,
@@ -1979,6 +1980,51 @@ describe('cat kit (wet paint)', () => {
     const b = initialState('cat', 'cat', characters);
     for (let t = 0; t < 600; t++) step(a, script(t), characters);
     for (let t = 0; t < 600; t++) step(b, script(t), characters);
+    expect(JSON.stringify(a)).toEqual(JSON.stringify(b));
+  });
+});
+
+describe('taunt (engine input — deterministic + net-synced)', () => {
+  it('a fresh taunt press from idle enters the taunt pose for TAUNT_TICKS', () => {
+    const s = fresh();
+    step(s, [inp({ taunt: true }), inp()], characters);
+    expect(s.fighters[0].action.kind).toBe('taunt');
+    // committed: holds through the window, then returns to idle
+    run(s, TAUNT_TICKS - 2, inp(), inp());
+    expect(s.fighters[0].action.kind).toBe('taunt');
+    run(s, 3, inp(), inp());
+    expect(s.fighters[0].action.kind).toBe('idle');
+  });
+
+  it('movement and attacks win over taunt (taunt only from a standing idle)', () => {
+    const s = fresh();
+    // holding forward + taunt → walk, not taunt
+    step(s, [inp({ right: true, taunt: true }), inp()], characters);
+    expect(s.fighters[0].action.kind).toBe('walkF');
+    // a fresh attack + taunt → attack
+    const s2 = fresh();
+    step(s2, [inp({ lp: true, taunt: true }), inp()], characters);
+    expect(s2.fighters[0].action.kind).toBe('attack');
+  });
+
+  it('getting hit cancels a taunt into hitstun', () => {
+    const s = fresh();
+    closeRange(s);
+    step(s, [inp({ taunt: true }), inp()], characters);
+    expect(s.fighters[0].action.kind).toBe('taunt');
+    // P2 jabs P1 out of the taunt
+    run(s, 20, inp(), inp({ lp: true }));
+    expect(s.fighters[0].action.kind).not.toBe('taunt');
+  });
+
+  it('taunt is part of the input — same taunt log yields identical states', () => {
+    const a = fresh();
+    const b = fresh();
+    for (let t = 0; t < 80; t++) {
+      const p1 = inp({ taunt: t === 5 });
+      step(a, [p1, inp()], characters);
+      step(b, [p1, inp()], characters);
+    }
     expect(JSON.stringify(a)).toEqual(JSON.stringify(b));
   });
 });

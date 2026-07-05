@@ -46,6 +46,13 @@ export class ThreeFightRenderer {
   private settings: RenderSettings = { ...DEFAULT_SETTINGS };
   private post: THREE.RenderPipeline | null = null;
   private readonly viewH: number;
+  // free mouse-orbit inspection camera + game-frustum gizmos (backtick toggle)
+  private inspectorCam: THREE.PerspectiveCamera | null = null;
+  private orbit: { update(): void; dispose(): void } | null = null;
+  private camHelper: THREE.CameraHelper | null = null;
+  private extentL: THREE.Line | null = null;
+  private extentR: THREE.Line | null = null;
+  private inspectorOn = false;
 
   private charIds: [string, string];
 
@@ -128,12 +135,6 @@ export class ThreeFightRenderer {
     this.fighters[slot].flash(tick, ticks, color);
   }
 
-  private tauntUntil: [number, number] = [-1, -1];
-
-  /** Presentation-only taunt gesture — plays while the engine stays idle. */
-  taunt(slot: 0 | 1, tick: number, ticks = 110): void {
-    this.tauntUntil[slot] = tick + ticks;
-  }
 
   /** Presentation-only camera shake (T21) — never touches gameplay coords. */
   shake(tick: number, ticks: number, amplitude: number): void {
@@ -293,7 +294,6 @@ export class ThreeFightRenderer {
       opponent: fb,
       opponentDef: this.defs[fb.charId],
       intro,
-      taunt: state.tick < this.tauntUntil[0],
       victor: ended && state.roundWinner === 0,
       defeated: ended && state.roundWinner === 1,
     });
@@ -301,7 +301,6 @@ export class ThreeFightRenderer {
       opponent: fa,
       opponentDef: this.defs[fa.charId],
       intro,
-      taunt: state.tick < this.tauntUntil[1],
       victor: ended && state.roundWinner === 1,
       defeated: ended && state.roundWinner === 0,
     });
@@ -324,8 +323,85 @@ export class ThreeFightRenderer {
 
   private drawFrame(): void {
     if (!this.ready || this.disposed) return;
+    if (this.inspectorOn && this.inspectorCam) {
+      // render from the free orbit cam; the game cam still updates each frame
+      // (render() runs from the scene loop), so its frustum gizmo tracks live
+      this.orbit?.update();
+      this.camHelper?.update();
+      this.updateExtentRays();
+      this.renderer.render(this.scene, this.inspectorCam);
+      return;
+    }
     if (this.post) this.post.render();
     else this.renderer.render(this.scene, this.camera);
+  }
+
+  /** True camera frame (frustum) + colored rays to its left/right extent, drawn
+   *  through the scene so the inspector shows exactly what the game cam sees. */
+  private updateExtentRays(): void {
+    const cam = this.camera; // the live GAME camera
+    const set = (line: THREE.Line | null, ndcX: number): void => {
+      if (!line) return;
+      const far = new THREE.Vector3(ndcX, 0, 1).unproject(cam);
+      const pos = (line.geometry as THREE.BufferGeometry).getAttribute('position') as THREE.BufferAttribute;
+      pos.setXYZ(0, cam.position.x, cam.position.y, cam.position.z);
+      pos.setXYZ(1, far.x, far.y, far.z);
+      pos.needsUpdate = true;
+    };
+    set(this.extentL, -1);
+    set(this.extentR, 1);
+  }
+
+  /** Toggle the mouse orbit/zoom/pan inspection camera. Returns the new state.
+   *  domElement must receive pointer events (caller flips canvas pointer-events). */
+  async toggleInspectorCam(domElement: HTMLElement): Promise<boolean> {
+    if (this.inspectorOn) {
+      this.disableInspectorCam();
+      return false;
+    }
+    const cam = new THREE.PerspectiveCamera(45, this.persp.aspect, 0.05, 300);
+    cam.position.copy(this.camera.position).add(new THREE.Vector3(7, 4, 9));
+    cam.lookAt(0, 1.3, 0);
+    this.inspectorCam = cam;
+    const { OrbitControls } = await import('three/addons/controls/OrbitControls.js');
+    if (!this.inspectorCam) return false; // toggled back off during the import
+    const ctrl = new OrbitControls(cam, domElement);
+    ctrl.target.set(0, 1.3, 0);
+    ctrl.enableDamping = true;
+    ctrl.update();
+    this.orbit = ctrl;
+    const mkRay = (color: number): THREE.Line => {
+      const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+      const l = new THREE.Line(g, new THREE.LineBasicMaterial({ color, depthTest: false }));
+      l.renderOrder = 999;
+      l.frustumCulled = false;
+      return l;
+    };
+    this.camHelper = new THREE.CameraHelper(this.camera);
+    this.extentL = mkRay(0xff3b30); // left extent — red
+    this.extentR = mkRay(0x0affff); // right extent — cyan
+    this.scene.add(this.camHelper, this.extentL, this.extentR);
+    this.inspectorOn = true;
+    return true;
+  }
+
+  private disableInspectorCam(): void {
+    this.orbit?.dispose();
+    this.orbit = null;
+    if (this.camHelper) {
+      this.scene.remove(this.camHelper);
+      this.camHelper.dispose();
+      this.camHelper = null;
+    }
+    for (const l of [this.extentL, this.extentR]) {
+      if (l) {
+        this.scene.remove(l);
+        (l.geometry as THREE.BufferGeometry).dispose();
+      }
+    }
+    this.extentL = this.extentR = null;
+    this.inspectorCam = null;
+    this.inspectorOn = false;
   }
 
   /** Lazy-attach the official three.js inspector (r185 addon). */
@@ -341,6 +417,7 @@ export class ThreeFightRenderer {
   dispose(): void {
     this.disposed = true;
     this.ready = false;
+    if (this.inspectorOn) this.disableInspectorCam();
     this.renderer.setAnimationLoop(null);
     this.renderer.dispose();
     this.canvas.remove();

@@ -43,6 +43,7 @@ export type FightEvent =
   | { type: 'block'; slot: 0 | 1 }
   | { type: 'attack-start'; slot: 0 | 1; moveId: string; special: boolean }
   | { type: 'jump'; slot: 0 | 1 }
+  | { type: 'taunt'; slot: 0 | 1 }
   /** ground-impact dust: airHit floor bounce or settling into knockdown */
   | { type: 'dust'; slot: 0 | 1 }
   | { type: 'projectile-spawn' }
@@ -103,6 +104,7 @@ export function diffTick(prev: TickSnap, s: GameState, defs: Defs): FightEvent[]
       });
     }
     if (kind === 'blockstun' && was !== 'blockstun') events.push({ type: 'block', slot });
+    if (kind === 'taunt' && was !== 'taunt') events.push({ type: 'taunt', slot });
     if (
       (kind === 'attack' || kind === 'airAttack') &&
       (was !== kind || prev.moveIds[slot] !== f.action.moveId)

@@ -13,15 +13,14 @@ function fresh(): GameState {
 }
 
 describe('unpackInput', () => {
-  it('round-trips all 1024 button/direction combinations', () => {
-    const keys = ['left', 'right', 'up', 'down', ...BUTTONS] as (keyof InputFrame)[];
-    for (let n = 0; n < 1024; n++) {
+  it('round-trips every button/direction/taunt combination', () => {
+    const keys = ['left', 'right', 'up', 'down', ...BUTTONS, 'taunt'] as (keyof InputFrame)[];
+    for (let n = 0; n < 1 << keys.length; n++) {
       const frame = { ...EMPTY_INPUT };
       keys.forEach((k, i) => {
         frame[k] = (n & (1 << i)) !== 0;
       });
-      expect(packInput(unpackInput(packInput(frame)))).toBe(packInput(frame));
-      expect(unpackInput(packInput(frame))).toEqual(frame);
+      expect(unpackInput(packInput(frame))).toEqual(frame); // taunt bit survives the wire
     }
   });
 });

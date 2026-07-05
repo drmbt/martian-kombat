@@ -56,6 +56,8 @@ export function actionToClipName(
   switch (a.kind) {
     case 'idle':
       return 'idle';
+    case 'taunt':
+      return 'taunt'; // (usually reached via the ctx override, but keep exhaustive)
     case 'walkF':
       // a dash is walkF carrying a big friction-bled impulse — read it off vx
       return f.vx * f.facing > 4 ? 'dash-forward' : 'walk-forward';

@@ -27,6 +27,8 @@ export interface InputFrame {
   lk: boolean;
   mk: boolean;
   hk: boolean;
+  /** flavor taunt — a real engine input so it's deterministic + net-synced */
+  taunt: boolean;
 }
 
 export const EMPTY_INPUT: InputFrame = {
@@ -40,6 +42,7 @@ export const EMPTY_INPUT: InputFrame = {
   lk: false,
   mk: false,
   hk: false,
+  taunt: false,
 };
 
 /** 'high' = overhead (air attacks): must be blocked STANDING.
@@ -272,6 +275,8 @@ export type ActionKind =
    *  after a whiffed air normal (buffered presses fire the moment it ends) */
   | 'landing'
   | 'ko'
+  /** flavor taunt pose — committed for TAUNT_TICKS, vulnerable, ends to idle */
+  | 'taunt'
   /** helpless: dizzy from stun buildup (fight phase, times out after
    *  DIZZY_TICKS), or standing defeated in the finisher window waiting for
    *  the fatality (never times out — updateFighter skips the loser there) */

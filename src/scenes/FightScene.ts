@@ -1035,6 +1035,7 @@ export class FightScene extends Phaser.Scene {
     const t = this.state.tick;
     switch (a.kind) {
       case 'idle': return this.cellFor(slot, [(t >> 4) % 2 ? 'idle-b' : 'idle-a']);
+      case 'taunt': return this.cellFor(slot, ['taunt', 'win', 'idle-a']);
       case 'walkF':
       case 'walkB': return this.cellFor(slot, [(t >> 3) % 2 ? 'walk-b' : 'walk-a']);
       case 'crouch':

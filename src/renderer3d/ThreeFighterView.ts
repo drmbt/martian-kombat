@@ -12,8 +12,6 @@ export interface ViewContext {
   opponentDef?: CharacterDef;
   /** round-1 intro phase: play the entry gesture instead of idle */
   intro?: boolean;
-  /** taunt button held recently: play a taunt gesture while idle */
-  taunt?: boolean;
   /** matchEnd: winner strikes the victory pose, defeated loser stays down */
   victor?: boolean;
   defeated?: boolean;
@@ -61,8 +59,6 @@ class ClipPlayer {
   private lastActionFrame = -1;
   private heavyReel = false;
   private bodyReel = false;
-  /** counts punch instances so repeated punches alternate L/R deterministically */
-  private punchInstance = 0;
 
   constructor(root: THREE.Object3D, clips: THREE.AnimationClip[]) {
     this.mixer = new THREE.AnimationMixer(root);
@@ -90,13 +86,11 @@ class ClipPlayer {
       ? 'ko'
       : ctx.victor && f.action.kind === 'idle'
         ? 'win'
-        : f.action.kind === 'idle'
-          ? ctx.intro
+        : f.action.kind === 'taunt'
+          ? 'taunt' // engine-driven taunt (deterministic + net-synced)
+          : f.action.kind === 'idle' && ctx.intro
             ? 'intro'
-            : ctx.taunt
-              ? 'taunt'
-              : null
-          : null;
+            : null;
     const key = override ?? `${f.action.kind}/${f.action.moveId ?? ''}`;
     // RESTART detection (T30): the same action re-triggering (lp lp lp
     // mashing, a fresh reel while already reeling) keeps the key identical
@@ -147,13 +141,14 @@ class ClipPlayer {
     if (!this.current || this.current.name.split('#')[0] !== resolved.name || restarted) {
       // A character's OWN attacks are deterministic — no tick-hash shuffle — so a
       // moveset is tunable and reads the same every time (that's how fighting
-      // games work). Punches alternate L/R in a fixed order via a per-fighter
-      // instance counter (lead jab → cross → …, reusing the baked `#2` variant
-      // as the other hand); every other attack plays its one fixed clip. Only
-      // involuntary flavor (hit reactions, taunts, intros) keeps the shuffle.
+      // games work). Punches alternate L/R via the tick the attack STARTED
+      // (tick − action.frame) — a synced, rollback-safe value, so both peers
+      // pick the same hand online (a local counter would drift on rollback).
+      // Every other attack plays its one fixed clip; involuntary flavor (hit
+      // reactions, taunts, intros) keeps the tick-hashed shuffle.
       let variant: string;
       if (isPunchClip(resolved.name)) {
-        variant = variantByIndex(this.available, resolved.name, this.punchInstance++);
+        variant = variantByIndex(this.available, resolved.name, tick - f.action.frame);
       } else if (resolved.name.startsWith('attack')) {
         variant = resolved.name;
       } else {
@@ -229,6 +224,21 @@ export class ThreeFighterView {
   private player: ClipPlayer | null = null;
   private skeleton: THREE.SkeletonHelper | null = null;
   private bones: THREE.Bone[] = [];
+  private hipsBone: THREE.Bone | null = null;
+
+  /** world position of the hips/root — for follow lights/cameras that track a
+   *  dancer roaming the floor via root motion */
+  rootWorldPosition(out: THREE.Vector3): THREE.Vector3 {
+    if (!this.hipsBone) this.hipsBone = this.bones.find((b) => /Hips/i.test(b.name)) ?? null;
+    const h = this.hipsBone;
+    if (h) {
+      h.updateWorldMatrix(true, false);
+      out.setFromMatrixPosition(h.matrixWorld);
+    } else {
+      out.copy(this.group.position);
+    }
+    return out;
+  }
   private skinnedMeshes: THREE.SkinnedMesh[] = [];
   private modelBaseY = 0;
   private modelScale = 1;

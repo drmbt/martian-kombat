@@ -26,6 +26,7 @@ import {
   DASH_REGEN_TICKS,
   DASH_STOCKS,
   DIZZY_TICKS,
+  TAUNT_TICKS,
   FATALITY_RANGE,
   FATALITY_TICKS,
   FINISHER_TICKS,
@@ -145,6 +146,7 @@ function overlaps(a: Rect, b: Rect): boolean {
 export const BIT = {
   left: 1, right: 2, up: 4, down: 8,
   lp: 16, mp: 32, hp: 64, lk: 128, mk: 256, hk: 512,
+  taunt: 1024,
 } as const;
 const PUNCH_BITS = BIT.lp | BIT.mp | BIT.hp;
 const KICK_BITS = BIT.lk | BIT.mk | BIT.hk;
@@ -160,7 +162,8 @@ export function packInput(i: InputFrame): number {
     (i.hp ? BIT.hp : 0) |
     (i.lk ? BIT.lk : 0) |
     (i.mk ? BIT.mk : 0) |
-    (i.hk ? BIT.hk : 0)
+    (i.hk ? BIT.hk : 0) |
+    (i.taunt ? BIT.taunt : 0)
   );
 }
 
@@ -178,6 +181,7 @@ export function unpackInput(n: number): InputFrame {
     lk: (n & BIT.lk) !== 0,
     mk: (n & BIT.mk) !== 0,
     hk: (n & BIT.hk) !== 0,
+    taunt: (n & BIT.taunt) !== 0,
   };
 }
 
@@ -713,6 +717,13 @@ function updateFighter(
       }
       break;
     }
+    case 'taunt': {
+      // committed flavor pose (standing hurtbox, no invuln — a hit drops it to
+      // hitstun in combat resolution); auto-returns to idle after TAUNT_TICKS
+      if (a.frame + 1 >= TAUNT_TICKS) f.action = { kind: 'idle', frame: 0 };
+      else a.frame++;
+      break;
+    }
     default: {
       // idle / walkF / walkB / crouch — fully actionable
       const stance = input.down ? 'crouch' : 'stand';
@@ -759,6 +770,10 @@ function updateFighter(
         }
         f.action = { kind: 'walkB', frame: 0 };
         f.x -= f.facing * def.backSpeed;
+      } else if (freshPress(f, BIT.taunt)) {
+        // flavor taunt: only from a standing idle (movement/attacks all win
+        // above), committed for TAUNT_TICKS. Deterministic → net-synced for free.
+        f.action = { kind: 'taunt', frame: 0 };
       } else {
         f.action = { kind: 'idle', frame: 0 };
       }

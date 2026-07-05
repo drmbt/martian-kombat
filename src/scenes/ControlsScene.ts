@@ -18,6 +18,7 @@ const ACTION_LABELS: Record<BindAction, string> = {
   up: 'UP / JUMP', down: 'DOWN / CROUCH', left: 'LEFT', right: 'RIGHT',
   lp: 'LIGHT PUNCH', mp: 'MEDIUM PUNCH', hp: 'HEAVY PUNCH',
   lk: 'LIGHT KICK', mk: 'MEDIUM KICK', hk: 'HEAVY KICK',
+  taunt: 'TAUNT',
 };
 
 const KEY_LABELS: Record<number, string> = {
