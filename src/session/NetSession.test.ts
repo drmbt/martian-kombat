@@ -10,6 +10,8 @@ import { createLoopbackPair, type LoopbackOptions } from '../net/transport';
 import { NetSession } from './NetSession';
 
 const FRAME = 1000 / 60;
+/** heads within a few ticks of each other counts as converged */
+const SYNC_TOLERANCE = 4;
 
 function fresh(): GameState {
   const s = initialState('vincent', 'yulia', characters);
@@ -163,6 +165,26 @@ describe('NetSession rollback', () => {
     }
     // and every simulated tick presented — none swallowed by rollbacks
     expect(seen.size).toBe(host.state.tick);
+  });
+
+  it('V26 timesync: a peer that started ahead eases back so heads converge', () => {
+    const pair = makePair({ latency: 2 }, { delay: 2 });
+    // simulate a launch skew: the host runs ~15 frames before the guest exists
+    for (let i = 0; i < 15; i++) {
+      pair.host.advance(FRAME);
+      pair.wire.tick();
+    }
+    const skew = pair.host.state.tick - pair.guest.state.tick;
+    expect(skew).toBeGreaterThan(8); // genuinely out of sync to start
+
+    // now both run together; timesync should pull their heads together
+    runFrames(pair, 300);
+    const drift = Math.abs(pair.host.state.tick - pair.guest.state.tick);
+    expect(skew).toBeGreaterThan(drift); // measurably closer than the start skew
+    expect(drift).toBeLessThanOrEqual(SYNC_TOLERANCE); // converged
+    expect(pair.host.stats().syncSkips).toBeGreaterThan(0); // the ahead peer eased
+    expect(pair.host.stats().halted).toBeNull();
+    expect(pair.guest.stats().halted).toBeNull();
   });
 
   it('disconnect: peer close surfaces as an issue, session halts', () => {

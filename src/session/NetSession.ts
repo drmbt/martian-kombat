@@ -44,6 +44,10 @@ export interface NetStats {
   rollbackTicks: number;
   /** advance() calls skipped because the window was exhausted */
   stalls: number;
+  /** frames eased to converge with the remote (timesync, V26) */
+  syncSkips: number;
+  /** ticks our head leads the remote's head by (drives timesync) */
+  drift: number;
   delay: number;
   confirmedTick: number;
   head: number;
@@ -53,6 +57,12 @@ export interface NetStats {
 const EMPTY_PACKED = 0;
 /** how many past inputs ride along in every packet (SPEC V22) */
 const REDUNDANCY = 8;
+/** timesync: tolerate this many ticks ahead of the remote before easing a
+ *  frame (small enough to keep both intros aligned, big enough to not thrash) */
+const SYNC_AHEAD = 2;
+/** min advances between eased frames — gentle convergence (~1 tick / N frames)
+ *  that never freezes; a genuinely silent peer still runs into the window stall */
+const SYNC_COOLDOWN = 6;
 
 export class NetSession implements Session {
   private readonly transport: Transport;
@@ -71,6 +81,13 @@ export class NetSession implements Session {
   private readonly snapshots = new Map<number, GameState>();
   /** highest k such that ALL ticks ≤ k have real remote inputs */
   private remoteContiguous = 0;
+  /** the remote peer's own sim head (their tick), from `input` packet ids —
+   *  used for timesync (V26): if we run ahead of it we ease back a frame */
+  private remoteHead = 0;
+  /** frames the ahead peer has skipped to converge (stat/debug) */
+  private syncSkips = 0;
+  /** advances remaining before the next timesync skip is allowed */
+  private syncCooldown = 0;
   /** the real remote input at remoteContiguous — the prediction source */
   private lastRealRemote = EMPTY_PACKED;
   private earliestMispredict = Infinity;
@@ -112,6 +129,8 @@ export class NetSession implements Session {
       rollbacks: this.rollbacks,
       rollbackTicks: this.rollbackTicks,
       stalls: this.stalls,
+      syncSkips: this.syncSkips,
+      drift: this.remoteHead > 0 ? this.state.tick - this.remoteHead : 0,
       delay: this.delay,
       confirmedTick: Math.min(this.remoteContiguous, this.state.tick),
       head: this.state.tick,
@@ -128,8 +147,26 @@ export class NetSession implements Session {
     // 2) pace exactly like the local session (KO slow-mo is state-derived, so
     //    both peers compute the same scaling — no drift)
     this.accumulator += Math.min(deltaMs, 100) * (koSlowActive(this.state) ? 0.35 : 1);
+    // timesync (V26): if our sim head runs ahead of the remote's, drop one frame
+    // (rate-limited) so both converge to the same tick at the same wall-clock —
+    // otherwise a launch/latency skew leaves one side's intro (and every action)
+    // visibly ahead of the other's forever. The cooldown keeps convergence
+    // gentle and lets a genuinely silent peer still hit the window stall below.
+    if (this.syncCooldown > 0) this.syncCooldown--;
+    let mayStep = true;
+    if (
+      this.remoteHead > 0 &&
+      this.state.tick - this.remoteHead > SYNC_AHEAD &&
+      this.syncCooldown === 0 &&
+      this.accumulator >= TICK_MS
+    ) {
+      this.accumulator -= TICK_MS; // burn this frame's time without stepping
+      this.syncSkips++;
+      this.syncCooldown = SYNC_COOLDOWN;
+      mayStep = false;
+    }
     let ticks = 0;
-    while (this.accumulator >= TICK_MS) {
+    while (mayStep && this.accumulator >= TICK_MS) {
       const k = this.state.tick + 1;
       if (k - this.remoteContiguous > this.window) {
         // out of rollback room — freeze and bank no further time (a stall
@@ -213,6 +250,8 @@ export class NetSession implements Session {
   private receive(m: NetMsg): void {
     switch (m.t) {
       case 'input': {
+        // the packet's newest tick = remote head + delay → recover their head
+        this.remoteHead = Math.max(this.remoteHead, m.tick - this.delay);
         for (let i = 0; i < m.frames.length; i++) {
           const t = m.tick - m.frames.length + 1 + i;
           if (t < 1 || this.remoteInputs.has(t)) continue;
