@@ -399,6 +399,11 @@ export class SelectScene extends Phaser.Scene {
     this.waitingText?.setText(`stage: ${config.stage.replace(/-/g, ' ').toUpperCase()}`);
     // announce the resolved stage (the winning vote) as the match kicks off
     this.playStageVo(config.stage);
+    // 3D online: start streaming the renderer the moment the stage settles, so
+    // it overlaps the launch instead of a black screen in the fight
+    if (config.render3d) {
+      void import('../renderer3d/warmup').then((m) => m.warmupRenderer(config.chars, config.stage));
+    }
     const net = this.online!;
     this.time.delayedCall(400, () => {
       this.scene.start(config.render3d ? 'Fight3D' : 'Fight', {

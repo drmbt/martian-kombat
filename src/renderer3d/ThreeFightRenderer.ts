@@ -40,6 +40,12 @@ export class ThreeFightRenderer {
   private shakeAmp = 0;
   private baseCamY = 0;
   private ready = false;
+
+  /** true once models + stage + pipelines are loaded and the first frame can
+   *  draw — the scene holds the sim (intro/countdown/sfx) until this flips */
+  get isReady(): boolean {
+    return this.ready;
+  }
   private disposed = false;
   private lights!: { key: THREE.DirectionalLight; fill: THREE.DirectionalLight; rim: THREE.DirectionalLight };
   private baseSize = { w: STAGE_W, h: STAGE_H };

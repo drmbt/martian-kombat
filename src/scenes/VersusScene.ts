@@ -44,6 +44,13 @@ export class VersusScene extends Phaser.Scene {
   }
 
   create(): void {
+    // 3D: start streaming the fight renderer (models/stage/pipelines) NOW so it
+    // overlaps this VS screen instead of a black screen after it
+    if (this.fight.render3d) {
+      void import('../renderer3d/warmup').then((m) =>
+        m.warmupRenderer([this.fight.p1, this.fight.p2], this.fight.stage),
+      );
+    }
     // a random versus clip paces the screen: fight starts when it ends
     if (hasTracks('versus')) {
       playMusic('versus', { once: true, onEnd: () => this.startFight() });

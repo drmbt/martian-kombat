@@ -15,7 +15,7 @@ import { characters } from '../data/characters';
 import { KeyboardSource } from '../input/keyboard';
 import { getSettings } from '../settings';
 import { CpuDriver } from '../ai/bot';
-import { stageById } from '../data/stages';
+import { takeWarmRenderer } from '../renderer3d/warmup';
 import { play, playVoice } from './BootScene';
 import { nextTrack, playMusic } from '../audio/music';
 import { diffTick, snapTick, type FightEvent } from '../presentation/tickEvents';
@@ -45,6 +45,7 @@ export class FightScene3D extends Phaser.Scene {
   private rematch: RematchLink | null = null;
   private rematchLeft = false;
   private rematchEl: HTMLDivElement | null = null;
+  private loadingEl: HTMLDivElement | null = null;
   /** captured by the session's beforeTick hook for diffTick */
   private pendingSnap: ReturnType<typeof snapTick> | null = null;
   private renderer3d: ThreeFightRenderer | null = null;
@@ -90,6 +91,7 @@ export class FightScene3D extends Phaser.Scene {
     this.rematch = null;
     this.rematchLeft = false;
     this.rematchEl = null;
+    this.loadingEl = null;
     // demo = attract mode: both sides are bots
     this.bot = this.cpu || this.demo ? new CpuDriver(1) : null;
     this.botP1 = this.demo ? new CpuDriver(0) : null;
@@ -250,39 +252,14 @@ export class FightScene3D extends Phaser.Scene {
   }
 
   private async bootRenderer(): Promise<void> {
-    const { ThreeFightRenderer } = await import('../renderer3d/ThreeFightRenderer');
-    // DEFAULT: mount the picked match's painted 2D stage art as a 3D parallax
-    // bridge (billboards at depths matching the 2D layer factors, over a shadow
-    // ground) — the real stage in 3D, no grey test chamber. Dev overrides:
-    // ?room=test for the grid chamber, ?room=street for the night-street set.
-    const roomParam = new URLSearchParams(window.location.search).get('room');
-    // the '3D TEST ROOM' stage pick (or ?room=test) → grey chamber; else the
-    // picked stage's painted art as the 2D→3D bridge
-    const room =
-      this.stageId === 'test-room' || roomParam === 'test'
-        ? 'test-room'
-        : roomParam === 'street'
-          ? 'street'
-          : '2d';
-    let stage2d;
-    if (room === '2d') {
-      const entry = stageById(this.stageId);
-      const l = entry?.layers;
-      stage2d = l
-        ? [
-            { file: l.sky!.file, factor: l.sky?.factor ?? 0.14 },
-            { file: l.far!.file, factor: l.far?.factor ?? 0.34 },
-            { file: l.near!.file, factor: l.near?.factor ?? 0.68 },
-            { file: l.floor!.file, factor: l.floor?.factor ?? 1 },
-          ]
-        : entry
-          ? [{ file: entry.file, factor: 0.32 }]
-          : undefined;
-    }
-    const renderer = new ThreeFightRenderer(characters, this.chars, room, stage2d);
+    // adopt the renderer warmed during the VS screen / online stage-settle
+    // (models + stage + pipelines already streaming) — or boot fresh if none
+    // was warmed for this matchup (e.g. ?dev=3d direct launch). The heavy load
+    // thus overlaps a screen the player was already watching.
+    const renderer = await takeWarmRenderer(this.chars, this.stageId);
     // the scene may have shut down while the chunk was loading
-    if (!this.scene.isActive()) {
-      renderer.dispose();
+    if (!renderer || !this.scene.isActive()) {
+      renderer?.dispose();
       return;
     }
     this.renderer3d = renderer;
@@ -295,7 +272,6 @@ export class FightScene3D extends Phaser.Scene {
     this.mountDom(renderer.canvas);
     const host = this.game.canvas.parentElement ?? document.body;
     this.panel = createSettingsPanel(host, this.settings, (s) => this.renderer3d?.applySettings(s));
-    await renderer.init(this.stageId);
     renderer.applySettings(this.settings);
   }
 
@@ -500,7 +476,35 @@ export class FightScene3D extends Phaser.Scene {
     }
   }
 
+  private showLoading(): void {
+    if (this.loadingEl) return;
+    const host = this.game.canvas.parentElement ?? document.body;
+    const el = document.createElement('div');
+    el.textContent = 'LOADING…';
+    el.style.cssText =
+      'position:absolute;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;' +
+      'background:#0c0910;color:#ffb347;font:bold 28px monospace;letter-spacing:3px;text-shadow:0 2px 6px #000;';
+    host.appendChild(el);
+    this.loadingEl = el;
+    this.events.once('shutdown', () => el.remove());
+  }
+
+  private hideLoading(): void {
+    if (!this.loadingEl) return;
+    this.loadingEl.remove();
+    this.loadingEl = null;
+  }
+
   update(_time: number, deltaMs: number): void {
+    // hold the sim (and its intro countdown + sounds) until the renderer has
+    // its models/stage/pipelines up — otherwise the whole fight plays out over
+    // a black screen while the GLBs stream in. A loading overlay covers the wait.
+    if (!this.renderer3d?.isReady) {
+      this.session.resetPacing(); // don't bank the wait into a fast-forward burst
+      this.showLoading();
+      return;
+    }
+    this.hideLoading();
     this.session.advance(deltaMs);
     if (this.online && this.state.phase === 'matchEnd') this.armRematch();
     this.renderer3d?.render(this.state);
