@@ -11,6 +11,8 @@ import { LobbyScene } from './scenes/LobbyScene';
 import { SettingsScene } from './scenes/SettingsScene';
 import { ControlsScene } from './scenes/ControlsScene';
 import { VolumeOverlayScene } from './scenes/VolumeOverlayScene';
+import { EditorMenuScene } from './scenes/EditorMenuScene';
+import { StagePinEditorScene } from './scenes/StagePinEditorScene';
 import { LaunchData, rememberDevLaunch } from './devLaunch';
 
 const devWindow = window as unknown as { __mkScenePatch?: boolean; __game?: Phaser.Game };
@@ -64,7 +66,13 @@ const game = new Phaser.Game({
   // scene transition. All pad input reads navigator.getGamepads() directly
   // (src/input/keyboard.ts + src/input/menu-nav.ts).
   input: { gamepad: false },
-  scene: [BootScene, MenuScene, SelectScene, VersusScene, FightScene, FightScene3D, DanceScene, LobbyScene, SettingsScene, ControlsScene, VolumeOverlayScene],
+  scene: [
+    BootScene, MenuScene, SelectScene, VersusScene, FightScene, FightScene3D, DanceScene, LobbyScene,
+    SettingsScene, ControlsScene, VolumeOverlayScene,
+    // dev-only authoring tools — reachable only via the title's DEV EDITOR item
+    // (import.meta.env.DEV). Registering them is harmless in prod (unreachable).
+    ...(import.meta.env.DEV ? [EditorMenuScene, StagePinEditorScene] : []),
+  ],
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,

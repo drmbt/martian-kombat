@@ -39,6 +39,9 @@ let pending: { ctxs: string[]; opts: PlayOpts } | null = null;
 let musicVolume = 0.6; // pre-boot fallback; BootScene applies the saved setting
 let unlockArmed = false;
 
+/** HTMLMediaElement.volume throws outside [0,1]; keep float math in range. */
+const clamp01 = (v: number): number => (v < 0 ? 0 : v > 1 ? 1 : v);
+
 /** Pure track selection: first context in the chain with tracks wins.
  *  `avoid` skips one file so multi-track folders rotate instead of repeating.
  *  Exported for tests. */
@@ -139,7 +142,7 @@ export function duckMusic(ms: number, level = 0.28): void {
   if (!current) return;
   const now = performance.now();
   duckUntil = Math.max(duckUntil, now + ms);
-  current.el.volume = musicVolume * level;
+  current.el.volume = clamp01(musicVolume * level);
   if (duckRaf) return; // a restore loop is already running
   const tick = (): void => {
     if (!current) { duckUntil = 0; duckRaf = 0; return; }
@@ -153,7 +156,7 @@ export function duckMusic(ms: number, level = 0.28): void {
     // ease back over the last 400ms of the duck window
     const remain = duckUntil - t;
     const k = remain < 400 ? 1 - remain / 400 : 0;
-    current.el.volume = musicVolume * (level + (1 - level) * k);
+    current.el.volume = clamp01(musicVolume * (level + (1 - level) * k));
     duckRaf = requestAnimationFrame(tick);
   };
   duckRaf = requestAnimationFrame(tick);
@@ -253,7 +256,9 @@ function fadeTo(el: HTMLAudioElement, target: number, ms: number, done: () => vo
   const t0 = performance.now();
   const step = (t: number): void => {
     const k = Math.min(1, (t - t0) / ms);
-    el.volume = from + (target - from) * k;
+    // clamp: float rounding on the interpolation can land a hair outside
+    // [0,1], which HTMLMediaElement.volume rejects with an IndexSizeError
+    el.volume = clamp01(from + (target - from) * k);
     if (k < 1) requestAnimationFrame(step);
     else done();
   };
