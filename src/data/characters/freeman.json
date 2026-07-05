@@ -2,7 +2,7 @@
   "id": "freeman",
   "name": "FREEMAN",
   "color": "#f0e0a0",
-  "stage": "institute",
+  "stage": "chiba",
   "winQuotes": [
     "This isn't violence; it's alignment.",
     "Prosperity finds the still. You found the floor.",
@@ -498,8 +498,8 @@
       "hitbox": null,
       "height": "mid",
       "float": {
-        "vy": 20,
-        "gravity": 0.22
+        "vy": 12,
+        "gravity": 0.35
       }
     },
     "throw": {
