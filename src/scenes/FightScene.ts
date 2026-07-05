@@ -11,13 +11,15 @@ import {
   INTRO_TICKS,
   STAGE_W,
   STAGE_H,
-  TICK_MS,
   FighterState,
   initialState,
   resolveMove,
-  step,
   worldBox,
 } from '../engine';
+import { FightSession, type Session } from '../session/FightSession';
+import { NetSession, type NetIssue } from '../session/NetSession';
+import type { OnlineFightData } from '../net/lobby';
+import { RematchLink, type RematchState } from '../net/rematch';
 import { characters } from '../data/characters';
 import { stageById } from '../data/stages';
 import { KeyboardSource } from '../input/keyboard';
@@ -168,7 +170,21 @@ export class FightScene extends Phaser.Scene {
   private bgLayers: BgLayer[] = [];
   /** px of background hidden past each screen edge — the parallax travel */
   private bgOverhang = 0;
-  private accumulator = 0;
+  private session!: Session;
+  /** online payload when this is a netplay match (null = local) */
+  private online: OnlineFightData | null = null;
+  private net: NetSession | null = null;
+  private netIssue: NetIssue | null = null;
+  private netText: Phaser.GameObjects.Text | null = null;
+  /** online rematch opt-in (post-match, same channel): armed at matchEnd */
+  private rematch: RematchLink | null = null;
+  private rematchLeft = false;
+  private rematchText: Phaser.GameObjects.Text | null = null;
+  /** captured by the session's beforeTick hook for presentTick's diff */
+  private pendingSnap: TickSnapshot | null = null;
+  private tickStart = 0;
+  private frameTickMs = 0;
+  private framePresentMs = 0;
   private debugBoxes = false;
   private stageGuide = false;
   private sparks: Spark[] = [];
@@ -213,12 +229,26 @@ export class FightScene extends Phaser.Scene {
     super('Fight');
   }
 
-  init(data: { p1?: string; p2?: string; cpu?: boolean; training?: boolean; demo?: boolean; stage?: string }): void {
+  init(data: {
+    p1?: string;
+    p2?: string;
+    cpu?: boolean;
+    training?: boolean;
+    demo?: boolean;
+    stage?: string;
+    online?: OnlineFightData;
+  }): void {
     this.chars = [data.p1 ?? 'vincent', data.p2 ?? 'yulia'];
     this.stageId = data.stage ?? 'salton';
-    this.cpu = !!data.cpu;
-    this.training = !!data.training;
-    this.demo = !!data.demo;
+    this.online = data.online ?? null;
+    // online is strictly 2-human: no CPU, no demo, no training upkeep
+    this.cpu = !this.online && !!data.cpu;
+    this.training = !this.online && !!data.training;
+    this.demo = !this.online && !!data.demo;
+    this.net = null;
+    this.netIssue = null;
+    this.rematch = null;
+    this.rematchLeft = false;
     this.bot = this.cpu || this.demo ? new CpuDriver(1) : null;
     this.botP1 = this.demo ? new CpuDriver(0) : null;
     this.fatalityPanel = null;
@@ -235,11 +265,60 @@ export class FightScene extends Phaser.Scene {
 
   create(): void {
     const cfg = getSettings();
-    this.state = initialState(this.chars[0], this.chars[1], characters, {
-      roundTicks: cfg.roundSeconds * 60,
-      winsNeeded: cfg.winsNeeded,
-    });
+    // online: BOTH peers build the identical start state from the lobby's
+    // agreed rules — V25 replay-equivalence depends on this being deterministic
+    this.state = initialState(
+      this.chars[0],
+      this.chars[1],
+      characters,
+      this.online
+        ? this.online.rules
+        : { roundTicks: cfg.roundSeconds * 60, winsNeeded: cfg.winsNeeded },
+    );
     this.inputs = new KeyboardSource(this);
+    // the one fight-loop driver (SPEC V17/V18): session owns pacing + step();
+    // this scene hangs its presentation diffing off the tick hooks. The hooks
+    // are IDENTICAL for local and net play — NetSession just consumes the
+    // local slot's input and drives the remote slot over the wire (V18).
+    const hooks = {
+      beforeTick: () => {
+        this.tickStart = performance.now();
+        this.pendingSnap = this.snapshot();
+      },
+      inputs: (s: GameState): [InputFrame, InputFrame] => [
+        this.botP1 ? this.botP1.poll(s) : this.inputs.poll(0),
+        this.bot ? this.bot.poll(s) : this.inputs.poll(1),
+      ],
+      afterTick: (_s: GameState, inp: [InputFrame, InputFrame]) => {
+        if (this.training) this.trainingUpkeep();
+        this.logInputs(inp);
+        this.frameTickMs += performance.now() - this.tickStart;
+        const presentStart = performance.now();
+        this.presentTick(this.pendingSnap!);
+        this.framePresentMs += performance.now() - presentStart;
+      },
+    };
+    if (this.online) {
+      const net = new NetSession(this.state, hooks, characters, {
+        transport: this.online.transport,
+        localSlot: this.online.localSlot,
+        delay: this.online.delay,
+      });
+      net.onIssue((issue) => (this.netIssue = issue));
+      this.net = net;
+      this.session = net;
+      // net status line (T41 turns this into the ping/quality HUD). Kept
+      // always-present so a halt (disconnect/desync) is never silent (V20).
+      this.netText = this.add
+        .text(STAGE_W / 2, 10, '', {
+          fontFamily: 'monospace', fontSize: '14px', color: '#8fe388',
+          stroke: '#000', strokeThickness: 4, align: 'center',
+        })
+        .setOrigin(0.5, 0)
+        .setDepth(10000);
+    } else {
+      this.session = new FightSession(this.state, hooks, characters);
+    }
     this.fighterSprites = [null, null];
     this.hitFlashSprites = [null, null];
     this.fighterShadows = [null, null];
@@ -249,7 +328,6 @@ export class FightScene extends Phaser.Scene {
     this.sparks = [];
     this.vfx = []; // scene.restart destroyed the old images with the scene
     this.dizzySprites = [null, null];
-    this.accumulator = 0;
     this.comboHits = 0;
     this.comboTicks = 0;
     this.perfOn = false;
@@ -426,14 +504,6 @@ export class FightScene extends Phaser.Scene {
 
     if (this.demo) {
       // attract mode: a blinking banner, and ANY input returns to the title
-      const coin = this.add
-        .text(STAGE_W / 2, STAGE_H - 88, 'INSERT COIN', {
-          fontFamily: 'monospace', fontSize: '34px', fontStyle: 'bold', color: '#ffb347',
-          stroke: '#2a3a7a', strokeThickness: 8,
-        })
-        .setOrigin(0.5)
-        .setDepth(30);
-      this.time.addEvent({ delay: 600, loop: true, callback: () => coin.setVisible(!coin.visible) });
       const banner = this.add
         .text(STAGE_W / 2, STAGE_H - 44, 'DEMO — PRESS ANY KEY', {
           fontFamily: 'monospace', fontSize: '26px', fontStyle: 'bold', color: '#ffd24a',
@@ -463,15 +533,24 @@ export class FightScene extends Phaser.Scene {
     this.input.keyboard!.on('keydown-F1', () => (this.debugBoxes = !this.debugBoxes));
     this.input.keyboard!.on('keydown-F3', () => (this.stageGuide = !this.stageGuide));
     this.input.keyboard!.on('keydown-R', () => {
-      if (this.state.phase === 'matchEnd') this.restartMatch();
+      if (this.state.phase !== 'matchEnd') return;
+      if (this.online) this.optInRematch();
+      else this.restartMatch();
     });
     this.input.keyboard!.on('keydown-ENTER', () => {
-      if (this.training) this.toCharacterSelect();
+      if (this.online && this.state.phase === 'matchEnd') this.optInRematch();
+      else if (this.training) this.toCharacterSelect();
       else if (this.state.phase === 'matchEnd') this.toCharacterSelect();
     });
-    // clicking through the win-quote screen skips back to character select
+    // online: ESC at matchEnd quits the match (disconnect); otherwise pauses
+    this.input.keyboard!.on('keydown-ESC', () => {
+      if (this.online && this.state.phase === 'matchEnd') this.leaveOnline('you left');
+    });
+    // clicking through the win-quote screen: rematch online, else char select
     this.input.on('pointerdown', () => {
-      if (this.state.phase === 'matchEnd') this.toCharacterSelect();
+      if (this.state.phase !== 'matchEnd') return;
+      if (this.online) this.optInRematch();
+      else this.toCharacterSelect();
     });
 
     play(this, 'ann-round-1');
@@ -480,6 +559,9 @@ export class FightScene extends Phaser.Scene {
   // ---------- pause / navigation ----------
 
   private togglePause(): void {
+    // online can't freeze the sim — the other player is still fighting (V23).
+    // Pausing would only stall your own head against the rollback window.
+    if (this.online) return;
     this.paused = !this.paused;
     this.pauseOverlay.setVisible(this.paused);
     if (this.paused) { this.pauseSel = 0; this.highlightPause(); }
@@ -510,6 +592,13 @@ export class FightScene extends Phaser.Scene {
       return;
     }
     if (this.state.phase === 'matchEnd') {
+      // online: confirm = opt into a rematch, Select = quit the match
+      if (this.online) {
+        if (this.time.now < this.endNavArmedAt) return;
+        if (n.confirm || n.start) navDefer(this, () => this.optInRematch());
+        else if (n.menu) navDefer(this, () => this.leaveOnline('you left'));
+        return;
+      }
       // Select brings up the full menu (rematch / char select / main menu)
       if (n.menu) { this.togglePause(); return; }
       if (this.time.now < this.endNavArmedAt) return;
@@ -551,46 +640,104 @@ export class FightScene extends Phaser.Scene {
   update(_time: number, deltaMs: number): void {
     this.padMenuFrame();
     if (this.paused) {
-      this.accumulator = 0;
+      this.session.resetPacing();
       return;
     }
     const frameStart = performance.now();
-    let tickMs = 0;
-    let presentMs = 0;
-    let tickCount = 0;
-    // fixed timestep: rendering fps may vary, simulation never does.
-    // KO slow-motion: the round-ending hit plays out at ~1/3 speed (pure
-    // presentation — ticks still advance identically, just spaced out)
-    const s = this.state;
-    const koSlow =
-      (s.phase === 'roundEnd' || s.phase === 'finisher') &&
-      s.phaseFrame < 55 &&
-      s.fighters.some((f) => f.health <= 0);
-    this.accumulator += Math.min(deltaMs, 100) * (koSlow ? 0.35 : 1);
-    while (this.accumulator >= TICK_MS) {
-      const tickStart = performance.now();
-      const snap = this.snapshot();
-      const p1 = this.botP1 ? this.botP1.poll(this.state) : this.inputs.poll(0);
-      const p2 = this.bot ? this.bot.poll(this.state) : this.inputs.poll(1);
-      step(this.state, [p1, p2], characters);
-      if (this.training) this.trainingUpkeep();
-      this.logInputs([p1, p2]);
-      this.accumulator -= TICK_MS;
-      tickMs += performance.now() - tickStart;
-      const presentStart = performance.now();
-      this.presentTick(snap);
-      presentMs += performance.now() - presentStart;
-      tickCount++;
-    }
+    this.frameTickMs = 0;
+    this.framePresentMs = 0;
+    const tickCount = this.session.advance(deltaMs);
+    if (this.net) this.updateNetStatus();
+    // online: the match is over — offer a rematch on the same channel
+    if (this.online && this.state.phase === 'matchEnd') this.armRematch();
     this.draw();
     this.recordPerf({
       ...this.perfDraw,
       frame: performance.now() - frameStart,
-      sim: tickMs + presentMs,
-      tick: tickMs,
-      present: presentMs,
+      sim: this.frameTickMs + this.framePresentMs,
+      tick: this.frameTickMs,
+      present: this.framePresentMs,
       ticks: tickCount,
     });
+  }
+
+  /** Minimal net readout (T41 replaces with a proper quality indicator). */
+  private updateNetStatus(): void {
+    const net = this.net;
+    const txt = this.netText;
+    if (!net || !txt) return;
+    if (this.netIssue) {
+      const msg =
+        this.netIssue.kind === 'desync'
+          ? `DESYNC — match halted\n${this.netIssue.detail}`
+          : `OPPONENT DISCONNECTED\n${this.netIssue.detail}`;
+      txt.setText(msg).setColor('#ff5a4a');
+      return;
+    }
+    const s = net.stats();
+    if (s.stalls > 0 && s.ahead >= s.delay + 3) {
+      txt.setText('WAITING FOR OPPONENT…').setColor('#ffd24a');
+    } else {
+      // quiet in the healthy case: just a small rollback tick-rate readout
+      txt.setText(s.rollbacks > 0 ? `net · rb ${s.rollbacks}` : 'net').setColor('#8fe388');
+    }
+  }
+
+  // ---------- online rematch (post-match, reuses the live channel) ----------
+
+  /** at matchEnd, take the channel back from the (finished) NetSession and
+   *  offer a rematch — both agree → back to the shared select, no code re-entry.
+   *  All the transport/handshake logic lives in RematchLink (shared with 3D). */
+  private armRematch(): void {
+    if (this.rematch || !this.online) return;
+    this.rematch = new RematchLink(
+      this.online,
+      characters,
+      this.stageId,
+      {
+        onPrompt: (st) => this.drawRematchPrompt(st),
+        onLaunch: (online) => this.scene.start('Select', { online }),
+        onLeave: (reason) => this.onRematchLeave(reason),
+      },
+      (fn) => this.time.delayedCall(0, fn),
+    );
+  }
+
+  private optInRematch(): void {
+    play(this, 's-blip', 0.6);
+    this.rematch?.optIn();
+  }
+
+  private leaveOnline(reason: string): void {
+    this.rematch?.leave(reason);
+  }
+
+  private drawRematchPrompt(st: RematchState): void {
+    const msg = st.localReady
+      ? st.remoteReady
+        ? 'REMATCH! back to select…'
+        : `waiting for ${st.remoteName}…`
+      : st.remoteReady
+        ? `${st.remoteName} wants a REMATCH!\n[R] accept   ·   [ESC] quit`
+        : 'REMATCH?  [R] play again   ·   [ESC] quit';
+    if (!this.rematchText) {
+      this.rematchText = this.add
+        .text(STAGE_W / 2, STAGE_H - 40, '', {
+          fontFamily: 'monospace', fontSize: '18px', fontStyle: 'bold', color: '#ffd24a',
+          stroke: '#000', strokeThickness: 6, align: 'center', backgroundColor: '#1a1020',
+          padding: { x: 12, y: 6 },
+        })
+        .setOrigin(0.5)
+        .setDepth(10001);
+    }
+    this.rematchText.setText(msg).setColor(st.localReady && st.remoteReady ? '#8fe388' : '#ffd24a');
+  }
+
+  private onRematchLeave(reason: string): void {
+    if (this.rematchLeft) return;
+    this.rematchLeft = true;
+    if (this.rematchText) this.rematchText.setText(reason).setColor('#ff5a4a');
+    this.time.delayedCall(1200, () => this.scene.start('Menu'));
   }
 
   private snapshot(): TickSnapshot {
@@ -888,6 +1035,7 @@ export class FightScene extends Phaser.Scene {
     const t = this.state.tick;
     switch (a.kind) {
       case 'idle': return this.cellFor(slot, [(t >> 4) % 2 ? 'idle-b' : 'idle-a']);
+      case 'taunt': return this.cellFor(slot, ['taunt', 'win', 'idle-a']);
       case 'walkF':
       case 'walkB': return this.cellFor(slot, [(t >> 3) % 2 ? 'walk-b' : 'walk-a']);
       case 'crouch':

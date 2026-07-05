@@ -23,7 +23,10 @@ import {
   COMBO_SCALE_STEP,
   COUNTER_HITSTOP_BONUS,
   COUNTER_HITSTUN_MULT,
+  DASH_REGEN_TICKS,
+  DASH_STOCKS,
   DIZZY_TICKS,
+  TAUNT_TICKS,
   FATALITY_RANGE,
   FATALITY_TICKS,
   FINISHER_TICKS,
@@ -72,6 +75,8 @@ function initFighter(charId: string, def: CharacterDef, slot: 0 | 1): FighterSta
     stun: 0,
     hitstop: 0,
     buffered: null,
+    dashStocks: DASH_STOCKS,
+    dashRegen: 0,
     comboHits: 0,
     floatGravity: 0,
   };
@@ -86,6 +91,8 @@ export function initialState(
   const r: MatchRules = {
     roundTicks: rules?.roundTicks ?? ROUND_TICKS,
     winsNeeded: rules?.winsNeeded ?? WINS_NEEDED,
+    stage: rules?.stage ?? { minX: STAGE_MIN_X, maxX: STAGE_MAX_X },
+    introTicks: rules?.introTicks ?? INTRO_TICKS,
   };
   return {
     tick: 0,
@@ -139,6 +146,7 @@ function overlaps(a: Rect, b: Rect): boolean {
 export const BIT = {
   left: 1, right: 2, up: 4, down: 8,
   lp: 16, mp: 32, hp: 64, lk: 128, mk: 256, hk: 512,
+  taunt: 1024,
 } as const;
 const PUNCH_BITS = BIT.lp | BIT.mp | BIT.hp;
 const KICK_BITS = BIT.lk | BIT.mk | BIT.hk;
@@ -154,8 +162,27 @@ export function packInput(i: InputFrame): number {
     (i.hp ? BIT.hp : 0) |
     (i.lk ? BIT.lk : 0) |
     (i.mk ? BIT.mk : 0) |
-    (i.hk ? BIT.hk : 0)
+    (i.hk ? BIT.hk : 0) |
+    (i.taunt ? BIT.taunt : 0)
   );
+}
+
+/** Inverse of packInput — rebuilds the InputFrame a net packet carried
+ *  (SPEC V22: inputs travel as packed numbers, never objects). */
+export function unpackInput(n: number): InputFrame {
+  return {
+    left: (n & BIT.left) !== 0,
+    right: (n & BIT.right) !== 0,
+    up: (n & BIT.up) !== 0,
+    down: (n & BIT.down) !== 0,
+    lp: (n & BIT.lp) !== 0,
+    mp: (n & BIT.mp) !== 0,
+    hp: (n & BIT.hp) !== 0,
+    lk: (n & BIT.lk) !== 0,
+    mk: (n & BIT.mk) !== 0,
+    hk: (n & BIT.hk) !== 0,
+    taunt: (n & BIT.taunt) !== 0,
+  };
 }
 
 /** True when any bit of `mask` is down this tick but was up last tick. */
@@ -503,9 +530,9 @@ function updateFighter(
         if (m.teleport.mode === 'behind') {
           f.x = o.x + (f.x <= o.x ? 90 : -90);
         } else {
-          f.x = f.facing === 1 ? STAGE_MIN_X + 40 : STAGE_MAX_X - 40;
+          f.x = f.facing === 1 ? s.rules.stage.minX + 40 : s.rules.stage.maxX - 40;
         }
-        f.x = Math.min(STAGE_MAX_X, Math.max(STAGE_MIN_X, f.x));
+        f.x = Math.min(s.rules.stage.maxX, Math.max(s.rules.stage.minX, f.x));
       }
       // shoryuken leaps: rise while the attack stays out
       if (m.leap) {
@@ -690,6 +717,13 @@ function updateFighter(
       }
       break;
     }
+    case 'taunt': {
+      // committed flavor pose (standing hurtbox, no invuln — a hit drops it to
+      // hitstun in combat resolution); auto-returns to idle after TAUNT_TICKS
+      if (a.frame + 1 >= TAUNT_TICKS) f.action = { kind: 'idle', frame: 0 };
+      else a.frame++;
+      break;
+    }
     default: {
       // idle / walkF / walkB / crouch — fully actionable
       const stance = input.down ? 'crouch' : 'stand';
@@ -721,14 +755,25 @@ function updateFighter(
       } else if (input.down) {
         f.action = { kind: 'crouch', frame: 0 };
       } else if (holdingForward(f, input)) {
-        // double-tap forward = dash: an impulse the ground friction bleeds off
-        if (doubleTapped(f, 'f')) f.vx = f.facing * DASH_SPEED;
+        // double-tap forward = dash: an impulse the ground friction bleeds
+        // off — gated by the stock pool so it can't be spammed
+        if (doubleTapped(f, 'f') && f.dashStocks > 0) {
+          f.dashStocks--;
+          f.vx = f.facing * DASH_SPEED;
+        }
         f.action = { kind: 'walkF', frame: 0 };
         f.x += f.facing * def.walkSpeed;
       } else if (holdingBack(f, input)) {
-        if (doubleTapped(f, 'b')) f.vx = -f.facing * BACKDASH_SPEED;
+        if (doubleTapped(f, 'b') && f.dashStocks > 0) {
+          f.dashStocks--;
+          f.vx = -f.facing * BACKDASH_SPEED;
+        }
         f.action = { kind: 'walkB', frame: 0 };
         f.x -= f.facing * def.backSpeed;
+      } else if (freshPress(f, BIT.taunt)) {
+        // flavor taunt: only from a standing idle (movement/attacks all win
+        // above), committed for TAUNT_TICKS. Deterministic → net-synced for free.
+        f.action = { kind: 'taunt', frame: 0 };
       } else {
         f.action = { kind: 'idle', frame: 0 };
       }
@@ -869,7 +914,7 @@ function applyHit(
 
   // corner transfer: if the defender is pinned on a wall, push the attacker
   // back instead so spacing still changes
-  if (d.x <= STAGE_MIN_X + 1 || d.x >= STAGE_MAX_X - 1) {
+  if (d.x <= s.rules.stage.minX + 1 || d.x >= s.rules.stage.maxX - 1) {
     s.fighters[atkSlot].vx = -attackerFacing * hit.knockback * 0.7;
   }
 }
@@ -1087,7 +1132,7 @@ function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputF
       if (p.pull && d.action.kind !== 'blockstun') {
         const owner = s.fighters[p.owner];
         const side = d.x >= owner.x ? 1 : -1;
-        d.x = Math.min(STAGE_MAX_X, Math.max(STAGE_MIN_X, owner.x + side * 85));
+        d.x = Math.min(s.rules.stage.maxX, Math.max(s.rules.stage.minX, owner.x + side * 85));
         d.vx = 0;
       }
       // lingering clouds survive their hits and re-hit on a cooldown
@@ -1133,7 +1178,7 @@ function endRound(s: GameState, winner: 0 | 1 | null, defs: Defs): void {
   }
 }
 
-function passivePhysics(f: FighterState, def: CharacterDef): void {
+function passivePhysics(f: FighterState, def: CharacterDef, stage: { minX: number; maxX: number }): void {
   if (!grounded(f) || f.action.kind === 'ko') {
     f.vy += def.gravity;
     f.y += f.vy;
@@ -1148,7 +1193,7 @@ function passivePhysics(f: FighterState, def: CharacterDef): void {
     f.vx *= GROUND_FRICTION;
     if (Math.abs(f.vx) < 0.05) f.vx = 0;
   }
-  f.x = Math.min(STAGE_MAX_X, Math.max(STAGE_MIN_X, f.x));
+  f.x = Math.min(stage.maxX, Math.max(stage.minX, f.x));
 }
 
 // ---------- the tick ----------
@@ -1164,6 +1209,11 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
     // bank charge while holding down; bleed it fast on release (short grace
     // window to flick ↓→↑ without losing the charge)
     f.charge = inputs[slot].down ? Math.min(f.charge + 1, 600) : Math.max(0, f.charge - 8);
+    // dash stock regen: one at a time, only while short (see DASH_STOCKS)
+    if (f.dashStocks < DASH_STOCKS && ++f.dashRegen >= DASH_REGEN_TICKS) {
+      f.dashStocks++;
+      f.dashRegen = 0;
+    }
     // action buffer: a button tapped while unactionable (or frozen in
     // hitstop) resolves its attack pick NOW — motions and chords are read at
     // press time so wakeup reversals keep their input window — and fires on
@@ -1188,8 +1238,9 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
   }
 
   if (s.phase === 'intro') {
+    const introLen = s.roundNumber === 1 ? s.rules.introTicks : INTRO_TICKS;
     s.phaseFrame++;
-    if (s.phaseFrame >= INTRO_TICKS) {
+    if (s.phaseFrame >= introLen) {
       s.phase = 'fight';
       s.phaseFrame = 0;
     }
@@ -1199,7 +1250,7 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
   if (s.phase === 'roundEnd') {
     s.phaseFrame++;
     for (const slot of [0, 1] as const) {
-      passivePhysics(s.fighters[slot], defs[s.fighters[slot].charId]);
+      passivePhysics(s.fighters[slot], defs[s.fighters[slot].charId], s.rules.stage);
     }
     if (s.phaseFrame >= ROUND_END_TICKS) {
       if (s.roundWinner !== null && s.wins[s.roundWinner] >= s.rules.winsNeeded) {
@@ -1223,7 +1274,7 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
     // can deal damage anymore
     updateFighter(s, w, winnerDef, inputs[w]);
     s.projectiles = [];
-    winner.x = Math.min(STAGE_MAX_X, Math.max(STAGE_MIN_X, winner.x));
+    winner.x = Math.min(s.rules.stage.maxX, Math.max(s.rules.stage.minX, winner.x));
     if (canAct(winner) && grounded(winner)) {
       winner.facing = s.fighters[loser].x >= winner.x ? 1 : -1;
     }
@@ -1371,7 +1422,7 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
 
   for (const slot of [0, 1] as const) {
     const f = s.fighters[slot];
-    f.x = Math.min(STAGE_MAX_X, Math.max(STAGE_MIN_X, f.x));
+    f.x = Math.min(s.rules.stage.maxX, Math.max(s.rules.stage.minX, f.x));
   }
 
   // the round clock holds its breath with the freeze frames

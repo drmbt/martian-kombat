@@ -5,7 +5,7 @@ import { STAGE_H, STAGE_W } from '../engine';
 import { ROSTER } from '../data/roster';
 import { characters } from '../data/characters';
 import { STAGES } from '../data/stages';
-import { initMusic } from '../audio/music';
+import { initMusic, duckMusic } from '../audio/music';
 import { applyMusicVolume, effectiveSfxVolume } from '../audio/volume';
 import { devBootTarget, rememberDevLaunch } from '../devLaunch';
 
@@ -15,7 +15,12 @@ const CELL_H = 384;
 const ANNOUNCER = [
   'round-1', 'round-2', 'final-round', 'fight', 'ko', 'time-up',
   'double-ko', 'perfect', 'victory', 'finish-them', 'fatality',
-  ...ROSTER.map((r) => r.id),
+  // per-fighter name calls — only for fighters with generated VO. A 404'd mp3
+  // decodes to an uncaught EncodingError (not harmless), so gate like VOICES.
+  ...ROSTER.filter((r) => r.playable).map((r) => r.id),
+  // stage name call-outs on the select screen — every STAGES id has a clip
+  // (tools/gen-audio.mjs `stage-*` lines). Same 404-gating rule: keep in sync.
+  ...STAGES.map((s) => `stage-${s.id}`),
 ];
 // several numbered variants per category so combat/win-screen audio doesn't
 // loop the same clip every hit; missing files 404 harmlessly, so characters
@@ -49,7 +54,10 @@ export class BootScene extends Phaser.Scene {
       if (st.layers?.near) this.load.image(`bg-stage-${st.id}-near`, st.layers.near.file);
       if (st.layers?.floor) this.load.image(`bg-stage-${st.id}-floor`, st.layers.floor.file);
     }
-    for (const { id } of ROSTER) {
+    for (const { id, playable } of ROSTER) {
+      // 3D-only fighters (mesh but no packed 2D sheet) have none of these files
+      // — skip so their absence isn't a wall of 404s at boot
+      if (!playable) continue;
       this.load.spritesheet(`sheet-${id}`, `assets/sprites/${id}/sheet.png`, {
         frameWidth: CELL_W,
         frameHeight: CELL_H,
@@ -108,8 +116,28 @@ export class BootScene extends Phaser.Scene {
 /** Play a sound if it loaded; silently skip if the asset doesn't exist.
  *  `volume` is per-sound emphasis, scaled by master+SFX settings (and mute). */
 export function play(scene: Phaser.Scene, key: string, volume = 0.8): void {
+  // Drop SFX/VO while the tab is unfocused. A backgrounded tab suspends the
+  // WebAudio context but the sim keeps ticking (throttled) — sounds scheduled
+  // into the suspended context bank up and ALL fire at once on refocus. Gating
+  // centrally here covers every caller (2D + 3D), not just the few that used to
+  // wrap it. Music is a raw <audio> element elsewhere, so it's unaffected.
+  if (typeof document !== 'undefined' && !document.hasFocus()) return;
   const v = volume * effectiveSfxVolume();
   if (v > 0 && scene.cache.audio.exists(key)) scene.sound.play(key, { volume: v });
+}
+
+/** Play an announcer-style voice-over (fighter names, stage names, "FIGHT!"):
+ *  louder than a normal SFX and it DUCKS the music for the clip's length so
+ *  the callout cuts through. Use this for any spoken callout, not play(). */
+export function announce(scene: Phaser.Scene, key: string, volume = 1.3): void {
+  if (typeof document !== 'undefined' && !document.hasFocus()) return;
+  const v = volume * effectiveSfxVolume();
+  if (v <= 0 || !scene.cache.audio.exists(key)) return;
+  const snd = scene.sound.add(key);
+  const durMs = ((snd as Phaser.Sound.BaseSound & { duration?: number }).duration ?? 1.4) * 1000;
+  duckMusic(durMs + 250);
+  snd.once('complete', () => snd.destroy());
+  snd.play({ volume: v });
 }
 
 /** Play a random numbered variant of a character voice line (kiai/hurt/victory)

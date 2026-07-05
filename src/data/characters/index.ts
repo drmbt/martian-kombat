@@ -15,6 +15,7 @@ import bodhi from './bodhi.json';
 import cat from './cat.json';
 import chebel from './chebel.json';
 import ygor from './ygor.json';
+import rapha from './rapha.json';
 
 const scaleBox = (b: Box, s: number): Box => ({
   x: Math.round(b.x * s),
@@ -69,4 +70,5 @@ export const characters: Defs = {
   cat: applySpriteScale(cat as unknown as CharacterDef),
   chebel: applySpriteScale(chebel as unknown as CharacterDef),
   ygor: applySpriteScale(ygor as unknown as CharacterDef),
+  rapha: applySpriteScale(rapha as unknown as CharacterDef),
 };

@@ -39,12 +39,31 @@ export function randomTraining(): LaunchTarget {
   };
 }
 
+export function random3dFight(): LaunchTarget {
+  // ?p1= / ?p2= pick the matchup (vincent, flo, yulia have GLBs so far);
+  // anyone else gets the capsule placeholder
+  const params = new URLSearchParams(window.location.search);
+  return {
+    scene: 'Fight3D',
+    data: {
+      p1: params.get('p1') ?? 'flo',
+      p2: params.get('p2') ?? 'yulia',
+      stage: DEV_STAGE,
+      // training dummy by default for inspection; ?cpu=1 re-arms the bot
+      cpu: params.get('cpu') === '1',
+      training: params.get('cpu') !== '1',
+    },
+  };
+}
+
 export function devBootTarget(): LaunchTarget | null {
   if (!import.meta.env.DEV || typeof window === 'undefined') return null;
   const params = new URLSearchParams(window.location.search);
   const directFight = params.get('fight') === 'random' || params.get('dev') === 'fight';
   if (directFight) return randomFight();
   if (params.get('dev') === 'training') return randomTraining();
+  if (params.get('dev') === '3d') return random3dFight();
+  if (params.get('dev') === 'net') return { scene: 'Lobby' };
 
   const saved = window.sessionStorage.getItem(KEY);
   if (!saved) return null;
@@ -61,5 +80,15 @@ export function devBootTarget(): LaunchTarget | null {
 export function rememberDevLaunch(scene: string, data?: LaunchData): void {
   if (!import.meta.env.DEV || typeof window === 'undefined') return;
   if (scene === 'Boot' || scene === 'Volume') return;
-  window.sessionStorage.setItem(KEY, JSON.stringify({ scene, data: data ?? {} }));
+  // an online fight carries a live Transport (peerjs conn) — not serializable
+  // and meaningless to replay on reload. Persist a bare Lobby restart instead.
+  if (data && 'online' in data) {
+    window.sessionStorage.setItem(KEY, JSON.stringify({ scene: 'Lobby' }));
+    return;
+  }
+  try {
+    window.sessionStorage.setItem(KEY, JSON.stringify({ scene, data: data ?? {} }));
+  } catch {
+    // non-serializable payload — don't let dev persistence break scene.start
+  }
 }

@@ -39,6 +39,7 @@ export const THROW_TECH_RECOIL = 10; // both unactionable for a beat after a tec
 export const STUN_THRESHOLD = 250;
 export const STUN_DECAY = 0.5; // per tick (binary-exact, so decay stays deterministic)
 export const DIZZY_TICKS = 180; // ~3s helpless
+export const TAUNT_TICKS = 55; // flavor taunt pose length (~0.9s, committed)
 
 // hitstop: per-fighter freeze frames on contact, scaled by button strength.
 // Melee freezes both fighters; projectiles freeze the VICTIM only (SF
@@ -79,3 +80,8 @@ export const LANDING_WHIFF_TICKS = 6;
 // ground-impact bounce: knockdowns pop back up off the floor with this
 // vertical speed before settling (the renderer puffs dust on each impact)
 export const BOUNCE_VY = 3.2;
+
+// dash (double-tap ←/→): a friction-bled impulse, limited by a stock pool so
+// it can't be spammed — each dash spends a stock, stocks regen one at a time
+export const DASH_STOCKS = 2;
+export const DASH_REGEN_TICKS = 150; // 2.5s per stock

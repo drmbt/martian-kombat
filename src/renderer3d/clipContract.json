@@ -1,0 +1,211 @@
+{
+  "clips": {
+    "idle": {
+      "class": "loop"
+    },
+    "walk-forward": {
+      "class": "loop",
+      "syncToWalkSpeed": true
+    },
+    "walk-back": {
+      "class": "loop",
+      "syncToWalkSpeed": true
+    },
+    "crouch": {
+      "class": "loop"
+    },
+    "prejump": {
+      "class": "oneshot"
+    },
+    "jump": {
+      "class": "oneshot"
+    },
+    "fall": {
+      "class": "loop"
+    },
+    "landing": {
+      "class": "oneshot"
+    },
+    "getup": {
+      "class": "oneshot"
+    },
+    "hit": {
+      "class": "oneshot"
+    },
+    "hit-front": {
+      "class": "oneshot"
+    },
+    "hit-back": {
+      "class": "oneshot"
+    },
+    "hit-air": {
+      "class": "oneshot"
+    },
+    "block-stand": {
+      "class": "loop"
+    },
+    "block-crouch": {
+      "class": "loop"
+    },
+    "knockdown": {
+      "class": "loop"
+    },
+    "ko": {
+      "class": "oneshot"
+    },
+    "ko-forward": {
+      "class": "oneshot"
+    },
+    "dazed": {
+      "class": "loop"
+    },
+    "win": {
+      "class": "loop"
+    },
+    "attack-generic": {
+      "class": "window"
+    },
+    "attack-air": {
+      "class": "window"
+    },
+    "hit-front-heavy": {
+      "class": "oneshot"
+    },
+    "hit-back-heavy": {
+      "class": "oneshot"
+    },
+    "intro": {
+      "class": "oneshot"
+    },
+    "hit-body": {
+      "class": "oneshot"
+    },
+    "hit-body-heavy": {
+      "class": "oneshot"
+    },
+    "taunt": {
+      "class": "oneshot"
+    },
+    "dash-forward": {
+      "class": "oneshot"
+    },
+    "dash-back": {
+      "class": "oneshot"
+    }
+  },
+  "fallbacks": {
+    "prejump": [
+      "crouch"
+    ],
+    "jump": [
+      "fall"
+    ],
+    "fall": [
+      "jump"
+    ],
+    "landing": [
+      "crouch"
+    ],
+    "getup": [
+      "crouch"
+    ],
+    "hit-front": [
+      "hit"
+    ],
+    "hit-back": [
+      "hit-front",
+      "hit"
+    ],
+    "hit-air": [
+      "hit"
+    ],
+    "block-crouch": [
+      "block-stand",
+      "crouch"
+    ],
+    "block-stand": [
+      "hit"
+    ],
+    "knockdown": [
+      "ko"
+    ],
+    "ko": [
+      "knockdown"
+    ],
+    "ko-forward": [
+      "ko",
+      "knockdown"
+    ],
+    "dazed": [
+      "hit"
+    ],
+    "win": [
+      "idle"
+    ],
+    "hit-front-heavy": [
+      "hit-front",
+      "hit"
+    ],
+    "hit-back-heavy": [
+      "hit-back",
+      "hit-front-heavy",
+      "hit"
+    ],
+    "intro": [
+      "idle"
+    ],
+    "hit-body": [
+      "hit-front",
+      "hit"
+    ],
+    "hit-body-heavy": [
+      "hit-body",
+      "hit-front-heavy",
+      "hit"
+    ],
+    "taunt": [
+      "win",
+      "idle"
+    ],
+    "dash-forward": [
+      "walk-forward"
+    ],
+    "dash-back": [
+      "walk-back"
+    ],
+    "attack/mk": [
+      "attack/lk",
+      "attack-generic"
+    ],
+    "attack/hk": [
+      "attack/lk",
+      "attack-generic"
+    ]
+  },
+  "impactNorm": {
+    "attack-generic": 0.35,
+    "attack-air": 0.45,
+    "attack/lp": 0.3,
+    "attack/mp": 0.35,
+    "attack/hp": 0.4,
+    "attack/throw": 0.4,
+    "attack/sigil-bolt": 0.5,
+    "attack/cloud-hands": 0.5,
+    "attack/rising-glyph": 0.4,
+    "attack/redirect": 0.55,
+    "attack/lk": 0.35,
+    "attack/mk": 0.3,
+    "attack/hk": 0.35,
+    "attack/matrix-teleport": 0.4,
+    "attack/backbend-guillotine": 0.45,
+    "attack/cossack-spiral": 0.5
+  },
+  "fadeTicks": {
+    "default": 5,
+    "locomotion": 8,
+    "toAttack": 2,
+    "fromAttack": 4,
+    "toHit": 2,
+    "toBlock": 3
+  }
+}

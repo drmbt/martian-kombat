@@ -1,0 +1,95 @@
+// Dash stocks (SPEC/engine): dashes are a limited resource so the impulse
+// can't be spammed into a permanent speed boost — each double-tap spends a
+// stock, stocks regen one at a time on a fixed clock. WHY: unlimited dashes
+// broke neutral (corner-to-corner in under a second) and made zoning moot.
+import { describe, expect, it } from 'vitest';
+import { DASH_REGEN_TICKS, DASH_STOCKS, EMPTY_INPUT, GameState, InputFrame, initialState, step } from './index';
+import { characters } from '../data/characters';
+
+function inp(partial: Partial<InputFrame> = {}): InputFrame {
+  return { ...EMPTY_INPUT, ...partial };
+}
+
+function fresh(): GameState {
+  const s = initialState('vincent', 'yulia', characters);
+  s.phase = 'fight';
+  return s;
+}
+
+/** P1 faces right: tap, two-tick release, tap = forward dash (the release
+ *  gap must be old enough to sit inside doubleTapped's scan window) */
+function doubleTapForward(s: GameState): void {
+  step(s, [inp({ right: true }), inp()], characters);
+  step(s, [inp(), inp()], characters);
+  step(s, [inp(), inp()], characters);
+  step(s, [inp({ right: true }), inp()], characters);
+}
+
+describe('stage bounds (MatchRules.stage)', () => {
+  it('defaults clamp at the classic 50..910 and wider rules widen the walk range', () => {
+    const def = fresh();
+    def.fighters[0].x = 60;
+    for (let t = 0; t < 120; t++) step(def, [inp({ left: true }), inp()], characters);
+    expect(def.fighters[0].x).toBe(50);
+
+    const wide = initialState('vincent', 'yulia', characters, { stage: { minX: -110, maxX: 1070 } });
+    wide.phase = 'fight';
+    wide.fighters[0].x = 60;
+    for (let t = 0; t < 300; t++) step(wide, [inp({ left: true }), inp()], characters);
+    expect(wide.fighters[0].x).toBe(-110);
+  });
+});
+
+describe('intro length (MatchRules.introTicks)', () => {
+  it('round 1 honors the rule, later rounds fall back to the default 90', () => {
+    const s = initialState('vincent', 'yulia', characters, { introTicks: 300 });
+    for (let t = 0; t < 299; t++) step(s, [inp(), inp()], characters);
+    expect(s.phase).toBe('intro');
+    step(s, [inp(), inp()], characters);
+    expect(s.phase).toBe('fight');
+  });
+});
+
+describe('dash stocks', () => {
+  it('spends a stock per dash and applies the impulse', () => {
+    const s = fresh();
+    doubleTapForward(s);
+    expect(s.fighters[0].dashStocks).toBe(DASH_STOCKS - 1);
+    expect(s.fighters[0].vx).toBeGreaterThan(0);
+  });
+
+  it('blocks the dash once the pool is empty — walk still works', () => {
+    const s = fresh();
+    for (let i = 0; i < DASH_STOCKS; i++) {
+      doubleTapForward(s);
+      // let the impulse bleed off so the next double-tap is clean
+      for (let t = 0; t < 30; t++) step(s, [inp(), inp()], characters);
+    }
+    expect(s.fighters[0].dashStocks).toBe(0);
+    const xBefore = s.fighters[0].x;
+    doubleTapForward(s);
+    expect(s.fighters[0].vx).toBe(0); // no impulse granted
+    expect(s.fighters[0].x).toBeGreaterThan(xBefore); // plain walk unaffected
+  });
+
+  it('regens one stock after DASH_REGEN_TICKS, capped at DASH_STOCKS', () => {
+    const s = fresh();
+    doubleTapForward(s);
+    expect(s.fighters[0].dashStocks).toBe(DASH_STOCKS - 1);
+    for (let t = 0; t < DASH_REGEN_TICKS; t++) step(s, [inp(), inp()], characters);
+    expect(s.fighters[0].dashStocks).toBe(DASH_STOCKS);
+    // full pool: the clock must not bank a phantom stock
+    for (let t = 0; t < DASH_REGEN_TICKS * 2; t++) step(s, [inp(), inp()], characters);
+    expect(s.fighters[0].dashStocks).toBe(DASH_STOCKS);
+  });
+
+  it('backdash draws from the same pool', () => {
+    const s = fresh();
+    step(s, [inp({ left: true }), inp()], characters);
+    step(s, [inp(), inp()], characters);
+    step(s, [inp(), inp()], characters);
+    step(s, [inp({ left: true }), inp()], characters);
+    expect(s.fighters[0].dashStocks).toBe(DASH_STOCKS - 1);
+    expect(s.fighters[0].vx).toBeLessThan(0);
+  });
+});

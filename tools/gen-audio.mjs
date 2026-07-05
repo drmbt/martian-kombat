@@ -15,7 +15,8 @@ const KEY = env.ELEVENLABS_API_KEY;
 // ElevenLabs caps concurrent requests by plan tier; keep this modest.
 const CONCURRENCY = concurrencyArg(4);
 
-const ANNOUNCER = 'V33LkP9pVLdcjeB2y5Na'; // Maverick — epic heroic legend
+const ANNOUNCER = 'V33LkP9pVLdcjeB2y5Na'; // Maverick — epic heroic legend (rounds, KO, fighter names)
+const STAGE_VOICE = 'QMJTqaMXmGnG8TCm8WQG'; // Clyde — vintage male radio announcer (stage name call-outs only)
 const VOICE_M = 'SOYHLrjzK2X1ezoPC6cr'; // Harry — fierce warrior (Vincent)
 const VOICE_F = 'EXAVITQu4vr4xnSDxMaL'; // Sarah — mature confident (Yulia)
 const VOICE_CATH = 'cgSgspJ2msm6clMCkdW9'; // Jessica — playful bright (Catherine)
@@ -72,6 +73,29 @@ const announcerLines = {
   ygor: 'YGOR!',
   'finish-them': 'FINISH THEM!',
   fatality: 'FATALITY!',
+  // stage-name call-outs (announced on stage select, mirrors the fighter
+  // names). Keys must stay in sync with STAGES ids in src/data/stages.ts.
+  // NOTE the announcer voice (Maverick) is an ElevenLabs *library* voice — it
+  // needs a paid plan; on the free tier these 402. Regen when the plan allows.
+  'stage-salton': 'SALTON SHORELINE!',
+  'stage-altar': 'ALTAR!',
+  'stage-bbac': 'B B A C!',
+  'stage-chiba': 'CHIBA!',
+  'stage-chiba-roof': 'CHIBA ROOFTOP!',
+  'stage-dodecahedron': 'DODECAHEDRON!',
+  'stage-dome': 'THE DOME!',
+  'stage-drive-in': 'DRIVE IN!',
+  'stage-estates': 'THE ESTATES!',
+  'stage-institute': 'THE INSTITUTE!',
+  'stage-mars': 'MARS!',
+  'stage-mimos': 'MIMOS!',
+  'stage-neptune': 'NEPTUNE!',
+  'stage-painted-canyon': 'PAINTED CANYON!',
+  'stage-saturn': 'SATURN!',
+  'stage-ski-inn': 'SKI INN!',
+  'stage-shipwreck': 'SHIPWRECK!',
+  'stage-the-range': 'THE RANGE!',
+  'stage-van': 'THE VAN!',
 };
 
 // Voice line takes an id, a voice, then per-category line lists so combat and
@@ -204,7 +228,9 @@ const announcerTasks = Object.entries(announcerLines)
     out: join(AUDIO, 'announcer', `${id}.mp3`),
     label: `announcer ${id}`,
     prompt: text,
-    run: () => tts(ANNOUNCER, text, 0.9),
+    // stage names get the dedicated radio-announcer voice; everything else
+    // keeps Maverick
+    run: () => tts(id.startsWith('stage-') ? STAGE_VOICE : ANNOUNCER, text, 0.9),
   }));
 const gruntTasks = grunts
   .filter(([id]) => !only || id.startsWith(`${only}-`))

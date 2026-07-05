@@ -27,6 +27,8 @@ export interface InputFrame {
   lk: boolean;
   mk: boolean;
   hk: boolean;
+  /** flavor taunt — a real engine input so it's deterministic + net-synced */
+  taunt: boolean;
 }
 
 export const EMPTY_INPUT: InputFrame = {
@@ -40,6 +42,7 @@ export const EMPTY_INPUT: InputFrame = {
   lk: false,
   mk: false,
   hk: false,
+  taunt: false,
 };
 
 /** 'high' = overhead (air attacks): must be blocked STANDING.
@@ -272,6 +275,8 @@ export type ActionKind =
    *  after a whiffed air normal (buffered presses fire the moment it ends) */
   | 'landing'
   | 'ko'
+  /** flavor taunt pose — committed for TAUNT_TICKS, vulnerable, ends to idle */
+  | 'taunt'
   /** helpless: dizzy from stun buildup (fight phase, times out after
    *  DIZZY_TICKS), or standing defeated in the finisher window waiting for
    *  the fatality (never times out — updateFighter skips the loser there) */
@@ -334,6 +339,10 @@ export interface FighterState {
   hitstop: number;
   /** action input buffer — null once consumed or expired */
   buffered: BufferedAction | null;
+  /** dash stocks remaining (double-tap dashes spend one; see DASH_STOCKS) */
+  dashStocks: number;
+  /** ticks accumulated toward the next stock regen (counts only when short) */
+  dashRegen: number;
   /** hits taken in the CURRENT combo (this fighter is the victim): increments
    *  while a hit lands on an already-reeling fighter, resets to 0 the moment
    *  they leave hitstun/airHit — fuels combo damage scaling */
@@ -393,6 +402,12 @@ export interface MatchRules {
   roundTicks: number;
   /** rounds needed to take the match */
   winsNeeded: number;
+  /** walkable x range — wider arenas (3D stage) widen it symmetrically
+   *  around STAGE_W/2 so renderer centering stays put */
+  stage: { minX: number; maxX: number };
+  /** ROUND 1 intro length in ticks (later rounds keep INTRO_TICKS) — longer
+   *  first intros give entry gestures + a READY? 3-2-1 countdown room */
+  introTicks: number;
 }
 
 export interface GameState {

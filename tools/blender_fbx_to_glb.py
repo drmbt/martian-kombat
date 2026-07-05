@@ -1,0 +1,321 @@
+# Blender headless: Mixamo rig FBX + clip FBXs -> one GLB with named clips.
+# Invoked by tools/gen-mesh.mjs:
+#   Blender --background --factory-startup --python tools/blender_fbx_to_glb.py -- job.json
+#
+# job.json: { "rig": path, "basecolor": path|null, "out": path,
+#             "report": path, "clips": [{ "name", "file", "stripY" }] }
+#
+# Root motion: horizontal hips travel is ALWAYS stripped (the engine owns
+# translation — SPEC V6); vertical is kept for pose (crouch, knockdown) unless
+# the clip says stripY. The vertical bone-local channel is derived from the
+# rig's rest pose, not hardcoded.
+import json
+import re
+import sys
+
+import bpy
+
+BONE_RE = re.compile(r'pose\.bones\["([^"]+)"\]')
+
+
+def fail(msg):
+    print(f"BLENDER-FAIL: {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def import_fbx(path, use_anim):
+    before = set(bpy.data.objects)
+    bpy.ops.import_scene.fbx(filepath=path, use_anim=use_anim)
+    return [o for o in bpy.data.objects if o not in before]
+
+
+def find_armature(objs):
+    for o in objs:
+        if o.type == 'ARMATURE':
+            return o
+    return None
+
+
+def sanitize_materials(meshes):
+    """Force OPAQUE: newer Mixamo exports wire a texture into the material's
+    Alpha and mark it BLEND — three then renders the whole character as a
+    transparent object (no depth-write, self-sorting chaos: see-through
+    limbs, garbled faces). Fighters are opaque; kill the alpha path."""
+    for mesh in meshes:
+        for slot in mesh.material_slots:
+            m = slot.material
+            if m is None:
+                continue
+            m.blend_method = 'OPAQUE'
+            if m.use_nodes:
+                for n in m.node_tree.nodes:
+                    if n.type == 'BSDF_PRINCIPLED':
+                        alpha = n.inputs['Alpha']
+                        for l in list(alpha.links):
+                            m.node_tree.links.remove(l)
+                        alpha.default_value = 1.0
+
+
+def ensure_basecolor(meshes, image_path):
+    """Give untextured materials a Principled+basecolor so the GLB isn't grey."""
+    if not image_path:
+        return False
+    img = None
+    applied = False
+    for mesh in meshes:
+        for slot in mesh.material_slots:
+            mat = slot.material
+            if mat is None:
+                continue
+            mat.use_nodes = True
+            nodes = mat.node_tree.nodes
+            principled = next((n for n in nodes if n.type == 'BSDF_PRINCIPLED'), None)
+            if principled is None:
+                continue
+            # only trust an image that is ACTUALLY wired into Base Color —
+            # stray/empty tex nodes made us skip while the exporter sampled
+            # nothing (yulia-v2 shipped white)
+            base = principled.inputs['Base Color']
+            has_base_tex = any(
+                l.from_node.type == 'TEX_IMAGE' and l.from_node.image for l in base.links
+            )
+            if has_base_tex:
+                continue
+            for l in list(base.links):
+                mat.node_tree.links.remove(l)
+            if img is None:
+                img = bpy.data.images.load(image_path)
+            tex = nodes.new('ShaderNodeTexImage')
+            tex.image = img
+            mat.node_tree.links.new(tex.outputs['Color'], base)
+            applied = True
+    return applied
+
+
+def vertical_channel(arm, hips_name):
+    """Bone-local axis index whose WORLD direction is most vertical.
+    Must go through matrix_world: FBX imports leave the armature object
+    rotated -90°, so armature-space 'up' is not world up — the old
+    armature-space test kept a horizontal channel (bows slid sideways)."""
+    m = (arm.matrix_world @ arm.data.bones[hips_name].matrix_local).to_3x3()
+    return max(range(3), key=lambda i: abs(m[2][i]))
+
+
+def remap_bone_paths(action, rig_bones):
+    """Point fcurves at the rig's bone names when only the prefix differs.
+    Curves for bones the rig simply doesn't have (e.g. Mixamo pinkies on a
+    four-fingered Tripo rig) are REMOVED — they'd only spam Blender warnings
+    and ship dead channels in the GLB."""
+    suffix = {}
+    for b in rig_bones:
+        suffix[b.split(':')[-1].lower()] = b
+    missing = set()
+    doomed = []
+    for fc in action.fcurves:
+        m = BONE_RE.search(fc.data_path)
+        if not m:
+            continue
+        name = m.group(1)
+        if name in rig_bones:
+            continue
+        alt = suffix.get(name.split(':')[-1].lower())
+        if alt:
+            fc.data_path = fc.data_path.replace(f'pose.bones["{name}"]', f'pose.bones["{alt}"]')
+        else:
+            missing.add(name)
+            doomed.append(fc)
+    for fc in doomed:
+        action.fcurves.remove(fc)
+    return sorted(missing)
+
+
+def scale_hips_translation(action, hips_name, s):
+    """Scale the hips (root) LOCATION keyframes by s — cancels the per-rig
+    armature-scale disparity so kept root travel is consistent across rigs.
+    Only the hips: other bones' translation channels are structural rest offsets."""
+    if abs(s - 1.0) < 1e-6:
+        return
+    path = f'pose.bones["{hips_name}"].location'
+    for fc in [f for f in action.fcurves if f.data_path == path]:
+        for kp in fc.keyframe_points:
+            kp.co[1] *= s
+            kp.handle_left[1] *= s
+            kp.handle_right[1] *= s
+        fc.update()
+
+
+def strip_root_motion(action, hips_name, vert_idx, strip_y, keep_horizontal=False):
+    # keep_horizontal (dances): retain the hips' floor travel (X/Z) so the dance
+    # can roam, while still dropping vertical hips motion (feet snap to ground at
+    # runtime) and ALL object-level transform below.
+    path = f'pose.bones["{hips_name}"].location'
+    stripped = []
+    for fc in [f for f in action.fcurves if f.data_path == path]:
+        horizontal = fc.array_index != vert_idx
+        remove = (not keep_horizontal) if horizontal else strip_y
+        if remove:
+            stripped.append(f"{'XYZ'[fc.array_index]}{'v' if not horizontal else ''}")
+            action.fcurves.remove(fc)
+    # OBJECT-level root motion: some Mixamo clips (bows, kicks, steps) animate
+    # the armature object's own transform instead of (or on top of) the hips
+    # bone — that slid models along the stage-depth axis (location) and turned
+    # punches sideways (rotation) in game. The engine owns translation and the
+    # renderer owns facing, so object-level transform channels die wholesale.
+    OBJ_PATHS = ('location', 'rotation_euler', 'rotation_quaternion')
+    for fc in [f for f in action.fcurves if f.data_path in OBJ_PATHS]:
+        stripped.append(f'obj.{fc.data_path}[{fc.array_index}]')
+        action.fcurves.remove(fc)
+    return stripped
+
+
+def main():
+    job_path = sys.argv[sys.argv.index('--') + 1]
+    with open(job_path) as f:
+        job = json.load(f)
+
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+
+    rig_objs = import_fbx(job['rig'], use_anim=False)
+    arm = find_armature(rig_objs)
+    if arm is None:
+        fail('no armature in rig FBX')
+    meshes = [o for o in rig_objs if o.type == 'MESH']
+    # drop unskinned meshes (Tripo exports sometimes carry a reference dummy):
+    # they can't animate, they render as frozen junk, and they poison the
+    # runtime height normalization
+    skinned = [m for m in meshes if len(m.vertex_groups) > 0]
+    if skinned and len(skinned) < len(meshes):
+        for m in meshes:
+            if m not in skinned:
+                print(f"BLENDER-NOTE: dropping unskinned mesh '{m.name}'")
+                bpy.data.objects.remove(m, do_unlink=True)
+        meshes = skinned
+    sanitize_materials(meshes)
+    textured = ensure_basecolor(meshes, job.get('basecolor'))
+
+    # normalize world height by SETTING the armature object scale (never
+    # transform_apply — that would change pose-space units under every clip):
+    # rigs arrive at wildly different unit conventions (vincent/flo/yulia all
+    # differ) and runtime Box3 guessing proved unreliable for skinned meshes
+    # ground truth = the RENDERED mesh: evaluate the skinned mesh through the
+    # depsgraph at rest (bone spans lie when a rig's bind convention differs —
+    # flo's bones span 18x his siblings' while his mesh renders 4x too big)
+    import mathutils
+    bpy.context.view_layer.update()
+    dg = bpy.context.evaluated_depsgraph_get()
+    zs = []
+    for m in meshes:
+        ev = m.evaluated_get(dg)
+        tmp = ev.to_mesh()
+        for v in tmp.vertices:
+            zs.append((ev.matrix_world @ v.co).z)
+        ev.to_mesh_clear()
+    span = max(zs) - min(zs)
+    target = job.get('targetHeight', 1.75)
+    factor = target / span if span > 1e-6 else 1.0
+    initial_scale = arm.scale[0]  # FBX import scale (~0.01), same for all rigs
+    arm.scale = tuple(s * factor for s in arm.scale)
+    # ROOT-TRANSLATION normalization. Bone ROTATIONS are scale-invariant, so the
+    # shared clips retarget onto every rig identically (why fights just work).
+    # But KEPT hips TRANSLATION (dances) rides the armature node scale, which is
+    # ~100x smaller on meter-scale Tripo rigs than on vincent — so their travel
+    # shrinks to nothing. Scaling hips-location keys by span/initial cancels the
+    # internal-scale disparity: world travel becomes clipTravel*targetHeight for
+    # EVERY rig (== 1.0 for vincent, so he's unchanged). Fights strip root, so
+    # this is a no-op there.
+    root_travel_scale = span / initial_scale if initial_scale > 1e-9 else 1.0
+    # normalize authored forward to +X: rigs facing +Z get a world-yaw bake
+    if job.get('forward') == 'z':
+        arm.rotation_euler.rotate_axis('Z', -1.5707963)
+    # some rigs (meter-scale skin verts under cm nodes) only render correctly
+    # in three when the exporter BAKES the armature transform into the skin.
+    # The -90 local-Z forces that path; the +90 local-Y stands the rig back
+    # upright (net effect verified per-rig in game — see manifest flags)
+    if job.get('bakeTransform'):
+        arm.rotation_euler.rotate_axis('Z', -1.5707963)
+        arm.rotation_euler.rotate_axis('Y', -1.5707963)
+        arm.rotation_euler.rotate_axis('Z', 3.14159265)
+
+    bpy.context.view_layer.update()
+
+    rig_bones = {b.name for b in arm.data.bones}
+    hips = next((b for b in rig_bones if b.lower().endswith('hips')), None)
+    if hips is None:
+        fail(f'no hips bone; bones: {sorted(rig_bones)[:8]}...')
+    vert_idx = vertical_channel(arm, hips)
+
+    if arm.animation_data is None:
+        arm.animation_data_create()
+
+    report = {
+        'bones': len(rig_bones),
+        'meshes': len(meshes),
+        'basecolorApplied': textured,
+        'hips': hips,
+        'verticalChannel': vert_idx,
+        'restSpan': round(span, 4),
+        'scaleFactor': round(factor, 4),
+        'clips': [],
+        'warnings': [],
+    }
+
+    for clip in job['clips']:
+        objs = import_fbx(clip['file'], use_anim=True)
+        clip_arm = find_armature(objs)
+        action = clip_arm.animation_data.action if clip_arm and clip_arm.animation_data else None
+        if action is None:
+            report['warnings'].append(f"{clip['name']}: no action in {clip['file']}")
+        else:
+            missing = remap_bone_paths(action, rig_bones)
+            if missing:
+                report['warnings'].append(f"{clip['name']}: unmapped bones {missing[:5]}")
+            # keepRoot clips (dances) keep horizontal floor travel but still drop
+            # vertical + object-level root; everything else strips all horizontal
+            # travel (the engine owns translation)
+            if clip.get('keepRoot'):
+                stripped = strip_root_motion(action, hips, vert_idx, True, keep_horizontal=True)
+                scale_hips_translation(action, hips, root_travel_scale)
+            else:
+                stripped = strip_root_motion(action, hips, vert_idx, clip.get('stripY', False))
+            action.name = clip['name']
+            action.use_fake_user = True
+            start, end = action.frame_range
+            track = arm.animation_data.nla_tracks.new()
+            track.name = clip['name']
+            strip = track.strips.new(clip['name'], max(int(start), 0), action)
+            strip.name = clip['name']
+            report['clips'].append({
+                'name': clip['name'],
+                'source': clip['file'],
+                'frames': round(end - start),
+                'seconds': round((end - start) / bpy.context.scene.render.fps, 3),
+                'rootStripped': stripped,
+            })
+        # the clip file's own objects are done — the action lives on our rig now
+        for o in objs:
+            bpy.data.objects.remove(o, do_unlink=True)
+
+    # final sweep: unskinned meshes sneak in via CLIP imports too (some packs
+    # ship the skin) — anything without vertex groups can't animate and only
+    # poisons bounds; kill before export
+    for o in [m for m in bpy.data.objects if m.type == 'MESH' and len(m.vertex_groups) == 0]:
+        print(f"BLENDER-NOTE: dropping unskinned mesh '{o.name}'")
+        bpy.data.objects.remove(o, do_unlink=True)
+
+    bpy.data.orphans_purge(do_recursive=True)
+
+    bpy.ops.export_scene.gltf(
+        filepath=job['out'],
+        export_format='GLB',
+        export_animations=True,
+        export_animation_mode='NLA_TRACKS',
+        export_skins=True,
+        export_yup=True,
+    )
+
+    with open(job['report'], 'w') as f:
+        json.dump(report, f, indent=1)
+    print(f"BLENDER-OK: {len(report['clips'])} clips -> {job['out']}")
+
+
+main()

@@ -723,6 +723,14 @@ review — chains/cancels/scaling promoted to Sprint 19)
       motion-clip frames; the biggest visual-quality lever we have
 
 ### Icebox (do not start)
+- **Attract-mode gag reels (3D)**: occasionally, instead of a demo fight, the
+  attract rotation holds on a stage with one or two fighters doing weird
+  bits for a little while — Thriller-style dance, taunts, yawning under a
+  street lamp — then rolls back into the normal demo. Mixamo has full dance
+  clips (Thriller Part 1-4, etc.); the 3D clip pipeline + renderer-side
+  gesture overrides (intro/taunt pattern) already cover the plumbing: drop
+  clips into the manifest, add an attract scheduler that picks fight vs gag.
+
 *(new characters, super meter, and the bonus stage PROMOTED 2026-07-03 to
 the Long-term RFEs above)* · stage
 interactables · rage meter + ENOUGH., armored/vault dashes, backdash
@@ -743,6 +751,246 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-05 · audio · stage-name announcer VO (Clyde)** — all 19 stages now
+  have a spoken name call-out (`public/assets/audio/announcer/stage-<id>.mp3`),
+  generated in the "Clyde — Vintage Male Radio Announcer" voice
+  (`QMJTqaMXmGnG8TCm8WQG`). gen-audio uses Clyde ONLY for `stage-*` lines;
+  Maverick stays for rounds/KO/fighter names (per-line voice switch). BootScene
+  preloads them; `SelectScene.playStageVo` (already wired) calls them out on
+  vote + on the resolved stage at launch. NOTE: needs the paid ElevenLabs key
+  (professional library voice) + `--concurrency ≤3` (Starter plan's parallel
+  cap). Verified: all 19 in the audio cache, no decode error. — Claude
+
+- **2026-07-05 · net+scenes · online rematch on the same channel** — at the end
+  of an online match each player sees a REMATCH prompt; press R/ENTER (or
+  click/pad-confirm) to opt in, ESC to quit. When BOTH opt in it goes straight
+  back to the shared character select — no room-code re-entry, no re-sync. Core
+  logic is a Phaser-free `src/net/rematch.ts` `RematchLink` shared by FightScene
+  (2D) and FightScene3D: it takes the finished match's transport, exchanges a
+  `rematch` opt-in, and on agreement spins a fresh `LobbyController` on the SAME
+  connection with `skipVerify` (peers already handshaked this session) →
+  onReady → Select. Gotcha fixed: skipVerify makes onReady fire SYNCHRONOUSLY
+  during controller construction, so the launch is deferred a tick (scene
+  clock) — else it reads the not-yet-assigned controller ref (TDZ). bye/close
+  → forfeit to menu. Verified live (two Chrome, prod build): match1 → both opt
+  in → back in shared select (no code) → match2 runs in sync (chars identical,
+  heads within 1 tick, 0 desync). — Claude
+
+- **2026-07-05 · net+select · online pick-waiting + both-vote stage** — (1) after
+  a player locks their fighter online they now see "waiting for <name> to choose
+  their fighter…" instead of silently sitting/advancing; onBothLocked clears it
+  and BOTH open the stage picker. (2) stage is chosen by BOTH players (was
+  host-only): each casts a `stagePick` vote; the host reconciles (agree → that
+  stage, disagree → coin flip between the two votes) and sends the authoritative
+  `start`, so both launch on the identical stage (V25). `confirmStart` is now
+  host-internal. 4 lobby vitests cover same-vote, disagreement (result ∈ the two
+  votes over 12 trials), lone-guest-no-start. Verified live (two Chrome, prod
+  build): waiting note shown, both peers reach the stage dialog, opposing votes
+  resolve to one shared stage, sync intact. Local select untouched. — Claude
+
+- **2026-07-05 · net+scenes · online reuses the real SelectScene (no duplicate
+  picker)** — the custom mini-picker in LobbyScene is gone; online now hands off
+  to the SAME `SelectScene` local 2-player uses (grid + side idle sprites +
+  stage dialog). Split the net handshake: `hello` (proto+charHash+name) verifies
+  on connect → `onReady` hands off to Select; `pick {charId}` is sent when a
+  player locks their fighter on the shared grid; the HOST picks the stage and
+  `confirmStart` commits the host-authoritative config. One `LobbyController`
+  spans Lobby→Select (passed by reference, `setHooks` merges the pick/stage/
+  start hooks). SelectScene online mode: local controls only its slot, the
+  remote fighter fills from the wire, only the host drives the stage dialog
+  (guest shows "waiting…"), then it launches Fight/Fight3D itself with the
+  online payload — Versus is skipped online. Local/CPU/training select paths
+  untouched (verified: both picks → stage → Versus, `online:false`). Verified
+  live over two Chrome processes on the production build: both peers land in
+  the shared selector, pick their own fighters (both slots reflect both picks),
+  host picks stage, both launch in lockstep — chars identical, heads within
+  1 tick, 0 desync. lobby.test rewritten for verify→ready→picks→start (7
+  tests). — Claude
+
+- **2026-07-04 · net · 3D-aware multiplayer + paste-anywhere (public 3D/MP)** —
+  online now respects the renderer: the host announces its 2D/3D mode the
+  instant the channel opens (new `mode` wire msg), the guest AUTO-ADOPTS it
+  before picking (so 2D/3D can never cross-join and the guest's roster +
+  launched scene always match the host). Lobby filters the char pool to
+  mesh-capable fighters (vincent/yulia/flo) in 3D and launches `Fight3D` vs
+  `Fight` per the agreed `render3d` in the start config. `FightScene3D` gained
+  the same `online`→NetSession injection as `FightScene` (identical hooks,
+  V18), with the 3D stage bounds baked into the host's rules so V25 holds in
+  either renderer. Pasting a room code anywhere on the page jumps to join +
+  fills it. Confirmed 3D + online are NOT dev-gated — reachable in the
+  production build via the menu render toggle + ONLINE entry; verified in
+  `npm run preview`: 3D fight renders (WebGPU), lobby 3D pools the 3 mesh
+  chars, paste fills. Test-room + debug hotkeys kept as-is (per user). — Claude
+
+- **2026-07-04 · net+scenes · online lobby + session injection, live-verified
+  (SPEC T39 done, T40 core)** — `LobbyScene` (registered in main.ts, menu
+  "3 · ONLINE" + `?dev=net`): host → room code + copy + "waiting", join → code
+  entry, per-side character pick, drives the `LobbyController` handshake →
+  launches `Fight` with an `OnlineFightData` payload. FightScene now takes that
+  payload and builds a `NetSession` (rollback) instead of `FightSession` using
+  the SAME tick hooks — proof of V18 (net vs local = session swap, scene code
+  identical). Online disables pause (sim never freezes, V23). peerjs
+  dynamic-imported → code-split into its own 91KB chunk, out of the 2D bundle.
+  Handshake logic (`src/net/lobby.ts` `LobbyController` + `charDataHash`,
+  V21) is unit-tested over loopback (6 vitests). **Live-verified** with a
+  two-Chrome-process CDP harness (scratchpad `net-2proc.mjs`): two peers meet
+  over the real peerjs broker + WebRTC DataChannel, both reach Fight, and their
+  engine heads stay byte-identical in lockstep (tick 180/300/420/540 equal,
+  0 desync, 0 halt) — V25 over the real network path. NOTE headless fully
+  PAUSES non-visible tabs' rAF, so two-player smokes need two separate Chrome
+  processes, not two tabs. REMAINING (T40): disconnect grace/rejoin + rematch.
+  — Claude
+- **2026-07-04 · net · WebRTC transport over PeerJS (SPEC T38, + rejoin spec
+  V27/T46)** — `src/net/webrtc.ts`: `WebRtcTransport` wraps a peerjs
+  DataConnection behind the same `Transport` iface as the loopback, so
+  NetSession is transport-agnostic. `hostRoom()` claims a namespaced room id
+  (5-char unambiguous code, no I/L/O/0/1) + waits for a guest; `joinRoom()`
+  connects to it; both surface a `transport` promise + `onReconnect` hook.
+  The room-owning Peer outlives any single DataConnection so a dropped peer
+  can rebind into the same room — groundwork for T46 rejoin. Reliable+ordered
+  channel (lockstep needs both). Not vitest-able (real broker); gated on
+  typecheck+build; code-gen unit-tested. peerjs dep added. SPEC gains V27
+  (grace window + host-authoritative resync, not instant forfeit) + T46. —
+  Claude GGPO-style
+  netplay behind the same Session surface as FightSession: predicted remote
+  inputs (repeat-last), structuredClone snapshot ring, mispredict → restore
+  at divergence + silent re-sim to head (presentation hooks fire once per
+  tick, V24), input delay D=2, stall only past window W=10, confirmed-tick
+  hash exchange (V20), stats() for the net HUD, onIssue for desync/
+  disconnect. 7 vitests over loopback incl. the V25 keystone: confirmed
+  timeline hash-equal to an offline step() replay of the same input log,
+  under latency+jitter+15% loss. — Claude
+- **2026-07-04 · net · transport seam + loopback test double (SPEC T36)** —
+  `src/net/transport.ts`: `Transport` interface (send/onMessage/onStatus/
+  close), typed `NetMsg` wire union (hello/start/input/hash/bye, PROTO=1),
+  and `createLoopbackPair` — in-memory pair on a virtual tick clock with
+  seeded-LCG latency/jitter/loss simulation (deterministic, no wall clock).
+  5 vitests incl. seed reproducibility and post-send mutation isolation.
+  NetSession (T37) tests will run entirely on this. — Claude
+- **2026-07-04 · engine · net wire helpers (SPEC T35)** — `unpackInput`
+  (inverse of packInput, 1024-combo round-trip vitest) and `hashState`
+  (FNV-1a over float64 bit patterns of the numeric core: tick/phase/timer/
+  wins + per-fighter x/y/vx/vy/facing/health/stun/hitstop/action +
+  projectiles/pendingThrow) for netplay desync detection (V20/V22). Math-op
+  audit: engine uses only abs/floor/max/min — exact IEEE ops, no trig/pow,
+  cross-browser deterministic. — Claude
+- **2026-07-04 · session · extract FightSession (SPEC T34, netplay groundwork)** —
+  the duplicated fixed-timestep loops in FightScene + FightScene3D moved into
+  `src/session/FightSession.ts`: one driver owns accumulator, 100ms delta
+  clamp, KO slow-mo pacing, and the `step()` call; scenes hang presentation
+  off `beforeTick`/`inputs`/`afterTick` hooks (2D keeps its perf split +
+  snapshot diff, 3D keeps snapTick/diffTick order). Zero Phaser imports,
+  5 vitests (tick-for-tick parity vs plain step loop, clamp, koSlow pacing,
+  resetPacing, hook order). Behavior unchanged; NetSession (rollback, SPEC
+  T37) swaps in behind the same `Session` surface. — Claude
+
+- **2026-07-04 · renderer3d+tools · animation stabilization sweep** — root
+  motion actually dead now: (1) vertical-axis detection went through
+  matrix_world (FBX leaves the armature rotated -90°, so armature-space "up"
+  kept a HORIZONTAL hips channel — the sideways drift in bows, reactions,
+  victory wobble); (2) object-level location AND rotation fcurves stripped
+  (some Mixamo clips animate the armature object itself — Z-slides, sideways
+  punches). T-pose flash fixed (same-clip restart crossfaded an action
+  against itself → bind-pose bleed; hard cut now). Dizzy stars: texture
+  late-binds (white-square bug). matchEnd poses: winner plays win clip,
+  loser lies in ko (engine leaves mercy-path losers 'dazed' → stun loop
+  looked like looping death). GLB byte-cache kills the capsule blink on
+  rematch (re-parse per consumer — SkeletonUtils.clone builds WebGL-class
+  skeletons the WebGPU renderer silently skips: invisible fighters). HUD:
+  dash pips inline with round stars, flush to the bar's outer end. — Claude
+
+- **2026-07-04 · engine+renderer3d · dash stocks, taunts, variants, entry
+  bow, directional/heavy/body hit reactions** — dash double-tap impulse now
+  gated by a 2-stock pool (150-tick regen, engine + 4 vitests, HUD pips w/
+  recharge fade); T = renderer-side taunt gesture; clip variant shuffle
+  (`name#N`, tick-hash latch) cycles jab/hook/elbow/reaction/taunt
+  alternates; round-1 intro bow; reactions pick side (front/back), weight
+  (small/large), and height (body: stomach/liver) from the actual hit;
+  uppercut landed as rising-glyph; HUD extracted to
+  `src/renderer3d/hud/{FightHud,WinOverlay,FatalityOverlay}`; converter
+  strips fcurves for bones the Tripo rig lacks (no pinkies — zero Blender
+  warnings). GLB: 54 clips / 38 slots / 0 missing. 140 tests. Perf pass:
+  71→112fps (half-res AO G-pass, material-recompile fix, billboard pool,
+  cached HUD writes). Branch pushed to origin. — Claude
+
+- **2026-07-04 · renderer3d · 3D spike T25–T27 + depth/beam/blood pass** —
+  depth layers (gradient sky + moon, 4th skyline row, neon signs + halos,
+  power cables, foreground bollards/walls), lamps rebuilt w/ TSL
+  inverse-fresnel fake-volumetric beams (`beamMaterial` in ThreeStageView,
+  technique from webgpu-threejs-tsl skill) + head glow + asphalt pool decals,
+  2 shadow-casting lamps over the lane. Blood: fixed flat-lying mid-flight
+  drops (shared instancing dummy kept splat X-rotation — full rotation.set
+  now), circular drops, damage-tiered counts (3+dmg·0.45/0.75 cap 42, KO 70),
+  smaller rarer splats. impactNorm piecewise warp (`attackClipTime`) lands
+  authored hit frames on engine active-window open (vitest'd). Fatality
+  cutscene = DOM panel slideshow from 2D jpgs; matchEnd win screen (winner
+  portrait, loser -ko bust, winQuotes). Dizzy stars billboard. fps audit:
+  82–108fps w/ AO+bloom+2 point-shadow lamps (headless WebGPU/Metal).
+  Verification workflow: `scratchpad cdp-shot.mjs` (node 24 native WebSocket
+  CDP driver — headless Chrome `--screenshot` can't wait for async GLB loads;
+  real-time wait + JS eval + capture). — Claude
+- **2026-07-04 · renderer3d+presentation · 3D spike T17–T24: full presentation
+  parity + gore** — pure `src/presentation/tickEvents.ts` (`snapTick`/`diffTick`
+  → typed events, 6 vitests; 2D migrates onto it post-Sprint-19). Fight3D now
+  has: full audio parity via existing helpers (announcer cues, hit/block/
+  whoosh/jump/projectile SFX, hurt/kiai voices, stage/victory music), DOM HUD
+  with portrait pngs + ghost health bars + win pips + combo counter, spark/
+  per-move-overlay billboards from the 2D vfx pngs, victim emissive flash
+  (red+longer on counter), camera shake, MK blood (instanced ellipse drops,
+  cone along impact velocity, dmg-scaled count/size w/ fat blobs, floor
+  splats thinned + 4s fade, KO gush), projectiles as additive billboards
+  (fixes black-fringe squares) + radial glow + PointLight that lights street
+  and fighters. Perspective follow-cam default (V10 amended): midpoint lerp +
+  separation dolly = real parallax vs depth-staggered building rows; night
+  street placeholder stage (asphalt, sidewalk, lit windows, 2 overhead street
+  lamps w/ shadow-casting warm pools + fake-volumetric cones, dense fog, dim
+  moon key). Bloom default on. SkeletonHelper moved to scene root (was
+  double-transformed). vincent-vs-vincent dev launch. — Claude
+- **2026-07-04 · renderer3d · 3D spike T10–T12: stage box, light rig, post,
+  settings** — placeholder test stage (grid floor + gridded back wall + side
+  walls + horizon + fog) replaces the black void; three-point rig (warm key
+  w/ shadows, cool fill, rim) + ACES/exposure so black outfits read; TSL post
+  stack GTAO→bloom via `RenderPipeline` (AO on, bloom off by default, both
+  toggleable); `threeRenderSettings.ts` DOM panel (F4: fps, res scale,
+  shadow size, AO/bloom, exposure, per-light intensity, camera presets
+  default/low/high, hitbox+skeleton) + official r185 Inspector on F3.
+  Model facing fixed (GLB authored +X: 0°/180°, not ±90°), dev launch now
+  vincent-vs-vincent to exercise mesh path on both sides. Verified via CDP:
+  both fighters face each other, P2 played `attack/redirect` cast clip
+  unflagged. — Claude
+- **2026-07-04 · renderer3d+tools · 3D spike T7–T9 + T14–T16: vincent GLB
+  animated in-game** — `tools/gen-mesh.mjs` (`npm run gen:mesh -- --char
+  vincent`) drives headless Blender (`tools/blender_fbx_to_glb.py`): rig FBX +
+  ~130 Mixamo clip FBXs (zips auto-extracted to `assets/raw/mesh-clips/`) →
+  `public/assets/3d/characters/vincent/vincent.glb` (26 clips renamed to
+  contract names, horizontal root motion stripped, vertical kept for pose,
+  self-calibrating vertical-axis detection) + coverage report (24 mapped ·
+  16 fallback · 0 missing). Runtime: `clipContract.ts`+json (action→clip map,
+  V12 fallback chains, V13 class-based tick-sampled playback + crossfades,
+  hitstop freezes clips) with 11 vitests; `ThreeFighterView` swaps capsule →
+  skinned GLB (foot-origin, hurtStand-scaled, facing = rotation not mirror);
+  per-frame lowest-bone ground snap + stage `Floor`-group auto-alignment
+  (V14) so feet neither float nor poke through. HUD shows active clip +
+  PLACEHOLDER flag. Verified via CDP headless Chrome (idle + knockdown).
+  — Claude
+- **2026-07-04 · renderer3d+scenes · 3D spike T3–T6: playable WebGPU scene** —
+  `FightScene3D` behind `?dev=3d` (same `step()`/`KeyboardSource`/`CpuDriver`
+  loop as FightScene, Three canvas + DOM HUD pinned over the Phaser canvas,
+  F1 hitboxes / F9 rematch / ESC menu, `&boxes=1` for headless verification);
+  `ThreeFightRenderer` (WebGPU, ortho camera, camera x-tracking, work lights,
+  shadow floor), capsule `ThreeFighterView` placeholders sized off
+  `hurtStand`, `ThreeHitboxDebug` cuboid pool straight from `worldBox`
+  (hurt/body/startup/active/recovery/projectile/throw palette). three loads
+  as a lazy chunk — production 2D bundle unchanged. Verified in headless
+  Chrome WebGPU (`--enable-unsafe-webgpu --use-angle=metal`). — Claude
+- **2026-07-04 · renderer3d · 3D spike T1+T2 (branch `spike/3d-renderer`)** —
+  three@0.185.1 installed, real import paths verified (`three/webgpu`,
+  `three/addons/inspector/Inspector.js`, TSL `GTAONode`/`BloomNode`,
+  `GLTFLoader`); `src/renderer3d/threeCoordinates.ts` engine→Three mapping
+  (WORLD_SCALE 0.01, floor→Y0, stage-centered X, ±0.18m lane cuboids) +
+  6 vitests. Spec/tasks in `SPEC.md` (SDD flow), spike doc in
+  `docs/THREE_D_RENDERER_SPIKE.md`. Vincent mesh + ~130 Mixamo clips staged
+  under `public/assets/meshes/vincent/`. — Claude
 - **2026-07-04 · data+assets · win-quote polish + Freeman crouch raw** — tightened
   SFII-style victory taunts for **Chebel, Flo, Gene, Kirby, Marzipan** (punchier
   rewrites; Flo's German de-unicoded to `scheisse`; Gene dropped one weak line),

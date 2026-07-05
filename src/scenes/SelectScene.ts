@@ -4,13 +4,14 @@
 // either player's keys drive it.
 import Phaser from 'phaser';
 import { STAGE_H, STAGE_W } from '../engine';
-import { ROSTER } from '../data/roster';
+import { ROSTER, type RosterEntry } from '../data/roster';
 import { characters } from '../data/characters';
 import { STAGES, stageOwner } from '../data/stages';
-import { play } from './BootScene';
+import { play, announce } from './BootScene';
 import { playMusic } from '../audio/music';
 import { menuNav, navDefer } from '../input/menu-nav';
 import { BindAction, getSettings } from '../settings';
+import type { OnlineSelectData, StartConfig } from '../net/lobby';
 
 const ATTACK_ACTIONS: BindAction[] = ['lp', 'mp', 'hp', 'lk', 'mk', 'hk'];
 
@@ -72,8 +73,16 @@ export class SelectScene extends Phaser.Scene {
   private starting = false;
   private cpu = false;
   private training = false;
+  private render3d = false;
+  /** online payload when this is a netplay pick (null = local). In online the
+   *  local player controls only `online.localSlot`; the other side is filled
+   *  from the wire, and only the host (slot 0) drives the stage dialog. */
+  private online: OnlineSelectData | null = null;
+  private waitingText: Phaser.GameObjects.Text | null = null;
   private stageMode = false;
   private stageIdx = 0;
+  /** online: the option index the REMOTE player voted for (-1 = not yet) */
+  private remoteStageIdx = -1;
   private stageCursor: Phaser.GameObjects.Graphics | null = null;
   // stage-dialog layout, computed by layoutStageGrid for the current count
   private scols = 4;
@@ -87,9 +96,24 @@ export class SelectScene extends Phaser.Scene {
     super('Select');
   }
 
-  init(data: { cpu?: boolean; training?: boolean }): void {
-    this.cpu = !!data.cpu;
-    this.training = !!data.training;
+  init(data: { cpu?: boolean; training?: boolean; render3d?: boolean; online?: OnlineSelectData }): void {
+    this.online = data.online ?? null;
+    // online is strictly 2-human, and the renderer is the host's (adopted)
+    this.cpu = !this.online && !!data.cpu;
+    this.training = !this.online && !!data.training;
+    this.render3d = this.online ? this.online.render3d : !!data.render3d;
+  }
+
+  /** the slot the LOCAL player controls (online: fixed; local: the P1-first
+   *  shared cursor logic). All grid movement + confirms route through here. */
+  private localControlSlot(): 0 | 1 {
+    return this.online ? this.online.localSlot : this.slotForP1();
+  }
+
+  /** Whether an entry can be picked in the CURRENT render mode: 3D needs a baked
+   *  GLB (`mesh3d`), 2D just needs a sprite sheet (`playable`). */
+  private pickable(entry: RosterEntry): boolean {
+    return this.render3d ? !!entry.mesh3d : entry.playable;
   }
 
   create(): void {
@@ -112,6 +136,15 @@ export class SelectScene extends Phaser.Scene {
         stroke: '#2a0a0a', strokeThickness: 8,
       })
       .setOrigin(0.5);
+    if (this.render3d) {
+      this.add
+        .text(STAGE_W - 12, 12, '3D', {
+          fontFamily: 'monospace', fontSize: '16px', fontStyle: 'bold', color: '#7fe3ff',
+          stroke: '#000', strokeThickness: 4, backgroundColor: '#123', padding: { x: 8, y: 4 },
+        })
+        .setOrigin(1, 0)
+        .setDepth(8);
+    }
 
     // World map banner across the top.
     if (this.textures.exists('ui-world-map')) {
@@ -128,14 +161,25 @@ export class SelectScene extends Phaser.Scene {
       const { x, y } = this.cellXY(i);
       const c = this.gcell;
       const cellBg = this.add.rectangle(x, y, c, c, 0x14101a, 0.85).setStrokeStyle(2, 0x594566).setDepth(2);
+      const locked = !this.pickable(entry);
       if (this.textures.exists(`portrait-${entry.id}`)) {
         const img = this.add.image(x, y, `portrait-${entry.id}`).setDisplaySize(c - 6, c - 6).setDepth(3);
-        if (!entry.playable) img.setAlpha(0.3).setTint(0x777799);
+        if (locked) img.setAlpha(0.3).setTint(0x777799);
+      }
+      // in 3D mode a sprite-playable fighter with no baked GLB reads "3D SOON"
+      if (locked && this.render3d && entry.playable) {
+        this.add
+          .text(x, y + c / 2 - 10, '3D SOON', {
+            fontFamily: 'monospace', fontSize: '10px', fontStyle: 'bold', color: '#7fe3ff',
+            stroke: '#000', strokeThickness: 3,
+          })
+          .setOrigin(0.5)
+          .setDepth(4);
       }
       // mouse: hovering moves the active cursor here; clicking confirms it.
       // The mouse always drives the first unconfirmed slot — in every mode it
       // picks P1 first, then (once P1 locks) P2 / the CPU opponent / the dummy.
-      cellBg.setInteractive({ useHandCursor: entry.playable });
+      cellBg.setInteractive({ useHandCursor: !locked });
       cellBg.on('pointerover', () => {
         if (this.stageMode) return;
         const p = this.confirmed[0] ? 1 : 0;
@@ -228,7 +272,8 @@ export class SelectScene extends Phaser.Scene {
     kb.on('keydown-ESC', () => {
       if (this.starting) return;
       play(this, 's-blip', 0.5);
-      if (this.stageMode) this.scene.restart({ cpu: this.cpu, training: this.training });
+      if (this.online) return this.leaveOnline(); // leaving disconnects the match
+      if (this.stageMode) this.scene.restart({ cpu: this.cpu, training: this.training, render3d: this.render3d });
       else this.scene.start('Menu');
     });
 
@@ -238,7 +283,138 @@ export class SelectScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    if (this.online) this.setupOnline();
+
     this.redraw();
+  }
+
+  /** Wire the shared select to the live match controller (SPEC T39 reuse). The
+   *  controller was created by LobbyScene during connect; here it gains the
+   *  pick/stage/start hooks and the local player is bannered by side. */
+  private setupOnline(): void {
+    const net = this.online!;
+    this.add
+      .text(STAGE_W / 2, MAP_TOP + MAP_H + 10, `ONLINE vs ${net.remoteName} — you are Player ${net.localSlot + 1}`, {
+        fontFamily: 'monospace', fontSize: '13px', color: '#8fe388', stroke: '#000', strokeThickness: 3,
+      })
+      .setOrigin(0.5)
+      .setDepth(5);
+    net.controller.setHooks({
+      onRemoteCursor: (idx) => this.applyRemoteCursor(idx),
+      onRemoteLock: (r) => this.applyRemotePick(r.charId),
+      onBothLocked: () => this.onBothLocked(),
+      onRemoteStage: (stageId) => this.applyRemoteStageVote(stageId),
+      onStart: (c) => this.launchOnline(c),
+      onPhase: (phase, detail) => {
+        if (phase === 'error') this.onNetError(detail ?? 'connection lost');
+      },
+    });
+    // a pick that landed during the Lobby→Select handoff won't re-fire the
+    // hook — reflect it now so the remote slot isn't left blank
+    if (net.controller.remotePick) this.applyRemotePick(net.controller.remotePick);
+  }
+
+  /** the remote player's live cursor — move their slot's box before they lock */
+  private applyRemoteCursor(idx: number): void {
+    const remoteSlot: 0 | 1 = this.online!.localSlot === 0 ? 1 : 0;
+    if (this.confirmed[remoteSlot] || idx < 0 || idx >= ROSTER.length) return;
+    this.idx[remoteSlot] = idx;
+    play(this, 's-blip', 0.2);
+    this.redraw();
+  }
+
+  /** the remote player cast a stage vote — mark it in the dialog (no call-out
+   *  yet; the resolved stage is announced once at launch) */
+  private applyRemoteStageVote(stageId: string): void {
+    this.remoteStageIdx = this.stageOptions().findIndex((o) => o.id === stageId);
+    if (this.stageMode) this.redrawStage();
+  }
+
+  /** the remote player's fighter arrived — reflect it in their slot */
+  private applyRemotePick(charId: string): void {
+    const remoteSlot: 0 | 1 = this.online!.localSlot === 0 ? 1 : 0;
+    const i = ROSTER.findIndex((e) => e.id === charId);
+    if (i < 0) return;
+    this.idx[remoteSlot] = i;
+    this.confirmed[remoteSlot] = true;
+    announce(this, `ann-${charId}`);
+    this.redraw();
+  }
+
+  /** both fighters locked: clear the "waiting" notice and BOTH players open
+   *  the stage picker (votes reconcile in the controller) */
+  private onBothLocked(): void {
+    this.waitingText?.destroy();
+    this.waitingText = null;
+    this.time.delayedCall(600, () => this.openStagePick());
+  }
+
+  /** show/replace the "waiting for the opponent" notice (bottom banner, above
+   *  the stage dialog + everything else) */
+  private setWaiting(text: string): void {
+    if (!this.waitingText) {
+      this.waitingText = this.add
+        .text(STAGE_W / 2, STAGE_H - 42, '', {
+          fontFamily: 'monospace', fontSize: '17px', fontStyle: 'bold', color: '#ffd24a',
+          stroke: '#000', strokeThickness: 6, align: 'center',
+          backgroundColor: '#1a1020', padding: { x: 12, y: 5 },
+        })
+        .setOrigin(0.5)
+        .setDepth(30);
+    }
+    this.waitingText.setText(text).setVisible(true);
+  }
+
+  /** leave an online pick: tell the peer, drop the channel, back to menu */
+  private leaveOnline(): void {
+    const t = this.online?.transport;
+    try {
+      t?.send({ t: 'bye', reason: 'left character select' });
+    } catch {
+      /* channel may already be gone */
+    }
+    t?.close();
+    this.scene.start('Menu');
+  }
+
+  private onNetError(detail: string): void {
+    if (this.starting) return;
+    this.starting = true;
+    this.add.rectangle(STAGE_W / 2, STAGE_H / 2, STAGE_W, STAGE_H, 0x1a0508, 0.85).setDepth(30);
+    this.add
+      .text(STAGE_W / 2, STAGE_H / 2, `CONNECTION LOST\n${detail}`, {
+        fontFamily: 'monospace', fontSize: '18px', fontStyle: 'bold', color: '#ff5a4a',
+        stroke: '#000', strokeThickness: 5, align: 'center',
+      })
+      .setOrigin(0.5)
+      .setDepth(31);
+    this.time.delayedCall(1800, () => this.scene.start('Menu'));
+  }
+
+  /** hand the live transport to the Fight (2D or 3D per the host's renderer).
+   *  onStart fires exactly once per peer (beginMatch is guarded), so this runs
+   *  once — the host from its own confirmStart, the guest from the `start` msg. */
+  private launchOnline(config: StartConfig): void {
+    this.starting = true;
+    this.waitingText?.setText(`stage: ${config.stage.replace(/-/g, ' ').toUpperCase()}`);
+    // announce the resolved stage (the winning vote) as the match kicks off
+    this.playStageVo(config.stage);
+    const net = this.online!;
+    this.time.delayedCall(400, () => {
+      this.scene.start(config.render3d ? 'Fight3D' : 'Fight', {
+        p1: config.chars[0],
+        p2: config.chars[1],
+        stage: config.stage,
+        online: {
+          transport: net.transport,
+          localSlot: net.localSlot,
+          delay: config.delay,
+          rules: config.rules,
+          remoteName: net.remoteName,
+          render3d: config.render3d,
+        },
+      });
+    });
   }
 
   /** Which slot the shared keyboard/pad drives: P1 until it locks, then P2. */
@@ -247,10 +423,14 @@ export class SelectScene extends Phaser.Scene {
   }
 
   private moveGrid(p: 0 | 1, d: number): void {
+    // online: the local player only ever moves their own slot
+    if (this.online) p = this.online.localSlot;
     if (this.confirmed[p] || this.starting) return;
     const n = ROSTER.length;
     this.idx[p] = ((this.idx[p] + d) % n + n) % n;
     play(this, 's-blip', 0.5);
+    // mirror our cursor to the opponent's screen (live remote cursor)
+    if (this.online) this.online.controller.moveCursor(this.idx[p]);
   }
 
   /** idle-a / idle-b sheet frame indices for the side idle animation. */
@@ -295,15 +475,28 @@ export class SelectScene extends Phaser.Scene {
   }
 
   private confirm(p: 0 | 1): void {
+    // online: only ever confirm the local slot; the pick goes over the wire and
+    // the stage picker is opened by onBothLocked (host), not here
+    if (this.online) p = this.online.localSlot;
     if (this.confirmed[p] || this.starting) return;
     const entry = ROSTER[this.idx[p]];
-    if (!entry.playable) {
+    if (!this.pickable(entry)) {
       play(this, 's-blip', 0.3);
       return;
     }
     this.confirmed[p] = true;
-    play(this, `ann-${entry.id}`, 1);
+    announce(this, `ann-${entry.id}`);
     this.redraw();
+    if (this.online) {
+      this.online.controller.lockChar(entry.id);
+      // picked first → tell them we're waiting on the other player, don't
+      // silently sit (onBothLocked clears this and opens the stage picker)
+      const remoteSlot = this.online.localSlot === 0 ? 1 : 0;
+      if (!this.confirmed[remoteSlot]) {
+        this.setWaiting(`waiting for ${this.online.remoteName} to choose their fighter…`);
+      }
+      return;
+    }
     if (this.confirmed[0] && this.confirmed[1]) {
       this.time.delayedCall(1100, () => this.openStagePick());
     }
@@ -311,7 +504,10 @@ export class SelectScene extends Phaser.Scene {
 
   /** RANDOM tile first, then every stage — index space of the dialog. */
   private stageOptions(): { id: string; name: string }[] {
-    return [{ id: 'random', name: 'RANDOM' }, ...STAGES];
+    // 3D-only: a pseudo-tile for the grey test chamber (no real STAGES entry,
+    // no slot conflict — the grid auto-sizes). Maps to room='test-room' in 3D.
+    const testRoom = this.render3d ? [{ id: 'test-room', name: '3D TEST ROOM' }] : [];
+    return [{ id: 'random', name: 'RANDOM' }, ...testRoom, ...STAGES];
   }
 
   /**
@@ -373,15 +569,22 @@ export class SelectScene extends Phaser.Scene {
       const ty = y - SLABEL_H / 2; // thumb center; label sits below it
       const tile = this.add.rectangle(x, ty, tw, th, 0x14101a, 1).setStrokeStyle(1, 0x594566).setDepth(11);
       tile.setInteractive({ useHandCursor: true });
-      tile.on('pointerover', () => { this.stageIdx = i; });
+      tile.on('pointerover', () => {
+        if (this.stageIdx === i) return;
+        this.stageIdx = i;
+        this.redrawStage();
+      });
       tile.on('pointerdown', () => { this.stageIdx = i; this.confirmStage(); });
       if (opt.id === 'random') {
         this.add.text(x, ty, '?', { ...font, fontSize: `${Math.round(th * 0.55)}px`, fontStyle: 'bold', color: '#ffd24a' })
           .setOrigin(0.5).setDepth(12);
+      } else if (opt.id === 'test-room') {
+        this.add.text(x, ty, '▦', { ...font, fontSize: `${Math.round(th * 0.5)}px`, fontStyle: 'bold', color: '#7fe3ff' })
+          .setOrigin(0.5).setDepth(12);
       } else if (this.textures.exists(`bg-stage-${opt.id}`)) {
         this.add.image(x, ty, `bg-stage-${opt.id}`).setDisplaySize(tw, th).setDepth(12);
       }
-      const owner = opt.id === 'random' ? null : stageOwner(opt.id, picked, characters);
+      const owner = opt.id === 'random' || opt.id === 'test-room' ? null : stageOwner(opt.id, picked, characters);
       const label = owner ? `${opt.name} · ${characters[owner].name}` : opt.name;
       this.add
         .text(x, ty + th / 2 + 3, label, {
@@ -410,16 +613,31 @@ export class SelectScene extends Phaser.Scene {
 
   private confirmStage(): void {
     if (this.starting) return;
-    this.starting = true;
     const pick = this.stageOptions()[this.stageIdx];
     const stage = pick.id === 'random'
       ? STAGES[Math.floor(Math.random() * STAGES.length)].id
       : pick.id;
     play(this, 's-blip', 0.8);
+    // online: BOTH players vote for a stage. The host reconciles (agree → that,
+    // disagree → coin flip) and sends the authoritative start, so both peers
+    // launch on the identical stage/rules (V25). Never scene.start here.
+    // online: BOTH vote; the announce waits until the vote is SETTLED
+    // (launchOnline plays the resolved stage), not on each vote here
+    if (this.online) {
+      this.starting = true;
+      this.redrawStage();
+      this.online.controller.pickStage(stage);
+      this.setWaiting(`stage locked — waiting for ${this.online.remoteName}…`);
+      return;
+    }
+    // offline: this IS the final pick — call it out now
+    this.starting = true;
     this.redrawStage();
+    this.playStageVo(stage);
     this.time.delayedCall(500, () => {
       this.scene.start('Versus', {
-        p1: ROSTER[this.idx[0]].id, p2: ROSTER[this.idx[1]].id, cpu: this.cpu, training: this.training, stage,
+        p1: ROSTER[this.idx[0]].id, p2: ROSTER[this.idx[1]].id,
+        cpu: this.cpu, training: this.training, stage, render3d: this.render3d,
       });
     });
   }
@@ -427,11 +645,30 @@ export class SelectScene extends Phaser.Scene {
   private redrawStage(): void {
     const g = this.stageCursor;
     if (!g) return;
+    g.clear();
+    // online: colour the local cursor by our slot; draw the opponent's vote in
+    // their colour (nested) so both votes are visible before they resolve
+    const localColor = this.online?.localSlot === 1 ? 0xff5a48 : 0x58e6d9;
+    const remoteColor = this.online?.localSlot === 1 ? 0x58e6d9 : 0xff5a48;
+    if (this.online && this.remoteStageIdx >= 0) {
+      const { x, y } = this.stageCellXY(this.remoteStageIdx);
+      const ty = y - SLABEL_H / 2;
+      g.lineStyle(3, remoteColor, 1);
+      g.strokeRect(x - this.sThumbW / 2 - 8, ty - this.sThumbH / 2 - 8, this.sThumbW + 16, this.sThumbH + 16);
+    }
     const { x, y } = this.stageCellXY(this.stageIdx);
     const ty = y - SLABEL_H / 2;
-    g.clear();
-    g.lineStyle(this.starting ? 5 : 3, 0x58e6d9, 1);
+    g.lineStyle(this.starting ? 5 : 3, localColor, 1);
     g.strokeRect(x - this.sThumbW / 2 - 4, ty - this.sThumbH / 2 - 4, this.sThumbW + 8, this.sThumbH + 8);
+  }
+
+  /** announce a stage by name (louder + ducks music; missing clips stay
+   *  silent). Only fired on FINAL selection — offline on confirm, online once
+   *  the vote is settled — never on hover/navigation. */
+  private playStageVo(stageId: string): void {
+    // Clyde (stage voice) records quieter than the Maverick name-calls, so
+    // push extra gain (WebAudio volume is a gain — >1 is fine here)
+    announce(this, `ann-stage-${stageId}`, 2.4);
   }
 
   update(): void {
@@ -459,7 +696,8 @@ export class SelectScene extends Phaser.Scene {
       // Select backs out of the stage dialog to the character grid
       if (n.menu) {
         play(this, 's-blip', 0.5);
-        navDefer(this, () => this.scene.restart({ cpu: this.cpu, training: this.training }));
+        if (this.online) navDefer(this, () => this.leaveOnline());
+        else navDefer(this, () => this.scene.restart({ cpu: this.cpu, training: this.training, render3d: this.render3d }));
       }
       return;
     }
@@ -472,7 +710,8 @@ export class SelectScene extends Phaser.Scene {
     // Select brings up the main menu (matches ESC)
     if (n.menu) {
       play(this, 's-blip', 0.5);
-      navDefer(this, () => this.scene.start('Menu'));
+      if (this.online) navDefer(this, () => this.leaveOnline());
+      else navDefer(this, () => this.scene.start('Menu'));
     }
   }
 
@@ -502,7 +741,7 @@ export class SelectScene extends Phaser.Scene {
           spr.setDisplaySize((SIDE_SPRITE_H * CELL_W) / CELL_H, SIDE_SPRITE_H);
           spr.setFlipX(p === 1);
           this.sideIdle[p] = this.idleFrames(entry.id);
-          if (!entry.playable) spr.setAlpha(0.5).setTint(0x8a8aa0);
+          if (!this.pickable(entry)) spr.setAlpha(0.5).setTint(0x8a8aa0);
           else spr.setAlpha(1).clearTint();
         }
         const [ia, ib] = this.sideIdle[p];

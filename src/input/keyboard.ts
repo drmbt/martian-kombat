@@ -68,6 +68,7 @@ export class KeyboardSource implements InputSource {
       lk: m.lk.isDown,
       mk: m.mk.isDown,
       hk: m.hk.isDown,
+      taunt: m.taunt.isDown,
     };
 
     const pad = padForPlayer(player);
@@ -89,6 +90,7 @@ export class KeyboardSource implements InputSource {
       frame.lk ||= btn(b.lk);
       frame.mk ||= btn(b.mk);
       frame.hk ||= btn(b.hk);
+      frame.taunt ||= btn(b.taunt);
     }
     return frame;
   }
