@@ -103,7 +103,7 @@ const announcerLines = {
 // kiai: attack grunts. hurt: pain reactions. victory: win-screen callouts
 // (spoken alongside the winQuotes text on the post-match screen).
 const VOICE_GENE = VOICE_M; // no dedicated ElevenLabs voice picked yet; reuse Harry
-const VOICE_MARZ = VOICE_F; // ditto, reuse Sarah
+const VOICE_MARZ = VOICE_M; // male voice (Harry) — Marzipan is a man; tuned mellow/earthy below
 
 // Slot counts are a contract with VOICE_COUNTS in src/scenes/BootScene.ts:
 // 6 kiai / 6 hurt / 4 victory per character. Keep the arrays exactly that
@@ -157,8 +157,11 @@ const voiceLines = {
     hurt: ['Ow!', 'Ugh, 429.', 'Nope!', 'Rate limited!', 'Segfault!', 'Bad output!'],
     victory: ['Yeah! Shipped it.', "Oh yeah — that's a merge.", 'Mana Blast secured.', 'Your context window just closed.'],
   },
+  // Marzipan is a laid-back dreadlocked vegan biologist; mellow + earthy, not fierce
   marzipan: {
     voice: VOICE_MARZ,
+    style: 0.35,
+    stability: 0.6,
     kiai: ['Grow!', 'Bloom!', 'Ha!', 'Symbiosis!', 'Photosynthesize!', 'Take root!'],
     hurt: ['Oh!', 'Ow!', 'Ugh!', 'Hey now!', 'Aah!', 'My roots!'],
     victory: ['Please, collaborate with me.', 'Nature always wins.', 'Grow with me, or don\'t.', 'Everything composts eventually.'],
