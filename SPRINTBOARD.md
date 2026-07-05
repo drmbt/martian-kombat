@@ -751,6 +751,16 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-05 · audio · stage-name announcer VO (Clyde)** — all 19 stages now
+  have a spoken name call-out (`public/assets/audio/announcer/stage-<id>.mp3`),
+  generated in the "Clyde — Vintage Male Radio Announcer" voice
+  (`QMJTqaMXmGnG8TCm8WQG`). gen-audio uses Clyde ONLY for `stage-*` lines;
+  Maverick stays for rounds/KO/fighter names (per-line voice switch). BootScene
+  preloads them; `SelectScene.playStageVo` (already wired) calls them out on
+  vote + on the resolved stage at launch. NOTE: needs the paid ElevenLabs key
+  (professional library voice) + `--concurrency ≤3` (Starter plan's parallel
+  cap). Verified: all 19 in the audio cache, no decode error. — Claude
+
 - **2026-07-05 · net+scenes · online rematch on the same channel** — at the end
   of an online match each player sees a REMATCH prompt; press R/ENTER (or
   click/pad-confirm) to opt in, ESC to quit. When BOTH opt in it goes straight

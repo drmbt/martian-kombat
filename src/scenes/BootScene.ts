@@ -18,6 +18,9 @@ const ANNOUNCER = [
   // per-fighter name calls — only for fighters with generated VO. A 404'd mp3
   // decodes to an uncaught EncodingError (not harmless), so gate like VOICES.
   ...ROSTER.filter((r) => r.playable).map((r) => r.id),
+  // stage name call-outs on the select screen — every STAGES id has a clip
+  // (tools/gen-audio.mjs `stage-*` lines). Same 404-gating rule: keep in sync.
+  ...STAGES.map((s) => `stage-${s.id}`),
 ];
 // several numbered variants per category so combat/win-screen audio doesn't
 // loop the same clip every hit; missing files 404 harmlessly, so characters
