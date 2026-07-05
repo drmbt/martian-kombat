@@ -58,7 +58,10 @@ async function genChar(charId) {
   const LOW_ANCHOR = ` CRITICAL: copy the BODY HEIGHT of the SECOND reference image (the low pose) — the top of the head at that same low height, empty green above.`;
   const isLowCell = (id) => id === 'crouch' || id === 'block-crouch' || /^c[lmh][pk]-/.test(id);
 
-  const genCell = async (i) => {
+  // extraRefs: additional reference images (prior special phases, projectile
+  // art, per-move inspo) appended after the canonical — the model keeps them
+  // consistent with the pose it's drawing.
+  const genCell = async (i, extraRefs = []) => {
     const { id, pose } = jobs[i];
     if (CELLS && !CELLS.has(id)) return; // targeted re-roll: only the named cells
     const out = join(outDir, `${String(i).padStart(2, '0')}-${id}.png`);
@@ -67,13 +70,16 @@ async function genChar(charId) {
     // per-character invariant (e.g. Catherine's bo staff in EVERY frame)
     const always = spec.always ? ` ${spec.always}` : '';
     const prompt = `${STYLE_BASE}\n${FRAME_RULES}${always}\nPose: ${pose}.${useAnchor ? LOW_ANCHOR : ''}`;
-    console.log(`[${charId}] ${i + 1}/${jobs.length} ${id}${useAnchor ? ' (low-anchored)' : ''} ...`);
+    const refs = [canonical, ...extraRefs.filter((p) => p && existsSync(p))];
+    if (useAnchor) refs.push(lowRefPath);
+    const tag = `${extraRefs.length ? ` (+${extraRefs.length} ref)` : ''}${useAnchor ? ' (low-anchored)' : ''}`;
+    console.log(`[${charId}] ${i + 1}/${jobs.length} ${id}${tag} ...`);
     try {
       const buf = await geminiImage({
         apiKey: env.GEMINI_API_KEY,
         model: MODEL,
         prompt,
-        referencePaths: useAnchor ? [canonical, lowRefPath] : [canonical],
+        referencePaths: refs,
         aspectRatio: '3:4',
       });
       saveAsset(out, buf, prompt);
@@ -82,17 +88,72 @@ async function genChar(charId) {
     }
   };
 
-  // The low anchor (legacy sheets) must exist before the crouch family runs,
-  // so generate it first, then fan out the remaining cells concurrently.
+  // The low anchor (legacy sheets) must exist before the crouch family runs.
   const anchorIdx = lowAnchorName?.i ?? -1;
   if (anchorIdx >= 0) await genCell(anchorIdx);
-  const rest = jobs.map((_, i) => i).filter((i) => i !== anchorIdx);
-  await pool(rest, CONCURRENCY, genCell);
 
-  // one art file per projectile-throwing special: projectile-<move-id>.png
-  // (skipped entirely during a targeted --cells re-roll)
-  const projJobs = CELLS ? [] : Object.entries(spec.extra?.projectiles ?? {});
-  await pool(projJobs, CONCURRENCY, async ([pid, proj]) => {
+  // Named specials (v2) get sequential, cross-referenced generation; every
+  // other cell stays concurrent. phaseRe matches "<special-id>-startup|active|
+  // recovery" so those are pulled OUT of the concurrent batch.
+  const specialIds = spec.moves6?.specials ? Object.keys(spec.moves6.specials) : [];
+  const esc = (s) => s.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+  const phaseRe = specialIds.length
+    ? new RegExp(`^(${specialIds.map(esc).join('|')})-(startup|active|recovery)$`)
+    : null;
+  const isPhase = (id) => (phaseRe ? phaseRe.test(id) : false);
+
+  // shared cells + normals: concurrent, no cross-refs.
+  const normalIdxs = jobs
+    .map((_, i) => i)
+    .filter((i) => i !== anchorIdx && !isPhase(jobs[i].id));
+  await pool(normalIdxs, CONCURRENCY, (i) => genCell(i));
+
+  // Specials: for a PROJECTILE move the projectile art is generated FIRST, so
+  // the startup/active frames can reference where the shot is going and draw a
+  // matching object leaving the hand. Then the three phases run IN ORDER, each
+  // one referencing the projectile + every earlier phase of the same special
+  // (+ any per-move inspo image). This is what keeps a special's frames — and
+  // its projectile — visually coherent (see gene's hallucination drift).
+  const projectiles = spec.extra?.projectiles ?? {};
+  const specialRefs = spec.extra?.specialRefs ?? {};
+  for (const sid of specialIds) {
+    const phaseRefs = [];
+    if (projectiles[sid] && !CELLS) {
+      const projOut = join(outDir, `projectile-${sid}.png`);
+      if (!skip(projOut, force)) {
+        const proj = projectiles[sid];
+        console.log(`[${charId}] projectile ${sid} (first) ...`);
+        try {
+          // NO canonical reference: an isolated-object projectile (a ball, a
+          // head) must not drag the whole character in — the prompt already
+          // carries the style. Consistency comes from explicit inspo refPaths.
+          const buf = await geminiImage({
+            apiKey: env.GEMINI_API_KEY,
+            model: MODEL,
+            prompt: proj.prompt,
+            referencePaths: (proj.refPaths ?? []).map((p) => join(ROOT, p)),
+            aspectRatio: '1:1',
+          });
+          saveAsset(projOut, buf, proj.prompt);
+        } catch (e) {
+          console.error(`  FAILED projectile ${sid}: ${e.message}`);
+        }
+      }
+      if (existsSync(projOut)) phaseRefs.push(projOut);
+    }
+    const inspo = (specialRefs[sid] ?? []).map((p) => join(ROOT, p)).filter((p) => existsSync(p));
+    for (const phase of ['startup', 'active', 'recovery']) {
+      const idx = jobs.findIndex((j) => j.id === `${sid}-${phase}`);
+      if (idx < 0) continue;
+      await genCell(idx, [...inspo, ...phaseRefs]);
+      const outP = join(outDir, `${String(idx).padStart(2, '0')}-${sid}-${phase}.png`);
+      if (existsSync(outP)) phaseRefs.push(outP); // next phase sees this one
+    }
+  }
+
+  // Projectiles NOT tied to a named special (legacy / edge case): concurrent.
+  const leftover = CELLS ? [] : Object.entries(projectiles).filter(([pid]) => !specialIds.includes(pid));
+  await pool(leftover, CONCURRENCY, async ([pid, proj]) => {
     const out = join(outDir, `projectile-${pid}.png`);
     if (skip(out, force)) return;
     console.log(`[${charId}] projectile ${pid} ...`);
@@ -101,7 +162,6 @@ async function genChar(charId) {
         apiKey: env.GEMINI_API_KEY,
         model: MODEL,
         prompt: proj.prompt,
-        // optional repo-relative reference images (logo marks etc.)
         referencePaths: (proj.refPaths ?? []).map((p) => join(ROOT, p)),
         aspectRatio: '1:1',
       });

@@ -129,6 +129,16 @@ const FATALITIES = {
       `The man from the reference image crouched calmly threading a single shiny new pop-tab onto the chain on his belt, the squat yellow one-clawed robot idling contentedly beside him, while the now-still yellow tub sits quiet with one small charred scrap poking out of the seam. He does not look at it. Cold quiet light, final.`,
     ],
   },
+  vanessa: {
+    id: 'fired-and-glazed',
+    canonical: 'assets/raw/canonical/vanessa.png',
+    panels: [
+      `The woman from the reference image (pink-and-teal geometric zip dress with a pink center stripe, wild curly auburn hair) raising both hands in a slow ceremonial gesture, a faint moonlit-silver light gathering at her palms (silver, never green), while a generic defeated opponent fighter stands frozen rigid before her — the opponent's skin beginning to turn pale matte grey like wet unfired clay. Low dramatic angle, ceremonial candle-light.`,
+      `The opponent now fully transformed into a pale grey UNFIRED CLAY statue (greenware) of a frozen fighter, rigid and lifeless, as a glossy ceramic GLAZE washes down over the clay from above in a shining wet sheet, the woman from the reference image extending one hand calmly. Side angle.`,
+      `The glazed clay statue of the opponent inside a glowing kiln-orange furnace heat, its hardening ceramic surface laced with spreading hairline CRACKS, steam and heat-shimmer rising, the woman from the reference image watching serenely with a soft moonlit-silver glow around her. Close angle on the cracking fired ceramic.`,
+      `The fired ceramic statue SHATTERING into scattered pottery shards across a kiln floor, the woman from the reference image placing a small pale clay round-headed Little Martian idol figurine atop the pile of broken shards like an offering, a soft moonbeam falling from above. She does not look back. Final, reverent.`,
+    ],
+  },
 };
 
 async function genPanel(charId, spec, i) {

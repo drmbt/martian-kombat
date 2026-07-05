@@ -1614,4 +1614,124 @@ export const CHARACTERS = {
       },
     },
   },
+  vanessa: {
+    canonical: 'assets/raw/canonical/vanessa.png',
+    layout: 'v2',
+    cells: {
+      'walk-a': 'MID-STEP walking forward, caught in motion (NOT a static stance): standing fairly UPRIGHT on a NARROW base, her LEFT knee lifted HIGH and swung FORWARD with that foot raised OFF the ground about to plant ahead, her RIGHT leg straight and trailing behind pushing off the toes. This is a walking step in motion. IGNORE the wide lunging leg stance of the reference image — redraw the LEGS as a clear mid-stride walk with one foot lifted.',
+      'walk-b': 'MID-STEP walking forward, the OPPOSITE step (a mirror of the other walk frame): standing fairly UPRIGHT on a NARROW base, her RIGHT knee lifted HIGH and swung FORWARD with that foot raised OFF the ground about to plant ahead, her LEFT leg straight and trailing behind pushing off the toes. IGNORE the wide lunging leg stance of the reference image — redraw the LEGS as a clear mid-stride walk with the OTHER foot lifted, distinctly different from the first walk frame.',
+    },
+    moves6: {
+      stand: {
+        lp: {
+          startup: 'drawing a slow ceremonial open palm back beside her hip, fingers together, calm and deliberate',
+          active: 'a single palm-heel strike fully extended forward at chest height, precise and unhurried',
+          recovery: 'the palm settling back into a composed high-priestess guard',
+        },
+        mp: {
+          startup: 'both hands rising, chambering a two-handed palm push at her side',
+          active: 'a two-handed ceremonial palm push thrust forward at chest height, faint moonlit-silver shimmer at the palms (the glow is SILVER-WHITE, never green)',
+          recovery: 'palms drawing back into a serene guard',
+        },
+        hp: {
+          startup: 'raising one hand overhead cradling a small pale terracotta clay idol, winding up',
+          active: 'driving the clay idol down in a heavy overhead smash at head height, a moonlit-silver impact burst (SILVER-WHITE, never green)',
+          recovery: 'lifting the hand back up from the follow-through, composed',
+        },
+        lk: {
+          startup: 'front knee rising for a short deliberate kick, hands kept in a ceremonial guard',
+          active: 'a quick snapping front kick at shin height, deliberate',
+          recovery: 'the foot returning smoothly to stance',
+        },
+        mk: {
+          startup: 'raising the lead knee high across the body, arms poised for balance',
+          active: 'a deliberate rising knee strike driven up at chest height — exactly one foot on the ground',
+          recovery: 'the knee lowering back into a settled stance',
+        },
+        hk: {
+          startup: 'coiling one leg back, arms flowing for a ceremonial high kick',
+          active: 'a tall sweeping crescent high kick fully extended at head height, a faint moonlit-silver trail off the heel (SILVER-WHITE, never green) — exactly one foot on the ground',
+          recovery: 'the kicking leg landing back into a composed stance',
+        },
+      },
+      crouch: {
+        lp: {
+          active: 'a short ceremonial palm snapped out at waist height from the squat',
+          recovery: 'the palm pulled back to guard, still compact in the squat',
+        },
+        mp: {
+          active: 'a rising palm thrust angled upward out of the squat, faint moonlit-silver shimmer (SILVER-WHITE, never green)',
+          recovery: 'the arm settling down, weight sinking back into the squat',
+        },
+        hp: {
+          active: 'both palms thrust powerfully straight upward out of the squat, a moonlit-silver burst overhead (anti-air; SILVER-WHITE, never green)',
+          recovery: 'arms lowering from overhead, settling back into the squat',
+        },
+        lk: {
+          active: 'squatting on her left leg, her RIGHT leg snapping a quick kick forward at ankle height',
+          recovery: 'the kicking leg pulled back beneath her, both feet planted in the squat',
+        },
+        mk: {
+          active: 'squatting on her bent left leg while her RIGHT leg is fully extended forward along the ground in a long low kick',
+          recovery: 'sliding the extended leg back beneath her body into a compact squat',
+        },
+        hk: {
+          active: 'a low circular leg sweep fully extended along the ground',
+          recovery: 'rising from the sweep back toward stance',
+        },
+      },
+      air: {
+        lp: 'throwing a quick downward-angled palm strike',
+        mp: 'a two-handed palm thrust angled 45 degrees downward, moonlit-silver shimmer (SILVER-WHITE, never green)',
+        hp: 'an overhead two-fist clay-idol hammer blow swung downward',
+        lk: 'a sharp knee strike raised toward the opponent',
+        mk: 'a side kick extended at a downward angle',
+        hk: 'a flying crescent kick — RIGHT leg fully extended with a moonlit-silver trail (SILVER-WHITE, never green), LEFT leg tucked beneath her, both legs clearly attached',
+      },
+      specials: {
+        'little-martian': {
+          startup: 'cupping both hands together at her hip, a small pale terracotta clay face taking shape between her palms with a faint moonlit-silver glow (SILVER-WHITE, never green)',
+          active: 'both palms thrust forward at chest height, launching a floating pale clay face-head away to the right, a moonlit-silver glow trailing it (SILVER-WHITE, never green)',
+          recovery: 'palms open in follow-through, the last silver glow fading from her fingertips',
+        },
+        'chocolate-head': {
+          startup: 'raising a round dark-brown ceremonial cacao head in one hand, winding back to lob it in an arc',
+          active: 'her arm in full follow-through after lobbing the dark cacao head — the round cacao head tumbling up and forward in a high arc ahead of her',
+          recovery: 'lowering the throwing arm, watching the arc land, composed',
+        },
+        teleportal: {
+          startup: 'raising both arms to summon a tall glowing dream-portal gateway materializing just BEHIND her — a white trapezoidal stone gate frame wreathed in golden-brown leafy vines, a swirling luminous VIOLET-and-blue spiral vortex glowing inside it (the vortex and all glow are VIOLET and BLUE, never green)',
+          active: 'stepping backward INTO the portal, her body half-dissolving into swirling violet-and-blue dream-mist and drifting motes as she enters the glowing gateway (violet and blue, never green)',
+          recovery: 'reforming as she steps OUT of a second violet-and-blue portal gate, composed and facing right, the gateway light fading behind her (violet and blue, never green)',
+        },
+        'euc-crash': {
+          startup: 'hopping onto a black electric unicycle (a single fat black wheel with a glowing rainbow LED strip along its side), crouching low over it, gripping her knees, leaning forward to charge',
+          active: 'torpedoing forward at high speed astride the black electric unicycle, body tucked low over the single rainbow-LED-lit wheel, hair streaming back, motion streaks — barreling to the right',
+          recovery: 'skidding to a stop and hopping off the electric unicycle back onto her feet, composed',
+        },
+        'spoken-word': {
+          startup: 'planting both feet, drawing a deep breath with her chest rising, head tilting up and forward, mouth beginning to open, hands lifting',
+          active: 'head thrown back screaming upward along a steep FORWARD-and-UP diagonal, mouth wide open, a swirling steamy pale-white tornado of sound erupting up and forward out of her open mouth toward the upper-right (pale WHITE-and-silver steam swirl, never green) — both feet planted on the ground',
+          recovery: 'her mouth closing, the steamy tornado thinning and dissipating, settling back down into a composed stance',
+        },
+      },
+    },
+    extra: {
+      projectiles: {
+        'little-martian': {
+          prompt:
+            'A single floating pale grey-terracotta unglazed CLAY sculpted human FACE with a serene expression and closed eyes, small dotted ritual markings punched into the brow and cheeks, and a small sculpted leaf-crown on top, facing right, hovering, wrapped in a faint moonlit-silver and violet glow (SILVER-WHITE and VIOLET, never green), painted cel-shaded anime style, small, centered, on solid flat chroma-key green background #00B140, no body, no hands, no text, no watermark.',
+          refPaths: ['assets/general-inspo/little-martian.jpg'],
+        },
+        'chocolate-head': {
+          prompt:
+            'ONLY a single small round dark-brown ceremonial CACAO chocolate head — a glossy sculpted chocolate face-orb, tumbling, with a faint wisp of pale incense smoke. It is a SMALL ISOLATED OBJECT floating alone, centered, with a wide empty green margin on ALL FOUR SIDES (nothing touching any edge). Painted cel-shaded anime style, on solid flat chroma-key green background #00B140. ABSOLUTELY NO PERSON, no woman, no character, no body, no hands, no arms — just the chocolate orb by itself. No text, no watermark.',
+        },
+      },
+      specialRefs: {
+        teleportal: ['assets/general-inspo/va portal.jpg'],
+        'euc-crash': ['assets/general-inspo/euc.jpeg'],
+      },
+    },
+  },
 };
