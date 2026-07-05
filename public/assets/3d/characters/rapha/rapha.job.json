@@ -379,5 +379,5 @@
  ],
  "targetHeight": 2.489,
  "forward": "x",
- "bakeTransform": false
+ "bakeTransform": true
 }

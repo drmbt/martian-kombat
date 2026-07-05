@@ -405,42 +405,54 @@
    "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/dances/Thriller Part 2.fbx",
    "frames": 565,
    "seconds": 18.833,
-   "rootStripped": []
+   "rootStripped": [
+    "Yv"
+   ]
   },
   {
    "name": "dance-thriller-2",
    "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/dances/Thriller Part 3.fbx",
    "frames": 767,
    "seconds": 25.567,
-   "rootStripped": []
+   "rootStripped": [
+    "Yv"
+   ]
   },
   {
    "name": "dance-thriller-3",
    "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/dances/Thriller Part 4.fbx",
    "frames": 1112,
    "seconds": 37.067,
-   "rootStripped": []
+   "rootStripped": [
+    "Yv"
+   ]
   },
   {
    "name": "dance-hiphop",
    "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/dances/Hip Hop Dancing.fbx",
    "frames": 325,
    "seconds": 10.833,
-   "rootStripped": []
+   "rootStripped": [
+    "Yv"
+   ]
   },
   {
    "name": "dance-twist",
    "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/dances/Twist Dance.fbx",
    "frames": 283,
    "seconds": 9.433,
-   "rootStripped": []
+   "rootStripped": [
+    "Yv"
+   ]
   },
   {
    "name": "dance-wave",
    "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/dances/Wave Hip Hop Dance.fbx",
    "frames": 31,
    "seconds": 1.033,
-   "rootStripped": []
+   "rootStripped": [
+    "Yv"
+   ]
   },
   {
    "name": "attack-generic",

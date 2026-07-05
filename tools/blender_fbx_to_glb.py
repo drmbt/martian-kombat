@@ -129,12 +129,31 @@ def remap_bone_paths(action, rig_bones):
     return sorted(missing)
 
 
-def strip_root_motion(action, hips_name, vert_idx, strip_y):
+def scale_hips_translation(action, hips_name, s):
+    """Scale the hips (root) LOCATION keyframes by s — cancels the per-rig
+    armature-scale disparity so kept root travel is consistent across rigs.
+    Only the hips: other bones' translation channels are structural rest offsets."""
+    if abs(s - 1.0) < 1e-6:
+        return
+    path = f'pose.bones["{hips_name}"].location'
+    for fc in [f for f in action.fcurves if f.data_path == path]:
+        for kp in fc.keyframe_points:
+            kp.co[1] *= s
+            kp.handle_left[1] *= s
+            kp.handle_right[1] *= s
+        fc.update()
+
+
+def strip_root_motion(action, hips_name, vert_idx, strip_y, keep_horizontal=False):
+    # keep_horizontal (dances): retain the hips' floor travel (X/Z) so the dance
+    # can roam, while still dropping vertical hips motion (feet snap to ground at
+    # runtime) and ALL object-level transform below.
     path = f'pose.bones["{hips_name}"].location'
     stripped = []
     for fc in [f for f in action.fcurves if f.data_path == path]:
         horizontal = fc.array_index != vert_idx
-        if horizontal or strip_y:
+        remove = (not keep_horizontal) if horizontal else strip_y
+        if remove:
             stripped.append(f"{'XYZ'[fc.array_index]}{'v' if not horizontal else ''}")
             action.fcurves.remove(fc)
     # OBJECT-level root motion: some Mixamo clips (bows, kicks, steps) animate
@@ -194,7 +213,17 @@ def main():
     span = max(zs) - min(zs)
     target = job.get('targetHeight', 1.75)
     factor = target / span if span > 1e-6 else 1.0
+    initial_scale = arm.scale[0]  # FBX import scale (~0.01), same for all rigs
     arm.scale = tuple(s * factor for s in arm.scale)
+    # ROOT-TRANSLATION normalization. Bone ROTATIONS are scale-invariant, so the
+    # shared clips retarget onto every rig identically (why fights just work).
+    # But KEPT hips TRANSLATION (dances) rides the armature node scale, which is
+    # ~100x smaller on meter-scale Tripo rigs than on vincent — so their travel
+    # shrinks to nothing. Scaling hips-location keys by span/initial cancels the
+    # internal-scale disparity: world travel becomes clipTravel*targetHeight for
+    # EVERY rig (== 1.0 for vincent, so he's unchanged). Fights strip root, so
+    # this is a no-op there.
+    root_travel_scale = span / initial_scale if initial_scale > 1e-9 else 1.0
     # normalize authored forward to +X: rigs facing +Z get a world-yaw bake
     if job.get('forward') == 'z':
         arm.rotation_euler.rotate_axis('Z', -1.5707963)
@@ -240,10 +269,14 @@ def main():
             missing = remap_bone_paths(action, rig_bones)
             if missing:
                 report['warnings'].append(f"{clip['name']}: unmapped bones {missing[:5]}")
-            # keepRoot clips (dances) retain ALL root travel so they can roam the
-            # floor; everything else strips it (the engine owns translation)
-            stripped = ([] if clip.get('keepRoot')
-                        else strip_root_motion(action, hips, vert_idx, clip.get('stripY', False)))
+            # keepRoot clips (dances) keep horizontal floor travel but still drop
+            # vertical + object-level root; everything else strips all horizontal
+            # travel (the engine owns translation)
+            if clip.get('keepRoot'):
+                stripped = strip_root_motion(action, hips, vert_idx, True, keep_horizontal=True)
+                scale_hips_translation(action, hips, root_travel_scale)
+            else:
+                stripped = strip_root_motion(action, hips, vert_idx, clip.get('stripY', False))
             action.name = clip['name']
             action.use_fake_user = True
             start, end = action.frame_range

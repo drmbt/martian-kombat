@@ -17,6 +17,9 @@ export interface ViewContext {
   /** matchEnd: winner strikes the victory pose, defeated loser stays down */
   victor?: boolean;
   defeated?: boolean;
+  /** force an arbitrary clip by name (non-fight scenes: the dance formation) —
+   *  highest priority, bypasses the action->clip mapping entirely */
+  override?: string;
 }
 import { engineToWorld, WORLD_SCALE } from './threeCoordinates';
 import { characterGlbUrl, loadGlb } from './threeAssets';
@@ -81,7 +84,9 @@ class ClipPlayer {
     // victory pose and collapsed loser on matchEnd (the engine leaves the
     // loser 'dazed' after a mercy finisher — looping the stun reel forever).
     // Engine hitboxes are untouched — pure gestures (V1).
-    const override = ctx.defeated
+    const override = ctx.override
+      ? ctx.override
+      : ctx.defeated
       ? 'ko'
       : ctx.victor && f.action.kind === 'idle'
         ? 'win'
@@ -323,10 +328,16 @@ export class ThreeFighterView {
         const mats = Array.isArray(o.material) ? o.material : [o.material];
         for (const m of mats) {
           if (m instanceof THREE.MeshStandardMaterial) {
-            // FBX->Principled conversion leaves metallic/specular hot and the
-            // character reads plastic — clamp toward matte cloth/skin
-            m.metalness = Math.min(m.metalness, 0.05);
-            m.roughness = Math.max(m.roughness, 0.82);
+            // The plastic/metallic look was METALNESS (Tripo bakes a metallic
+            // map). metalness=0 kills it outright (0 * anyMap = 0), so the
+            // metalnessMap is moot. KEEP the roughnessMap though — it carries the
+            // skin/cloth surface variation; nulling it flattened everyone to a
+            // uniform "matte oil". Just floor the roughness so nothing stays glossy.
+            m.metalness = 0;
+            m.metalnessMap = null;
+            m.roughness = Math.max(m.roughness, 0.85);
+            m.envMap = null;
+            m.needsUpdate = true;
             this.materials.push(m);
           }
         }

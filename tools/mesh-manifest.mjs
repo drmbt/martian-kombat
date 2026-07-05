@@ -167,6 +167,7 @@ export const MESHES = {
   },
   rapha: {
     rig: 'rapha-20k-tripo-mixamo-base-rig.fbx',
+    bakeTransform: true, // meter-vert Tripo export: force the exporter's skin-bake path (as flo/yulia)
     basecolor: 'rapha-20k-tripo-unrigged/rapha-20k-tripo-unrigged_basecolor.PNG',
     archetype: 'dirty-boxer',
     clips: { ...kit('dirty-boxer') },

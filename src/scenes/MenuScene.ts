@@ -139,6 +139,14 @@ export class MenuScene extends Phaser.Scene {
     this.input.keyboard!.on('keydown-THREE', () => { if (this.canChoose()) toLobby(); });
     this.input.keyboard!.on('keydown-FOUR', () => { if (this.canChoose()) go(false, true); });
     this.input.keyboard!.on('keydown-FIVE', () => { if (this.canChoose()) toSettings(); });
+    // secret: M jumps straight into a demo (skips the 20s idle wait). In 3D it
+    // goes right to the Thriller dance formation (deterministic, for testing);
+    // in 2D it demos a fight.
+    this.input.keyboard!.on('keydown-M', () => {
+      if (!this.canChoose()) return;
+      if (this.render3d) this.scene.start('Dance');
+      else this.startAttractDemo();
+    });
     // arrow / W-S cursor nav mirrors the gamepad; ENTER/SPACE activate the cursor
     for (const k of ['UP', 'W']) this.input.keyboard!.on(`keydown-${k}`, () => this.moveCursor(-1));
     for (const k of ['DOWN', 'S']) this.input.keyboard!.on(`keydown-${k}`, () => this.moveCursor(1));
@@ -231,6 +239,12 @@ export class MenuScene extends Phaser.Scene {
   /** Arcade attract mode: two random fighters demo the game on a random stage
    *  until any key/click/pad button brings the player back to the title. */
   private startAttractDemo(): void {
+    // 3D attract alternates: half the time the Thriller dance formation, half a
+    // bot fight. 2D always demos a fight.
+    if (this.render3d && Math.random() < 0.5) {
+      this.scene.start('Dance');
+      return;
+    }
     // 3D attract is restricted to fighters with a baked GLB; 2D uses everyone playable
     const pool = ROSTER.filter((r) => (this.render3d ? r.mesh3d : r.playable)).map((r) => r.id);
     const p1 = Phaser.Utils.Array.GetRandom(pool);
