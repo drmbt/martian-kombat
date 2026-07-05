@@ -189,6 +189,10 @@ export class NetSession implements Session {
     this.accumulator = 0;
   }
 
+  get alpha(): number {
+    return Math.min(this.accumulator / TICK_MS, 1);
+  }
+
   close(reason: string): void {
     this.transport.send({ t: 'bye', reason });
     this.transport.close();

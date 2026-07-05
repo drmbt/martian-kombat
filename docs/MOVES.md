@@ -331,6 +331,24 @@ Hurts you therapeutically. All his grabs look like treatments.
   all that remains is a burnt film silhouette (husk asset) developing slowly
   in the red dark-room light.
 
+### RAPHA — "The TabBastard" · Puppet/assist zoner (built on proven plumbing)
+His own normals are short, calm, functional — toymaker hands. The range comes
+from Tubs and the chain. Kit reuses existing primitives (no new engine code).
+- **Basics:** short compact normals; the reach lives in the specials.
+- **Claw Machine** — 360+P · command grab (Symbiosis/Deep-Tissue plumbing).
+  Tubs-style crane clamp; big damage, no heal. Declared before qcf so the
+  full circle wins over Tubs, Fetch!. L/H = range/damage.
+- **Tubs, Fetch!** — qcf+P · low assist projectile (Order Up!/Jazzper). Tubs
+  scuttles ankle-height and claw-pinches — a **low** that hits while Rapha
+  moves. L/H = speed/range.
+- **Pop-Tab Chain** — qcb+P · multi-hit projectile (Blunt Puff `rehit`). A
+  short glittering arc of pop-tabs, several ticks. L/H = travel/ttl.
+- **Wind-Up** — qcf+K · ground trap (Fork Bomb `fuse`+`detonate`). A tin toy
+  marches slowly forward, then pops in a spring-loaded burst. L/H = fuse/speed.
+- **Fatality — "Scrap Compactor":** Tubs claw-hoists the husk and drops it in
+  the yellow tub; the lid slams and the tub rattles it to scrap; Rapha threads
+  the fresh pop-tab onto his chain.
+
 ---
 
 ## 4. Editing guide

@@ -21,6 +21,10 @@ export interface Session {
   advance(deltaMs: number): number;
   /** drop banked time (pause, scene handoff) — never skips or rewinds ticks */
   resetPacing(): void;
+  /** 0..1 fraction into the next tick (banked accumulator / TICK_MS) — lets the
+   *  renderer interpolate between tick-quantized poses so animation stays smooth
+   *  above 60Hz / under pacing jitter, without touching the deterministic sim */
+  readonly alpha: number;
 }
 
 /** KO slow-mo: the round-ending hit plays out at ~1/3 speed — pure
@@ -59,5 +63,9 @@ export class FightSession implements Session {
 
   resetPacing(): void {
     this.accumulator = 0;
+  }
+
+  get alpha(): number {
+    return Math.min(this.accumulator / TICK_MS, 1);
   }
 }

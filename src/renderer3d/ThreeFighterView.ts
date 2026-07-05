@@ -75,7 +75,7 @@ class ClipPlayer {
     return this.current ?? { name: '-', placeholder: false };
   }
 
-  update(tick: number, f: FighterState, def: CharacterDef, ctx: ViewContext = {}): void {
+  update(tick: number, f: FighterState, def: CharacterDef, ctx: ViewContext = {}, alpha = 0): void {
     // presentation-only overrides: intro bow / taunt while the engine idles,
     // victory pose and collapsed loser on matchEnd (the engine leaves the
     // loser 'dazed' after a mercy finisher — looping the stun reel forever).
@@ -161,12 +161,17 @@ class ClipPlayer {
     // clip time from tick state (V4/V13) — walk loops scale with walk speed;
     // attacks with a declared impactNorm warp so the authored hit frame lands
     // exactly when the engine's active window opens (V5)
+    // interpolate the clip time by the sub-tick alpha (render smoothness above
+    // 60Hz / under pacing jitter) — the sim stays integer-tick, only playback
+    // reads between poses. Frozen while in hitstop (elapsed isn't advancing).
+    const sub = f.hitstop > 0 ? 0 : alpha;
+    const elapsed = this.elapsed + sub;
     const dur = cur.action.getClip().duration;
     const norm = impactNorm(cur.name);
     if (cur.windowTicks && cur.startupTicks !== undefined && norm !== undefined) {
-      cur.action.time = attackClipTime(this.elapsed, cur.startupTicks, cur.windowTicks, dur, norm);
+      cur.action.time = attackClipTime(elapsed, cur.startupTicks, cur.windowTicks, dur, norm);
     } else {
-      let ticks = this.elapsed;
+      let ticks = elapsed;
       if (syncToWalkSpeed(cur.name)) {
         const speed = f.action.kind === 'walkB' ? def.backSpeed : def.walkSpeed;
         ticks *= speed / 3; // ~3px/tick reads as a natural stride at 1x
@@ -174,10 +179,10 @@ class ClipPlayer {
       cur.action.time = clipTimeSec(clipClass(cur.name), ticks, dur, cur.windowTicks);
     }
 
-    // crossfade weights, tick-derived (V13)
+    // crossfade weights, tick-derived (V13) + sub-tick alpha for a smooth blend
     let w = 1;
     if (this.previous && this.fadeTicks > 0) {
-      w = Math.min((tick - this.fadeStart) / this.fadeTicks, 1);
+      w = Math.min((tick + sub - this.fadeStart) / this.fadeTicks, 1);
       this.previous.action.setEffectiveWeight(1 - w);
       if (w >= 1) {
         this.previous.action.stop();
@@ -390,7 +395,7 @@ export class ThreeFighterView {
     this.model.position.y -= worldDelta / scale;
   }
 
-  update(tick: number, f: FighterState, ctx: ViewContext = {}): void {
+  update(tick: number, f: FighterState, ctx: ViewContext = {}, alpha = 0): void {
     const [x, y] = engineToWorld(f.x, f.y);
     this.group.position.set(x, y, 0);
 
@@ -401,7 +406,7 @@ export class ThreeFighterView {
       // lead hand toward the opponent). three handles negative-determinant
       // winding, so skinned meshes survive scale.x = -1.
       this.modelWrapper.scale.set(this.modelScale * f.facing, this.modelScale, this.modelScale);
-      this.player.update(tick, f, this.def, ctx);
+      this.player.update(tick, f, this.def, ctx, alpha);
       this.snapFeetToGround(f);
       this.applyFlash(tick);
       return;

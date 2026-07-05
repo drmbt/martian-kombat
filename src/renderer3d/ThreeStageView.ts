@@ -191,8 +191,11 @@ export class ThreeStageView {
   private buildSlicedStage(g: THREE.Group, load: (f: string) => THREE.Texture, file: string): void {
     const BAND = ThreeStageView.FLOOR_BAND;
     const W = 26; // world width the stage spans (arena + generous margin)
-    const FRONT_Z = 6; // floor front edge, in front of the fighters (z=0)
-    const BACK_Z = -13; // back wall depth
+    const FRONT_Z = 11; // floor front edge, pulled toward the camera (z=17) so the
+    //                     near edge fills the bottom of frame — no seeing under it
+    const BACK_Z = -16; // back wall pushed further back: the wall reads smaller and
+    //                     lower on screen (more floor visible, backdrop sits "in the
+    //                     background") and the floor plane gets a deeper recede
     const floorDepth = FRONT_Z - BACK_Z;
 
     // FLOOR — bottom band, flat, receding from the fighters to the wall

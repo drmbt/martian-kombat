@@ -184,12 +184,13 @@ winQuotes:
 - [ ] "You're common, I'm rare."
 - [ ] "Tubs rates you two claws out of ten."
 
-kiai (5):
+kiai (6):
 - [ ] "Tubs."
 - [ ] "Ha!"
 - [ ] "Clamp!"
 - [ ] "Go, buddy!"
 - [ ] "Hup!"
+- [ ] "Fetch!"  <!-- backfill to 6/6/4 contract -->
 
 hurt (6):
 - [ ] "Agh!"
@@ -200,9 +201,10 @@ hurt (6):
 - [ ] "My tabs!"
 
 victory (4):
-- [ ] "The TabBastard has spoken"
+- [ ] "The TabBastard has spoken."
 - [ ] "Tubs, we're done here."
 - [ ] "Built to last."
+- [ ] "Add it to the chain."  <!-- backfill to 6/6/4 contract -->
 
 ## Vanessa — "The High Priestess"
 **Voice:** [ ] mystical, intimate female — new pick (low-whisper capable);

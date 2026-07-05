@@ -1484,4 +1484,128 @@ export const CHARACTERS = {
       },
     },
   },
+  rapha: {
+    canonical: 'assets/raw/canonical/rapha.png',
+    layout: 'v2',
+    // Tubs (the robot) stays OUT of normal cells — he only appears in the
+    // tubs-fetch assist pose and the projectile art (Jazzper pattern). Pin
+    // the calm toymaker wardrobe so it survives every pose.
+    always:
+      'He wears a black cap, a dusty faded black t-shirt, faded camo-print cargo pants, and is BAREFOOT (bare feet, no shoes) with a trimmed dark beard and a calm, unbothered blue-eyed stare. A long chain of shiny aluminium pop-tabs hangs from his belt. NO robot, NO yellow tub, and no second character anywhere in this frame unless explicitly described.',
+    moves6: {
+      stand: {
+        lp: {
+          startup: 'chambering a short compact jab, elbows tucked, weight settled and calm',
+          active: 'quick straight jab extended at head height, a toymaker\'s precise short arm',
+          recovery: 'retracting the jab back to a loose relaxed guard',
+        },
+        mp: {
+          startup: 'loading a level cross, shoulders turning, unbothered expression',
+          active: 'straight cross fully extended at chin height, clean and functional',
+          recovery: 'pulling the cross back, resetting his stance calmly',
+        },
+        hp: {
+          startup: 'cocking one fist far back at the hip, other hand raised flat, calm focus',
+          active: 'heavy straight power punch fully extended at chest height, whole body behind it',
+          recovery: 'lowering the fist, rolling the shoulder, unimpressed',
+        },
+        lk: {
+          startup: 'lifting the lead knee for a short bare-foot shin kick, hands loose in guard',
+          active: 'quick snapping bare-foot kick at shin height, lead leg extended',
+          recovery: 'the bare foot returning to stance, calm',
+        },
+        mk: {
+          startup: 'chambering the lead knee across the body, balanced and level',
+          active: 'straight bare-foot front push-kick fully extended at waist height, sole facing forward',
+          recovery: 'the leg folding back down into a relaxed stance',
+        },
+        hk: {
+          startup: 'balancing on his left leg only, RIGHT knee chambered high near his chest, arms counterbalancing',
+          active: 'tall bare-foot roundhouse fully extended at head height, his RIGHT leg (clearly attached at the hip) driven out — exactly ONE bare foot on the ground',
+          recovery: 'the kicking leg returning to the ground, settling back into his calm guard',
+        },
+      },
+      crouch: {
+        lp: {
+          active: 'short jab snapped out at waist height from a low squat',
+          recovery: 'jab arm pulled back in, staying compact in the squat',
+        },
+        mp: {
+          active: 'a short rising uppercut driven upward out of the squat',
+          recovery: 'the fist lowering, weight sinking back into the squat',
+        },
+        hp: {
+          active: 'both fists thrust straight upward out of the squat as an anti-air',
+          recovery: 'arms lowering from overhead, settling back into the squat',
+        },
+        lk: {
+          active: 'squatting on his left leg while his RIGHT bare foot (leg clearly attached at the hip) snaps a quick kick forward at ankle height',
+          recovery: 'the kicking leg pulled back beneath him, both bare feet planted in the squat',
+        },
+        mk: {
+          active: 'squatting on his bent left leg while his RIGHT leg (clearly attached at the hip) extends forward along the ground in a low bare-foot kick',
+          recovery: 'sliding the leg back beneath his body into a compact squat',
+        },
+        hk: {
+          active: 'low spinning bare-foot leg sweep fully extended along the ground in a wide arc',
+          recovery: 'rising from the sweep back toward stance, unhurried',
+        },
+      },
+      air: {
+        lp: 'throwing a quick short downward-angled jab',
+        mp: 'a straight punch driven at a 45-degree downward angle',
+        hp: 'a heavy overhead hammer-fist swung downward, arm fully extended',
+        lk: 'a sharp bare-foot knee strike raised toward the opponent',
+        mk: 'a bare-foot side kick extended at a downward angle',
+        hk: 'a flying bare-foot kick — RIGHT leg fully extended, LEFT leg tucked beneath him, both legs clearly attached',
+      },
+      specials: {
+        'claw-machine': {
+          startup: 'lunging low with both arms sweeping open wide as if working the levers of a claw-machine crane, calm concentration',
+          active: 'both arms clamped shut in a scooping crane-grab motion toward the right frame edge, hands gripping the EMPTY GREEN AIR — he is COMPLETELY ALONE, absolutely no second person and no robot in the frame',
+          recovery: 'tipping his hands over as if emptying a bin, then straightening up calm',
+        },
+        'tubs-fetch': {
+          startup: 'kneeling on one knee, snapping his fingers and pointing forward low along the ground, sending an unseen helper on an errand, a squat yellow one-clawed storage-tub robot crouched beside him ready to scuttle',
+          active: 'arm fully extended pointing forward low, the yellow robot absent (already launched off-screen), him still kneeling calm',
+          recovery: 'rising back to his feet, watching down the lane, unbothered',
+        },
+        'pop-tab-chain': {
+          startup: 'unhooking the long pop-tab chain from his belt and drawing it back coiled in one hand, the aluminium tabs glinting',
+          active: 'whipping the pop-tab chain forward in a shallow glittering arc ahead of him, a spray of shiny aluminium tabs trailing off it',
+          recovery: 'the chain swinging back to his side, re-clipping it to his belt',
+        },
+        'wind-up': {
+          startup: 'crouching to set a small tin wind-up toy down on the ground in front of him, one hand twisting its key',
+          active: 'releasing the wound tin toy, hand drawn back as the little toy begins marching forward along the ground away from him',
+          recovery: 'standing back up, hands on hips, watching the toy trundle off, calm',
+        },
+        throw: {
+          startup: 'lunging forward, one hand snatching at collar height in front of him, fingers splayed to grab',
+          active: 'both arms thrust out toward the right frame edge, hands clawed actively gripping the EMPTY GREEN AIR, a small white impact flash at his hands — he is COMPLETELY ALONE, a single figure grabbing empty air, absolutely no second person and no clone anywhere in the frame',
+          recovery: 'shoving both palms forward to fling the unseen opponent away, then settling back into stance',
+        },
+      },
+    },
+    extra: {
+      projectiles: {
+        'tubs-fetch': {
+          prompt:
+            'A squat yellow plastic storage-tub robot with a single mechanical claw arm, scuttling low to the right on little legs, ankle-height, determined single glowing eye, painted cel-shaded anime style, side view, full body, on solid flat chroma-key green background #00B140, no human, no text, no watermark.',
+        },
+        'pop-tab-chain': {
+          prompt:
+            'A shallow whipping arc of a metal chain strung with dozens of shiny aluminium can pop-tabs, glinting, flying to the right with a spray of loose tabs trailing it, painted cel-shaded anime style, centered, on solid flat chroma-key green background #00B140, no character, no hands, no text, no watermark.',
+        },
+        'wind-up': {
+          prompt:
+            'A small tin clockwork wind-up toy with a big brass key in its back, marching to the right on little tin feet along the ground, wider than it is tall, painted cel-shaded anime style, side view, on solid flat chroma-key green background #00B140, no human, no text, no watermark.',
+        },
+        'wind-up-burst': {
+          prompt:
+            'A sudden spring-loaded burst of scattered tin springs, gears and coiled metal exploding outward from a center point, painted cel-shaded anime style, centered, on solid flat chroma-key green background #00B140, no character, no text, no watermark.',
+        },
+      },
+    },
+  },
 };

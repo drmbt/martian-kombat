@@ -119,6 +119,16 @@ const FATALITIES = {
       `The man from the reference image wiping his palms together and studying a small glowing circular astrologer's ephemeris wheel of amber zodiac constellations and star-symbols hovering above one open hand — a delicate wheel of stars, NOT a coin, NO text, NO letters, NO words anywhere — nodding once with quiet professional satisfaction, while the defeated fighter is left as a neatly folded impossible knot of char on the cracked desert ground beside him. He does not look back. Calm, warm amber starlight fading, final.`,
     ],
   },
+  rapha: {
+    id: 'scrap-compactor',
+    canonical: 'assets/raw/canonical/rapha.png',
+    panels: [
+      `The man from the reference image (black cap, dusty black t-shirt, faded camo cargo pants, barefoot, trimmed dark beard, a chain of shiny aluminium pop-tabs on his belt) calmly snapping his fingers and pointing down, while a squat yellow plastic storage-tub robot with a single mechanical claw arm scuttles in and clamps its claw around ${HUSK}, hoisting the charred figure off the ground. Low dramatic angle, cold industrial light, his expression bored and unbothered.`,
+      `The squat yellow one-clawed tub robot raising ${HUSK} high overhead in its clamped claw, the hinged lid of a big yellow storage tub flipping open on the ground below, while the man from the reference image watches with his arms crossed, completely calm, a single fresh pop-tab held ready between two fingers. Dynamic side angle.`,
+      `The yellow robot dropping ${HUSK} down into the yellow storage tub and the lid SLAMMING shut, the whole tub violently rattling and jerking with a muffled crunch, bolts and springs popping loose and flying out the seams, while the man from the reference image stands unbothered with hands in his pockets. Maximum contrast, motion-streak shake lines, scattered tin debris.`,
+      `The man from the reference image crouched calmly threading a single shiny new pop-tab onto the chain on his belt, the squat yellow one-clawed robot idling contentedly beside him, while the now-still yellow tub sits quiet with one small charred scrap poking out of the seam. He does not look at it. Cold quiet light, final.`,
+    ],
+  },
 };
 
 async function genPanel(charId, spec, i) {

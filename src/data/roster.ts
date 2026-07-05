@@ -22,6 +22,5 @@ export const ROSTER: RosterEntry[] = [
   { id: 'cat', name: 'CAT', playable: true },
   { id: 'chebel', name: 'CHEBEL', playable: true },
   { id: 'ygor', name: 'YGOR', playable: true },
-  // 3D-only so far: has a baked GLB but no 2D sprite sheet yet
-  { id: 'rapha', name: 'RAPHA', playable: false, mesh3d: true },
+  { id: 'rapha', name: 'RAPHA', playable: true, mesh3d: true },
 ];

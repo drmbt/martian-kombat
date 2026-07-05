@@ -344,6 +344,9 @@ belt.
 - VO soundbites: "Tubs. Fetch." (assist) · sharp two-note whistle (Claw
   Machine) · "Add it to the chain." (KO) · "Perfect attendance, baby."
   (taunt).
+- **Fatality — "Scrap Compactor" (hcb+K):** Tubs claw-hoists the husk and
+  drops it into the yellow storage tub; the lid slams and the tub rattles it
+  down to scrap; Rapha calmly threads the fresh pop-tab onto his belt chain.
 
 ## Vanessa — "The High Priestess"
 **Archetype:** summoner/ritualist zoner — the battlefield fills with clay.

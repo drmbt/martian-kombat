@@ -71,6 +71,7 @@ const announcerLines = {
   cat: 'CAT!',
   chebel: 'CHEBEL!',
   ygor: 'YGOR!',
+  rapha: 'RAPHA!',
   'finish-them': 'FINISH THEM!',
   fatality: 'FATALITY!',
   // stage-name call-outs (announced on stage select, mirrors the fighter
@@ -201,6 +202,16 @@ const voiceLines = {
     kiai: ['Suave!', 'Ha!', 'Vai, Appa!', 'Projeta!', 'Whoa!', 'Toma!'],
     hurt: ['Ai!', 'Whoa—', 'Agh!', 'Mano...', 'Ei!', 'Hnh!'],
     victory: ['Não foi microdose!', 'Suave, mano. Suave.', 'Mais Amor Por Favor.', 'Nice render.'],
+  },
+  // Rapha is a dry, laconic toymaker — minimal effort, total confidence.
+  // Reuses Daniel (VOICE_FLO) but low style + high stability = deadpan, not angry.
+  rapha: {
+    voice: VOICE_FLO,
+    style: 0.15,
+    stability: 0.7,
+    kiai: ['Tubs.', 'Ha!', 'Clamp!', 'Go, buddy!', 'Hup!', 'Fetch!'],
+    hurt: ['Agh!', 'Ow!', 'Tubs—!', 'Hey!', 'Hnh!', 'My tabs!'],
+    victory: ['The TabBastard has spoken.', "Tubs, we're done here.", 'Built to last.', 'Add it to the chain.'],
   },
 };
 
