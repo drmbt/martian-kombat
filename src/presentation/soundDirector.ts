@@ -37,8 +37,10 @@ export function soundCues(events: FightEvent[], charIds: [string, string]): Audi
         }
         break;
       case 'match-end':
+        // announcer says the winner's name, then "WINS!" once the name clip has
+        // played (delay ≈ name length) — the generic "MARTIAN VICTORY" sting is gone
         cues.push({ kind: 'sfx', key: `ann-${charIds[e.winner]}`, volume: 1 });
-        cues.push({ kind: 'sfx', key: 'ann-victory', volume: 1, delayMs: 900 });
+        cues.push({ kind: 'sfx', key: 'ann-wins', volume: 1, delayMs: 1000 });
         cues.push({ kind: 'music', action: 'victory' });
         break;
       case 'finisher':
@@ -58,7 +60,10 @@ export function soundCues(events: FightEvent[], charIds: [string, string]): Audi
         break;
       case 'attack-start':
         cues.push({ kind: 'sfx', key: 's-whoosh', volume: 0.4 });
-        if (e.special) cues.push({ kind: 'voice', charId: charIds[e.slot], line: 'kiai', volume: 0.8 });
+        // a move with its own VO call-out (e.g. Gene's "Line goes up!") plays
+        // that specific line; other specials get a random kiai grunt
+        if (e.voiceLine) cues.push({ kind: 'sfx', key: `v-${charIds[e.slot]}-move-${e.moveId}`, volume: 0.9 });
+        else if (e.special) cues.push({ kind: 'voice', charId: charIds[e.slot], line: 'kiai', volume: 0.8 });
         break;
       case 'jump':
         cues.push({ kind: 'sfx', key: 's-jump', volume: 0.35 });

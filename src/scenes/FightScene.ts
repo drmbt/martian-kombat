@@ -48,17 +48,19 @@ const PHASE_NAME = ['startup', 'active', 'recovery'] as const;
 // per-special projectile draw size (square px); default 72
 const PROJ_SIZE: Record<string, number> = {
   'order-up': 96, // Jazzper is a whole dog
-  'fork-bomb': 64,
-  'fork-bomb-burst': 150,
-  smokescreen: 260,
+  'sigil-bolt': 112, // Vincent's glyphs — read as a real rune, not a dot
+  'fork-bomb': 104, // Flo's tumbling laptop is a whole laptop
+  'fork-bomb-burst': 170,
+  smokescreen: 150, // "Flame War" — a short Yoga-Flame burst (was a big smoke field)
   'root-access': 120,
   'sudo-kill': 90,
+  'pop-tab-chain': 104, // Rapha's flung chain
   overgrowth: 48,
   'overgrowth-burst': 200,
   'spore-bloom': 130,
   hallucination: 300,
   'hallucination-burst': 170,
-  'rate-limit': 220,
+  'rate-limit': 150, // "Line Goes Up" — a short rising candle burst (was a slow field)
   'flour-bomb': 210,
   'thread-of-life': 92,
 };
@@ -66,12 +68,24 @@ const PROJ_SIZE: Record<string, number> = {
 // box extends upward), so draw bottom-anchored instead of centered — a
 // centered clone renders half-buried below the floor
 const PROJ_FEET_ANCHORED = new Set(['hallucination', 'hallucination-burst', 'flour-bomb']);
+// render-only vertical nudge (px, negative = up) — the hitbox stays put.
+// Flo's Flame War should look like it roars out of his MOUTH, not his chest.
+const PROJ_RENDER_OFFSET_Y: Record<string, number> = {
+  smokescreen: -125, // lift the flame's origin to mouth/head height
+};
 const LEGACY_BUTTON: Record<string, string> = {
   lp: 'light', mp: 'light', hp: 'heavy', lk: 'light', mk: 'heavy', hk: 'heavy',
 };
 
 const BAR_W = 320;
 const BAR_X1 = 100;
+// shared vertical center of the name / side-tag / round-win-pip row; sits so the
+// row's bottom lands on the portrait icon's lower edge (icon frame spans y=21..72)
+const HUD_NAME_Y = 63;
+// matchEnd ticks the "<NAME> WINS" beat holds over the frozen fight before the
+// win-quote screen takes over — 2s at 60 ticks/sec (fits the "<NAME>… WINS!"
+// announcer callout with a breath after)
+const WIN_REVEAL_FRAME = 120;
 const DEFAULT_LAYER_FACTORS = { sky: 0.15, far: 0.35, near: 0.7, floor: 1.0 } as const;
 
 interface Spark {
@@ -188,6 +202,7 @@ export class FightScene extends Phaser.Scene {
   private cpu = false;
   private training = false;
   private demo = false;
+  private showcase = false;
   private bot: CpuDriver | null = null;
   private botP1: CpuDriver | null = null;
   private fatalityPanel: Phaser.GameObjects.Image | null = null;
@@ -210,6 +225,8 @@ export class FightScene extends Phaser.Scene {
     cpu?: boolean;
     training?: boolean;
     demo?: boolean;
+    /** showcase demo: both bots walk their full moveset + guaranteed fatality */
+    showcase?: boolean;
     stage?: string;
     online?: OnlineFightData;
   }): void {
@@ -219,11 +236,13 @@ export class FightScene extends Phaser.Scene {
     // online is strictly 2-human: no CPU, no demo, no training upkeep
     this.cpu = !this.online && !!data.cpu;
     this.training = !this.online && !!data.training;
-    this.demo = !this.online && !!data.demo;
+    // showcase is a chosen CPU-vs-CPU demo — both sides are (showcase) bots
+    this.showcase = !this.online && !!data.showcase;
+    this.demo = !this.online && (!!data.demo || this.showcase);
     this.net = null;
     this.netIssue = null;
-    this.bot = this.cpu || this.demo ? new CpuDriver(1) : null;
-    this.botP1 = this.demo ? new CpuDriver(0) : null;
+    this.bot = this.cpu || this.demo ? new CpuDriver(1, 1, this.showcase) : null;
+    this.botP1 = this.demo ? new CpuDriver(0, 1, this.showcase) : null;
     this.fatalityPanel = null;
     this.lastDamageTick = [0, 0];
     this.stageGuide = false;
@@ -239,7 +258,11 @@ export class FightScene extends Phaser.Scene {
       characters,
       this.online
         ? this.online.rules
-        : { roundTicks: cfg.roundSeconds * 60, winsNeeded: cfg.winsNeeded },
+        : {
+            roundTicks: cfg.roundSeconds * 60,
+            // showcase is a single round that ends in the fatality
+            winsNeeded: this.showcase ? 1 : cfg.winsNeeded,
+          },
     );
     this.inputs = new KeyboardSource(this);
     // the one fight-loop driver (SPEC V17/V18): session owns pacing + step();
@@ -301,6 +324,7 @@ export class FightScene extends Phaser.Scene {
       cpu: this.cpu,
       training: this.training,
       demo: this.demo,
+      showcase: this.showcase,
       render3d: false,
       state: () => this.state,
       debugKeys: [
@@ -311,7 +335,7 @@ export class FightScene extends Phaser.Scene {
         'ESC/START resume · ◄► choose, attack confirms · F1 hitboxes · F2 move log · F3 stage guide · ` perf',
     });
     this.winOverlay = new WinOverlay(this.uiLayer.root, characters, {
-      revealFrame: 72, // the K.O./victory beat lands first
+      revealFrame: WIN_REVEAL_FRAME, // the "<NAME> WINS" beat lands + breathes first
       prompt: this.online ? 'R  REMATCH   ·   ESC  QUIT' : 'R  REMATCH   ·   ENTER  SELECT',
       onFirstShow: (id) => playVoice(this, id, 'victory', 0.85),
     });
@@ -414,12 +438,26 @@ export class FightScene extends Phaser.Scene {
       .text(0, 130, '', { ...font, fontSize: '30px', fontStyle: 'bold', color: '#ffd24a', stroke: '#000', strokeThickness: 6 })
       .setOrigin(0.5)
       .setDepth(6);
+    // name / side-tag / win-pip row: all three share the vertical center
+    // HUD_NAME_Y so they read as one clean line whose bottom meets the portrait
+    // icon. Names justify to the bar's OUTSIDE edge (away from center); the
+    // P1/P2/CPU tag tucks just inside the round-win pips (toward center).
+    const nameStyle = { ...font, fontSize: '14px', stroke: '#000', strokeThickness: 3 };
     this.add
-      .text(120, 58, characters[this.chars[0]].name, { ...font, fontSize: '14px', stroke: '#000', strokeThickness: 3 })
+      .text(BAR_X1, HUD_NAME_Y, characters[this.chars[0]].name, nameStyle)
+      .setOrigin(0, 0.5)
       .setDepth(6);
     this.add
-      .text(STAGE_W - 120, 58, characters[this.chars[1]].name, { ...font, fontSize: '14px', stroke: '#000', strokeThickness: 3 })
-      .setOrigin(1, 0)
+      .text(STAGE_W - BAR_X1, HUD_NAME_Y, characters[this.chars[1]].name, nameStyle)
+      .setOrigin(1, 0.5)
+      .setDepth(6);
+    this.add
+      .text(BAR_X1 + BAR_W + 8, HUD_NAME_Y, this.playerLabel(0), nameStyle)
+      .setOrigin(0, 0.5)
+      .setDepth(6);
+    this.add
+      .text(STAGE_W - BAR_X1 - BAR_W - 8, HUD_NAME_Y, this.playerLabel(1), nameStyle)
+      .setOrigin(1, 0.5)
       .setDepth(6);
     this.add
       .text(STAGE_W / 2, STAGE_H - 14, 'P1: WASD + RTY punches FGH kicks   P2: ARROWS + UIO punches JKL kicks   ESC pause · F2 move log · F3 stage · ` perf', {
@@ -536,9 +574,10 @@ export class FightScene extends Phaser.Scene {
           keepOnMiss: true,
           once: true,
           onEnd: () => {
+            // let the win-quote screen breathe a couple seconds past the theme,
+            // then fade to black and move on (player input can still skip ahead)
             if (this.state.phase !== 'matchEnd') return;
-            if (this.demo) this.shell.toMainMenu();
-            else this.shell.toCharacterSelect();
+            this.time.delayedCall(2000, () => this.fadeOutToNext());
           },
         }),
     });
@@ -588,6 +627,24 @@ export class FightScene extends Phaser.Scene {
     if (this.demo && s.phase === 'matchEnd' && s.phaseFrame === 300) {
       this.shell.toMainMenu();
     }
+  }
+
+  /** Win-quote screen is done breathing: fade a black curtain over the shell,
+   *  then advance (char select, or the title in demo). The destination scene
+   *  fades its camera in, so the whole hand-off reads as a cross-fade rather
+   *  than a hard cut. A no-op if the player already skipped ahead. */
+  private fadeOutToNext(): void {
+    if (this.state.phase !== 'matchEnd') return;
+    const curtain = document.createElement('div');
+    curtain.style.cssText =
+      'position:absolute;inset:0;background:#000;opacity:0;z-index:9;pointer-events:none;' +
+      'transition:opacity 700ms ease;';
+    this.uiLayer.root.appendChild(curtain);
+    requestAnimationFrame(() => (curtain.style.opacity = '1'));
+    this.time.delayedCall(720, () => {
+      if (this.demo) this.shell.toMainMenu();
+      else this.shell.toCharacterSelect();
+    });
   }
 
   // ---------- impact VFX (renderer-side; engine state is never touched) ----------
@@ -726,9 +783,15 @@ export class FightScene extends Phaser.Scene {
       case 'air': return this.cellFor(slot, ['jump']);
       case 'attack':
       case 'airAttack': {
-        const m = resolveMove(characters[f.charId].moves[a.moveId!], a.strength);
-        const phase = a.frame < m.startup ? 0 : a.frame < m.startup + m.active ? 1 : 2;
-        return this.cellFor(slot, this.attackCells(f.charId, a.moveId!, phase as 0 | 1 | 2));
+        const base = characters[f.charId].moves[a.moveId!];
+        const m = resolveMove(base, a.strength);
+        let phase: 0 | 1 | 2 = a.frame < m.startup ? 0 : a.frame < m.startup + m.active ? 1 : 2;
+        // Portal teleport: the blink lands her on the far side at the first
+        // active frame. Play the post-blink cells in REVERSE so she reads as
+        // re-forming OUT of the portal (startup = summon/enter on the origin
+        // side, then recovery→active as she resolidifies on the far side).
+        if (base.teleport && phase >= 1) phase = (3 - phase) as 1 | 2;
+        return this.cellFor(slot, this.attackCells(f.charId, a.moveId!, phase));
       }
       case 'dazed':
       case 'hitstun': return this.cellFor(slot, ['hit']);
@@ -921,7 +984,7 @@ export class FightScene extends Phaser.Scene {
     // Post-match win-quote screen (shared DOM WinOverlay): after the K.O./
     // victory beat lands, the winner portrait taunts the beaten loser.
     this.winOverlay.sync(s); // shows past revealFrame, hides otherwise
-    if (s.phase === 'matchEnd' && s.roundWinner !== null && s.phaseFrame > 72) {
+    if (s.phase === 'matchEnd' && s.roundWinner !== null && s.phaseFrame > WIN_REVEAL_FRAME) {
       for (const sh of this.fighterShadows) sh?.setVisible(false);
       for (const dz of this.dizzySprites) dz?.setVisible(false);
       perf.cutscene = performance.now() - sectionStart;
@@ -952,13 +1015,27 @@ export class FightScene extends Phaser.Scene {
     perf.world = performance.now() - sectionStart;
     sectionStart = performance.now();
 
+    // after a fatality, the beaten loser lies burnt in a heap through the win
+    // beat — not dazed on their feet. Force the down pose, kill the dizzy stars,
+    // ash the sprite, and pile some dust under them.
+    const fatalDown = s.phase === 'matchEnd' && !!s.fatality && s.roundWinner !== null;
+    const loserSlot = s.roundWinner === 0 ? 1 : 0;
+
     for (const slot of [0, 1] as const) {
       const f = s.fighters[slot];
       const def = characters[f.charId];
+      const burnt = fatalDown && slot === loserSlot;
+
+      if (burnt) {
+        // ashy dust heap the charred loser sprawls in
+        gU.fillStyle(0x241f1b, 0.9).fillEllipse(f.x, FLOOR_Y + 8, def.bodyBox.w * 2.1, 24);
+        gU.fillStyle(0x463d34, 0.8).fillEllipse(f.x, FLOOR_Y + 3, def.bodyBox.w * 1.5, 15);
+        gU.fillStyle(0x5c5046, 0.5).fillEllipse(f.x - def.bodyBox.w * 0.3, FLOOR_Y - 1, def.bodyBox.w * 0.7, 8);
+      }
 
       // circling dizzy stars over a dazed fighter's head (fight-phase dizzy
       // and the finisher-window daze both read as "helpless")
-      if (f.action.kind === 'dazed' && this.textures.exists('vfx-dizzy')) {
+      if (f.action.kind === 'dazed' && !burnt && this.textures.exists('vfx-dizzy')) {
         let dz = this.dizzySprites[slot];
         if (!dz) {
           dz = this.add.image(0, 0, 'vfx-dizzy').setDepth(4);
@@ -981,7 +1058,7 @@ export class FightScene extends Phaser.Scene {
         sprite.setPosition(f.x, f.y + SPRITE_FOOT_OFFSET_Y + (def.spriteOffsetY ?? 0));
         sprite.setFlipX(f.facing === -1);
         sprite.setRotation(0);
-        const frame = this.actionToCell(slot, f);
+        const frame = burnt ? this.cellFor(slot, ['down', 'fall', 'hit']) : this.actionToCell(slot, f);
         this.drawFighterShadow(slot, f, def, frame);
         sprite.setFrame(frame);
         if (flash) {
@@ -995,7 +1072,10 @@ export class FightScene extends Phaser.Scene {
         }
         const k = f.action.kind;
         const mirrorTint = this.chars[0] === this.chars[1] && slot === 1 ? 0xffb0a0 : undefined;
-        if (k === 'hitstun' || (k === 'airHit' && f.action.frame < 6)) {
+        if (burnt) {
+          sprite.setTint(0x453b32); // charred ash
+          sprite.setRotation(0);
+        } else if (k === 'hitstun' || (k === 'airHit' && f.action.frame < 6)) {
           sprite.clearTint();
           flash?.setVisible(true);
         }
@@ -1033,11 +1113,12 @@ export class FightScene extends Phaser.Scene {
         if (img.texture.key !== key) img.setTexture(key);
         const size = PROJ_SIZE[p.moveId] ?? 72;
         const feet = PROJ_FEET_ANCHORED.has(p.moveId);
+        const oy = PROJ_RENDER_OFFSET_Y[p.moveId] ?? 0; // render-only nudge
         img.setOrigin(0.5, feet ? 1 : 0.5);
         img.setVisible(true)
-          .setPosition(p.x, feet ? p.y + SPRITE_FOOT_OFFSET_Y : p.y)
+          .setPosition(p.x, (feet ? p.y + SPRITE_FOOT_OFFSET_Y : p.y) + oy)
           .setDisplaySize(size, size);
-        img.setAlpha(p.moveId === 'smokescreen' ? 0.92 : 1);
+        img.setAlpha(1);
         if (p.moveId === 'sigil-bolt') {
           img.setRotation(s.tick * 0.15 * (p.vx > 0 ? 1 : -1)); // runes spin
         } else if (p.moveId === 'fork-bomb' && (p.vx !== 0 || p.vy !== 0)) {
@@ -1248,15 +1329,23 @@ export class FightScene extends Phaser.Scene {
       const fillW = BAR_W * ratio;
       const color = ratio > 0.5 ? 0x7ee06e : ratio > 0.25 ? 0xffd24a : 0xff5a48;
       g.fillStyle(color, 1).fillRect(slot === 0 ? x + BAR_W - fillW : x, 28, fillW, 18);
+      // centered on the shared name row (HUD_NAME_Y), hugging the health bar's
+      // INSIDE edge (toward screen center)
       for (let w = 0; w < 2; w++) {
         const wx = slot === 0 ? x + BAR_W - 14 - w * 20 : x + 14 + w * 20;
-        if (s.wins[slot] > w) g.fillStyle(0xffd24a, 1).fillCircle(wx, 62, 6);
-        else g.lineStyle(1, 0xd8cbb8, 1).strokeCircle(wx, 62, 6);
+        if (s.wins[slot] > w) g.fillStyle(0xffd24a, 1).fillCircle(wx, HUD_NAME_Y, 6);
+        else g.lineStyle(1, 0xd8cbb8, 1).strokeCircle(wx, HUD_NAME_Y, 6);
       }
     }
 
     this.timerText.setText(s.rules.roundTicks === 0 ? '∞' : String(Math.max(0, Math.ceil(s.timer / 60))));
     this.msgText.setText(this.message());
+  }
+
+  /** HUD tag beside the round-win pips: which side is bot-driven vs human */
+  private playerLabel(slot: 0 | 1): string {
+    const isBot = slot === 0 ? !!this.botP1 : !!this.bot;
+    return isBot ? 'CPU' : slot === 0 ? 'P1' : 'P2';
   }
 
   private message(): string {
@@ -1272,7 +1361,7 @@ export class FightScene extends Phaser.Scene {
       case 'matchEnd': {
         const name = characters[s.fighters[s.roundWinner ?? 0].charId].name;
         const fatal = s.fatality ? '\nFATALITY' : '';
-        return `${name} WINS${fatal}\nENTER / attack continue · R rematch · ESC / SELECT menu`;
+        return `${name} WINS${fatal}`;
       }
       default:
         return '';

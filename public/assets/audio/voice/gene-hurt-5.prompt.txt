@@ -1,1 +1,1 @@
-Segfault!
+Bad output!

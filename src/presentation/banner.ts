@@ -44,6 +44,13 @@ export function bannerFor(
       return ['FINISH THEM', 'pulse'];
     case 'fatality':
       return s.phaseFrame < 70 ? ['FATALITY', 'slam'] : ['', 'pop'];
+    case 'matchEnd': {
+      // "<NAME> WINS" beat, held over the frozen scene until the win-quote
+      // screen reveals (renderers gate that on their own revealFrame)
+      if (s.roundWinner === null) return ['', 'pop'];
+      const w = s.fighters[s.roundWinner];
+      return [`${defs[w.charId].name.toUpperCase()} WINS`, 'slam'];
+    }
     default:
       return ['', 'pop'];
   }

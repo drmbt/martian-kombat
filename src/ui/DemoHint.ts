@@ -17,7 +17,7 @@ export class DemoHint {
     this.el = document.createElement('div');
     this.el.textContent = 'DEMO — PRESS ANY KEY';
     this.el.style.cssText =
-      'position:absolute;left:50%;bottom:26px;transform:translateX(-50%);z-index:7;' +
+      'position:absolute;left:50%;top:14%;transform:translateX(-50%);z-index:7;' +
       'font:bold 20px monospace;color:#ffd24a;text-shadow:0 2px 5px #000;' +
       'pointer-events:none;animation:mkDemoBlink 1.1s ease-in-out infinite;';
     host.appendChild(this.el);

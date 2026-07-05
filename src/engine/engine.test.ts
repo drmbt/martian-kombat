@@ -169,8 +169,12 @@ describe('air attacks', () => {
     // defender near the corner so holding back can't walk them out of range
     s.fighters[0].x = 800;
     s.fighters[1].x = 880;
-    step(s, [inp({ up: true }), guard], characters);
-    run(s, 25, inp(), guard); // past the apex, falling toward the defender
+    // place the attacker mid-descent at connecting height directly — this test
+    // is about the overhead PROPERTY, not the jump arc, so decouple it from
+    // jump-height tuning (a real jump reaches this same state on the way down)
+    s.fighters[0].action = { kind: 'air', frame: 0 };
+    s.fighters[0].y = FLOOR_Y - 90; // low enough the jhk reaches even a croucher
+    s.fighters[0].vy = 0.5;
     step(s, [inp({ hk: true }), guard], characters); // fresh press mid-air
     expect(s.fighters[0].action.kind).toBe('airAttack');
     expect(s.fighters[0].action.moveId).toBe('jhk');
@@ -288,7 +292,10 @@ describe('named specials with per-move motions', () => {
     const s = fresh();
     s.fighters[0].x = 500;
     s.fighters[1].x = 580;
-    const guard = inp({ left: true }); // P1 blocks (back = left... P1 faces right, so back is left)
+    // crouch-block: P1 guards WITHOUT walking backward — a back-WALKING blocker
+    // legitimately retreats out of grab range (see the throw tests). P1 faces
+    // right, so back is left.
+    const guard = inp({ left: true, down: true });
     // P2 faces left: 360 simplified = down + back(right) + fwd(left) seen
     step(s, [guard, inp({ down: true })], characters);
     step(s, [guard, inp({ right: true })], characters);
@@ -456,6 +463,25 @@ describe('fatality flow', () => {
     run(s, 200);
     expect(s.phase).toBe('matchEnd');
     expect(s.fatality).toBeNull();
+  });
+
+  it('a fumbled fatality (just landing a normal) collapses the loser (MK)', () => {
+    const s = decideMatch();
+    expect(s.phase).toBe('finisher');
+    // stand the dazed vincent in yulia's jab range and let her recover from the
+    // KO jab, then pulse a FRESH jab — it lands and he just collapses (no
+    // fatality), round ends. Pulsing (release→press) re-arms each activation.
+    s.fighters[0].x = 490;
+    s.fighters[1].x = 529;
+    for (let i = 0; i < 40 && s.phase === 'finisher'; i++) {
+      s.fighters[0].x = 490; // hold the dazed loser in place for the test
+      step(s, [inp(), inp({ lp: i % 4 === 0 })], characters);
+    }
+    expect(s.phase).toBe('roundEnd');
+    expect(s.fighters[0].action.kind).toBe('ko');
+    expect(s.fatality).toBeNull();
+    run(s, 200);
+    expect(s.phase).toBe('matchEnd');
   });
 
   it('a fighter with no fatality defined KOs straight to the normal round end', () => {
@@ -726,20 +752,20 @@ describe('flo: kernel panic kit (traps, fields, charge)', () => {
     expect(s.fighters[1].health).toBe(characters.yulia.health - 90);
   });
 
-  it('Smokescreen is a harmless field and does not block Fork Bomb (one-projectile rule exemption)', () => {
+  it('Flame War is a short-range flame that hits (Yoga-Flame-style), not a field', () => {
     const s = freshFlo();
+    s.fighters[0].x = 420;
+    s.fighters[1].x = 520; // within the flame's short reach
     fireQcbPunch(s);
-    expect(s.fighters[0].action.moveId).toBe('smokescreen');
-    run(s, 20); // past startup
-    expect(s.projectiles).toHaveLength(1);
-    expect(s.projectiles[0].field).toBe(true);
-    expect(s.projectiles[0].damage).toBe(0);
-
-    run(s, 25); // recover, then throw the bomb through the smoke
-    fireSpecial(s);
-    run(s, 15);
-    expect(s.projectiles).toHaveLength(2); // smoke + laptop coexist
-    expect(s.fighters[1].health).toBe(characters.yulia.health); // smoke never hit anyone
+    expect(s.fighters[0].action.moveId).toBe('smokescreen'); // id kept; name "Flame War"
+    // the flame comes out, connects at close range for real damage + knockdown
+    // (the old Smokescreen was a harmless 0-damage field), then dissipates
+    run(s, 40);
+    expect(s.fighters[1].health).toBeLessThan(characters.yulia.health);
+    expect(['airHit', 'knockdown', 'getup']).toContain(s.fighters[1].action.kind);
+    // nothing lingers — no static mine left on the screen (short ttl)
+    expect(s.projectiles.some((p) => p.moveId === 'smokescreen' && p.field)).toBe(false);
+    expect(s.projectiles.find((p) => p.moveId === 'smokescreen')).toBeUndefined();
   });
 
   it('Root Access needs a banked down-charge, then pops the opponent up', () => {
@@ -900,28 +926,23 @@ describe('gene: prompt injection kit (teleports, slow field, fake clone)', () =>
     expect(s.fighters[0].x).toBeLessThan(100); // back wall (faces right -> retreats left)
   });
 
-  it('Rate Limit field slows enemy projectiles inside it', () => {
-    // gene (P2, faces left) drops the field; yulia-side P1 is vincent for a fireball
-    const s = initialState('vincent', 'gene', characters);
-    s.phase = 'fight';
-    // gene: qcb+P — he faces left, so back = right
-    step(s, [inp(), inp({ down: true })], characters);
-    step(s, [inp(), inp({ right: true })], characters);
-    step(s, [inp(), inp({ right: true, lp: true })], characters);
-    expect(s.fighters[1].action.moveId).toBe('rate-limit');
-    run(s, 16); // field out
-    const field = s.projectiles.find((p) => p.field);
-    expect(field?.slowFactor).toBe(0.35);
-
-    // vincent fires sigil bolt into the field
-    fireSpecial(s);
-    run(s, 16); // past sigil-bolt startup
-    const bolt = s.projectiles.find((p) => !p.field);
-    expect(bolt).toBeDefined();
-    const x0 = bolt!.x;
-    run(s, 10);
-    const insideSpeed = (bolt!.x - x0) / 10;
-    expect(Math.abs(insideSpeed)).toBeLessThan(Math.abs(bolt!.vx) * 0.6); // crawling
+  it('Line Goes Up is a short-range hitting attack, not a slow field', () => {
+    const s = freshGene();
+    s.fighters[0].x = 420;
+    s.fighters[1].x = 515; // within the candle-curve's short reach
+    // gene: qcb+P (faces right in this setup, so back = left)
+    step(s, [inp({ down: true }), inp()], characters);
+    step(s, [inp({ left: true }), inp()], characters);
+    step(s, [inp({ left: true, lp: true }), inp()], characters);
+    expect(s.fighters[0].action.moveId).toBe('rate-limit'); // id kept; name "Line Goes Up"
+    // the candle curve comes out and connects for real damage + knockdown (the
+    // old Rate Limit was a harmless 0-damage slow field), then dissipates
+    run(s, 40);
+    expect(s.fighters[1].health).toBeLessThan(characters.yulia.health);
+    expect(['airHit', 'knockdown', 'getup']).toContain(s.fighters[1].action.kind);
+    // no static slow-field mine lingers on the screen (short ttl)
+    expect(s.projectiles.some((q) => q.moveId === 'rate-limit' && (q.field || q.slowFactor > 0))).toBe(false);
+    expect(s.projectiles.find((q) => q.moveId === 'rate-limit')).toBeUndefined();
   });
 
   it('Hallucination clone walks harmlessly, then pops for damage', () => {
@@ -1096,6 +1117,28 @@ describe('universal throw (LP+LK)', () => {
       characters[P2].health - characters[P1].moves.throw.damage,
     );
     expect(['airHit', 'knockdown', 'getup']).toContain(s.fighters[1].action.kind);
+  });
+
+  it('tosses the victim on a long high arc that slams + bounces (SF2)', () => {
+    const s = fresh();
+    closeRange(s);
+    const guard = inp({ right: true, down: true });
+    // land the throw
+    for (let i = 0; i < 12 && !s.pendingThrow; i++) step(s, [chord, guard], characters);
+    for (let i = 0; i < 20 && s.pendingThrow; i++) step(s, [inp(), guard], characters);
+    const vic = s.fighters[1];
+    const startX = vic.x;
+    // launched airborne, sailing away from the thrower (P1 faces right)
+    expect(vic.action.kind).toBe('airHit');
+    expect(vic.action.tossed).toBe(true);
+    expect(vic.y).toBeLessThan(FLOOR_Y);
+    expect(vic.vy).toBeLessThan(0); // rising
+    expect(vic.vx).toBeGreaterThan(6); // strong horizontal, thrown to the right
+    // let the arc play out: it hits the floor, bounces once, then settles far
+    // from where it was thrown — a normal knockdown wouldn't travel this far
+    run(s, 60, inp(), guard);
+    expect(['knockdown', 'getup', 'idle']).toContain(s.fighters[1].action.kind);
+    expect(s.fighters[1].x - startX).toBeGreaterThan(90);
   });
 
   it('whiffs at full-screen range', () => {
@@ -1403,6 +1446,32 @@ describe('counterhits (sprint 18)', () => {
 });
 
 describe('landing recovery (sprint 18)', () => {
+  it('a forward jump covers ground faster than walking and clears real height', () => {
+    const def = characters[P1];
+    // horizontal jump speed is a multiple of walk (SF2 arc), not walk itself
+    const s = fresh();
+    s.fighters[0].x = 300;
+    const startX = s.fighters[0].x;
+    step(s, [inp({ up: true, right: true }), inp()], characters);
+    let peakRise = 0;
+    let airVx = 0;
+    // run through prejump + the whole air arc back to the ground
+    for (let t = 0; t < 120; t++) {
+      const k = s.fighters[0].action.kind;
+      if (k !== 'prejump' && k !== 'air') break;
+      step(s, [inp({ right: true }), inp()], characters);
+      peakRise = Math.max(peakRise, FLOOR_Y - s.fighters[0].y);
+      if (s.fighters[0].action.kind === 'air') airVx = s.fighters[0].vx;
+    }
+    const airX = s.fighters[0].x - startX;
+    // the airborne horizontal per tick beats a walk; total travel is well past
+    // what walkSpeed alone would give over the same air time
+    expect(airVx).toBeGreaterThan(def.walkSpeed);
+    expect(airX).toBeGreaterThan(def.walkSpeed * 20);
+    // and it actually gets off the ground (over half a body height of rise)
+    expect(peakRise).toBeGreaterThan(def.hurtStand.h * 0.6);
+  });
+
   it('an empty jump lands with LANDING_TICKS of recovery before idle', () => {
     const s = fresh();
     step(s, [inp({ up: true }), inp()], characters);

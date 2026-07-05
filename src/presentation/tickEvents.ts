@@ -41,7 +41,8 @@ export type FightEvent =
   /** `slot` = the fighter that got hurt; `comboContinues` = they never left stun */
   | { type: 'hit'; slot: 0 | 1; damage: number; counter: boolean; heavy: boolean; comboContinues: boolean }
   | { type: 'block'; slot: 0 | 1 }
-  | { type: 'attack-start'; slot: 0 | 1; moveId: string; special: boolean }
+  /** `voiceLine` = the move declares a per-move VO call-out (v-<char>-move-<id>) */
+  | { type: 'attack-start'; slot: 0 | 1; moveId: string; special: boolean; voiceLine: boolean }
   | { type: 'jump'; slot: 0 | 1 }
   | { type: 'taunt'; slot: 0 | 1 }
   /** ground-impact dust: airHit floor bounce or settling into knockdown */
@@ -109,11 +110,13 @@ export function diffTick(prev: TickSnap, s: GameState, defs: Defs): FightEvent[]
       (kind === 'attack' || kind === 'airAttack') &&
       (was !== kind || prev.moveIds[slot] !== f.action.moveId)
     ) {
+      const startMove = defs[f.charId].moves[f.action.moveId!];
       events.push({
         type: 'attack-start',
         slot,
         moveId: f.action.moveId!,
-        special: !!defs[f.charId].moves[f.action.moveId!]?.input,
+        special: !!startMove?.input,
+        voiceLine: !!startMove?.voice,
       });
     }
     if (kind === 'air' && was === 'prejump') events.push({ type: 'jump', slot });

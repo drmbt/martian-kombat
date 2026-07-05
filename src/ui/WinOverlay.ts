@@ -42,20 +42,31 @@ export class WinOverlay {
     const quote = quotes.length ? quotes[s.tick % quotes.length] : '...';
     const base = import.meta.env.BASE_URL;
     const el = document.createElement('div');
+    // container-type:size lets the children scale in cq units against the
+    // overlay's own box (the letterboxed canvas region), not the viewport
     el.style.cssText =
-      'position:absolute;inset:0;background:#05030a;color:#e8e4d8;font:14px monospace;' +
-      'pointer-events:none;z-index:4;display:flex;flex-direction:column;align-items:center;' +
-      'justify-content:center;gap:16px;text-align:center;';
-    const fatal = s.fatality ? `<div style="color:#ff4b2e;font-weight:bold;letter-spacing:4px;">FATALITY</div>` : '';
+      'position:absolute;inset:0;container-type:size;background:#05030a;color:#e8e4d8;' +
+      'font:14px monospace;pointer-events:none;z-index:4;display:flex;flex-direction:column;' +
+      'align-items:center;justify-content:center;gap:3.2cqh;text-align:center;';
+    // stylized SFII-style title: crisp black outline + drop for depth
+    const titleShadow =
+      '-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,2px 2px 0 #000,0 6px 18px rgba(0,0,0,.85)';
+    const fatal = s.fatality
+      ? `<div style="font-size:4cqh;font-weight:bold;letter-spacing:1cqh;color:#ff4b2e;text-shadow:${titleShadow};">FATALITY</div>`
+      : '';
+    // busts are transparent-backed silhouettes (no boxes) that face each other;
+    // size to the overlay so the screen scales like the SFII reference
+    const bust =
+      'height:44cqh;width:auto;image-rendering:pixelated;filter:drop-shadow(0 6px 10px rgba(0,0,0,.6));';
     el.innerHTML =
-      `<div style="font-size:34px;font-weight:bold;color:${wDef.color};text-shadow:0 3px 0 #000,0 5px 14px rgba(0,0,0,.7);letter-spacing:2px;">${wDef.name.toUpperCase()} WINS</div>` +
+      `<div style="font-size:9cqh;font-weight:bold;color:${wDef.color};text-shadow:${titleShadow};letter-spacing:0.6cqh;line-height:1;">${wDef.name.toUpperCase()} WINS</div>` +
       fatal +
-      `<div style="display:flex;gap:56px;align-items:flex-end;">` +
-      `<img src="${base}assets/portraits/${winner.charId}.png" style="width:180px;border:3px solid #e8c832;background:#222;">` +
-      `<img src="${base}assets/portraits/${loser.charId}-ko.png" onerror="this.src='${base}assets/portraits/${loser.charId}.png';this.style.filter='grayscale(1)'" style="width:150px;border:3px solid #555;background:#222;transform:scaleX(-1);">` +
+      `<div style="display:flex;gap:8cqw;align-items:flex-end;justify-content:center;">` +
+      `<img src="${base}assets/portraits/${winner.charId}.png" style="${bust}">` +
+      `<img src="${base}assets/portraits/${loser.charId}-ko.png" onerror="this.src='${base}assets/portraits/${loser.charId}.png';this.style.filter='grayscale(1) drop-shadow(0 6px 10px rgba(0,0,0,.6))'" style="${bust}transform:scaleX(-1);">` +
       `</div>` +
-      `<div style="max-width:72%;font-size:17px;color:#ffd24a;text-shadow:0 2px 4px #000;">“${quote}”</div>` +
-      `<div style="opacity:.65;">${this.opts.prompt ?? 'R  REMATCH   ·   ENTER  SELECT   ·   ESC  MENU'}</div>`;
+      `<div style="max-width:74%;font-size:3cqh;font-style:italic;color:#ffd24a;text-shadow:0 2px 5px #000;">“${quote}”</div>` +
+      `<div style="font-size:2cqh;letter-spacing:0.2cqh;opacity:.55;">${this.opts.prompt ?? 'R  REMATCH   ·   ENTER  SELECT   ·   ESC  MENU'}</div>`;
     this.host.appendChild(el);
     this.el = el;
     this.opts.onFirstShow?.(winner.charId);

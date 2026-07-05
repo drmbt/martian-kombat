@@ -44,21 +44,29 @@ describe('soundCues', () => {
     ]);
   });
 
-  it('match end: winner name call, delayed victory sting, victory music', () => {
+  it('match end: winner name call, then "WINS", then victory music (no generic sting)', () => {
     expect(cues({ type: 'match-end', winner: 1 })).toEqual([
       { kind: 'sfx', key: 'ann-yulia', volume: 1 },
-      { kind: 'sfx', key: 'ann-victory', volume: 1, delayMs: 900 },
+      { kind: 'sfx', key: 'ann-wins', volume: 1, delayMs: 1000 },
       { kind: 'music', action: 'victory' },
     ]);
   });
 
   it('special attack-start adds the kiai on top of the whoosh', () => {
-    expect(cues({ type: 'attack-start', slot: 0, moveId: 'sigil-bolt', special: true })).toEqual([
+    expect(cues({ type: 'attack-start', slot: 0, moveId: 'sigil-bolt', special: true, voiceLine: false })).toEqual([
       { kind: 'sfx', key: 's-whoosh', volume: 0.4 },
       { kind: 'voice', charId: 'vincent', line: 'kiai', volume: 0.8 },
     ]);
-    expect(cues({ type: 'attack-start', slot: 0, moveId: 'lp', special: false })).toEqual([
+    expect(cues({ type: 'attack-start', slot: 0, moveId: 'lp', special: false, voiceLine: false })).toEqual([
       { kind: 'sfx', key: 's-whoosh', volume: 0.4 },
+    ]);
+  });
+
+  it('a move with a voice line plays its call-out instead of a random kiai', () => {
+    // Gene's Line Goes Up (rate-limit): says "Line goes up!" not a generic grunt
+    expect(cues({ type: 'attack-start', slot: 1, moveId: 'rate-limit', special: true, voiceLine: true })).toEqual([
+      { kind: 'sfx', key: 's-whoosh', volume: 0.4 },
+      { kind: 'sfx', key: 'v-yulia-move-rate-limit', volume: 0.9 },
     ]);
   });
 
@@ -77,7 +85,7 @@ describe('soundCues', () => {
 
   it('keeps event order across a mixed batch', () => {
     const c = cues(
-      { type: 'attack-start', slot: 0, moveId: 'lp', special: false },
+      { type: 'attack-start', slot: 0, moveId: 'lp', special: false, voiceLine: false },
       { type: 'hit', slot: 1, damage: 10, counter: false, heavy: false, comboContinues: false },
     );
     expect(c.map((x) => (x.kind === 'sfx' ? x.key : x.kind))).toEqual(['s-whoosh', 's-hit', 'voice']);

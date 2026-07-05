@@ -45,6 +45,7 @@ export class FightScene3D extends Phaser.Scene {
   private bot: CpuDriver | null = null;
   private botP1: CpuDriver | null = null;
   private demo = false;
+  private showcase = false;
   private session!: Session;
   private online: OnlineFightData | null = null;
   private net: NetSession | null = null;
@@ -81,13 +82,15 @@ export class FightScene3D extends Phaser.Scene {
     training?: boolean;
     stage?: string;
     demo?: boolean;
+    showcase?: boolean;
     online?: OnlineFightData;
   }): void {
     this.chars = [data.p1 ?? 'vincent', data.p2 ?? 'vincent'];
     this.stageId = data.stage ?? 'chiba-roof';
     this.online = data.online ?? null;
     // online is strictly 2-human — no CPU, no demo, no training upkeep
-    this.demo = !this.online && !!data.demo;
+    this.showcase = !this.online && !!data.showcase;
+    this.demo = !this.online && (!!data.demo || this.showcase);
     this.cpu = !this.online && !!data.cpu;
     this.training = !this.online && !!data.training;
     this.net = null;
@@ -95,9 +98,9 @@ export class FightScene3D extends Phaser.Scene {
     this.uiLayer = null;
     this.shell = null;
     this.loading = null;
-    // demo = attract mode: both sides are bots
-    this.bot = this.cpu || this.demo ? new CpuDriver(1) : null;
-    this.botP1 = this.demo ? new CpuDriver(0) : null;
+    // demo = attract mode: both sides are (showcase) bots
+    this.bot = this.cpu || this.demo ? new CpuDriver(1, 1, this.showcase) : null;
+    this.botP1 = this.demo ? new CpuDriver(0, 1, this.showcase) : null;
   }
 
   create(): void {
@@ -115,6 +118,8 @@ export class FightScene3D extends Phaser.Scene {
             stage: { ...STAGE3D_BOUNDS },
             // room for the entry gesture + READY? 3-2-1 before FIGHT
             introTicks: 240,
+            // showcase: single round that ends in the fatality
+            ...(this.showcase ? { winsNeeded: 1 } : {}),
             // training sandbox: no round clock
             ...(this.training ? { roundTicks: 0 } : {}),
           },
@@ -180,6 +185,7 @@ export class FightScene3D extends Phaser.Scene {
       cpu: this.cpu,
       training: this.training,
       demo: this.demo,
+      showcase: this.showcase,
       render3d: true,
       state: () => this.state,
       debugKeys: [
@@ -288,7 +294,7 @@ export class FightScene3D extends Phaser.Scene {
     this.fatalityOverlay = new FatalityOverlay(layer.root, characters);
     this.winOverlay = new WinOverlay(layer.root, characters, {
       prompt: this.online ? 'R  REMATCH   ·   ESC  QUIT' : 'R  REMATCH   ·   ENTER  SELECT',
-      revealFrame: 72, // let the K.O./name-call beat land first (2D parity)
+      revealFrame: 150, // let the "<NAME> WINS" beat land + breathe first (2D parity)
       onFirstShow: (id) => playVoice(this, id, 'victory', 0.85),
     });
     this.layoutDom();

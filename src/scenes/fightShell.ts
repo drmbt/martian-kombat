@@ -26,6 +26,9 @@ export interface FightShellOpts {
   cpu: boolean;
   training: boolean;
   demo: boolean;
+  /** demo was explicitly chosen from the menu ("DEMO MATCH"), not idle-triggered
+   *  attract mode — it plays to the finish; only ESC/Start opens a quit menu */
+  showcase?: boolean;
   /** which renderer this shell serves — rides into character select */
   render3d: boolean;
   /** live engine state accessor (scenes reassign state on restart) */
@@ -61,8 +64,26 @@ export class FightShell {
     const kb = scene.input.keyboard!;
 
     if (opts.demo) {
-      // attract mode: a blinking banner, and ANY input returns to the title
-      // (` stays free for the perf overlay); pad exit is polled in frame()
+      if (opts.showcase) {
+        // explicitly chosen from the menu (DEMO MATCH): plays out to the
+        // finish (auto-returns to the menu after the win screen, see
+        // FightScene/FightScene3D) — only ESC or a pad Start/Select press
+        // interrupts it, via the same pause menu a human match uses. No
+        // "press any key" banner here — nothing should hint at an exit.
+        this.pauseMenu = new PauseMenu(
+          opts.layer.root,
+          [opts.defs[opts.chars[0]], opts.defs[opts.chars[1]]],
+          [
+            { label: 'RESUME', act: () => this.togglePause() },
+            { label: 'MAIN MENU', act: () => this.toMainMenu() },
+          ],
+          { onNavSound: () => play(scene, 's-blip', 0.4) },
+        );
+        kb.on('keydown-ESC', () => this.togglePause());
+        return;
+      }
+      // idle-triggered attract mode: a blinking banner, and ANY input returns
+      // to the title (` stays free for the perf overlay); pad exit polled in frame()
       new DemoHint(opts.layer.root); // torn down with the layer on shutdown
       kb.on('keydown', (e: KeyboardEvent) => {
         if (e.key !== '`') this.toMainMenu();
@@ -139,13 +160,6 @@ export class FightShell {
    *  opening the pause menu mid-match. */
   private padMenuFrame(): void {
     const n = menuNav.poll();
-    if (this.opts.demo) {
-      // attract mode: any fresh pad input returns to the title
-      if (n.confirm || n.start || n.menu || n.up || n.down || n.left || n.right) {
-        navDefer(this.scene, () => this.toMainMenu());
-      }
-      return;
-    }
     if (this.paused) {
       if (n.left || n.up) this.pauseMenu?.move(-1);
       if (n.right || n.down) this.pauseMenu?.move(1);
@@ -156,6 +170,18 @@ export class FightShell {
         return;
       }
       if (n.start || n.menu) this.togglePause(); // Start/Select resumes
+      return;
+    }
+    if (this.opts.demo) {
+      if (this.opts.showcase) {
+        // chosen from the menu: only Start/Select opens the quit menu
+        if (n.start || n.menu) this.togglePause();
+        return;
+      }
+      // idle-triggered attract mode: any fresh pad input returns to the title
+      if (n.confirm || n.start || n.menu || n.up || n.down || n.left || n.right) {
+        navDefer(this.scene, () => this.toMainMenu());
+      }
       return;
     }
     if (this.opts.state().phase === 'matchEnd') {
