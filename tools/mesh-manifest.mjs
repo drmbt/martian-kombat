@@ -129,6 +129,7 @@ export const MESHES = {
     archetype: 'tai-chi',
     clips: {
       ...kit('tai-chi'),
+      idle: { file: 'Fighting Idle.fbx' }, // per-char idle (tai-chi: poised, flowing)
       'attack/sigil-bolt': { file: 'Standing 1H Magic Attack 01.fbx' },
       'attack/cloud-hands': { file: 'Standing 2H Magic Attack 01.fbx' },
       'attack/rising-glyph': { file: 'Uppercut.fbx', stripY: true },
@@ -143,6 +144,7 @@ export const MESHES = {
     archetype: 'dirty-boxer',
     clips: {
       ...kit('dirty-boxer'),
+      idle: { file: 'Bouncing Fight Idle.fbx' }, // per-char idle (flo: bouncy, restless)
       'attack/sudo-kill': { file: 'Standing 1H Magic Attack 02.fbx' },
       'attack/fork-bomb': { file: 'Standing 2H Cast Spell 01.fbx' },
       'attack/smokescreen': { file: 'Standing 2H Magic Area Attack 01.fbx' },
@@ -157,6 +159,7 @@ export const MESHES = {
     archetype: 'acrobat',
     clips: {
       ...kit('acrobat'),
+      idle: { file: 'Mma Idle.fbx' }, // per-char idle (yulia: athletic MMA stance)
       'attack/cossack-spiral': { file: 'Cross Jumps Rotation.fbx', stripY: true },
       'attack/backbend-guillotine': { file: 'Back Flip To Uppercut.fbx', stripY: true },
       'attack/volga-piledriver': { file: 'Illegal Headbutt.fbx' },
@@ -170,6 +173,9 @@ export const MESHES = {
     bakeTransform: true, // meter-vert Tripo export: force the exporter's skin-bake path (as flo/yulia)
     basecolor: 'rapha-20k-tripo-unrigged/rapha-20k-tripo-unrigged_basecolor.PNG',
     archetype: 'dirty-boxer',
-    clips: { ...kit('dirty-boxer') },
+    clips: {
+      ...kit('dirty-boxer'),
+      idle: { file: 'Fight Idle (2).fbx' }, // per-char idle
+    },
   },
 };

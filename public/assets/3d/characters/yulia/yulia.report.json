@@ -9,9 +9,9 @@
  "clips": [
   {
    "name": "idle",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/idle/Fight Idle.fbx",
-   "frames": 143,
-   "seconds": 4.767,
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/idle/Mma Idle.fbx",
+   "frames": 150,
+   "seconds": 5,
    "rootStripped": [
     "X",
     "Z"
