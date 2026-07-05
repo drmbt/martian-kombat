@@ -4,9 +4,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "predev": "node tools/gen-music-manifest.mjs",
+    "predev": "node tools/gen-music-manifest.mjs && node tools/gen-asset-manifest.mjs",
     "dev": "vite",
-    "prebuild": "node tools/gen-music-manifest.mjs",
+    "prebuild": "node tools/gen-music-manifest.mjs && node tools/gen-asset-manifest.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest run",
@@ -20,7 +20,11 @@
     "gen:fatality": "node tools/gen-fatality.mjs",
     "gen:vfx": "node tools/gen-vfx.mjs",
     "gen:mesh": "node tools/gen-mesh.mjs",
-    "gen:worldmap": "node tools/gen-worldmap.mjs"
+    "gen:worldmap": "node tools/gen-worldmap.mjs",
+    "gen:assets": "node tools/gen-asset-manifest.mjs",
+    "gen:key": "node tools/corridorkey.mjs",
+    "gen:voice": "node tools/gen-voice.mjs",
+    "gen:qa": "python3 tools/qa/pose_qa.py"
   },
   "dependencies": {
     "peerjs": "^1.5.5",
@@ -28,6 +32,7 @@
     "three": "^0.185.1"
   },
   "devDependencies": {
+    "@types/node": "^26.1.0",
     "@types/three": "^0.185.0",
     "typescript": "^5.6.0",
     "vite": "^6.0.0",
