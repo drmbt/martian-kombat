@@ -566,7 +566,12 @@ export class SelectScene extends Phaser.Scene {
       const ty = y - SLABEL_H / 2; // thumb center; label sits below it
       const tile = this.add.rectangle(x, ty, tw, th, 0x14101a, 1).setStrokeStyle(1, 0x594566).setDepth(11);
       tile.setInteractive({ useHandCursor: true });
-      tile.on('pointerover', () => { this.stageIdx = i; });
+      tile.on('pointerover', () => {
+        if (this.stageIdx === i) return;
+        this.stageIdx = i;
+        this.playStageVo(opt.id); // announce on mouse hover too
+        this.redrawStage();
+      });
       tile.on('pointerdown', () => { this.stageIdx = i; this.confirmStage(); });
       if (opt.id === 'random') {
         this.add.text(x, ty, '?', { ...font, fontSize: `${Math.round(th * 0.55)}px`, fontStyle: 'bold', color: '#ffd24a' })
@@ -598,6 +603,7 @@ export class SelectScene extends Phaser.Scene {
     const n = this.stageOptions().length;
     this.stageIdx = ((this.stageIdx + d) % n + n) % n;
     play(this, 's-blip', 0.5);
+    this.playStageVo(this.stageOptions()[this.stageIdx].id); // call the stage name out as you land on it
     this.redrawStage();
   }
 
