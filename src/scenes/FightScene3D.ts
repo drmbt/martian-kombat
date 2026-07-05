@@ -507,7 +507,8 @@ export class FightScene3D extends Phaser.Scene {
     this.hideLoading();
     this.session.advance(deltaMs);
     if (this.online && this.state.phase === 'matchEnd') this.armRematch();
-    this.renderer3d?.render(this.state);
+    // pass the sub-tick alpha so clip playback interpolates between poses
+    this.renderer3d?.render(this.state, this.session.alpha);
     this.drawHud();
     this.fatalityOverlay?.sync(this.state);
     this.winOverlay?.sync(this.state);

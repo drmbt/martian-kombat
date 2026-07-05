@@ -290,7 +290,7 @@ export class ThreeFightRenderer {
     this.post.outputNode = color;
   }
 
-  render(state: GameState): void {
+  render(state: GameState, alpha = 0): void {
     if (!this.ready || this.disposed) return;
     // round-1 intro plays the entry gesture (later rounds go straight to idle)
     const intro = state.phase === 'intro' && state.roundNumber === 1;
@@ -302,14 +302,14 @@ export class ThreeFightRenderer {
       intro,
       victor: ended && state.roundWinner === 0,
       defeated: ended && state.roundWinner === 1,
-    });
+    }, alpha);
     this.fighters[1].update(state.tick, fb, {
       opponent: fa,
       opponentDef: this.defs[fa.charId],
       intro,
       victor: ended && state.roundWinner === 1,
       defeated: ended && state.roundWinner === 0,
-    });
+    }, alpha);
     this.hitboxes.update(state, this.defs);
     const dtTicks = this.lastFxTick < 0 ? 0 : Math.max(state.tick - this.lastFxTick, 0);
     this.lastFxTick = state.tick;
