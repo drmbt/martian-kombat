@@ -48,6 +48,9 @@ const CELL_MAX = 132; // don't let cells balloon when the roster is small
 // P2 (right) is flipped to face left, so the two fighters square off inward.
 const CELL_W = 288; // sprite-sheet cell dims (matches FightScene)
 const CELL_H = 384;
+// feet-line fraction — MUST match FLOOR_FRAC in tools/qa/normalize_floor.py so
+// the roster preview's feet sit on SIDE_BASE_Y (see FightScene FLOOR_FRAC)
+const FLOOR_FRAC = 0.88;
 const SIDE_P1_X = 116;
 const SIDE_P2_X = STAGE_W - 116;
 const SIDE_SPRITE_H = 250; // display height of the idle sprite
@@ -89,6 +92,8 @@ export class SelectScene extends Phaser.Scene {
   private cpu = false;
   private training = false;
   private showcase = false;
+  /** dev-only move tuner (see FightScene) */
+  private tuner = false;
   private render3d = false;
   /** live 3D idle previews on the side slots (3D mode; loaded dynamically) */
   private preview3d: SelectPreview3D | null = null;
@@ -114,7 +119,7 @@ export class SelectScene extends Phaser.Scene {
     super('Select');
   }
 
-  init(data: { cpu?: boolean; training?: boolean; showcase?: boolean; render3d?: boolean; online?: OnlineSelectData }): void {
+  init(data: { cpu?: boolean; training?: boolean; showcase?: boolean; tuner?: boolean; render3d?: boolean; online?: OnlineSelectData }): void {
     this.online = data.online ?? null;
     // showcase = a chosen CPU-vs-CPU demo; one controller picks BOTH fighters,
     // exactly like VS CPU, so it rides the same single-controller select flow
@@ -122,6 +127,7 @@ export class SelectScene extends Phaser.Scene {
     // online is strictly 2-human, and the renderer is the host's (adopted)
     this.cpu = !this.online && (!!data.cpu || this.showcase);
     this.training = !this.online && !!data.training;
+    this.tuner = !this.online && !!data.tuner;
     this.render3d = this.online ? this.online.render3d : !!data.render3d;
     this.preview3d = null; // rebuilt per create(); disposed on shutdown
   }
@@ -281,7 +287,7 @@ export class SelectScene extends Phaser.Scene {
         .setDepth(5);
       this.sideSprites[p] = this.add
         .sprite(sx, SIDE_BASE_Y, 'sheet-vincent', 0)
-        .setOrigin(0.5, 0.95)
+        .setOrigin(0.5, FLOOR_FRAC)
         .setDisplaySize((SIDE_SPRITE_H * CELL_W) / CELL_H, SIDE_SPRITE_H)
         .setFlipX(p === 1)
         .setDepth(4);
@@ -350,7 +356,7 @@ export class SelectScene extends Phaser.Scene {
       if (this.starting) return;
       play(this, 's-blip', 0.5);
       if (this.online) return this.leaveOnline(); // leaving disconnects the match
-      if (this.stageMode) this.scene.restart({ cpu: this.cpu, training: this.training, showcase: this.showcase, render3d: this.render3d });
+      if (this.stageMode) this.scene.restart({ cpu: this.cpu, training: this.training, showcase: this.showcase, tuner: this.tuner, render3d: this.render3d });
       else this.scene.start('Menu');
     });
 
@@ -721,7 +727,7 @@ export class SelectScene extends Phaser.Scene {
         p1: ROSTER[this.idx[0]].id, p2: ROSTER[this.idx[1]].id,
         // showcase launches as a CPU-vs-CPU demo, not a human-vs-CPU match
         cpu: this.showcase ? false : this.cpu, training: this.training,
-        showcase: this.showcase, stage, render3d: this.render3d,
+        showcase: this.showcase, tuner: this.tuner, stage, render3d: this.render3d,
       });
     });
   }
@@ -785,7 +791,7 @@ export class SelectScene extends Phaser.Scene {
       if (n.menu) {
         play(this, 's-blip', 0.5);
         if (this.online) navDefer(this, () => this.leaveOnline());
-        else navDefer(this, () => this.scene.restart({ cpu: this.cpu, training: this.training, showcase: this.showcase, render3d: this.render3d }));
+        else navDefer(this, () => this.scene.restart({ cpu: this.cpu, training: this.training, showcase: this.showcase, tuner: this.tuner, render3d: this.render3d }));
       }
       return;
     }

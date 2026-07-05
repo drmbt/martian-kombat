@@ -936,6 +936,65 @@ column before starting — do NOT scaffold anyone marked NO AI PLEASE):
 - [ ] **Veo motion smoothing** — upgrade keyframe animation to sampled
       motion-clip frames; the biggest visual-quality lever we have
 
+### Combat mechanics — new archetypes to build (user-directed 2026-07-05)
+Each becomes a VALID archetype to pick in the `move-authoring` skill once built;
+every engine mechanic ships with a vitest (determinism rules). Current coverage
+audit lives in the `move-authoring` skill.
+- [ ] **Forward-forward (ff) attacks** — add `ff` as a `Motion` trigger; make
+      dash-attacks a common, encouraged option
+- [ ] **Directional + attack (Smash-style tilts/smashes)** — hold a direction +
+      button for a distinct move (new input paradigm alongside motions)
+- [ ] **More "get over here" pull moves** — plumbing exists (`projectile.pull`,
+      Vine Spear); design more into kits
+- [ ] **Charge back-forward projectile** (true Guile Sonic Boom) — `bf` is
+      currently a sequence, not a held charge; add the charge-hold variant
+- [ ] **Wire the `du` charge flash-kick that already exists** — the plumbing is
+      built (charge ↓hold↑) but NO character uses it yet; give one a flash-kick
+- [ ] **More mash / rapid single-attack specials** (Chun-Li lightning legs,
+      E. Honda hundred-hands, Blanka electricity) — `input.mash` exists, underused
+- [ ] **Air command-specials / dives** — fire a motion special while airborne
+- [ ] **Wall-kick / bounce moves** (Chun-Li, Vega) — wall-jump + bounce mobility
+- [ ] **Replace install-style moves with catalog archetypes** — install/buff
+      plumbing is DECLINED (not liked); swap Gratitude (Vanessa), Third Round
+      (Lyosha), Microdose (Ygor), Breathwork/Presence (Freeman) for buildable
+      archetypes where those moves are wanted
+
+### VFX & smoothness (user-directed 2026-07-05)
+- [ ] **More basic hit-spark overlay variety** — multiple scales + densities so
+      characters vary and low sprite-count moves read smoother
+- [ ] **Frame-trail effect on high-velocity attacks** — motion-smear/afterimage
+      to cut choppiness where sprite counts are low
+- [ ] **SOON: multi-frame VFX sprite-sheet gen in ONE pass** — get nano-banana to
+      emit 9- or 16-frame effect grids in a single call, cut them up on import
+      (low-res is fine); one call yields a whole animated effect. Unlocks the
+      hit-spark variety + frame-trail work cheaply.
+
+### Tooling & skills (canonical, 2026-07-05)
+Character sprite work is codified as invokable skills in `.claude/skills/` and is
+valid to lean on: **sprite-generation** (prompt craft), **sprite-qa** (DWPose/
+alpha deterministic QA + `tools/qa/`), **move-authoring** (kit design + the
+archetype→plumbing catalog — pick archetypes from here), **new-character**
+(end-to-end orchestrator; lore-sheet fuzzy-search + the 7-step pipeline).
+
+### Sprint 24 — proposed (low-hanging, high-value; 2026-07-05)
+Theme: smoothness + showcase already-built mechanics (low engine risk).
+- [x] Multi-frame VFX sprite-sheet generator (single nano-banana pass → 9/16
+      grid) — DONE 2026-07-05: `tools/qa/gen-vfx-grid.mjs` + `vfx_grid.py`
+      (key/inset/greyscale-normalize/centroid-center/edge+failed-key validate)
+      + `vfx_grid_boomerang.py` (truncate-before-edge bloom loops) +
+      `vfx_canonize.py`. Codified in the **hit-spark-generator** skill.
+- [x] Hit-spark variety **library** — DONE 2026-07-05: 15 tintable greyscale
+      strips + tags in `public/assets/vfx/sparks/` (`sparks.json`). Tags
+      (light/heavy/slash/energy/spark/noise/sparse/…) drive pooling.
+- [ ] **Wire spark playback into the renderer** (the anti-samey spec, in the
+      hit-spark-generator skill): pick-per-hit from a TAG POOL, per-move/char
+      `sparkTags` override, rotate+mirror to the attack angle, position/scale
+      jitter, layer for heavies, play-once ~24–30fps in the hitstop — all
+      driven by a DETERMINISTIC hash (tick+slot+hitcount), not `Math.random`.
+- [ ] Frame-trail effect on high-velocity attacks (render-side)
+- [ ] Wire the unused `du` charge + `mash` archetypes into 1–2 fighters (DATA
+      ONLY — plumbing already exists, zero engine risk, immediate variety)
+
 ### Icebox (do not start)
 - **Attract-mode gag reels (3D)**: occasionally, instead of a demo fight, the
   attract rotation holds on a stage with one or two fighters doing weird

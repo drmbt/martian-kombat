@@ -2,7 +2,7 @@
 """Pose-centered head-and-shoulders portrait crop.
 
 The old portraits were a FIXED crop box on the canonical, so heads landed at
-different scales/positions per character. This instead runs DWPose on the
+different scales/positions per character. This instead runs RTMPose on the
 canonical, then frames every bust identically off the skeleton: centered on the
 head, eyes on a fixed line, a consistent head-to-crop scale. Deterministic — no
 vision model call, just keypoints + ffmpeg crop/key/scale.

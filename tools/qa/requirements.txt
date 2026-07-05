@@ -1,6 +1,6 @@
 # Procedural sprite QA (npm run gen:qa). Python 3.10+.
 #   pip install -r tools/qa/requirements.txt
-# rtmlib auto-downloads the DWPose ONNX weights on first run (~/.cache/rtmlib).
+# rtmlib auto-downloads the RTMPose ONNX weights on first run (~/.cache/rtmlib).
 rtmlib>=0.0.15
 onnxruntime>=1.17
 numpy>=1.24

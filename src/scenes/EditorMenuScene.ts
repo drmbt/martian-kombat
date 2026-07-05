@@ -19,6 +19,11 @@ const TOOLS: Tool[] = [
     desc: 'place each stage on the select-screen world map',
     act: (s) => s.go('StagePinEditor'),
   },
+  {
+    label: 'MOVE TUNER',
+    desc: 'pick two fighters, tune moves live, CPU/loop drivers',
+    act: (s) => s.go('Select', { cpu: false, training: true, tuner: true, render3d: false }),
+  },
 ];
 
 export class EditorMenuScene extends Phaser.Scene {
@@ -92,9 +97,9 @@ export class EditorMenuScene extends Phaser.Scene {
     kb.on('keydown', (e: KeyboardEvent) => { if (atk.has(e.keyCode)) this.activate(); });
   }
 
-  go(key: string): void {
+  go(key: string, data?: object): void {
     play(this, 's-blip');
-    this.scene.start(key);
+    this.scene.start(key, data);
   }
 
   private move(d: number): void {

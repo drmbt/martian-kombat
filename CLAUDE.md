@@ -266,3 +266,10 @@ sprint.
   `assets: pack kirby sprite sheet`, `tools: veo clip extraction`.
 - Every engine behavior change ships with a vitest covering it.
 - 60fps is a feature. If a change drops frames on a mid laptop, it doesn't merge.
+- Character sprite work is codified as invokable skills in `.claude/skills/`:
+  **sprite-generation** (pose-prompt craft), **sprite-qa** (deterministic
+  DWPose/alpha validation), **move-authoring** (kit design + the archetype→
+  plumbing catalog — the source of truth for which move mechanics are buildable),
+  **new-character** (end-to-end orchestrator), and **hit-spark-generator**
+  (single-pass NxN VFX grids + the anti-samey playback spec). Invoke them for
+  that work.

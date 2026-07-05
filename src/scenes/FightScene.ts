@@ -3,6 +3,7 @@
 // the deterministic core in src/engine/ stays pure and silent.
 import Phaser from 'phaser';
 import {
+  Box,
   FATALITY_TICKS,
   FLOOR_Y,
   InputFrame,
@@ -12,6 +13,7 @@ import {
   STAGE_H,
   FighterState,
   initialState,
+  mirrorTeleportPhases,
   resolveMove,
   worldBox,
 } from '../engine';
@@ -22,6 +24,8 @@ import { characters } from '../data/characters';
 import { stageById } from '../data/stages';
 import { KeyboardSource } from '../input/keyboard';
 import { CpuDriver } from '../ai/bot';
+import { DIFFICULTIES, DIFFICULTY_AGGRESSION, type Difficulty } from '../ai/difficulty';
+import { MoveTunerPanel } from '../ui/MoveTunerPanel';
 import { play, playVoice, runCues } from './BootScene';
 import { playMusic } from '../audio/music';
 import { getSettings } from '../settings';
@@ -40,6 +44,10 @@ const timedOut = (s: GameState): boolean => s.rules.roundTicks > 0 && s.timer <=
 
 const CELL_W = 288;
 const CELL_H = 384;
+// Fraction of cell height where the fighter's feet sit — the sprite anchor and
+// skeleton floor line. MUST match FLOOR_FRAC in tools/qa/normalize_floor.py
+// (canonical) so the packed art's normalized feet land on the ground.
+const FLOOR_FRAC = 0.88;
 const SHADOW_W = 96;
 const SHADOW_H = 36;
 const SHADOW_PAD = 8;
@@ -196,6 +204,17 @@ export class FightScene extends Phaser.Scene {
   /** shared ghost-bar + combo bookkeeping (see presentation/hudModel) */
   private hudModel!: HudModel;
   private cellMaps: [Map<string, number>, Map<string, number>] = [new Map(), new Map()];
+  /** index -> cell name, the inverse of cellMaps — lets drawSkeleton() know
+   *  which cell is currently showing without re-deriving it */
+  private cellNames: [string[], string[]] = [[], []];
+  /** F3 skeleton overlay: DWPose keypoints baked into meta.json at pack time
+   *  (tools/pack-sheet.mjs, from tools/qa/pose_qa.py's report.json) — absent
+   *  for characters not yet repacked with that data (graceful no-op) */
+  private skeletons: [Record<string, Record<string, [number, number, number]>> | undefined, Record<string, Record<string, [number, number, number]>> | undefined] = [undefined, undefined];
+  private showSkeleton = false;
+  /** the cell name currently resolved for each slot's sprite this frame —
+   *  set alongside sprite.setFrame(), read by drawSkeleton() */
+  private currentCellName: [string | null, string | null] = [null, null];
   /** shared DOM chrome layer + the fight shell (pause/keys/nav/pad/log) */
   private uiLayer!: UiLayer;
   private shell!: FightShell;
@@ -203,8 +222,22 @@ export class FightScene extends Phaser.Scene {
   private training = false;
   private demo = false;
   private showcase = false;
-  private bot: CpuDriver | null = null;
-  private botP1: CpuDriver | null = null;
+  private tuner = false;
+  /** [p1 driver, p2 driver] — null means that slot is human/manual */
+  private bots: [CpuDriver | null, CpuDriver | null] = [null, null];
+  /** move-tuner: which mode setControlMode last put each slot in — used to
+   *  let directional keys still nudge a loop-mode fighter for positioning
+   *  (see pollSlot) */
+  private controlMode: ['manual' | 'cpu' | 'loop', 'manual' | 'cpu' | 'loop'] = ['manual', 'manual'];
+  private tunerPanel: MoveTunerPanel | null = null;
+  /** move-tuner: freeze ticks the instant a held slot's move reaches its
+   *  first active frame (see setHoldActive / afterTick) */
+  private holdActiveSlots: [boolean, boolean] = [false, false];
+  private tunerFrozen = false;
+  /** move-tuner: a soft (non-live) hitbox marker shown while a move's
+   *  parameters are expanded in the inspector, so it can be dialed in without
+   *  actually firing the move over and over (see setPreviewBox) */
+  private previewBox: { slot: 0 | 1; box: Box } | null = null;
   private fatalityPanel: Phaser.GameObjects.Image | null = null;
   /** SFII-style post-match taunt screen (shared DOM WinOverlay) */
   private winOverlay!: WinOverlay;
@@ -229,6 +262,9 @@ export class FightScene extends Phaser.Scene {
     showcase?: boolean;
     stage?: string;
     online?: OnlineFightData;
+    /** dev-only move tuner: mounts the inspector sidebar, runtime-swappable
+     *  per-slot control modes (see setControlMode) */
+    tuner?: boolean;
   }): void {
     this.chars = [data.p1 ?? 'vincent', data.p2 ?? 'yulia'];
     this.stageId = data.stage ?? 'salton';
@@ -239,10 +275,17 @@ export class FightScene extends Phaser.Scene {
     // showcase is a chosen CPU-vs-CPU demo — both sides are (showcase) bots
     this.showcase = !this.online && !!data.showcase;
     this.demo = !this.online && (!!data.demo || this.showcase);
+    this.tuner = !this.online && !!data.tuner;
     this.net = null;
     this.netIssue = null;
-    this.bot = this.cpu || this.demo ? new CpuDriver(1, 1, this.showcase) : null;
-    this.botP1 = this.demo ? new CpuDriver(0, 1, this.showcase) : null;
+    // demo/attract mode: randomize CPU difficulty per side (also the
+    // mechanism a future arcade difficulty-select would drive); a plain
+    // human-vs-CPU match keeps the original fixed aggression
+    const randomAgg = () => DIFFICULTY_AGGRESSION[DIFFICULTIES[Math.floor(Math.random() * DIFFICULTIES.length)]];
+    this.bots = [
+      this.demo ? new CpuDriver(0, randomAgg(), this.showcase) : null,
+      this.cpu || this.demo ? new CpuDriver(1, this.demo ? randomAgg() : 1, this.showcase) : null,
+    ];
     this.fatalityPanel = null;
     this.lastDamageTick = [0, 0];
     this.stageGuide = false;
@@ -274,12 +317,10 @@ export class FightScene extends Phaser.Scene {
         this.tickStart = performance.now();
         this.pendingSnap = snapTick(s);
       },
-      inputs: (s: GameState): [InputFrame, InputFrame] => [
-        this.botP1 ? this.botP1.poll(s) : this.inputs.poll(0),
-        this.bot ? this.bot.poll(s) : this.inputs.poll(1),
-      ],
-      afterTick: (_s: GameState, inp: [InputFrame, InputFrame]) => {
+      inputs: (s: GameState): [InputFrame, InputFrame] => [this.pollSlot(s, 0), this.pollSlot(s, 1)],
+      afterTick: (s: GameState, inp: [InputFrame, InputFrame]) => {
         if (this.training) this.trainingUpkeep();
+        if (this.tuner) this.tunerHoldUpkeep(s);
         this.logInputs(inp);
         this.frameTickMs += performance.now() - this.tickStart;
         const presentStart = performance.now();
@@ -325,20 +366,27 @@ export class FightScene extends Phaser.Scene {
       training: this.training,
       demo: this.demo,
       showcase: this.showcase,
+      tuner: this.tuner,
       render3d: false,
       state: () => this.state,
       debugKeys: [
         { key: 'F1', act: () => (this.debugBoxes = !this.debugBoxes) },
-        { key: 'F3', act: () => (this.stageGuide = !this.stageGuide) },
+        { key: 'F3', act: () => (this.showSkeleton = !this.showSkeleton) },
+        { key: 'F5', act: () => (this.stageGuide = !this.stageGuide) },
       ],
       pauseHint:
-        'ESC/START resume · ◄► choose, attack confirms · F1 hitboxes · F2 move log · F3 stage guide · ` perf',
+        'ESC/START resume · ◄► choose, attack confirms · F1 hitboxes · F2 move log · F3 skeleton · F5 stage guide · ` perf',
     });
     this.winOverlay = new WinOverlay(this.uiLayer.root, characters, {
       revealFrame: WIN_REVEAL_FRAME, // the "<NAME> WINS" beat lands + breathes first
       prompt: this.online ? 'R  REMATCH   ·   ESC  QUIT' : 'R  REMATCH   ·   ENTER  SELECT',
       onFirstShow: (id) => playVoice(this, id, 'victory', 0.85),
     });
+    this.tunerPanel = null;
+    if (this.tuner) {
+      this.debugBoxes = true; // hitbox edits should be visible immediately
+      this.tunerPanel = new MoveTunerPanel(this.uiLayer.root, characters, this.chars, this);
+    }
     this.sparks = [];
     this.vfx = []; // scene.restart destroyed the old images with the scene
     this.dizzySprites = [null, null];
@@ -392,14 +440,18 @@ export class FightScene extends Phaser.Scene {
 
     for (const slot of [0, 1] as const) {
       const id = this.chars[slot];
-      const meta = this.cache.json.get(`meta-${id}`) as { frames?: string[] } | undefined;
+      const meta = this.cache.json.get(`meta-${id}`) as
+        | { frames?: string[]; skeletons?: Record<string, Record<string, [number, number, number]>> }
+        | undefined;
       this.cellMaps[slot] = new Map((meta?.frames ?? []).map((n, i) => [n, i]));
+      this.cellNames[slot] = meta?.frames ?? [];
+      this.skeletons[slot] = meta?.skeletons;
       if (this.textures.exists(`sheet-${id}`)) {
         this.fighterShadows[slot] = this.add.image(0, 0, '__DEFAULT').setOrigin(0.5).setDepth(1.5).setVisible(false);
-        this.fighterSprites[slot] = this.add.sprite(0, 0, `sheet-${id}`, 0).setOrigin(0.5, 0.95).setDepth(2);
+        this.fighterSprites[slot] = this.add.sprite(0, 0, `sheet-${id}`, 0).setOrigin(0.5, FLOOR_FRAC).setDepth(2);
         this.hitFlashSprites[slot] = this.add
           .sprite(0, 0, `sheet-${id}`, 0)
-          .setOrigin(0.5, 0.95)
+          .setOrigin(0.5, FLOOR_FRAC)
           .setDepth(3)
           .setTintFill(0xfff0ea)
           .setAlpha(0.45)
@@ -495,7 +547,7 @@ export class FightScene extends Phaser.Scene {
 
     if (this.training) {
       this.add
-        .text(STAGE_W / 2, 84, 'TRAINING · ENTER to leave', {
+        .text(STAGE_W / 2, 84, this.tuner ? 'MOVE TUNER' : 'TRAINING · ENTER to leave', {
           fontFamily: 'monospace', fontSize: '13px', color: '#ffd24a', stroke: '#000', strokeThickness: 3,
         })
         .setOrigin(0.5)
@@ -518,6 +570,13 @@ export class FightScene extends Phaser.Scene {
     // shell: pad nav, pause state, move-log redraw, online rematch arming
     if (!this.shell.frame()) {
       this.session.resetPacing();
+      return;
+    }
+    // move-tuner "hold at active": stop ticking, but keep drawing/pacing sane
+    // so it doesn't try to catch up a backlog of ticks the instant it's released
+    if (this.tuner && this.tunerFrozen) {
+      this.session.resetPacing();
+      this.draw();
       return;
     }
     const frameStart = performance.now();
@@ -574,9 +633,9 @@ export class FightScene extends Phaser.Scene {
           keepOnMiss: true,
           once: true,
           onEnd: () => {
-            // let the win-quote screen breathe a couple seconds past the theme,
-            // then fade to black and move on (player input can still skip ahead)
-            if (this.state.phase !== 'matchEnd') return;
+            // real matches fade on to char select a couple seconds past the
+            // theme; demo/showcase loop on their own phaseFrame timer below
+            if (this.demo || this.state.phase !== 'matchEnd') return;
             this.time.delayedCall(2000, () => this.fadeOutToNext());
           },
         }),
@@ -623,16 +682,20 @@ export class FightScene extends Phaser.Scene {
       }
     }
 
-    // attract demo loops back to the title once the win screen has had its beat
+    // once the demo win screen has had its beat: idle attract exits to the
+    // title; a menu-chosen CPU-vs-CPU showcase returns to the CPU-vs-CPU select
+    // so you can pick another matchup to watch
     if (this.demo && s.phase === 'matchEnd' && s.phaseFrame === 300) {
-      this.shell.toMainMenu();
+      if (this.showcase) this.fadeOutToNext();
+      else this.shell.toMainMenu();
     }
   }
 
   /** Win-quote screen is done breathing: fade a black curtain over the shell,
-   *  then advance (char select, or the title in demo). The destination scene
-   *  fades its camera in, so the whole hand-off reads as a cross-fade rather
-   *  than a hard cut. A no-op if the player already skipped ahead. */
+   *  then advance to character select. A menu-chosen CPU-vs-CPU showcase rides
+   *  back to the CPU-vs-CPU select (toCharacterSelect carries `showcase`), so you
+   *  pick a new matchup to watch; a real match returns to the normal select. The
+   *  destination fades its camera in for a cross-fade. No-op if already skipped. */
   private fadeOutToNext(): void {
     if (this.state.phase !== 'matchEnd') return;
     const curtain = document.createElement('div');
@@ -641,10 +704,7 @@ export class FightScene extends Phaser.Scene {
       'transition:opacity 700ms ease;';
     this.uiLayer.root.appendChild(curtain);
     requestAnimationFrame(() => (curtain.style.opacity = '1'));
-    this.time.delayedCall(720, () => {
-      if (this.demo) this.shell.toMainMenu();
-      else this.shell.toCharacterSelect();
-    });
+    this.time.delayedCall(720, () => this.shell.toCharacterSelect());
   }
 
   // ---------- impact VFX (renderer-side; engine state is never touched) ----------
@@ -742,6 +802,42 @@ export class FightScene extends Phaser.Scene {
     }
   }
 
+  /** move-tuner "hold at active": the instant a held slot's attack reaches
+   *  its first active frame, freeze the whole sim (update() stops ticking)
+   *  so the active hitbox can be inspected at rest. Checking `=== startup`
+   *  (not the whole active window) means resuming doesn't instantly re-trip
+   *  it on the very next tick. */
+  private tunerHoldUpkeep(s: GameState): void {
+    if (this.tunerFrozen) return;
+    for (const slot of [0, 1] as const) {
+      if (!this.holdActiveSlots[slot]) continue;
+      const f = s.fighters[slot];
+      const a = f.action;
+      if (a.kind !== 'attack' && a.kind !== 'airAttack') continue;
+      const def = characters[f.charId];
+      const move = def.moves[a.moveId!];
+      if (!move) continue;
+      const m = resolveMove(move, a.strength);
+      if (a.frame === m.startup) {
+        this.tunerFrozen = true;
+        return;
+      }
+    }
+  }
+
+  /** move-tuner: freeze/unfreeze the whole-hold toggle for a side */
+  setHoldActive(slot: 0 | 1, on: boolean): void {
+    this.holdActiveSlots[slot] = on;
+    if (!on) this.tunerFrozen = false;
+  }
+
+  /** move-tuner: soft (non-live) hitbox marker for the move currently
+   *  expanded in the inspector — drawn every frame regardless of whether
+   *  the move is actually firing (see drawDebug) */
+  setPreviewBox(slot: 0 | 1, box: Box | null): void {
+    this.previewBox = box ? { slot, box } : null;
+  }
+
   /** First cell name present in this fighter's sheet meta wins. */
   private cellFor(slot: 0 | 1, candidates: string[]): number {
     const map = this.cellMaps[slot];
@@ -785,12 +881,28 @@ export class FightScene extends Phaser.Scene {
       case 'airAttack': {
         const base = characters[f.charId].moves[a.moveId!];
         const m = resolveMove(base, a.strength);
-        let phase: 0 | 1 | 2 = a.frame < m.startup ? 0 : a.frame < m.startup + m.active ? 1 : 2;
-        // Portal teleport: the blink lands her on the far side at the first
-        // active frame. Play the post-blink cells in REVERSE so she reads as
-        // re-forming OUT of the portal (startup = summon/enter on the origin
-        // side, then recovery→active as she resolidifies on the far side).
-        if (base.teleport && phase >= 1) phase = (3 - phase) as 1 | 2;
+        let phase: 0 | 1 | 2;
+        if (base.teleport?.mirror) {
+          // Mirrored teleport (Matrix Teleport): the startup/active/recovery
+          // cells play once on the origin side, the fighter blinks exactly
+          // at `half` (see mirrorTeleportPhases / step.ts), then the SAME
+          // three cells replay reversed on the destination side — a
+          // dissolve/blink/re-form palindrome with no extra art.
+          const { subStartup, subActive, subRecovery, half } = mirrorTeleportPhases(m);
+          const t = a.frame;
+          if (t < subStartup) phase = 0;
+          else if (t < subStartup + subActive) phase = 1;
+          else if (t < half + subRecovery) phase = 2; // spans both sides of the blink
+          else if (t < half + subRecovery + subActive) phase = 1;
+          else phase = 0;
+        } else {
+          phase = a.frame < m.startup ? 0 : a.frame < m.startup + m.active ? 1 : 2;
+          // Portal teleport: the blink lands her on the far side at the first
+          // active frame. Play the post-blink cells in REVERSE so she reads as
+          // re-forming OUT of the portal (startup = summon/enter on the origin
+          // side, then recovery→active as she resolidifies on the far side).
+          if (base.teleport && phase >= 1) phase = (3 - phase) as 1 | 2;
+        }
         return this.cellFor(slot, this.attackCells(f.charId, a.moveId!, phase));
       }
       case 'dazed':
@@ -1059,6 +1171,7 @@ export class FightScene extends Phaser.Scene {
         sprite.setFlipX(f.facing === -1);
         sprite.setRotation(0);
         const frame = burnt ? this.cellFor(slot, ['down', 'fall', 'hit']) : this.actionToCell(slot, f);
+        this.currentCellName[slot] = this.cellNames[slot][frame] ?? null;
         this.drawFighterShadow(slot, f, def, frame);
         sprite.setFrame(frame);
         if (flash) {
@@ -1087,6 +1200,7 @@ export class FightScene extends Phaser.Scene {
         else if (mirrorTint) sprite.setTint(mirrorTint);
         else sprite.clearTint();
       } else {
+        this.currentCellName[slot] = null;
         this.fighterShadows[slot]?.setVisible(false);
         gU.fillStyle(0x000000, 0.35).fillEllipse(f.x, FLOOR_Y + 8, def.bodyBox.w * 1.6, 18);
         this.drawCapsule(slot);
@@ -1148,6 +1262,7 @@ export class FightScene extends Phaser.Scene {
     if (this.stageGuide) this.drawStageGuide();
     else for (const t of this.stageGuideTexts) t.setVisible(false);
     if (this.debugBoxes) this.drawDebug();
+    if (this.showSkeleton) this.drawSkeleton();
     perf.debug = performance.now() - sectionStart;
     sectionStart = performance.now();
     this.drawHud();
@@ -1268,6 +1383,76 @@ export class FightScene extends Phaser.Scene {
     for (const p of this.state.projectiles) {
       g.lineStyle(2, 0xff4444, 1).strokeRect(p.x + p.box.x, p.y + p.box.y, p.box.w, p.box.h);
     }
+    this.drawPreviewBox();
+  }
+
+  /** the fixed limb graph over the DWPose joint names baked into meta.json
+   *  (see tools/pack-sheet.mjs) — each pair only drawn when both joints are
+   *  present for the current cell (low-confidence joints are simply absent) */
+  private static readonly SKELETON_BONES: [string, string][] = [
+    ['Lsho', 'Rsho'], ['Lhip', 'Rhip'],
+    ['Lsho', 'Lhip'], ['Rsho', 'Rhip'],
+    ['Lsho', 'Lelb'], ['Lelb', 'Lwri'],
+    ['Rsho', 'Relb'], ['Relb', 'Rwri'],
+    ['Lhip', 'Lkne'], ['Lkne', 'Lank'],
+    ['Rhip', 'Rkne'], ['Rkne', 'Rank'],
+  ];
+
+  /** F3 debug overlay: a stick figure from DWPose keypoints QA'd against the
+   *  actual painted sprite (tools/qa/pose_qa.py -> tools/pack-sheet.mjs ->
+   *  meta.json), replayed live off whichever cell is currently on screen —
+   *  no runtime pose inference, just the sprite's own transform applied to
+   *  pre-measured joints (mirrors sprite.setOrigin/setDisplaySize/setFlipX
+   *  from the fighter-draw block above). Silently draws nothing for a
+   *  character/cell with no baked keypoints yet. */
+  private drawSkeleton(): void {
+    const g = this.gfxHud;
+    for (const slot of [0, 1] as const) {
+      const cellName = this.currentCellName[slot];
+      if (!cellName) continue;
+      const joints = this.skeletons[slot]?.[cellName];
+      if (!joints) continue;
+      const f = this.state.fighters[slot];
+      const def = characters[f.charId];
+      const h = def.hurtStand.h * 1.32;
+      const scale = h / CELL_H;
+      const mirror = f.facing === -1 ? -1 : 1;
+      const toWorld = (jx: number, jy: number): [number, number] => [
+        f.x + mirror * (jx - 0.5 * CELL_W) * scale,
+        f.y + SPRITE_FOOT_OFFSET_Y + (def.spriteOffsetY ?? 0) + (jy - FLOOR_FRAC * CELL_H) * scale,
+      ];
+      for (const [a, b] of FightScene.SKELETON_BONES) {
+        const ja = joints[a];
+        const jb = joints[b];
+        if (!ja || !jb) continue;
+        const [ax, ay] = toWorld(ja[0], ja[1]);
+        const [bx, by] = toWorld(jb[0], jb[1]);
+        g.lineStyle(2, 0xff44ff, 0.9).lineBetween(ax, ay, bx, by);
+      }
+      if (joints.nose && joints.Lsho && joints.Rsho) {
+        const [nx, ny] = toWorld(joints.nose[0], joints.nose[1]);
+        const [lx, ly] = toWorld(joints.Lsho[0], joints.Lsho[1]);
+        const [rx, ry] = toWorld(joints.Rsho[0], joints.Rsho[1]);
+        g.lineStyle(2, 0xff44ff, 0.9).lineBetween(nx, ny, (lx + rx) / 2, (ly + ry) / 2);
+      }
+      for (const name in joints) {
+        const [jx, jy] = toWorld(joints[name][0], joints[name][1]);
+        g.fillStyle(0xff44ff, 1).fillCircle(jx, jy, 3);
+      }
+    }
+  }
+
+  /** move-tuner soft hitbox marker — always drawn (independent of whether the
+   *  move is actually active) while a move's params are expanded, so it can
+   *  be dialed in without repeatedly firing the move */
+  private drawPreviewBox(): void {
+    if (!this.previewBox) return;
+    const { slot, box } = this.previewBox;
+    const f = this.state.fighters[slot];
+    const wb = worldBox(f, box);
+    const g = this.gfxHud;
+    g.fillStyle(0x7fe3ff, 0.16).fillRect(wb.l, wb.t, wb.r - wb.l, wb.b - wb.t);
+    g.lineStyle(2, 0x7fe3ff, 0.8).strokeRect(wb.l, wb.t, wb.r - wb.l, wb.b - wb.t);
   }
 
   private drawStageGuide(): void {
@@ -1344,8 +1529,51 @@ export class FightScene extends Phaser.Scene {
 
   /** HUD tag beside the round-win pips: which side is bot-driven vs human */
   private playerLabel(slot: 0 | 1): string {
-    const isBot = slot === 0 ? !!this.botP1 : !!this.bot;
-    return isBot ? 'CPU' : slot === 0 ? 'P1' : 'P2';
+    return this.bots[slot] ? 'CPU' : slot === 0 ? 'P1' : 'P2';
+  }
+
+  /** move-tuner: a loop-mode dummy is still bot-driven, but the tester often
+   *  wants to nudge it into a specific spot (corner, max range, ...) — held
+   *  directional keys override the driver's own movement for that tick, and
+   *  its attack decisions are untouched */
+  private pollSlot(s: GameState, slot: 0 | 1): InputFrame {
+    const bot = this.bots[slot];
+    if (!bot) return this.inputs.poll(slot);
+    const frame = bot.poll(s);
+    if (this.tuner && this.controlMode[slot] === 'loop') {
+      const kb = this.inputs.poll(slot);
+      if (kb.left || kb.right || kb.up || kb.down) {
+        return { ...frame, left: kb.left, right: kb.right, up: kb.up, down: kb.down };
+      }
+    }
+    return frame;
+  }
+
+  /** move-tuner: swap a slot between manual/CPU/loop at runtime */
+  setControlMode(
+    slot: 0 | 1,
+    mode: 'manual' | 'cpu' | 'loop',
+    opts?: { difficulty?: Difficulty; moveId?: string; pauseTicks?: number; attack?: boolean },
+  ): void {
+    this.controlMode[slot] = mode;
+    if (mode === 'manual') {
+      this.bots[slot] = null;
+      return;
+    }
+    if (mode === 'cpu') {
+      this.bots[slot] = new CpuDriver(slot, DIFFICULTY_AGGRESSION[opts?.difficulty ?? 'medium'], false);
+      return;
+    }
+    // loop
+    const driver = new CpuDriver(slot, 1, false);
+    driver.setLoop(opts?.moveId ?? null, opts?.pauseTicks ?? 30, opts?.attack ?? false);
+    this.bots[slot] = driver;
+  }
+
+  /** move-tuner: pause/resume the current loop-mode driver on a slot (no-op
+   *  if that slot isn't in loop mode) */
+  setLoopPaused(slot: 0 | 1, paused: boolean): void {
+    this.bots[slot]?.setLoopPaused(paused);
   }
 
   private message(): string {

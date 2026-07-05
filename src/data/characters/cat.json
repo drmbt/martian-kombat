@@ -418,7 +418,7 @@
       "hitbox": null,
       "height": "mid",
       "knockdown": true,
-      "grab": { "range": 108 },
+      "grab": { "range": 120 },
       "techable": true
     }
   }

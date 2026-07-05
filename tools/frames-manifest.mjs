@@ -84,21 +84,36 @@ export const CHARACTERS = {
   vincent: {
     canonical: 'assets/raw/style-tests/char-vincent-b-painted.png',
     layout: 'v2',
+    // QA re-roll overrides (2026-07-05): shared generic-cell defaults read too
+    // subtly for vincent's idle/walk loop, didn't distinguish block from idle,
+    // and block-crouch wasn't low enough.
+    cells: {
+      'walk-a':
+        'a real mid-stride walking step: BOTH feet FLAT on the ground, legs mostly STRAIGHT with only a slight, natural knee bend (NOT deeply bent, NOT crouched), one foot planted forward and the other trailing back pushing off its toes, standing tall and UPRIGHT on a NARROW base — NOT a knee lift, NOT a jump, both feet stay grounded the whole time, cloak trailing the motion. IGNORE the wide static tai-chi straddle of the reference image — this is a real walking STEP, not a kung-fu ready stance.',
+      'idle-b':
+        'same tai chi ready stance, but on a deep inhale his HEAD and SHOULDERS visibly rise a couple inches HIGHER in the frame than the other idle frame — chest lifted, cloak settling slightly differently, hands drifted a few centimeters. CRITICAL: the top of his head must sit measurably higher on the canvas than the reference — a real vertical shift, not just a hand-position change.',
+      'walk-b':
+        'MID-STEP walking forward, the OPPOSITE step (a mirror of the other walk frame): standing fairly UPRIGHT on a NARROW base, his RIGHT knee lifted HIGH and swung FORWARD with that foot raised OFF the ground about to plant ahead, his LEFT leg straight and trailing behind pushing off the toes, cloak trailing the motion. IGNORE the wide tai-chi stance of the reference image — redraw the LEGS as a clear mid-stride walk with the OTHER foot lifted, distinctly different from the first walk frame.',
+      block:
+        'a completely different silhouette from the reference stance: standing tall and NARROW, feet close together almost square, weight rocked straight BACK onto his heels leaning away — both forearms crossed tightly directly in front of his face and chest like an X, elbows in, cloak drawn in tight. Do NOT copy the reference\'s wide tai-chi stance or its open palms — this is a full defensive brace, both arms up, completely different from the idle guard.',
+      'block-crouch':
+        `crouching down VERY low on deeply bent knees, buttocks near the heels, both forearms crossed tightly shielding the face, cloak pooled around him, curled compact — NOT standing, NOT upright. ${LOW}`,
+    },
     moves6: {
       stand: {
         lp: {
           startup: 'coiling a quick straight palm strike, rear palm chambered at the hip',
-          active: 'straight palm strike fully extended at chest height, cloak snapping forward',
+          active: 'a straight palm strike — arm and wrist held perfectly STRAIGHT and in-line, like a spear thrust, absolutely NOT bent back into a stop-hand gesture — the whole arm from shoulder to fingertips forms one straight line driven forward until the wrist itself is thrust well past the right edge of his idle guard, deep into the frame\'s right margin, cloak snapping forward',
           recovery: 'retracting the palm, weight settling back into stance',
         },
         mp: {
           startup: 'chambering a short double-palm push, palms stacked at his side',
-          active: 'short double-palm push thrust forward at chest height, faint crimson red shimmer at the palms',
+          active: 'double-palm push, arms driven FULLY EXTENDED forward at chest height so his fists reach almost to the right edge of the frame, much further forward than his idle guard position, faint crimson red shimmer at the palms',
           recovery: 'palms drawing back into a tai chi guard',
         },
         hp: {
           startup: 'winding into a spinning double-palm push, cloak wrapping around the body',
-          active: 'double-palm push fully extended, cloak flared wide, burst of crimson red energy at the palms',
+          active: 'double-palm push driven down and FORWARD at chest height, both palms thrust out in front of his body — not straight overhead — reaching clearly past his guard, cloak flared wide, a SMALL, tight burst of crimson red energy no bigger than his own hand cupped closely around his palms — it must float with a wide green margin, far from the right edge of the frame, nowhere near touching it',
           recovery: 'completing the spin, cloak settling, arms lowering',
         },
         lk: {
@@ -1030,6 +1045,19 @@ export const CHARACTERS = {
   bodhi: {
     canonical: 'assets/raw/canonical/bodhi.png',
     layout: 'v2',
+    // QA re-roll overrides (2026-07-05): the shared generic-cell defaults read
+    // too subtly for bodhi's idle/walk loop and didn't distinguish block from
+    // idle; block-crouch wasn't low enough either.
+    cells: {
+      'idle-b':
+        'same fighting stance, but on a deep inhale his HEAD and SHOULDERS visibly rise a couple inches HIGHER in the frame than the other idle frame — the top of his beanie noticeably higher up, chest puffed, hands drifted a few centimeters. CRITICAL: the top of his head must sit measurably higher on the canvas than the reference — a real vertical shift, not just a hand-position change.',
+      'walk-b':
+        'MID-STEP walking forward, the OPPOSITE step (a mirror of the other walk frame): standing fairly UPRIGHT on a NARROW base, his RIGHT knee lifted HIGH and swung FORWARD with that foot raised OFF the ground about to plant ahead, his LEFT leg straight and trailing behind pushing off the toes. IGNORE the wide grappler stance of the reference image — redraw the LEGS as a clear mid-stride walk with the OTHER foot lifted, distinctly different from the first walk frame.',
+      block:
+        'a completely different silhouette from the reference stance: standing tall and NARROW, feet close together almost square, weight rocked straight BACK onto his heels leaning away — both forearms crossed tightly directly in front of his face and chest like an X, elbows in, head ducked down behind his arms. Do NOT copy the reference\'s wide bent-knee stance or its raised single fist — this is a full defensive turtle, both arms up, completely different from the idle guard.',
+      'block-crouch':
+        `crouching down VERY low on deeply bent knees, buttocks near the heels, both forearms crossed tightly shielding the face, curled compact — NOT standing, NOT upright. ${LOW}`,
+    },
     // wardrobe must persist; zodiac star-glyphs are GOLD and appear ONLY where
     // a pose asks (Ascendant) — no stray glyphs, never green effects
     always:
@@ -1038,17 +1066,17 @@ export const CHARACTERS = {
       stand: {
         lp: {
           startup: 'chambering a quick open-palm jab at his hip, weight settling forward',
-          active: 'a short straight palm-heel strike fully extended at chest height, front arm firm',
+          active: 'a straight palm-heel strike — arm and wrist held perfectly STRAIGHT and in-line, like a spear thrust, absolutely NOT bent back into a stop-hand gesture — the whole arm from shoulder to fingertips forms one straight line driven forward until the wrist itself is thrust well past the right edge of his idle guard, deep into the frame\'s right margin',
           recovery: 'drawing the palm back into a loose relaxed guard',
         },
         mp: {
           startup: 'winding a rolling forearm across his chest, shoulders loading',
-          active: 'driving a forearm smash forward at chest height, full shoulder behind it',
+          active: 'a forearm smash, arm driven FULLY EXTENDED forward at chest height so his fist reaches almost to the right edge of the frame, full shoulder behind it, much further forward than his idle guard position',
           recovery: 'the forearm returning to a calm ready guard',
         },
         hp: {
           startup: 'raising both hands high overhead, fingers laced together for a hammer blow',
-          active: 'a double-fist overhead hammer blow driven straight down at head height',
+          active: 'a double-fist hammer blow driven down and FORWARD at head height, both fists thrust out in front of his body — not straight overhead — reaching clearly past his guard',
           recovery: 'straightening up from the hammer, rolling his shoulders loose',
         },
         lk: {
@@ -1119,7 +1147,7 @@ export const CHARACTERS = {
         },
         retrograde: {
           startup: 'dropping low and coiling one leg back beneath him, hands tucked, ready to launch a slide',
-          active: 'a fast low sliding tackle skimming along the ground, leading leg extended forward, body kept flat and low',
+          active: 'a fast low sliding tackle skimming along the ground, leading leg extended forward but kept well clear of the frame edges with a comfortable green margin on every side, body kept flat and low and fully contained within the frame',
           recovery: 'coming up out of the slide onto one knee, rising back toward stance',
         },
         throw: {

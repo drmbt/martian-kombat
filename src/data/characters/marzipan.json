@@ -568,7 +568,7 @@
       "height": "mid",
       "knockdown": true,
       "grab": {
-        "range": 105
+        "range": 114
       },
       "techable": true
     }

@@ -1141,6 +1141,35 @@ describe('universal throw (LP+LK)', () => {
     expect(s.fighters[1].x - startX).toBeGreaterThan(90);
   });
 
+  it('tossArc overrides the default arc height/knockback per move', () => {
+    const s = fresh();
+    closeRange(s);
+    const guard = inp({ right: true, down: true });
+    const knockback = characters.vincent.moves.throw.knockback;
+    const defs = {
+      ...characters,
+      vincent: {
+        ...characters.vincent,
+        moves: {
+          ...characters.vincent.moves,
+          throw: {
+            ...characters.vincent.moves.throw,
+            tossArc: { vy: -3, knockbackMult: 0.5 },
+          },
+        },
+      },
+    };
+    for (let i = 0; i < 12 && !s.pendingThrow; i++) step(s, [chord, guard], defs);
+    for (let i = 0; i < 20 && s.pendingThrow; i++) step(s, [inp(), guard], defs);
+    const vic = s.fighters[1];
+    expect(vic.action.tossed).toBe(true);
+    // one gravity tick has already applied by the time we read vy this frame;
+    // the override (-3) still reads far shallower than the default arc (-8.5)
+    expect(vic.vy).toBeLessThan(0);
+    expect(vic.vy).toBeGreaterThan(-4);
+    expect(vic.vx).toBeCloseTo(knockback * 0.5, 5);
+  });
+
   it('whiffs at full-screen range', () => {
     const s = fresh();
     step(s, [chord, inp()], characters);
@@ -1976,8 +2005,37 @@ describe('personality specials (Sprint 20)', () => {
       step(s, [inp({ right: true }), inp()], characters);
       step(s, [inp({ right: true, lk: true }), inp()], characters);
       expect(s.fighters[0].action.moveId).toBe('matrix-teleport');
-      run(s, 20);
+      run(s, 40);
       expect(s.fighters[0].x).toBeGreaterThan(s.fighters[1].x); // crossed to the far side
+    });
+
+    it('mirrored blink lands exactly at the halfway tick, not first-active', () => {
+      const s = fresh();
+      s.fighters[0].x = 300;
+      s.fighters[1].x = 600;
+      step(s, [inp({ down: true }), inp()], characters);
+      step(s, [inp({ down: true }), inp()], characters);
+      step(s, [inp({ right: true }), inp()], characters);
+      step(s, [inp({ right: true, lk: true }), inp()], characters);
+      // startup 28 + active 4 + recovery 20 halve to 14/2/10 -> blink at frame 26
+      run(s, 25);
+      expect(s.fighters[0].x).toBeLessThan(s.fighters[1].x); // still on the origin side
+      run(s, 1);
+      expect(s.fighters[0].x).toBeGreaterThan(s.fighters[1].x); // blinked on this tick
+    });
+
+    it('is vulnerable while dissolving, invulnerable through the blink, vulnerable again once rematerialized', () => {
+      const s = fresh();
+      s.fighters[0].x = 300;
+      s.fighters[1].x = 600;
+      step(s, [inp({ down: true }), inp()], characters);
+      step(s, [inp({ down: true }), inp()], characters);
+      step(s, [inp({ right: true }), inp()], characters);
+      step(s, [inp({ right: true, lk: true }), inp()], characters);
+      const a = s.fighters[0].action;
+      expect(a.invulnFrom).toBe(14);
+      expect(a.invuln).toBe(24);
+      // vulnerable window is [0,14) and [38,52) around the invulnerable [14,38)
     });
   });
 });

@@ -12,7 +12,7 @@
 
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, readdirSync, writeFileSync, existsSync, rmSync } from 'node:fs';
+import { mkdirSync, readdirSync, writeFileSync, readFileSync, existsSync, rmSync } from 'node:fs';
 import { ROOT } from './lib.mjs';
 import { CELL_W, CELL_H, CHARACTERS, buildJobs, gridFor } from './frames-manifest.mjs';
 
@@ -106,6 +106,31 @@ function pack(charId) {
     rows: ROWS,
     frames: frames.map((f) => f.replace(/^\d\d-/, '').replace(/\.png$/, '')),
   };
+
+  // Optional: bake the DWPose keypoints tools/qa/pose_qa.py already measured
+  // (assets/raw/qa/<char>/report.json, cells.<name>.kp) into meta.json as a
+  // 2D skeleton overlay source — see src/scenes/FightScene.ts drawSkeleton().
+  // Purely additive: no report.json (or an older one predating the `cells`
+  // key) just means no `skeletons` in meta.json, same as any other
+  // not-yet-generated optional asset.
+  const qaReportPath = join(ROOT, 'assets/raw/qa', charId, 'report.json');
+  if (existsSync(qaReportPath)) {
+    const report = JSON.parse(readFileSync(qaReportPath, 'utf-8'));
+    if (report.cells) {
+      const dyPath = join(tmp, 'dy.json');
+      const dy = existsSync(dyPath) ? JSON.parse(readFileSync(dyPath, 'utf-8')).dy : 0;
+      const skeletons = {};
+      for (const name of meta.frames) {
+        const kp = report.cells[name]?.kp;
+        if (!kp) continue;
+        skeletons[name] = Object.fromEntries(
+          Object.entries(kp).map(([joint, [x, y, conf]]) => [joint, [x, y + dy, conf]]),
+        );
+      }
+      if (Object.keys(skeletons).length) meta.skeletons = skeletons;
+    }
+  }
+
   writeFileSync(join(outDir, 'meta.json'), JSON.stringify(meta, null, 2));
 
   for (const [pid, projSpec] of Object.entries(CHARACTERS[charId]?.extra?.projectiles ?? {})) {

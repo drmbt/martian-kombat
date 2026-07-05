@@ -29,6 +29,8 @@ export interface FightShellOpts {
   /** demo was explicitly chosen from the menu ("DEMO MATCH"), not idle-triggered
    *  attract mode — it plays to the finish; only ESC/Start opens a quit menu */
   showcase?: boolean;
+  /** dev-only move tuner (see FightScene) — rides into restart/character select */
+  tuner?: boolean;
   /** which renderer this shell serves — rides into character select */
   render3d: boolean;
   /** live engine state accessor (scenes reassign state on restart) */
@@ -80,6 +82,8 @@ export class FightShell {
           { onNavSound: () => play(scene, 's-blip', 0.4) },
         );
         kb.on('keydown-ESC', () => this.togglePause());
+        // R restarts the current CPU-vs-CPU matchup at any time
+        kb.on('keydown-R', () => this.restartMatch());
         return;
       }
       // idle-triggered attract mode: a blinking banner, and ANY input returns
@@ -127,6 +131,9 @@ export class FightShell {
       else this.restartMatch();
     });
     kb.on('keydown-ENTER', () => {
+      // tuner: ENTER types into number inputs / triggers buttons in the DOM
+      // sidebar — it must never also bail out to character select underneath
+      if (this.opts.tuner) return;
       if (this.opts.online && this.opts.state().phase === 'matchEnd') this.optInRematch();
       else if (this.opts.training) this.toCharacterSelect();
       else if (this.opts.state().phase === 'matchEnd') this.toCharacterSelect();
@@ -231,12 +238,14 @@ export class FightShell {
 
   private restartMatch(): void {
     const o = this.opts;
-    this.scene.scene.restart({ p1: o.chars[0], p2: o.chars[1], cpu: o.cpu, training: o.training, stage: o.stageId });
+    // keep showcase so a CPU-vs-CPU demo restarts as CPU-vs-CPU (not human P1)
+    this.scene.scene.restart({ p1: o.chars[0], p2: o.chars[1], cpu: o.cpu, training: o.training, showcase: o.showcase, tuner: o.tuner, stage: o.stageId });
   }
 
   toCharacterSelect(): void {
     const o = this.opts;
-    this.scene.scene.start('Select', { cpu: o.cpu, training: o.training, render3d: o.render3d });
+    // showcase rides back to the CPU-vs-CPU select so you can pick a new matchup
+    this.scene.scene.start('Select', { cpu: o.cpu, training: o.training, showcase: o.showcase, tuner: o.tuner, render3d: o.render3d });
   }
 
   toMainMenu(): void {

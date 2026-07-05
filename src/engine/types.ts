@@ -163,8 +163,13 @@ export interface MoveDef {
   /** presence marks the move as a SPECIAL, fired by motion+button instead of
    *  a raw button press; a character may define any number of these */
   input?: SpecialInput;
-  /** invulnerable for the first N ticks (reversal anti-airs) */
+  /** invulnerable for N ticks starting at `invulnFrom` (default tick 0) —
+   *  reversal anti-airs want the default; a delayed window (e.g. a mirrored
+   *  teleport that's vulnerable during its startup pose) sets invulnFrom */
   invuln?: number;
+  /** tick the invuln window opens; omit for the traditional "invulnerable
+   *  from frame 0" reversal behavior */
+  invulnFrom?: number;
   /** command grab: unblockable, connects within range against grounded foes */
   grab?: { range: number };
   /** backward hop applied to the ATTACKER when a grab connects (86'd) */
@@ -173,6 +178,10 @@ export interface MoveDef {
    *  their own LP+LK escapes it (both bounce back, no damage); also whiffs
    *  against victims already reeling (hitstun/blockstun/airHit) */
   techable?: boolean;
+  /** per-move override of the SF2 toss arc (techable throw landing): omit to
+   *  use the default TOSS_VY/TOSS_KNOCKBACK_MULT — a grappler can go higher
+   *  and harder, a quick throw flatter and shorter */
+  tossArc?: { vy: number; knockbackMult?: number };
   /** health restored to the ATTACKER when a grab connects, capped at max
    *  (Symbiosis kudzu drain) */
   heal?: number;
@@ -183,8 +192,14 @@ export interface MoveDef {
   /** at first active frame, launch into the air with this velocity (vaults) */
   vault?: { vx: number; vy: number };
   /** at first active frame, blink: 'behind' crosses to the far side of the
-   *  opponent, 'retreat' snaps back to own corner (Diffusion) */
-  teleport?: { mode: 'behind' | 'retreat' };
+   *  opponent, 'retreat' snaps back to own corner (Diffusion). `mirror: true`
+   *  opts into a symmetric halfway-blink instead (Matrix Teleport): the move's
+   *  own startup/active/recovery cells play once on the origin half, the
+   *  fighter blinks at the exact midpoint, then the SAME three cells replay
+   *  reversed (recovery, active, startup) on the destination half — pair with
+   *  a delayed `invulnFrom`/`invuln` window so the fighter reads as vulnerable
+   *  while dissolving and while fully rematerialized, invulnerable in between */
+  teleport?: { mode: 'behind' | 'retreat'; mirror?: boolean };
   /** shoryuken physics: rise with this velocity AT the first active frame while
    *  the attack stays out (hitbox travels with the fighter) */
   leap?: { vx: number; vy: number };
@@ -300,6 +315,8 @@ export interface Action {
   strength?: Strength;
   /** cached i-frame count for the current attack */
   invuln?: number;
+  /** cached tick the invuln window opens (default 0 — see MoveDef.invulnFrom) */
+  invulnFrom?: number;
   /** hitstun/airHit: this reel came from a counterhit (defender was clipped
    *  during their own attack's startup or recovery) — bonus hitstun and
    *  victim-side hitstop already applied; the renderer flashes it */

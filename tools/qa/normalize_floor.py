@@ -13,9 +13,17 @@ cell-NN.png (NN = index into the frames list passed via --frames).
 
   python tools/qa/normalize_floor.py --dir <tmpdir> --frames idle-a,idle-b,... [--target 365]
 """
-import argparse, os
+import argparse, json, os
 import numpy as np
 from PIL import Image
+
+# CANONICAL floor line: the fraction of cell height where every fighter's feet
+# land. Lowered from 0.95 to 0.88 (2026-07-05) to give ~46px of headroom below
+# the feet (was 19px) — the per-cell floor spread (up to ~72px) was pushing deep
+# stances / sub-floor FX past the cell bottom on the single normalize shift.
+# MUST match: tools/qa/pose_qa.py ORIGIN_FEET, and setOrigin(0.5, FLOOR_FRAC) +
+# the skeleton map in src/scenes/FightScene.ts and src/scenes/SelectScene.ts.
+FLOOR_FRAC = 0.88
 
 # poses with no ground contact — excluded from the floor measurement (their
 # lowest pixel is a tucked knee / airborne body, not a sole)
@@ -48,7 +56,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", required=True)
     ap.add_argument("--frames", required=True, help="comma-separated frame names in cell order")
-    ap.add_argument("--target", type=float, default=0.95 * 384)  # origin feet line
+    ap.add_argument("--target", type=float, default=FLOOR_FRAC * 384)  # origin feet line
     args = ap.parse_args()
 
     names = args.frames.split(",")
@@ -70,6 +78,9 @@ def main():
         p = os.path.join(args.dir, f"cell-{i:02d}.png")
         if os.path.exists(p):
             shift_v(p, dy)
+    # sidecar for tools/pack-sheet.mjs — lets it shift QA-measured keypoints by
+    # the same amount cell art just moved, so a skeleton overlay stays aligned
+    json.dump({"dy": dy}, open(os.path.join(args.dir, "dy.json"), "w"))
     print(f"[normalize] floor {floor:.0f} -> {args.target:.0f} (shift {dy:+d}px), "
           f"grounded spread {spread}px across {len(grounded)} cells")
 

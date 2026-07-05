@@ -24,6 +24,11 @@ interface ReelEntry {
 export class CpuDriver {
   private queue: Partial<InputFrame>[] = [];
   private reel: ReelEntry[] | null = null;
+  /** move-tuner "loop a single move" mode: null = disabled */
+  private loop: { moveId: string; pauseTicks: number; attack: boolean } | null = null;
+  private loopPaused = false;
+  private loopState: 'approach' | 'jump' | 'act' | 'retreat' | 'wait' = 'approach';
+  private loopTimer = 0;
 
   constructor(
     private slot: 0 | 1,
@@ -34,9 +39,84 @@ export class CpuDriver {
     private showcase = false,
   ) {}
 
+  /** move-tuner: repeatedly approach, perform `moveId`, retreat, wait
+   *  `pauseTicks`, repeat. Pass `moveId: null` to disable. `attack: false`
+   *  skips the approach/retreat legs entirely — the move just fires in place
+   *  on a timer, for dialing in its length without needing to reach/hit the
+   *  other fighter. */
+  setLoop(moveId: string | null, pauseTicks = 30, attack = true): void {
+    this.loop = moveId ? { moveId, pauseTicks, attack } : null;
+    this.loopState = 'approach';
+    this.loopTimer = 0;
+    this.queue = [];
+  }
+
+  setLoopPaused(paused: boolean): void {
+    this.loopPaused = paused;
+  }
+
   poll(s: GameState): InputFrame {
     if (this.queue.length) return { ...EMPTY_INPUT, ...this.queue.shift()! };
     return { ...EMPTY_INPUT, ...this.decide(s) };
+  }
+
+  /** a normal's press for a moveId — standing (lp..hk), crouching (c-prefixed),
+   *  or airborne (j-prefixed — caller is responsible for having jumped first) */
+  private pressForMove(moveId: string): Partial<InputFrame> {
+    const crouch = moveId.startsWith('c') && moveId.length === 3;
+    const air = moveId.startsWith('j') && moveId.length === 3;
+    const base = crouch || air ? moveId.slice(1) : moveId;
+    if (!['lp', 'mp', 'hp', 'lk', 'mk', 'hk'].includes(base)) return {};
+    return crouch ? { down: true, [base]: true } : { [base]: true };
+  }
+
+  /** move-tuner loop state machine: (jump, for air moves ->) approach into
+   *  range, do the move, back off, wait out the configured pause, repeat. */
+  private loopDecide(f: GameState['fighters'][number], def: typeof characters[string], toward: Dir, away: Dir, dist: number): Partial<InputFrame> {
+    if (this.loopPaused) return {};
+    const { moveId, pauseTicks, attack } = this.loop!;
+    const move = def.moves[moveId];
+    if (!move) return {};
+    const isSpecial = !!move.input;
+    const isAir = moveId.startsWith('j') && moveId.length === 3;
+    const range = isAir ? 150 : isSpecial ? 380 : 100;
+    switch (this.loopState) {
+      case 'approach':
+        if (attack && dist > range) return { [toward]: true };
+        this.loopState = isAir ? 'jump' : 'act';
+        return {};
+      case 'jump':
+        // air moves need airborne state before the button does anything —
+        // hop toward the opponent, then wait until actually off the ground
+        if (f.y >= FLOOR_Y) return { up: true, [toward]: true };
+        this.loopState = 'act';
+        return {};
+      case 'act':
+        if (isSpecial && move.input && QUEUEABLE.has(move.input.motion ?? '')) {
+          this.enqueueMotion(move.input.motion as QueueableMotion, move.input.button as 'punch' | 'kick', f.facing);
+        } else {
+          this.queue.push(this.pressForMove(moveId));
+        }
+        this.loopState = 'retreat';
+        this.loopTimer = 0;
+        return {};
+      case 'retreat':
+        if (!attack) {
+          this.loopState = 'wait';
+          this.loopTimer = 0;
+          return {};
+        }
+        this.loopTimer++;
+        if (this.loopTimer < 20) return { [away]: true };
+        this.loopState = 'wait';
+        this.loopTimer = 0;
+        return {};
+      case 'wait':
+        this.loopTimer++;
+        if (this.loopTimer < pauseTicks) return {};
+        this.loopState = 'approach';
+        return {};
+    }
   }
 
   /** queue a motion+button as a per-tick input sequence, facing-aware. Handles
@@ -116,6 +196,8 @@ export class CpuDriver {
       return {};
     }
     if (s.phase !== 'fight') return {};
+
+    if (this.loop) return this.loopDecide(f, def, toward, away, dist);
 
     if (this.showcase) return this.showcaseDecide(s, f, o, def, toward, dist);
 

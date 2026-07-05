@@ -356,8 +356,14 @@ export class FightScene3D extends Phaser.Scene {
         case 'match-end':
           // don't let the KO punch (still held) instantly skip the win screen
           this.shell?.armEndNav();
-          // attract mode loops back to the title so the menu can cycle the demo
-          if (this.demo) this.time.delayedCall(6000, () => this.scene.start('Menu'));
+          // idle attract exits to the title so the menu can cycle the demo; a
+          // menu-chosen CPU-vs-CPU showcase returns to the CPU-vs-CPU select
+          // (toCharacterSelect carries `showcase`) to pick another matchup
+          if (this.demo) {
+            this.time.delayedCall(6000, () =>
+              this.showcase ? this.shell?.toCharacterSelect() : this.scene.start('Menu'),
+            );
+          }
           break;
         case 'finisher':
           r?.shake(s.tick, 12, 0.05);

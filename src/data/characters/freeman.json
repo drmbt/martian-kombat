@@ -518,8 +518,9 @@
       "height": "mid",
       "knockdown": true,
       "grab": {
-        "range": 105
+        "range": 119
       },
+      "tossArc": { "vy": -10.5, "knockbackMult": 1.5 },
       "techable": true
     }
   }

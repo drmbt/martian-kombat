@@ -330,6 +330,20 @@ export function resolveMove(base: MoveDef, strength?: Strength): MoveDef {
   return merged;
 }
 
+/** Sub-phase ticks for a `teleport.mirror` move: each of startup/active/
+ *  recovery is halved for the origin side, the fighter blinks at `half`, then
+ *  the destination side gets the same three sub-durations back — the renderer
+ *  replays the cells in reverse (recovery, active, startup) across it.
+ *  Exported so FightScene's cell picker stays in lockstep with the blink tick. */
+export function mirrorTeleportPhases(
+  m: MoveDef,
+): { subStartup: number; subActive: number; subRecovery: number; half: number } {
+  const subStartup = Math.round(m.startup / 2);
+  const subActive = Math.round(m.active / 2);
+  const subRecovery = Math.round(m.recovery / 2);
+  return { subStartup, subActive, subRecovery, half: subStartup + subActive + subRecovery };
+}
+
 function holdingBack(f: FighterState, i: InputFrame): boolean {
   return f.facing === 1 ? i.left : i.right;
 }
@@ -385,7 +399,10 @@ function anyFreshButton(f: FighterState): boolean {
 
 function isInvulnerable(f: FighterState): boolean {
   const a = f.action;
-  if (a.kind === 'attack' && (a.invuln ?? 0) > a.frame) return true; // reversal i-frames
+  if (a.kind === 'attack') {
+    const from = a.invulnFrom ?? 0;
+    if (a.frame >= from && a.frame < from + (a.invuln ?? 0)) return true; // reversal i-frames
+  }
   if (a.kind === 'airHit' && a.bounced) return true; // rebounding off the floor = already down
   const k = a.kind;
   // 'dazed' is NOT here: a dizzied fighter is fully vulnerable (the finisher-
@@ -495,6 +512,7 @@ function updateFighter(
               strength: f.buffered.strength,
               hasHit: false,
               invuln: res.invuln ?? 0,
+              invulnFrom: res.invulnFrom ?? 0,
             };
             f.buffered = null;
             canceled = true;
@@ -519,7 +537,15 @@ function updateFighter(
           if (mv.input!.motion && !motionDone(f, mv.input!.motion)) continue;
           const str: Strength = btn === 'LPLK' ? 'l' : 'm';
           const up = resolveMove(mv, str);
-          f.action = { kind: 'attack', frame: 0, moveId: id, strength: str, hasHit: false, invuln: up.invuln ?? 0 };
+          f.action = {
+            kind: 'attack',
+            frame: 0,
+            moveId: id,
+            strength: str,
+            hasHit: false,
+            invuln: up.invuln ?? 0,
+            invulnFrom: up.invulnFrom ?? 0,
+          };
           break;
         }
       }
@@ -529,8 +555,10 @@ function updateFighter(
       if (m.forwardVel && act.frame <= m.startup + m.active) {
         f.x += f.facing * m.forwardVel;
       }
-      // teleports blink at the first active frame (Diffusion)
-      if (m.teleport && act.frame === m.startup) {
+      // teleports blink at the first active frame (Diffusion); `mirror`
+      // teleports (Matrix Teleport) blink at the halfway point instead, so
+      // the full startup/active/recovery cell cycle plays once per side
+      if (m.teleport && act.frame === (m.teleport.mirror ? mirrorTeleportPhases(m).half : m.startup)) {
         const o = s.fighters[slot === 0 ? 1 : 0];
         if (m.teleport.mode === 'behind') {
           f.x = o.x + (f.x <= o.x ? 90 : -90);
@@ -761,6 +789,7 @@ function updateFighter(
           strength: attack.strength,
           hasHit: false,
           invuln: resolved.invuln ?? 0,
+          invulnFrom: resolved.invulnFrom ?? 0,
         };
       } else if (input.up) {
         f.action = { kind: 'prejump', frame: 0 };
@@ -842,6 +871,8 @@ interface HitPayload {
   unblockable?: boolean;
   /** throw toss: launch on a long high arc that slams + bounces (SF2 throws) */
   toss?: boolean;
+  /** per-move toss arc override; omit for the default TOSS_VY/TOSS_KNOCKBACK_MULT */
+  tossArc?: { vy: number; knockbackMult?: number };
 }
 
 /** Counterhit test: the defender is mid-attack and NOT in active frames
@@ -914,8 +945,8 @@ function applyHit(
     if (hit.toss) {
       // SF2 throw toss: sail on a long high arc, then slam + bounce hard
       d.action = { kind: 'airHit', frame: 0, counter, tossed: true };
-      d.vx = attackerFacing * hit.knockback * TOSS_KNOCKBACK_MULT;
-      d.vy = TOSS_VY;
+      d.vx = attackerFacing * hit.knockback * (hit.tossArc?.knockbackMult ?? TOSS_KNOCKBACK_MULT);
+      d.vy = hit.tossArc?.vy ?? TOSS_VY;
     } else if (!grounded(d)) {
       d.action = { kind: 'airHit', frame: 0, counter };
       d.vx = attackerFacing * hit.knockback * 0.6;
@@ -1415,6 +1446,7 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
         counter: false,
         unblockable: true,
         toss: true, // SF2 toss: sail + slam + bounce
+        tossArc: m.tossArc,
       }, inputs[vicSlot]);
       if (m.grabRecoil) atk.vx = -atk.facing * m.grabRecoil;
       if (m.heal) atk.health = Math.min(defs[atk.charId].health, atk.health + m.heal);

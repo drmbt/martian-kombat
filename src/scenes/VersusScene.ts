@@ -20,12 +20,14 @@ interface VersusData {
   cpu?: boolean;
   training?: boolean;
   showcase?: boolean;
+  /** dev-only move tuner (see FightScene) */
+  tuner?: boolean;
   stage?: string;
   render3d?: boolean;
 }
 
 export class VersusScene extends Phaser.Scene {
-  private fight: Required<VersusData> = { p1: 'vincent', p2: 'yulia', cpu: false, training: false, showcase: false, stage: 'salton', render3d: false };
+  private fight: Required<VersusData> = { p1: 'vincent', p2: 'yulia', cpu: false, training: false, showcase: false, tuner: false, stage: 'salton', render3d: false };
   private started = false;
 
   constructor() {
@@ -39,6 +41,7 @@ export class VersusScene extends Phaser.Scene {
       cpu: !!data.cpu,
       training: !!data.training,
       showcase: !!data.showcase,
+      tuner: !!data.tuner,
       stage: data.stage ?? 'salton',
       render3d: !!data.render3d,
     };
@@ -138,7 +141,7 @@ export class VersusScene extends Phaser.Scene {
   private startFight(): void {
     if (this.started) return;
     this.started = true;
-    const { p1, p2, cpu, training, showcase, stage, render3d } = this.fight;
-    this.scene.start(render3d ? 'Fight3D' : 'Fight', { p1, p2, cpu, training, showcase, stage });
+    const { p1, p2, cpu, training, showcase, tuner, stage, render3d } = this.fight;
+    this.scene.start(render3d ? 'Fight3D' : 'Fight', { p1, p2, cpu, training, showcase, tuner, stage });
   }
 }

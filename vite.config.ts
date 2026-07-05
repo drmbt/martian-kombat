@@ -1,6 +1,6 @@
 /// <reference types="vitest/config" />
 import { defineConfig, type Plugin } from 'vite';
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 // Dev-only editor backend: a tiny middleware that lets the in-game front-end
@@ -34,6 +34,32 @@ function editorApi(): Plugin {
             res.statusCode = 200;
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({ ok: true, count: Object.keys(out).length }));
+          } catch (err) {
+            res.statusCode = 400;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ ok: false, error: String(err) }));
+          }
+        });
+      });
+
+      // POST /__editor/character  { "id": "<charId>", "moves": {...} }
+      // -> merges into src/data/characters/<id>.json's `moves` key (the
+      //    move tuner's WRITE TO DISK button, see src/ui/MoveTunerPanel.ts).
+      server.middlewares.use('/__editor/character', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        let body = '';
+        req.on('data', (c) => (body += c));
+        req.on('end', () => {
+          try {
+            const { id, moves } = JSON.parse(body || '{}') as { id?: string; moves?: Record<string, unknown> };
+            if (!id || !/^[a-z0-9_-]+$/.test(id)) throw new Error('invalid character id');
+            const file = fileURLToPath(new URL(`./src/data/characters/${id}.json`, import.meta.url));
+            const parsed = JSON.parse(readFileSync(file, 'utf-8')) as { moves?: Record<string, unknown> };
+            parsed.moves = { ...parsed.moves, ...moves };
+            writeFileSync(file, JSON.stringify(parsed, null, 2) + '\n');
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ ok: true, moveCount: Object.keys(parsed.moves).length }));
           } catch (err) {
             res.statusCode = 400;
             res.setHeader('Content-Type', 'application/json');

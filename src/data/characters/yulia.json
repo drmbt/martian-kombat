@@ -551,6 +551,7 @@
       "grab": {
         "range": 115
       },
+      "tossArc": { "vy": -10.5, "knockbackMult": 1.5 },
       "techable": true
     }
   }

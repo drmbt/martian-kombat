@@ -397,7 +397,8 @@
       "hitbox": null,
       "height": "mid",
       "knockdown": true,
-      "grab": { "range": 110 },
+      "grab": { "range": 100 },
+      "tossArc": { "vy": -10.5, "knockbackMult": 1.5 },
       "techable": true
     }
   }

@@ -4,7 +4,7 @@
 Runs over a character's keyed cells and validates them WITHOUT a vision model
 where the geometry is decidable procedurally:
 
-  * DWPose (rtmlib / onnxruntime) keypoints per cell  -> where the limbs are
+  * RTMPose (rtmlib / onnxruntime) keypoints per cell  -> where the limbs are
   * alpha-edge check                                  -> nothing trails off frame
   * floor-plane (lowest-alpha sole) per cell          -> everyone on one plane
   * hitbox suggestion from the striking limb          -> stop guessing boxes
@@ -31,13 +31,15 @@ CW, CH = 288, 384
 ALPHA_THR = 16
 FFMPEG_KEY = "chromakey=0x00B140:0.15:0.06"  # matches tools/pack-sheet.mjs
 
-# The engine renders every sprite at origin (0.5, 0.95) and defines hitboxes
-# relative to THAT anchor (worldBox: l = f.x + box.x, t = f.y + box.y). So a
-# box aligns with a drawn limb only in this origin space — regardless of where
-# the alpha actually sits. Suggestions + overlays therefore use these refs; the
-# MEASURED sole/center are reported separately as the floor-normalization target.
+# The engine renders every sprite at origin (0.5, FLOOR_FRAC) and defines
+# hitboxes relative to THAT anchor (worldBox: l = f.x + box.x, t = f.y + box.y).
+# So a box aligns with a drawn limb only in this origin space — regardless of
+# where the alpha actually sits. Suggestions + overlays therefore use these refs;
+# the MEASURED sole/center are reported separately as the normalization target.
+# FLOOR_FRAC MUST match tools/qa/normalize_floor.py (canonical) + FightScene.
+FLOOR_FRAC = 0.88
 ORIGIN_CX = CW / 2          # 144
-ORIGIN_FEET = 0.95 * CH     # 365
+ORIGIN_FEET = FLOOR_FRAC * CH   # 338
 
 # COCO-wholebody-133 indices
 KP = {"nose": 0, "Lsho": 5, "Rsho": 6, "Lelb": 7, "Relb": 8, "Lwri": 9,
@@ -145,7 +147,7 @@ def analyze_cell(rgba, name, native_edge=None):
         if tot > 0:
             out["flags"].append(f"EDGE_BLEED: {tot}px touch frame edge ({edge})")
     if people == 0:
-        out["flags"].append("NO_POSE: DWPose found no figure")
+        out["flags"].append("NO_POSE: RTMPose found no figure")
     elif people > 1:
         out["flags"].append(f"MULTI_FIGURE: {people} people detected (extra limb / 2nd character?)")
     return out
@@ -172,11 +174,15 @@ def _core(k, s, kind):
 def striking_extremity(cell, kind, facing_right=True):
     """Return (x,y,conf,pts) of the striking hand/foot in cell pixels.
 
-    The striking limb is the extremity reaching FURTHEST from the body core
-    (shoulders for hands, hips for feet) — robust for high kicks, overheads and
-    downward strikes where "forward-most" would pick the planted/guard limb.
-    Sub-keypoints are kept only when they cluster near the joint, so a noisy
-    fingertip can't inflate the box.
+    The striking limb is the one extended toward the OPPONENT, scored by
+    DIRECTIONAL reach — forward distance (toward the facing edge) plus a bonus
+    for height above the body core. Undirected Euclidean distance is wrong: a
+    support leg hanging straight DOWN sits ~120px below the hips and would beat
+    a horizontal kicking leg extended forward (this is exactly how lk/mk/clp
+    used to mis-pick the planted foot). Forward reach + up-bonus handles high
+    kicks and overhead punches (up + forward) while a support limb dangling
+    below core scores ~0 and can't win. Sub-keypoints are kept only when they
+    cluster near the joint, so a noisy fingertip can't inflate the box.
     """
     k, s = cell.get("_k"), cell.get("_s")
     if k is None:
@@ -190,15 +196,69 @@ def striking_extremity(cell, kind, facing_right=True):
         if not p:
             continue
         pts = _near((p[0], p[1]), group_pts(k, s, sub)) + [(p[0], p[1])]
-        reach = (p[0] - cx) ** 2 + (p[1] - cy) ** 2
-        # bias toward the forward half-space so a cocked rear limb doesn't win
-        if (facing_right and p[0] < cx - 20) or (not facing_right and p[0] > cx + 20):
-            reach *= 0.4
+        fwd = (p[0] - cx) if facing_right else (cx - p[0])  # signed toward opponent
+        up = max(0.0, cy - p[1])  # height above core (0 for a limb below it)
+        reach = fwd + 0.5 * up
         joints.append((p[0], p[1], p[2], pts, reach))
     if not joints:
         return None
     best = max(joints, key=lambda j: j[4])
     return best[:4]
+
+
+# Confidence-gate constants for auto-applying a measured suggestion.
+# CONF_THRESHOLD is a RTMPose keypoint-detection PROBABILITY (0-1, model-
+# intrinsic) — it's already scale-free, so it does NOT need normalizing
+# against character size the way a pixel distance does. Set to 0.6
+# (2026-07-05): once the forward-limb selection bug was fixed, the cells that
+# land in the 0.6-0.75 band are the correct limb only partly occluded by
+# cloak/FX, so their boxes are trustworthy; a genuinely wrong detection reads
+# well below 0.6. The forward-limb check remains the hard safety gate.
+# FORWARD_GATE_FRAC/REACH_GAIN_FRAC ARE pixel-based, so each is expressed as
+# a fraction of that character's own measured size (character_scale) instead
+# of one fixed pixel count for the whole roster — a compact character and a
+# tall/long-limbed one get proportionally fair gates.
+CONF_THRESHOLD = 0.6
+FORWARD_GATE_FRAC = 0.07
+REACH_GAIN_FRAC = 0.08
+DEFAULT_SCALE = 300.0  # fallback if idle-a's alpha can't be measured
+
+
+def character_scale(cells):
+    """Per-character size reference for the fractional gates: idle-a's own
+    alpha bbox height (a taller/bigger-bodied character measures bigger)."""
+    ia = cells.get("idle-a")
+    if ia and ia.get("alpha"):
+        h = ia["alpha"]["y1"] - ia["alpha"]["y0"]
+        if h > 0:
+            return h
+    return DEFAULT_SCALE
+
+
+def passes_gate(sug, scale, force=False):
+    """Should this measured suggestion be trusted and auto-applied?
+
+    The forward-limb check is a HARD safety gate (a box behind the character
+    is never acceptable) and is enforced even under --force. The confidence
+    check is a soft trust bar that --force waives — appropriate once the limb
+    is correctly selected and only occlusion is dragging the score down."""
+    if sug is None:
+        return False, "no measurement"
+    if sug["x"] < -FORWARD_GATE_FRAC * scale:
+        return False, f"limb behind center (x={sug['x']}, gate={-FORWARD_GATE_FRAC*scale:.0f})"
+    if not force and sug["conf"] < CONF_THRESHOLD:
+        return False, f"confidence {sug['conf']:.2f} < {CONF_THRESHOLD}"
+    return True, "ok"
+
+
+def suggest_grab_range(cell, center_ref):
+    """How far the reaching hand extends from body-center on the throw's
+    active frame — a measured starting point for the move's grab.range,
+    instead of guessing (or copying another character's number)."""
+    ex = striking_extremity(cell, "punch")
+    if ex is None:
+        return None
+    return {"x": round(ex[0] - center_ref, 1), "conf": round(ex[2], 2)}
 
 
 def suggest_hitbox(cell, kind, feet_ref, center_ref, pad=26):
@@ -367,14 +427,17 @@ def run_group_rules(cells, char_json):
         if "nose" in dn["kp"] and dn["kp"]["nose"][0] > CW * 0.5:
             note("down", "flag", "down: head should be on the LEFT (fell backward facing right)")
 
-    # punch reach: active wrist must extend beyond the idle guard wrist
+    # punch reach: active wrist must extend beyond the idle guard wrist, by a
+    # margin scaled to THIS character's own size (a compact character and a
+    # long-limbed one shouldn't share one fixed pixel count)
+    scale = character_scale(cells)
     idle_wx = wrist_x(idle) if idle else None
     if idle_wx is not None:
         for b in ("lp", "mp", "hp"):
             c = C(f"{b}-active")
             if not c: continue
             wx = wrist_x(c)
-            if wx is not None and wx - idle_wx < 24:
+            if wx is not None and wx - idle_wx < REACH_GAIN_FRAC * scale:
                 note(f"{b}-active", "regen", f"no reach: fist x={wx:.0f} barely past idle guard {idle_wx:.0f} — extend the arm further forward")
 
     # kicks: extra-limb detection (multi-figure or blob split)
@@ -396,7 +459,7 @@ def feet_reference(cells):
                 "lp-active", "mp-active", "hp-active"]
     soles = [cells[n]["alpha"]["y1"] for n in grounded
              if n in cells and cells[n].get("alpha")]
-    return float(np.median(soles)) if soles else 0.95 * CH
+    return float(np.median(soles)) if soles else ORIGIN_FEET
 
 
 def center_reference(cells):
@@ -407,12 +470,47 @@ def center_reference(cells):
 # ---------- main ----------
 KICK_PUNCH = {"lp": "punch", "mp": "punch", "hp": "punch",
               "lk": "kick", "mk": "kick", "hk": "kick"}
+CROUCH_KICK_PUNCH = {f"c{k}": v for k, v in KICK_PUNCH.items()}
+AIR_KICK_PUNCH = {f"j{k}": v for k, v in KICK_PUNCH.items()}
+PHASE_SUFFIXES = ("-startup", "-active", "-recovery")
+
+
+def move_id_for(nm):
+    """Cell name -> the character-JSON move key. Cells are named
+    '<moveId>-startup|active|recovery' for everything EXCEPT air attacks,
+    whose single cell IS the move id ('jlp', not 'jlp-active') — so only
+    strip a phase suffix when one is actually present. Do NOT split on the
+    first hyphen: multi-word special ids (cloud-hands, rising-glyph,
+    diffusion-strike...) contain hyphens themselves."""
+    for suf in PHASE_SUFFIXES:
+        if nm.endswith(suf):
+            return nm[: -len(suf)]
+    return nm
+
+
+def is_active_cell(nm):
+    """True for any cell that represents a move's damage-dealing frame —
+    '<id>-active' for stand/crouch/specials, or the bare air-move cell
+    ('jlp' etc, which has no separate startup/active/recovery split)."""
+    return nm.endswith("-active") or move_id_for(nm) in AIR_KICK_PUNCH
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--char", required=True)
     ap.add_argument("--frames-dir")
     ap.add_argument("--suggest", action="store_true")
+    ap.add_argument("--hitbox-grid", action="store_true",
+                     help="export every cell, in sheet order, with its JSON hitbox "
+                          "(red) and skeleton superimposed, as one big grid image")
+    ap.add_argument("--per-row", type=int, default=8)
+    ap.add_argument("--calibrate", action="store_true",
+                     help="write confidence-gated measured hitboxes straight into "
+                          "the character JSON for every move that has one; anything "
+                          "that fails the gate is left untouched and reported")
+    ap.add_argument("--force", action="store_true",
+                     help="with --calibrate, waive the confidence bar (still keeps "
+                          "the forward-limb safety check) so correct-limb but "
+                          "occlusion-lowered measurements get applied too")
     args = ap.parse_args()
 
     proj_issues = []
@@ -435,15 +533,65 @@ def main():
 
     issues = run_group_rules(cells, cj) + proj_issues
 
-    # hitbox suggestions in engine origin space (drop-in for the JSON)
+    # hitbox suggestions in engine origin space (drop-in for the JSON).
+    # Named specials aren't in the punch/kick maps by cell name; if the JSON
+    # already carries a real (non-null) hitbox for one, default the
+    # measurement to a hand-strike (most melee specials are arm/palm-based —
+    # imperfect for a kick-based special, but a reasonable default; flagged
+    # by the low confidence a genuinely wrong kind usually produces anyway).
     suggestions = {}
     for nm, cell in cells.items():
-        base = nm.split("-")[0].lstrip("c")
-        kind = KICK_PUNCH.get(base)
-        if kind and nm.endswith("-active"):
+        mv = move_id_for(nm)
+        kind = KICK_PUNCH.get(mv) or CROUCH_KICK_PUNCH.get(mv) or AIR_KICK_PUNCH.get(mv)
+        if not kind and is_active_cell(nm):
+            existing = (cj.get("moves", {}).get(mv, {}) or {}).get("hitbox")
+            if existing is not None:
+                kind = "punch"
+        if kind and is_active_cell(nm):
             sug = suggest_hitbox(cell, kind, ORIGIN_FEET, ORIGIN_CX)
             if sug:
                 suggestions[nm] = sug
+
+    # grab.range suggestion: how far the throw's reaching hand extends from
+    # body-center on its active frame (v2 "throw-active" or legacy "throw")
+    grab_suggestion = None
+    for nm in ("throw-active", "throw"):
+        if nm in cells:
+            grab_suggestion = suggest_grab_range(cells[nm], measured_center)
+            break
+
+    # Hitbox calibration is computed on EVERY run (advisory), applied only
+    # with --calibrate. Walk every move that currently has a real (non-null)
+    # hitbox — that's "should have one" — not just punch/kick-named cells, so
+    # a named special with an authored box gets checked too. A gated proposal
+    # that meaningfully DIFFERS from the current box is surfaced as a "propose"
+    # advisory: QA never rewrites it, it just tells you the box is off and by
+    # how much. A plain run flags; --calibrate writes exactly this set.
+    scale = character_scale(cells)
+    DRIFT_FRAC = 0.05  # ignore sub-5%-of-body-height nudges as noise
+    calibration = {"changed": [], "skipped": []}
+    for mid, mv in (cj.get("moves") or {}).items():
+        if mv.get("hitbox") is None:
+            continue  # projectile/grab/teleport/reflect — no box by design
+        cell_nm = f"{mid}-active" if f"{mid}-active" in cells else (mid if mid in cells else None)
+        sug = suggestions.get(cell_nm) if cell_nm else None
+        ok, reason = passes_gate(sug, scale, force=args.force)
+        if not ok:
+            calibration["skipped"].append({"move": mid, "reason": reason, "measured": sug})
+            continue
+        old = mv["hitbox"]
+        new = {k: sug[k] for k in ("x", "y", "w", "h")}
+        drift = max(abs(new[k] - old.get(k, 0)) for k in ("x", "y", "w", "h"))
+        if drift < DRIFT_FRAC * scale:
+            continue  # measured box already matches the authored one — no advice
+        entry = {"move": mid, "old": old, "new": new, "conf": sug["conf"], "drift": drift}
+        if args.calibrate:
+            mv["hitbox"] = new
+        calibration["changed"].append(entry)
+    if args.calibrate:
+        with open(cjp, "w") as f:
+            json.dump(cj, f, indent=2)
+            f.write("\n")
 
     # montage of flagged/interesting cells
     flagged = [nm for nm, c in cells.items() if c["flags"]] + [i["name"] for i in issues]
@@ -451,8 +599,8 @@ def main():
     tiles = []
     for nm in show:
         cell = cells[nm]
-        base = nm.split("-")[0].lstrip("c")
-        ex = (cj.get("moves", {}).get(base, {}) or {}).get("hitbox") if nm.endswith("-active") else None
+        mv = move_id_for(nm)
+        ex = (cj.get("moves", {}).get(mv, {}) or {}).get("hitbox") if is_active_cell(nm) else None
         tiles.append(draw_overlay(rgba_cells[nm], cell, ex, suggestions.get(nm), ORIGIN_FEET, ORIGIN_CX))
     mont = montage(tiles)
 
@@ -460,6 +608,19 @@ def main():
     os.makedirs(outdir, exist_ok=True)
     if mont is not None:
         cv2.imwrite(f"{outdir}/montage.png", mont)
+
+    if args.hitbox_grid:
+        grid_tiles = []
+        for nm in rgba_cells:
+            cell = cells[nm]
+            mv = move_id_for(nm)
+            ex = (cj.get("moves", {}).get(mv, {}) or {}).get("hitbox") if is_active_cell(nm) else None
+            grid_tiles.append(draw_overlay(rgba_cells[nm], cell, ex, None, ORIGIN_FEET, ORIGIN_CX))
+        grid = montage(grid_tiles, per_row=args.per_row)
+        if grid is not None:
+            out_path = f"{outdir}/hitbox-grid.png"
+            cv2.imwrite(out_path, grid)
+            print(f"  -> {out_path} ({len(grid_tiles)} cells, red = JSON hitbox)")
 
     # strip in-memory arrays before serialising
     for c in cells.values():
@@ -471,7 +632,9 @@ def main():
               "floor_drift": round(measured_floor - ORIGIN_FEET, 1),
               "n_cells": len(cells),
               "n_flagged": len(set(flagged)),
-              "issues": issues, "suggestions": suggestions, "cells": cells}
+              "issues": issues, "suggestions": suggestions,
+              "grab_suggestion": grab_suggestion, "calibration": calibration,
+              "cells": cells}
     json.dump(report, open(f"{outdir}/report.json", "w"), indent=1)
 
     # console summary
@@ -485,10 +648,29 @@ def main():
     print(f"  group-rule issues: {len(issues)}")
     for i in issues:
         print(f"    [{i['level']:5}] {i['name']:16} {i['msg']}")
+    if grab_suggestion:
+        print(f"  measured grab reach: {grab_suggestion['x']}px from center "
+              f"(conf {grab_suggestion['conf']}) — starting point for grab.range")
     if args.suggest:
         print("  suggested hitboxes (JSON convention):")
         for nm, sg in suggestions.items():
             print(f"    {nm:16} {sg}")
+    # Hitbox advisory: always shown. A plain run PROPOSES (flags only);
+    # --calibrate applies the exact same proposals.
+    verb = "applied" if args.calibrate else "proposed"
+    if calibration["changed"]:
+        print(f"  hitbox calibration ({verb} — pass --calibrate to write): "
+              f"{len(calibration['changed'])} off vs measured (scale={scale:.0f}px)")
+        for c in calibration["changed"]:
+            print(f"    [{verb:8}] {c['move']:16} conf={c['conf']:.2f} drift={c['drift']:.0f}px  "
+                  f"{c['old']} -> {c['new']}")
+    if calibration["skipped"]:
+        print(f"  hitbox calibration skipped (gate not met — needs human/vision): "
+              f"{len(calibration['skipped'])}")
+        for s in calibration["skipped"]:
+            print(f"    [skipped ] {s['move']:16} {s['reason']}")
+    if args.calibrate and calibration["changed"]:
+        print(f"  -> wrote {cjp}")
     print(f"  -> {outdir}/report.json + montage.png")
 
 

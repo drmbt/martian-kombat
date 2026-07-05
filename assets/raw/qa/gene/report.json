@@ -6,17 +6,27 @@
  "measured_center": 126.0,
  "floor_drift": -6.8,
  "n_cells": 65,
- "n_flagged": 5,
+ "n_flagged": 7,
  "issues": [
   {
    "name": "walk-b",
    "level": "flag",
-   "msg": "walk-a/walk-b leg gap barely differs (151/157px)"
+   "msg": "walk-a/walk-b nearly identical \u2014 same lead foot, no visible step"
   },
   {
    "name": "block",
    "level": "flag",
    "msg": "block looks like idle \u2014 should read as a braced parry"
+  },
+  {
+   "name": "projectile:mana-burst",
+   "level": "regen",
+   "msg": "EDGE_BLEED 89px ({'top': 0, 'bottom': 80, 'left': 9, 'right': 0}) \u2014 projectile art must float free of every edge"
+  },
+  {
+   "name": "projectile:rate-limit",
+   "level": "regen",
+   "msg": "EDGE_BLEED 4096px ({'top': 1024, 'bottom': 1024, 'left': 1024, 'right': 1024}) \u2014 projectile art must float free of every edge"
   }
  ],
  "suggestions": {
@@ -49,11 +59,11 @@
    "conf": 0.74
   },
   "mk-active": {
-   "x": 61,
-   "y": -296,
-   "w": 77,
-   "h": 90,
-   "conf": 0.52
+   "x": 11,
+   "y": -75,
+   "w": 100,
+   "h": 71,
+   "conf": 0.83
   },
   "hk-active": {
    "x": 11,
@@ -104,6 +114,10 @@
    "h": 91,
    "conf": 0.83
   }
+ },
+ "grab_suggestion": {
+  "x": 106.1,
+  "conf": 0.94
  },
  "cells": {
   "idle-a": {
@@ -3903,7 +3917,7 @@
    "edge": {
     "top": 0,
     "bottom": 0,
-    "left": 4,
+    "left": 8,
     "right": 0
    },
    "alpha": {
@@ -3976,7 +3990,7 @@
     ]
    },
    "flags": [
-    "EDGE_BLEED: 4px touch frame edge ({'top': 0, 'bottom': 0, 'left': 4, 'right': 0})"
+    "EDGE_BLEED: 8px touch frame edge ({'top': 0, 'bottom': 0, 'left': 8, 'right': 0})"
    ]
   },
   "diffusion-strike-recovery": {
@@ -4142,7 +4156,7 @@
    "edge": {
     "top": 0,
     "bottom": 0,
-    "left": 149,
+    "left": 374,
     "right": 0
    },
    "alpha": {
@@ -4215,7 +4229,7 @@
     ]
    },
    "flags": [
-    "EDGE_BLEED: 149px touch frame edge ({'top': 0, 'bottom': 0, 'left': 149, 'right': 0})"
+    "EDGE_BLEED: 374px touch frame edge ({'top': 0, 'bottom': 0, 'left': 374, 'right': 0})"
    ]
   },
   "diffusion-escape-recovery": {

@@ -1,18 +1,18 @@
 ---
 name: sprite-qa
-description: Canonical workflow for creating and validating a character's sprite sheet in Martian Kombat — DWPose/alpha deterministic QA, pose-measured hitboxes, floor normalization, sequential specials, projectile handling, and pose-centered portraits. Use whenever generating, regenerating, packing, or validating character frames, projectiles, hitboxes, or bust portraits.
+description: Canonical workflow for creating and validating a character's sprite sheet in Martian Kombat — RTMPose/alpha deterministic QA, pose-measured hitboxes, floor normalization, sequential specials, projectile handling, and pose-centered portraits. Use whenever generating, regenerating, packing, or validating character frames, projectiles, hitboxes, or bust portraits.
 ---
 
 # Character sprite creation & QA (canonical)
 
 The governing principle: **validate deterministically, never with vision unless
-forced.** Every check below is numpy/OpenCV or local DWPose (ONNX) — zero LLM
+forced.** Every check below is numpy/OpenCV or local RTMPose (ONNX) — zero LLM
 tokens. A vision call happens at most once per QA run, on a single labeled
 montage of the cells that already FAILED a deterministic check. If nothing
 failed, do not open an image at all.
 
 Tooling lives in `tools/qa/` (Python; `pip install -r tools/qa/requirements.txt`,
-rtmlib auto-downloads DWPose weights). Run QA with `npm run gen:qa`.
+rtmlib auto-downloads RTMPose weights). Run QA with `npm run gen:qa`.
 
 ## Pipeline order (do NOT reorder)
 
@@ -21,6 +21,11 @@ rtmlib auto-downloads DWPose weights). Run QA with `npm run gen:qa`.
    **raw/keyed native frames**, BEFORE packing.
 3. Fix flagged cells (targeted `--cells` re-roll), re-run QA until clean.
 4. `gen:pack --char <id> --normalize` — the final bake. QA is already done.
+5. `gen:qa --char <id> --hitbox-grid` (against the PACKED sheet — omit
+   `--frames-dir`) — every cell in sheet order, skeleton + the move's JSON
+   hitbox in red, as one image at `assets/raw/qa/<id>/hitbox-grid.png`
+   (`--per-row N` to reflow, default 8). Purely a visual sanity pass over
+   the final hitboxes post-normalize; doesn't affect pass/fail.
 
 **Never QA the packed sheet.** Packing scales each frame to fit inside the cell
 and pads, which pulls edge-touching content off the edge and hides bleed. Edge
@@ -49,7 +54,7 @@ checks are only valid on the native frame.
 
 ## Per-frame-group validation
 
-Compare DWPose skeletons across related cells; regenerate with sharper prompt
+Compare RTMPose skeletons across related cells; regenerate with sharper prompt
 verbage when a group fails.
 
 - **idle-a / idle-b:** a subtle, distinct breathing shift (classic Ryu idle /
@@ -70,11 +75,11 @@ verbage when a group fails.
   regenerate with "extend the arm further forward." (Overhead heavies are
   vertical — exempt from the horizontal-reach check.)
 - **kick groups:** exactly ONE figure and ONE kicking leg. The common failure
-  is the canonical pose PLUS a third kicking leg — DWPose "2 people" or a second
+  is the canonical pose PLUS a third kicking leg — RTMPose "2 people" or a second
   large alpha blob flags it. Regenerate: "EXACTLY ONE figure, one kicking leg
   attached at the hip."
 - **specials:** the prompt should place the effect where the move's HITBOX is
-  meant to be. Expected false positive: DWPose reports "2 people" on a
+  meant to be. Expected false positive: RTMPose reports "2 people" on a
   projectile-throw frame when the projectile is face/figure-like — ignore it.
 
 ## Hitboxes from the pose skeleton (stop guessing)
@@ -89,6 +94,15 @@ verbage when a group fails.
 - **Confidence gate:** apply the measured box only when the striking limb is
   forward (x ≥ ~-20) and keypoint confidence ≥ 0.75; otherwise keep the estimate
   and FLAG it. Low confidence (heavy VFX, occlusion) → human/vision review.
+- **Grab range from the throw pose (2026-07-05):** the universal throw's
+  `grab.range` shouldn't be eyeballed either — `pose_qa.py` measures how far
+  the reaching hand extends from body-center on the `throw-active` cell
+  (same striking-extremity logic as punches) and reports it as
+  `grab_suggestion` in `report.json` / the console summary. A character with
+  long reach (grappler build) measures a bigger number than a compact one —
+  use it as the JSON `grab.range` starting point, same confidence gate as
+  hitboxes. It's descriptive only (no pass/fail — a throw pose has no "wrong"
+  answer the way a crouch height does), so it never blocks a QA run.
 
 ## Floor normalization
 
