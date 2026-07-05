@@ -5,7 +5,7 @@ import { STAGE_H, STAGE_W } from '../engine';
 import { ROSTER } from '../data/roster';
 import { characters } from '../data/characters';
 import { STAGES } from '../data/stages';
-import { initMusic } from '../audio/music';
+import { initMusic, duckMusic } from '../audio/music';
 import { applyMusicVolume, effectiveSfxVolume } from '../audio/volume';
 import { devBootTarget, rememberDevLaunch } from '../devLaunch';
 
@@ -124,6 +124,20 @@ export function play(scene: Phaser.Scene, key: string, volume = 0.8): void {
   if (typeof document !== 'undefined' && !document.hasFocus()) return;
   const v = volume * effectiveSfxVolume();
   if (v > 0 && scene.cache.audio.exists(key)) scene.sound.play(key, { volume: v });
+}
+
+/** Play an announcer-style voice-over (fighter names, stage names, "FIGHT!"):
+ *  louder than a normal SFX and it DUCKS the music for the clip's length so
+ *  the callout cuts through. Use this for any spoken callout, not play(). */
+export function announce(scene: Phaser.Scene, key: string, volume = 1.3): void {
+  if (typeof document !== 'undefined' && !document.hasFocus()) return;
+  const v = volume * effectiveSfxVolume();
+  if (v <= 0 || !scene.cache.audio.exists(key)) return;
+  const snd = scene.sound.add(key);
+  const durMs = ((snd as Phaser.Sound.BaseSound & { duration?: number }).duration ?? 1.4) * 1000;
+  duckMusic(durMs + 250);
+  snd.once('complete', () => snd.destroy());
+  snd.play({ volume: v });
 }
 
 /** Play a random numbered variant of a character voice line (kiai/hurt/victory)

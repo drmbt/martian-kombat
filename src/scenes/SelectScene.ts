@@ -7,7 +7,7 @@ import { STAGE_H, STAGE_W } from '../engine';
 import { ROSTER, type RosterEntry } from '../data/roster';
 import { characters } from '../data/characters';
 import { STAGES, stageOwner } from '../data/stages';
-import { play } from './BootScene';
+import { play, announce } from './BootScene';
 import { playMusic } from '../audio/music';
 import { menuNav, navDefer } from '../input/menu-nav';
 import { BindAction, getSettings } from '../settings';
@@ -323,10 +323,10 @@ export class SelectScene extends Phaser.Scene {
     this.redraw();
   }
 
-  /** the remote player cast a stage vote — mark it in the dialog + call it out */
+  /** the remote player cast a stage vote — mark it in the dialog (no call-out
+   *  yet; the resolved stage is announced once at launch) */
   private applyRemoteStageVote(stageId: string): void {
     this.remoteStageIdx = this.stageOptions().findIndex((o) => o.id === stageId);
-    this.playStageVo(stageId);
     if (this.stageMode) this.redrawStage();
   }
 
@@ -337,7 +337,7 @@ export class SelectScene extends Phaser.Scene {
     if (i < 0) return;
     this.idx[remoteSlot] = i;
     this.confirmed[remoteSlot] = true;
-    play(this, `ann-${charId}`, 1);
+    announce(this, `ann-${charId}`);
     this.redraw();
   }
 
@@ -485,7 +485,7 @@ export class SelectScene extends Phaser.Scene {
       return;
     }
     this.confirmed[p] = true;
-    play(this, `ann-${entry.id}`, 1);
+    announce(this, `ann-${entry.id}`);
     this.redraw();
     if (this.online) {
       this.online.controller.lockChar(entry.id);
@@ -569,7 +569,6 @@ export class SelectScene extends Phaser.Scene {
       tile.on('pointerover', () => {
         if (this.stageIdx === i) return;
         this.stageIdx = i;
-        this.playStageVo(opt.id); // announce on mouse hover too
         this.redrawStage();
       });
       tile.on('pointerdown', () => { this.stageIdx = i; this.confirmStage(); });
@@ -603,7 +602,6 @@ export class SelectScene extends Phaser.Scene {
     const n = this.stageOptions().length;
     this.stageIdx = ((this.stageIdx + d) % n + n) % n;
     play(this, 's-blip', 0.5);
-    this.playStageVo(this.stageOptions()[this.stageIdx].id); // call the stage name out as you land on it
     this.redrawStage();
   }
 
@@ -617,16 +615,19 @@ export class SelectScene extends Phaser.Scene {
     // online: BOTH players vote for a stage. The host reconciles (agree → that,
     // disagree → coin flip) and sends the authoritative start, so both peers
     // launch on the identical stage/rules (V25). Never scene.start here.
+    // online: BOTH vote; the announce waits until the vote is SETTLED
+    // (launchOnline plays the resolved stage), not on each vote here
     if (this.online) {
       this.starting = true;
       this.redrawStage();
       this.online.controller.pickStage(stage);
-      this.playStageVo(stage);
       this.setWaiting(`stage locked — waiting for ${this.online.remoteName}…`);
       return;
     }
+    // offline: this IS the final pick — call it out now
     this.starting = true;
     this.redrawStage();
+    this.playStageVo(stage);
     this.time.delayedCall(500, () => {
       this.scene.start('Versus', {
         p1: ROSTER[this.idx[0]].id, p2: ROSTER[this.idx[1]].id,
@@ -655,11 +656,13 @@ export class SelectScene extends Phaser.Scene {
     g.strokeRect(x - this.sThumbW / 2 - 4, ty - this.sThumbH / 2 - 4, this.sThumbW + 8, this.sThumbH + 8);
   }
 
-  /** announce a stage by name if its VO exists (mirrors the character name
-   *  call-out; missing clips just stay silent) */
+  /** announce a stage by name (louder + ducks music; missing clips stay
+   *  silent). Only fired on FINAL selection — offline on confirm, online once
+   *  the vote is settled — never on hover/navigation. */
   private playStageVo(stageId: string): void {
-    const key = `ann-stage-${stageId}`;
-    if (this.cache.audio.exists(key)) play(this, key, 1);
+    // Clyde (stage voice) records quieter than the Maverick name-calls, so
+    // push extra gain (WebAudio volume is a gain — >1 is fine here)
+    announce(this, `ann-stage-${stageId}`, 2.4);
   }
 
   update(): void {

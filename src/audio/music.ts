@@ -124,7 +124,39 @@ export function stopMusic(fadeMs = FADE_MS): void {
 
 export function setMusicVolume(v: number): void {
   musicVolume = Math.max(0, Math.min(1, v));
-  if (current) current.el.volume = musicVolume;
+  // don't fight an active duck — it restores to musicVolume when it ends
+  if (current && duckUntil === 0) current.el.volume = musicVolume;
+}
+
+/** how long the current duck holds (0 = not ducking) — lets overlapping VOs
+ *  extend the duck instead of restoring early */
+let duckUntil = 0;
+let duckRaf = 0;
+
+/** Duck the music under a voice-over for `ms`, then ease it back. Centralised
+ *  so every announcer/name call (see BootScene.announce) sounds the same. */
+export function duckMusic(ms: number, level = 0.28): void {
+  if (!current) return;
+  const now = performance.now();
+  duckUntil = Math.max(duckUntil, now + ms);
+  current.el.volume = musicVolume * level;
+  if (duckRaf) return; // a restore loop is already running
+  const tick = (): void => {
+    if (!current) { duckUntil = 0; duckRaf = 0; return; }
+    const t = performance.now();
+    if (t >= duckUntil) {
+      current.el.volume = musicVolume; // fully restored
+      duckUntil = 0;
+      duckRaf = 0;
+      return;
+    }
+    // ease back over the last 400ms of the duck window
+    const remain = duckUntil - t;
+    const k = remain < 400 ? 1 - remain / 400 : 0;
+    current.el.volume = musicVolume * (level + (1 - level) * k);
+    duckRaf = requestAnimationFrame(tick);
+  };
+  duckRaf = requestAnimationFrame(tick);
 }
 
 // --- internals ---------------------------------------------------------
