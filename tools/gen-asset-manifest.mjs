@@ -20,7 +20,10 @@ const ROOT = new URL('..', import.meta.url).pathname;
 const PUB = join(ROOT, 'public', 'assets');
 const OUT = join(ROOT, 'src', 'data', 'assetManifest.json');
 
-const ls = (dir) => (existsSync(dir) ? readdirSync(dir) : []);
+// list a directory's entries, skipping macOS/editor junk (.DS_Store etc.) and
+// anything that isn't itself a directory-safe name — a stray .DS_Store FILE in
+// sprites/ otherwise gets treated as a character folder and readdir throws
+const ls = (dir) => (existsSync(dir) ? readdirSync(dir).filter((f) => !f.startsWith('.')) : []);
 
 // stage name VOs
 const stageVo = ls(join(PUB, 'audio', 'announcer'))

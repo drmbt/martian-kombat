@@ -53,7 +53,7 @@ const SIDE_P2_X = STAGE_W - 116;
 const SIDE_SPRITE_H = 250; // display height of the idle sprite
 const SIDE_BASE_Y = 512; // feet baseline
 const SIDE_TAG_Y = 296; // "1P" / "2P" label
-const SIDE_NAME_Y = 524; // character name
+const SIDE_NAME_Y = 520; // character name — centered on the pod ellipse (SIDE_BASE_Y + 8)
 const SIDE_IDLE_MS = 360; // idle-a <-> idle-b toggle period
 
 // stage dialog: the grid sizes itself to the option count (RANDOM + every
