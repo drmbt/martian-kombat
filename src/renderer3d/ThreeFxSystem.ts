@@ -484,11 +484,11 @@ export class ThreeFxSystem {
       const gs = Math.max(w, h) * 2.6;
       entry.glow.scale.set(gs, gs, 1);
       entry.glowMat.color = color;
-      entry.glowMat.opacity = 0.85;
+      entry.glowMat.opacity = 0.6;
       if (light) {
         light.position.set(x, y, 0.4);
         light.color = color;
-        light.intensity = p.field ? 0 : 18;
+        light.intensity = p.field ? 0 : 12;
       }
     });
   }

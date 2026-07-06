@@ -283,7 +283,7 @@ export class ThreeFightRenderer {
     }
     if (s.bloomEnabled) {
       color = (color as ReturnType<typeof vec4>).add(
-        bloom(color as ReturnType<typeof vec4>, s.bloomStrength, 0.35, 0.85),
+        bloom(color as ReturnType<typeof vec4>, s.bloomStrength, 0.35, 0.92),
       );
     }
     this.post = new THREE.RenderPipeline(this.renderer);
