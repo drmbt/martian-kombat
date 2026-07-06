@@ -1,11 +1,25 @@
-# CorridorKey — cleaner green-screen keying (production upgrade, not yet wired in)
+# CorridorKey — cleaner green-screen keying (production upgrade, tooling wired in)
 
-**Status:** evaluated & proven 2026-07-04, **not yet integrated.** Current
-production keying is still ffmpeg `chromakey` in `tools/pack-sheet.mjs` (with a
-PIL/numpy coarse-mask fallback used in some spots). This doc is the parking spot
-so we can pick it up for a **main production release**: at that point we re-key
-**all** sprite sheets from their raw green-screen frames using CorridorKey
-instead of ffmpeg/PIL.
+**Status:** evaluated & proven 2026-07-04; **handler tooling built 2026-07-05**
+(`npm run gen:key`, smoke-tested end-to-end on MLX). Current production keying
+is still ffmpeg `chromakey` in `tools/pack-sheet.mjs` — the fast iteration
+default. The full re-key of **all** sprite sheets remains parked for a main
+production release; when that lands, it's now a two-command job per character:
+
+```bash
+npm run gen:key  -- --char <name>                  # self-bootstrapping: clone,
+                                                   # install, weights, stash,
+                                                   # hints, inference, compose
+npm run gen:pack -- --char <name> --keyer corridor # pack from the keyed frames
+```
+
+`tools/corridorkey.mjs` automates everything below (sibling clone scaffold, uv
+install with the MLX extra on Apple Silicon, the dead-repo MLX weights recipe,
+the checkpoint-collision stash in `checkpoints/.stash/`, coarse alpha hints,
+`--skip-existing` batching, EXR→straight-alpha-PNG composition into
+`assets/raw/keyed/<char>/`). `tools/corridorkey-helper.py` runs the hint/compose
+recipes inside the CorridorKey venv. The notes below stay as the reference for
+*why* the tool does what it does.
 
 ## Why bother
 

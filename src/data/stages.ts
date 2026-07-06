@@ -3,12 +3,17 @@
 // A character claims a home stage with an optional `stage: "<id>"` field in
 // its JSON — used by the stage-select dialog to badge home stages.
 import type { Defs } from '../engine';
+import stagePins from './stage-pins.json';
 
 export interface StageEntry {
   id: string;
   name: string;
   /** path under public/, relative to the page (matches BootScene loads) */
   file: string;
+  /** Normalized (0..1) position on the character-select world map. Authored by
+   *  the dev-mode Stage Pin editor (src/scenes/StagePinEditorScene.ts), which
+   *  writes stage-pins.json. Undefined = not placed yet. */
+  pin?: { x: number; y: number };
   /** Optional parallax layers, ordered back-to-front by the renderer. */
   layers?: {
     sky?: { file: string; factor?: number };
@@ -27,6 +32,7 @@ const stage = (id: string, name: string): StageEntry => ({
 export const STAGES: StageEntry[] = [
   // the original MVP stage keeps its legacy file location
   { id: 'salton', name: 'SALTON SHORELINE', file: 'assets/backgrounds/salton-shoreline.jpg' },
+  stage('ai-kitchen', 'AI KITCHEN'),
   stage('altar', 'ALTAR'),
   stage('bbac', 'BBAC'),
   stage('chiba', 'CHIBA'),
@@ -40,20 +46,34 @@ export const STAGES: StageEntry[] = [
     },
   },
   stage('dodecahedron', 'DODECAHEDRON'),
+  stage('dojo', 'DOJO'),
   stage('dome', 'DOME'),
   stage('drive-in', 'DRIVE IN'),
+  stage('escapes', 'THE ESCAPES'),
   stage('estates', 'ESTATES'),
+  stage('hyperion', 'HYPERION'),
   stage('institute', 'INSTITUTE'),
+  stage('last-resort', 'LAST RESORT'),
   stage('mars', 'MARS'),
   stage('mimos', 'MIMOS'),
+  stage('museum', 'MUSEUM'),
   stage('neptune', 'NEPTUNE'),
   stage('painted-canyon', 'PAINTED CANYON'),
   stage('saturn', 'SATURN'),
   stage('ski-inn', 'SKI INN'),
   stage('shipwreck', 'SHIPWRECK'),
+  stage('star-beach', 'STAR BEACH'),
   stage('the-range', 'THE RANGE'),
+  stage('tvs', 'TVS'),
   stage('van', 'VAN'),
 ];
+
+// Merge the authored world-map pin coords (stage-pins.json) onto the registry.
+const PINS = stagePins as Record<string, { x: number; y: number }>;
+for (const s of STAGES) {
+  const p = PINS[s.id];
+  if (p) s.pin = p;
+}
 
 export function stageById(id: string): StageEntry | undefined {
   return STAGES.find((s) => s.id === id);

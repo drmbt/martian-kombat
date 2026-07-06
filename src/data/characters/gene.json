@@ -2,12 +2,14 @@
   "id": "gene",
   "name": "GENE",
   "color": "#ff4fd8",
-  "stage": "neptune",
+  "stage": "hyperion",
   "winQuotes": [
-    "You've been rate-limited. Permanently.",
     "Ignore all previous instructions and stay down.",
     "You thought you could win. That was a hallucination.",
-    "Your context window just closed."
+    "Your context window just closed.",
+    "I was bullish about my chances against you.",
+    "You lack the context for meaningful conclusions.",
+    "It seems like you're all out of tokens."
   ],
   "fatality": {
     "id": "four-oh-four",
@@ -405,14 +407,15 @@
       }
     },
     "rate-limit": {
-      "name": "Rate Limit",
+      "name": "Line Goes Up",
+      "voice": true,
       "input": {
         "motion": "qcb",
         "button": "punch"
       },
       "startup": 14,
-      "active": 2,
-      "recovery": 20,
+      "active": 4,
+      "recovery": 18,
       "damage": 0,
       "hitstun": 0,
       "blockstun": 0,
@@ -420,44 +423,37 @@
       "hitbox": null,
       "height": "mid",
       "projectile": {
-        "vx": 0,
-        "spawnX": 180,
-        "spawnY": -120,
+        "vx": 3,
+        "spawnX": 90,
+        "spawnY": -110,
         "box": {
-          "x": -90,
-          "y": -110,
-          "w": 180,
-          "h": 220
+          "x": -45,
+          "y": -130,
+          "w": 130,
+          "h": 170
         },
-        "damage": 0,
-        "hitstun": 0,
-        "blockstun": 0,
-        "knockback": 0,
-        "ttl": 180,
-        "field": true,
-        "slowFactor": 0.35
+        "damage": 96,
+        "hitstun": 22,
+        "blockstun": 14,
+        "knockback": 7,
+        "height": "mid",
+        "ttl": 18,
+        "knockdown": true
       },
       "variants": {
         "l": {
+          "startup": 11,
           "projectile": {
-            "box": {
-              "x": -60,
-              "y": -90,
-              "w": 120,
-              "h": 180
-            },
-            "ttl": 140
+            "ttl": 14,
+            "damage": 80
           }
         },
         "h": {
+          "startup": 17,
           "projectile": {
-            "box": {
-              "x": -120,
-              "y": -130,
-              "w": 240,
-              "h": 260
-            },
-            "ttl": 220
+            "vx": 4,
+            "ttl": 24,
+            "damage": 112
           }
         }
       }

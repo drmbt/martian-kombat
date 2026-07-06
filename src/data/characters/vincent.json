@@ -2,7 +2,7 @@
   "id": "vincent",
   "name": "VINCENT",
   "color": "#58e6d9",
-  "stage": "chiba",
+  "stage": "van",
   "winQuotes": [
     "The cursor blinks. Your session has ended.",
     "I took everything you had. It was never much.",
@@ -10,7 +10,7 @@
     "I am the signal. You were noise.",
     "The mirror reflects the truth, and the truth reflects your weakness."
   ],
-  "spriteScale": 1.08,
+  "spriteScale": 1.18,
   "spriteOffsetY": 20,
   "health": 1000,
   "walkSpeed": 5.0,

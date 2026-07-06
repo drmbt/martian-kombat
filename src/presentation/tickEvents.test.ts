@@ -50,6 +50,7 @@ describe('diffTick', () => {
       slot: 0,
       moveId: 'mp',
       special: false,
+      voiceLine: false,
     });
   });
 

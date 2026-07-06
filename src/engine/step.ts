@@ -17,6 +17,11 @@ import {
 import {
   ACTION_BUFFER_TICKS,
   BOUNCE_VY,
+  TOSS_KNOCKBACK_MULT,
+  TOSS_VY,
+  TOSS_BOUNCE_VY,
+  JUMP_SPEED_MULT,
+  JUMP_VEL_MULT,
   CANCEL_WINDOW_TICKS,
   CHARGE_TICKS,
   COMBO_SCALE_FLOOR,
@@ -609,8 +614,13 @@ function updateFighter(
     case 'prejump': {
       a.frame++;
       if (a.frame >= def.prejumpFrames) {
-        f.vy = -def.jumpVel;
-        f.vx = (input.right ? 1 : 0) * def.walkSpeed - (input.left ? 1 : 0) * def.walkSpeed;
+        // jump higher (air time for aerials) and, on a forward/back jump,
+        // COVER GROUND — horizontal speed is a multiple of walk, not walk
+        // itself (walk-speed jumps read floaty). Direction is locked at
+        // takeoff, SF2-style: no air steering.
+        f.vy = -def.jumpVel * JUMP_VEL_MULT;
+        const jumpX = def.jumpSpeedX ?? def.walkSpeed * JUMP_SPEED_MULT;
+        f.vx = ((input.right ? 1 : 0) - (input.left ? 1 : 0)) * jumpX;
         f.action = { kind: 'air', frame: 0 };
       }
       break;
@@ -626,9 +636,11 @@ function updateFighter(
         f.floatGravity = 0;
         if (a.kind === 'airHit' && !a.bounced) {
           // ground-impact bounce: pop back off the floor once (invulnerable —
-          // you're already down), then the next contact settles for real
-          f.vy = -BOUNCE_VY;
-          f.vx *= 0.5;
+          // you're already down), then the next contact settles for real.
+          // A throw toss slams harder, so it rebounds higher and keeps more
+          // of its horizontal — the body skips further across the floor.
+          f.vy = -(a.tossed ? TOSS_BOUNCE_VY : BOUNCE_VY);
+          f.vx *= a.tossed ? 0.7 : 0.5;
           f.y = FLOOR_Y - 1; // lift so the rebound arc plays
           a.bounced = true;
         } else {
@@ -828,6 +840,8 @@ interface HitPayload {
   counter: boolean;
   /** command grabs ignore blocking entirely */
   unblockable?: boolean;
+  /** throw toss: launch on a long high arc that slams + bounces (SF2 throws) */
+  toss?: boolean;
 }
 
 /** Counterhit test: the defender is mid-attack and NOT in active frames
@@ -897,7 +911,12 @@ function applyHit(
     else d.stun += damage;
     const counter = hit.counter || undefined;
     d.floatGravity = 0; // a hit knocks the float out of them
-    if (!grounded(d)) {
+    if (hit.toss) {
+      // SF2 throw toss: sail on a long high arc, then slam + bounce hard
+      d.action = { kind: 'airHit', frame: 0, counter, tossed: true };
+      d.vx = attackerFacing * hit.knockback * TOSS_KNOCKBACK_MULT;
+      d.vy = TOSS_VY;
+    } else if (!grounded(d)) {
       d.action = { kind: 'airHit', frame: 0, counter };
       d.vx = attackerFacing * hit.knockback * 0.6;
       d.vy = -5;
@@ -1300,6 +1319,30 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
       return s;
     }
 
+    // Fumbled fatality (MK behavior): if the winner instead just lands a normal
+    // attack on the dazed loser, they collapse and the round ends — no fatality.
+    // (The clean fatality input above already got first refusal this tick.)
+    const wa = winner.action;
+    if ((wa.kind === 'attack' || wa.kind === 'airAttack') && wa.moveId && !wa.hasHit) {
+      const m = resolveMove(winnerDef.moves[wa.moveId], wa.strength);
+      const active = wa.frame >= m.startup && wa.frame < m.startup + m.active;
+      const l = s.fighters[loser];
+      if (
+        active &&
+        m.hitbox &&
+        overlaps(worldBox(winner, m.hitbox), defenderHurtRect(l, defs[l.charId]))
+      ) {
+        wa.hasHit = true;
+        l.action = { kind: 'ko', frame: 0 };
+        l.vy = -6;
+        l.vx = winner.facing * 3.5; // knocked away from the winner
+        l.y -= 1;
+        s.phase = 'roundEnd';
+        s.phaseFrame = 0;
+        return s;
+      }
+    }
+
     if (s.phaseFrame >= FINISHER_TICKS) {
       // mercy: no fatality input — the loser just collapses
       const l = s.fighters[loser];
@@ -1371,6 +1414,7 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
         freezeAttacker: true,
         counter: false,
         unblockable: true,
+        toss: true, // SF2 toss: sail + slam + bounce
       }, inputs[vicSlot]);
       if (m.grabRecoil) atk.vx = -atk.facing * m.grabRecoil;
       if (m.heal) atk.health = Math.min(defs[atk.charId].health, atk.health + m.heal);

@@ -81,6 +81,21 @@ export const LANDING_WHIFF_TICKS = 6;
 // vertical speed before settling (the renderer puffs dust on each impact)
 export const BOUNCE_VY = 3.2;
 
+// throw toss (SF2-style): a thrown victim sails much further than a normal
+// knockdown and slams the ground hard — a high pop for a long arc, strong
+// horizontal so they're physically displaced, and a bigger rebound bounce.
+export const TOSS_KNOCKBACK_MULT = 1.25; // vs the throw move's knockback
+export const TOSS_VY = -8.5; // launch pop (a normal knockdown pops -4.5)
+export const TOSS_BOUNCE_VY = 5.4; // the slam rebound (vs BOUNCE_VY 3.2)
+
+// jump feel (SF2 arcs): a forward/back jump should COVER GROUND — its
+// horizontal speed is a multiple of the walk speed (walk-speed jumps read
+// floaty and vertical), and the whole roster jumps a touch higher so aerials
+// have air time. Both are global defaults; a character can override its
+// jump-forward speed with `jumpSpeedX` (acrobats get more) in its JSON.
+export const JUMP_SPEED_MULT = 1.6; // jump-forward vx = walkSpeed × this
+export const JUMP_VEL_MULT = 1.12; // launch height = jumpVel × this
+
 // dash (double-tap ←/→): a friction-bled impulse, limited by a stock pool so
 // it can't be spammed — each dash spends a stock, stocks regen one at a time
 export const DASH_STOCKS = 2;

@@ -10,7 +10,7 @@ import { mrt, normalView, output, pass, vec3, vec4 } from 'three/tsl';
 import { ao } from 'three/addons/tsl/display/GTAONode.js';
 import { bloom } from 'three/addons/tsl/display/BloomNode.js';
 import type { Defs, GameState } from '../engine';
-import { STAGE_W, STAGE_H } from '../engine';
+import { STAGE_W, STAGE_H, FLOOR_Y } from '../engine';
 import { engineToWorld, WORLD_SCALE } from './threeCoordinates';
 import { DEFAULT_SETTINGS, type RenderSettings } from './threeRenderSettings';
 import { ThreeFighterView } from './ThreeFighterView';
@@ -30,6 +30,9 @@ export class ThreeFightRenderer {
   /** smoothed follow state (world meters) */
   private camX = 0;
   private camZ = 17;
+  /** lerped camera eye-Y + look-Y — rise to follow a high jump (V/MvC-style) */
+  private camY = 0;
+  private camLookY = 1.3;
   private fighters: [ThreeFighterView, ThreeFighterView];
   readonly hitboxes = new ThreeHitboxDebug();
   readonly fx: ThreeFxSystem;
@@ -210,6 +213,7 @@ export class ThreeFightRenderer {
       this.camera.lookAt(this.camX * 0.85, 1.3, 0);
     }
     this.baseCamY = this.camera.position.y;
+    this.camY = this.baseCamY; // seed the lerp so followCamera doesn't pop
     if (this.ready && this.post) this.buildPost(); // post pass binds the camera
   }
 
@@ -225,12 +229,21 @@ export class ThreeFightRenderer {
     const [a, b] = state.fighters;
     const [mx] = engineToWorld((a.x + b.x) / 2, 0);
     const sep01 = Math.min(Math.abs(a.x - b.x) / 1000, 1);
+    // how high the higher fighter is off the floor (0 grounded → 1 peak jump)
+    const rise = Math.max(FLOOR_Y - a.y, FLOOR_Y - b.y, 0);
+    const h01 = Math.min(rise / 260, 1);
     const targetX = mx * 0.8;
-    const targetZ = 13.5 + sep01 * 6.5; // dolly out as they spread
+    // dolly back as they SPREAD (SF2 Turbo) or go HIGH (MvC) — 3D has a real
+    // sky/horizon + fog so pulling back never reveals a black void
+    const targetZ = 13.5 + sep01 * 6.5 + h01 * 5.5;
+    const targetY = this.baseCamY + h01 * 1.6; // rise with the jump
+    const targetLookY = 1.3 + h01 * 1.4; // tilt up to keep them framed
     this.camX += (targetX - this.camX) * 0.08;
     this.camZ += (targetZ - this.camZ) * 0.05;
-    this.camera.position.set(this.camX, this.baseCamY, this.camZ);
-    this.camera.lookAt(this.camX * 0.85, 1.3, 0);
+    this.camY += (targetY - this.camY) * 0.06;
+    this.camLookY += (targetLookY - this.camLookY) * 0.06;
+    this.camera.position.set(this.camX, this.camY, this.camZ);
+    this.camera.lookAt(this.camX * 0.85, this.camLookY, 0);
   }
 
   applySettings(s: RenderSettings): void {

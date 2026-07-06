@@ -6,12 +6,15 @@ import Phaser from 'phaser';
 import { STAGE_H, STAGE_W } from '../engine';
 import { ROSTER, type RosterEntry } from '../data/roster';
 import { characters } from '../data/characters';
-import { STAGES, stageOwner } from '../data/stages';
+import { STAGES, stageById, stageOwner, type StageEntry } from '../data/stages';
 import { play, announce } from './BootScene';
 import { playMusic } from '../audio/music';
 import { menuNav, navDefer } from '../input/menu-nav';
 import { BindAction, getSettings } from '../settings';
 import type { OnlineSelectData, StartConfig } from '../net/lobby';
+import { UiLayer } from '../ui/layer';
+// type-only: the real module (and three) loads dynamically on the 3D path
+import type { SelectPreview3D } from '../renderer3d/SelectPreview3D';
 
 const ATTACK_ACTIONS: BindAction[] = ['lp', 'mp', 'hp', 'lk', 'mk', 'hk'];
 
@@ -23,6 +26,13 @@ const MAP_ASPECT = 3168 / 1344; // source stage-map.png aspect (~2.357)
 const MAP_TOP = 42;
 const MAP_H = 236;
 const MAP_W = Math.round(MAP_H * MAP_ASPECT);
+const MAP_LEFT = Math.round(STAGE_W / 2 - MAP_W / 2);
+// Home-stage thumbnail flanking the map: P1 in the left gutter, P2 mirrored to
+// the right. Sits above each side's idle sprite, clear of the map's edges.
+const SIDE_THUMB_W = 184;
+const SIDE_THUMB_H = Math.round((SIDE_THUMB_W * 9) / 21);
+const SIDE_THUMB_X = 102; // P1 center; P2 = STAGE_W - SIDE_THUMB_X
+const SIDE_THUMB_Y = 158;
 
 // Bottom-center band the roster grid lives in (bottom edge is flush/tight).
 const GRID_LEFT = 214;
@@ -64,6 +74,11 @@ export class SelectScene extends Phaser.Scene {
   private sidePodium!: Phaser.GameObjects.Graphics;
   private sideSheet: [string, string] = ['', ''];
   private sideIdle: [[number, number], [number, number]] = [[0, 1], [0, 1]];
+  // home-stage pins over the top map: static dots + a per-player highlight
+  // (ring + name label + stage thumbnail) tracking each side's current pick
+  private pinLayer: Phaser.GameObjects.Graphics | null = null;
+  private pinLabels: Phaser.GameObjects.Text[] = [];
+  private pinThumbs: (Phaser.GameObjects.Image | null)[] = [null, null];
   // roster grid, sized to the roster count by layoutGrid()
   private gcols = 5;
   private grows = 2;
@@ -73,7 +88,10 @@ export class SelectScene extends Phaser.Scene {
   private starting = false;
   private cpu = false;
   private training = false;
+  private showcase = false;
   private render3d = false;
+  /** live 3D idle previews on the side slots (3D mode; loaded dynamically) */
+  private preview3d: SelectPreview3D | null = null;
   /** online payload when this is a netplay pick (null = local). In online the
    *  local player controls only `online.localSlot`; the other side is filled
    *  from the wire, and only the host (slot 0) drives the stage dialog. */
@@ -96,12 +114,47 @@ export class SelectScene extends Phaser.Scene {
     super('Select');
   }
 
-  init(data: { cpu?: boolean; training?: boolean; render3d?: boolean; online?: OnlineSelectData }): void {
+  init(data: { cpu?: boolean; training?: boolean; showcase?: boolean; render3d?: boolean; online?: OnlineSelectData }): void {
     this.online = data.online ?? null;
+    // showcase = a chosen CPU-vs-CPU demo; one controller picks BOTH fighters,
+    // exactly like VS CPU, so it rides the same single-controller select flow
+    this.showcase = !this.online && !!data.showcase;
     // online is strictly 2-human, and the renderer is the host's (adopted)
-    this.cpu = !this.online && !!data.cpu;
+    this.cpu = !this.online && (!!data.cpu || this.showcase);
     this.training = !this.online && !!data.training;
     this.render3d = this.online ? this.online.render3d : !!data.render3d;
+    this.preview3d = null; // rebuilt per create(); disposed on shutdown
+  }
+
+  /** Boot the live 3D side previews (3D mode): dynamic import keeps three
+   *  out of the 2D bundle; portraits stay up until each GLB actually lands. */
+  private async boot3dPreview(): Promise<void> {
+    const { SelectPreview3D } = await import('../renderer3d/SelectPreview3D');
+    if (!this.scene.isActive()) return;
+    const preview = new SelectPreview3D(characters, () => {
+      // a model finished loading — swap the portrait out on the next redraw
+      if (this.scene.isActive() && !this.stageMode) this.redraw();
+    });
+    await preview.init();
+    if (!this.scene.isActive()) {
+      preview.dispose();
+      return;
+    }
+    this.preview3d = preview;
+    const layer = new UiLayer(this);
+    layer.root.appendChild(preview.canvas);
+    const size = (): void => {
+      const r = this.game.canvas.getBoundingClientRect();
+      preview.setSize(r.width, r.height);
+    };
+    size();
+    this.scale.on('resize', size);
+    this.events.once('shutdown', () => {
+      this.scale.off('resize', size);
+      preview.dispose();
+      this.preview3d = null;
+    });
+    this.redraw();
   }
 
   /** the slot the LOCAL player controls (online: fixed; local: the P1-first
@@ -117,6 +170,7 @@ export class SelectScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.cameras.main.fadeIn(400, 0, 0, 0); // soft cross-fade in from the win screen / menu
     this.idx = [0, 1];
     this.confirmed = [false, false];
     this.starting = false;
@@ -144,6 +198,7 @@ export class SelectScene extends Phaser.Scene {
         })
         .setOrigin(1, 0)
         .setDepth(8);
+      void this.boot3dPreview(); // live GLB idles on the side slots
     }
 
     // World map banner across the top.
@@ -152,6 +207,23 @@ export class SelectScene extends Phaser.Scene {
         .image(STAGE_W / 2, MAP_TOP + MAP_H / 2, 'ui-world-map')
         .setDisplaySize(MAP_W, MAP_H)
         .setDepth(1);
+    }
+
+    // Home-stage pins over the map (all depths < 10 so the stage dialog's
+    // opaque overlay hides them). redrawPins() drives them each frame.
+    this.pinLayer = this.add.graphics().setDepth(8);
+    this.pinLabels = [];
+    this.pinThumbs = [null, null];
+    for (const p of [0, 1] as const) {
+      this.pinThumbs[p] = this.add.image(0, 0, '__WHITE').setVisible(false).setDepth(7);
+      this.pinLabels[p] = this.add
+        .text(0, 0, '', {
+          fontFamily: 'monospace', fontSize: '13px', fontStyle: 'bold',
+          color: '#fff', stroke: '#000', strokeThickness: 4,
+        })
+        .setOrigin(0.5, 1)
+        .setDepth(9)
+        .setVisible(false);
     }
 
     // Size the roster grid to the current count before laying cells out.
@@ -222,8 +294,13 @@ export class SelectScene extends Phaser.Scene {
     }
 
     if (this.cpu || this.training) {
+      const hint = this.showcase
+        ? 'DEMO — pick both fighters to watch a CPU-vs-CPU showcase'
+        : this.training
+          ? 'TRAINING — pick your fighter, then the dummy'
+          : 'VS CPU — pick your fighter, then your opponent';
       this.add
-        .text(STAGE_W / 2, MAP_TOP + MAP_H + 10, this.training ? 'TRAINING — pick your fighter, then the dummy' : 'VS CPU — pick your fighter, then your opponent', {
+        .text(STAGE_W / 2, MAP_TOP + MAP_H + 10, hint, {
           fontFamily: 'monospace', fontSize: '13px', color: '#e8dcc8', stroke: '#000', strokeThickness: 3,
         })
         .setOrigin(0.5)
@@ -273,7 +350,7 @@ export class SelectScene extends Phaser.Scene {
       if (this.starting) return;
       play(this, 's-blip', 0.5);
       if (this.online) return this.leaveOnline(); // leaving disconnects the match
-      if (this.stageMode) this.scene.restart({ cpu: this.cpu, training: this.training, render3d: this.render3d });
+      if (this.stageMode) this.scene.restart({ cpu: this.cpu, training: this.training, showcase: this.showcase, render3d: this.render3d });
       else this.scene.start('Menu');
     });
 
@@ -642,7 +719,9 @@ export class SelectScene extends Phaser.Scene {
     this.time.delayedCall(500, () => {
       this.scene.start('Versus', {
         p1: ROSTER[this.idx[0]].id, p2: ROSTER[this.idx[1]].id,
-        cpu: this.cpu, training: this.training, stage, render3d: this.render3d,
+        // showcase launches as a CPU-vs-CPU demo, not a human-vs-CPU match
+        cpu: this.showcase ? false : this.cpu, training: this.training,
+        showcase: this.showcase, stage, render3d: this.render3d,
       });
     });
   }
@@ -680,6 +759,10 @@ export class SelectScene extends Phaser.Scene {
     this.padFrame();
     if (this.stageMode) this.redrawStage();
     else this.redraw();
+    // 3D side previews: hidden behind the (full-screen Phaser) stage dialog;
+    // driven off the Phaser loop so pacing matches the rest of the scene
+    this.preview3d?.setVisible(!this.stageMode);
+    if (!this.stageMode) this.preview3d?.render(this.time.now);
   }
 
   /** Gamepad drives the same picks the keyboard does (shared cursor). A single
@@ -702,7 +785,7 @@ export class SelectScene extends Phaser.Scene {
       if (n.menu) {
         play(this, 's-blip', 0.5);
         if (this.online) navDefer(this, () => this.leaveOnline());
-        else navDefer(this, () => this.scene.restart({ cpu: this.cpu, training: this.training, render3d: this.render3d }));
+        else navDefer(this, () => this.scene.restart({ cpu: this.cpu, training: this.training, showcase: this.showcase, render3d: this.render3d }));
       }
       return;
     }
@@ -717,6 +800,89 @@ export class SelectScene extends Phaser.Scene {
       play(this, 's-blip', 0.5);
       if (this.online) navDefer(this, () => this.leaveOnline());
       else navDefer(this, () => this.scene.start('Menu'));
+    }
+  }
+
+  /** Screen position of a normalized (0..1) world-map pin. */
+  private pinScreen(pin: { x: number; y: number }): { x: number; y: number } {
+    return { x: MAP_LEFT + pin.x * MAP_W, y: MAP_TOP + pin.y * MAP_H };
+  }
+
+  /** The home stage (with pin) of the fighter at a roster index, if any. */
+  private homeStage(rosterIdx: number): StageEntry | undefined {
+    const entry = ROSTER[rosterIdx];
+    const def = entry ? characters[entry.id] : undefined;
+    return def?.stage ? stageById(def.stage) : undefined;
+  }
+
+  /** Whether a player's slot is "in play" enough to light its home pin. P1
+   *  always; P2 in 2P/online always, but in single-controller modes only once
+   *  P1 has locked (the opponent-pick phase). */
+  private pinSlotActive(p: 0 | 1): boolean {
+    if (p === 0) return true;
+    if (!this.cpu && !this.training && !this.showcase) return true;
+    return this.confirmed[0];
+  }
+
+  /** Draw the world-map pins: dim dots for every placed stage (no labels) plus
+   *  a player-colored highlight — ring, stage name, and stage thumbnail — for
+   *  each side's currently hovered/held fighter's home stage. */
+  private redrawPins(): void {
+    const layer = this.pinLayer;
+    if (!layer) return;
+    layer.clear();
+    // base dots: every placed stage, unlabeled
+    for (const st of STAGES) {
+      if (!st.pin) continue;
+      const s = this.pinScreen(st.pin);
+      layer.fillStyle(0x000000, 0.55);
+      layer.fillCircle(s.x, s.y + 1, 4.4);
+      layer.fillStyle(0xffe08a, 0.95);
+      layer.fillCircle(s.x, s.y, 2.9);
+    }
+
+    const colors = [0x58e6d9, 0xff5a48] as const;
+    const hexes = ['#7ff2e8', '#ff8072'] as const;
+    const active: (StageEntry | undefined)[] = [
+      this.pinSlotActive(0) ? this.homeStage(this.idx[0]) : undefined,
+      this.pinSlotActive(1) ? this.homeStage(this.idx[1]) : undefined,
+    ];
+    for (const p of [0, 1] as const) {
+      const label = this.pinLabels[p];
+      const thumb = this.pinThumbs[p];
+      const st = active[p];
+      if (!st || !st.pin) {
+        label.setVisible(false);
+        thumb?.setVisible(false);
+        continue;
+      }
+      const s = this.pinScreen(st.pin);
+      const color = colors[p];
+      // ring + glow at the pin
+      layer.fillStyle(color, 0.22);
+      layer.fillCircle(s.x, s.y, 12);
+      layer.lineStyle(2.5, color, 1);
+      layer.strokeCircle(s.x, s.y, 7);
+      layer.fillStyle(color, 1);
+      layer.fillCircle(s.x, s.y, 3.2);
+
+      // stage name at the pin — P1 above, P2 below, so a shared pin never clashes
+      const lx = Phaser.Math.Clamp(s.x, 40, STAGE_W - 40);
+      label.setVisible(true).setText(st.name).setColor(hexes[p]);
+      if (p === 0) label.setPosition(lx, Math.max(14, s.y - 11)).setOrigin(0.5, 1);
+      else label.setPosition(lx, Math.min(STAGE_H - 8, s.y + 11)).setOrigin(0.5, 0);
+
+      // stage thumbnail flanking the map: P1 left gutter, P2 right gutter
+      const key = `bg-stage-${st.id}`;
+      if (thumb && this.textures.exists(key)) {
+        const tx = p === 0 ? SIDE_THUMB_X : STAGE_W - SIDE_THUMB_X;
+        const ty = SIDE_THUMB_Y;
+        thumb.setVisible(true).setTexture(key).setDisplaySize(SIDE_THUMB_W, SIDE_THUMB_H).setPosition(tx, ty).clearTint();
+        layer.lineStyle(2, color, 1);
+        layer.strokeRect(tx - SIDE_THUMB_W / 2, ty - SIDE_THUMB_H / 2, SIDE_THUMB_W, SIDE_THUMB_H);
+      } else {
+        thumb?.setVisible(false);
+      }
     }
   }
 
@@ -738,7 +904,24 @@ export class SelectScene extends Phaser.Scene {
       const sx = p === 0 ? SIDE_P1_X : SIDE_P2_X;
       const spr = this.sideSprites[p];
       const sheetKey = `sheet-${entry.id}`;
-      if (spr && this.textures.exists(sheetKey)) {
+      // 3D mode, best-available preview: live GLB idle (SelectPreview3D) →
+      // portrait bust while it streams / for sheet-only fighters → 2D sheet.
+      this.preview3d?.setChar(p, this.render3d && entry.mesh3d ? entry.id : null);
+      const portraitKey = `portrait-${entry.id}`;
+      if (spr && this.render3d && this.preview3d?.active(p)) {
+        spr.setVisible(false);
+        this.sideSheet[p] = ''; // force a re-texture when we fall back later
+      } else if (spr && this.render3d && this.textures.exists(portraitKey)) {
+        spr.setVisible(true);
+        if (this.sideSheet[p] !== portraitKey) {
+          this.sideSheet[p] = portraitKey;
+          spr.setTexture(portraitKey);
+          spr.setDisplaySize(SIDE_SPRITE_H * 0.8, SIDE_SPRITE_H * 0.8);
+          spr.setFlipX(p === 1);
+          if (!this.pickable(entry)) spr.setAlpha(0.5).setTint(0x8a8aa0);
+          else spr.setAlpha(1).clearTint();
+        }
+      } else if (spr && this.textures.exists(sheetKey)) {
         spr.setVisible(true);
         if (this.sideSheet[p] !== sheetKey) {
           this.sideSheet[p] = sheetKey;
@@ -759,5 +942,6 @@ export class SelectScene extends Phaser.Scene {
       pod.fillEllipse(sx, SIDE_BASE_Y + 8, 150, 26);
       this.nameTexts[p].setText(`${entry.name}${this.confirmed[p] ? ' ✓' : ''}`);
     }
+    this.redrawPins();
   }
 }

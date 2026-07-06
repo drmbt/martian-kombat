@@ -206,6 +206,9 @@ export interface MoveDef {
   /** special-cancelable: on contact (hit or block), this normal may cancel
    *  into any motion special inside the cancel window */
   cancel?: boolean;
+  /** presentation only: this move has a per-move voice call-out
+   *  (v-<char>-move-<moveId>, e.g. Gene's "Line goes up!") played on start */
+  voice?: boolean;
   /** render hint only — per-move impact overlay art
    *  (assets/sprites/<char>/vfx-<moveId>.png, tools/gen-vfx.mjs) played by the
    *  scene when this move connects; engine never reads it */
@@ -247,6 +250,9 @@ export interface CharacterDef {
   walkSpeed: number;
   backSpeed: number;
   jumpVel: number;
+  /** horizontal speed of a forward/back jump (px/tick). Optional — defaults
+   *  to walkSpeed × JUMP_SPEED_MULT; acrobats override for more air range. */
+  jumpSpeedX?: number;
   gravity: number;
   prejumpFrames: number;
   bodyBox: Box;
@@ -301,6 +307,9 @@ export interface Action {
   /** airHit: already rebounded off the floor once — the next floor contact
    *  settles into knockdown (invulnerable while bounced, like knockdown) */
   bounced?: boolean;
+  /** airHit: this launch came from a throw toss — the floor slam rebounds
+   *  higher (TOSS_BOUNCE_VY) for the SF2 tossed-across-the-screen arc */
+  tossed?: boolean;
   /** attack frame of the most recent connect — gates melee `rehit` spacing */
   lastHitFrame?: number;
 }

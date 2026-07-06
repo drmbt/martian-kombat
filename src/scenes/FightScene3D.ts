@@ -1,32 +1,39 @@
-// Dev-only 3D fight scene (?dev=3d — SPEC I.url). Phaser still owns boot,
-// input, audio, and scene flow; Three owns a separate canvas mounted over the
-// Phaser one. The deterministic engine drives everything — this scene is the
-// same step() loop as FightScene with a different presenter (SPEC V1, V7).
-// Presentation events come from the shared pure diffTick (SPEC V15); sounds
-// and music reuse the exact 2D helpers and asset keys.
+// The 3D fight scene (RENDER: 3D on the title; ?dev=3d for direct launch).
+// Phaser still owns boot, input, audio, and scene flow; Three owns a separate
+// canvas mounted over the Phaser one. The deterministic engine drives
+// everything — this scene is the same step() loop as FightScene with a
+// different presenter (SPEC V1, V7). Presentation events come from the shared
+// pure diffTick (SPEC V15); audio from the shared soundCues table; pause/
+// keys/nav/pad/log from the shared FightShell; UI chrome from src/ui/.
 import Phaser from 'phaser';
 import { initialState } from '../engine';
 import type { GameState, InputFrame } from '../engine';
 import { FightSession, type Session } from '../session/FightSession';
 import { NetSession, type NetIssue } from '../session/NetSession';
 import type { OnlineFightData } from '../net/lobby';
-import { RematchLink, type RematchState } from '../net/rematch';
 import { characters } from '../data/characters';
 import { KeyboardSource } from '../input/keyboard';
 import { getSettings } from '../settings';
 import { CpuDriver } from '../ai/bot';
 import { takeWarmRenderer } from '../renderer3d/warmup';
-import { play, playVoice } from './BootScene';
-import { nextTrack, playMusic } from '../audio/music';
+import { play, playVoice, runCues } from './BootScene';
+import { playMusic } from '../audio/music';
 import { diffTick, snapTick, type FightEvent } from '../presentation/tickEvents';
+import { soundCues } from '../presentation/soundDirector';
+import { HudModel } from '../presentation/hudModel';
+import { bannerFor, type BannerVariant } from '../presentation/banner';
+import { STAGE3D_BOUNDS } from '../renderer3d/threeCoordinates';
 // three is dev-path-only: type-only import here, the real module loads
 // dynamically in create() so the production 2D bundle never ships it
 import type { ThreeFightRenderer } from '../renderer3d/ThreeFightRenderer';
 import { createSettingsPanel, DEFAULT_SETTINGS } from '../renderer3d/threeRenderSettings';
-import { FightHud } from '../renderer3d/hud/FightHud';
-import { AnnouncerBanner, type BannerVariant } from '../renderer3d/hud/AnnouncerBanner';
-import { FatalityOverlay } from '../renderer3d/hud/FatalityOverlay';
-import { WinOverlay } from '../renderer3d/hud/WinOverlay';
+import { UiLayer } from '../ui/layer';
+import { FightHud } from '../ui/FightHud';
+import { AnnouncerBanner } from '../ui/AnnouncerBanner';
+import { FatalityOverlay } from '../ui/FatalityOverlay';
+import { WinOverlay } from '../ui/WinOverlay';
+import { LoadingOverlay } from '../ui/LoadingOverlay';
+import { FightShell } from './fightShell';
 
 export class FightScene3D extends Phaser.Scene {
   private chars: [string, string] = ['vincent', 'vincent'];
@@ -38,14 +45,14 @@ export class FightScene3D extends Phaser.Scene {
   private bot: CpuDriver | null = null;
   private botP1: CpuDriver | null = null;
   private demo = false;
+  private showcase = false;
   private session!: Session;
   private online: OnlineFightData | null = null;
   private net: NetSession | null = null;
   private netIssue: NetIssue | null = null;
-  private rematch: RematchLink | null = null;
-  private rematchLeft = false;
-  private rematchEl: HTMLDivElement | null = null;
-  private loadingEl: HTMLDivElement | null = null;
+  private uiLayer: UiLayer | null = null;
+  private shell: FightShell | null = null;
+  private loading: LoadingOverlay | null = null;
   /** captured by the session's beforeTick hook for diffTick */
   private pendingSnap: ReturnType<typeof snapTick> | null = null;
   private renderer3d: ThreeFightRenderer | null = null;
@@ -61,10 +68,8 @@ export class FightScene3D extends Phaser.Scene {
   private panel: ReturnType<typeof createSettingsPanel> | null = null;
   private inspectorOn = false;
   private tauntKey = 'Q';
-  private comboHits = 0;
-  private comboTicks = 0;
-  private ghostHealth: [number, number] = [0, 0];
-  private ghostHoldUntil: [number, number] = [0, 0];
+  /** shared ghost-bar + combo bookkeeping (see presentation/hudModel) */
+  private hudModel!: HudModel;
 
   constructor() {
     super('Fight3D');
@@ -77,26 +82,25 @@ export class FightScene3D extends Phaser.Scene {
     training?: boolean;
     stage?: string;
     demo?: boolean;
+    showcase?: boolean;
     online?: OnlineFightData;
   }): void {
     this.chars = [data.p1 ?? 'vincent', data.p2 ?? 'vincent'];
     this.stageId = data.stage ?? 'chiba-roof';
     this.online = data.online ?? null;
     // online is strictly 2-human — no CPU, no demo, no training upkeep
-    this.demo = !this.online && !!data.demo;
+    this.showcase = !this.online && !!data.showcase;
+    this.demo = !this.online && (!!data.demo || this.showcase);
     this.cpu = !this.online && !!data.cpu;
     this.training = !this.online && !!data.training;
     this.net = null;
     this.netIssue = null;
-    this.rematch = null;
-    this.rematchLeft = false;
-    this.rematchEl = null;
-    this.loadingEl = null;
-    // demo = attract mode: both sides are bots
-    this.bot = this.cpu || this.demo ? new CpuDriver(1) : null;
-    this.botP1 = this.demo ? new CpuDriver(0) : null;
-    this.comboHits = 0;
-    this.comboTicks = 0;
+    this.uiLayer = null;
+    this.shell = null;
+    this.loading = null;
+    // demo = attract mode: both sides are (showcase) bots
+    this.bot = this.cpu || this.demo ? new CpuDriver(1, 1, this.showcase) : null;
+    this.botP1 = this.demo ? new CpuDriver(0, 1, this.showcase) : null;
   }
 
   create(): void {
@@ -111,9 +115,11 @@ export class FightScene3D extends Phaser.Scene {
       this.online
         ? this.online.rules
         : {
-            stage: { minX: -110, maxX: 1070 },
+            stage: { ...STAGE3D_BOUNDS },
             // room for the entry gesture + READY? 3-2-1 before FIGHT
             introTicks: 240,
+            // showcase: single round that ends in the fatality
+            ...(this.showcase ? { winsNeeded: 1 } : {}),
             // training sandbox: no round clock
             ...(this.training ? { roundTicks: 0 } : {}),
           },
@@ -130,12 +136,15 @@ export class FightScene3D extends Phaser.Scene {
         this.botP1 ? this.botP1.poll(s) : this.inputs.poll(0),
         this.bot ? this.bot.poll(s) : this.inputs.poll(1),
       ],
-      afterTick: (s: GameState) => {
+      afterTick: (s: GameState, inp: [InputFrame, InputFrame]) => {
+        this.shell?.logInputs(inp);
         const prev = this.pendingSnap!;
         if (prev.phase !== 'fight' && s.phase === 'fight') {
           this.fightEnteredTick = s.tick;
         }
-        this.handleEvents(diffTick(prev, s, characters));
+        const events = diffTick(prev, s, characters);
+        runCues(this, soundCues(events, this.chars)); // shared event→audio table
+        this.handleEvents(events); // renderer fx (blood, shake, flashes)
         if (this.training && s.phase === 'fight') {
           // sandbox upkeep: health snaps back so nothing ever dies
           for (const f of s.fighters) {
@@ -145,8 +154,7 @@ export class FightScene3D extends Phaser.Scene {
             }
           }
         }
-        this.tickGhosts();
-        if (this.comboTicks > 0 && --this.comboTicks === 0) this.comboHits = 0;
+        this.hudModel.tick(events, s);
       },
     };
     if (this.online) {
@@ -161,20 +169,62 @@ export class FightScene3D extends Phaser.Scene {
     } else {
       this.session = new FightSession(this.state, hooks, characters);
     }
-    this.ghostHealth = [characters[this.chars[0]].health, characters[this.chars[1]].health];
-    this.ghostHoldUntil = [0, 0];
+    this.hudModel = new HudModel(characters, this.chars);
     playMusic([`stages/${this.stageId}`, 'stages/default']);
+    // the DOM layer exists before the renderer so LOADING… can cover the boot
+    this.uiLayer = new UiLayer(this);
+    this.loading = new LoadingOverlay(this.uiLayer.root);
+    // the shared fight shell: ESC pause menu, F2 move log, R/ENTER/F9/click
+    // matchEnd nav, pad menu nav, demo exits, online rematch — 2D parity
+    this.shell = new FightShell(this, {
+      layer: this.uiLayer,
+      defs: characters,
+      chars: this.chars,
+      stageId: this.stageId,
+      online: this.online,
+      cpu: this.cpu,
+      training: this.training,
+      demo: this.demo,
+      showcase: this.showcase,
+      render3d: true,
+      state: () => this.state,
+      debugKeys: [
+        {
+          key: 'F1',
+          act: () => {
+            this.settings.hitboxes = !this.settings.hitboxes;
+            if (this.renderer3d) this.renderer3d.hitboxes.visible = this.settings.hitboxes;
+          },
+        },
+        {
+          key: 'F3',
+          act: () => {
+            this.settings.skeleton = this.skeletonOn = !this.skeletonOn;
+            this.renderer3d?.setSkeletonVisible(this.skeletonOn);
+          },
+        },
+        {
+          key: 'F4',
+          act: () => {
+            if (!this.panel) return;
+            this.panel.el.style.display = this.panel.el.style.display === 'none' ? 'block' : 'none';
+          },
+        },
+        {
+          key: 'F5',
+          act: () => {
+            if (this.inspectorOn) return;
+            this.inspectorOn = true;
+            void this.renderer3d?.enableInspector();
+          },
+        },
+      ],
+      pauseHint:
+        'ESC/START resume · ◄► choose, attack confirms · F1 hitboxes · F2 move log · F3 skeleton · F4 settings · ` orbit',
+    });
     void this.bootRenderer();
 
     const kb = this.input.keyboard!;
-    kb.on('keydown-F1', () => {
-      this.settings.hitboxes = !this.settings.hitboxes;
-      if (this.renderer3d) this.renderer3d.hitboxes.visible = this.settings.hitboxes;
-    });
-    kb.on('keydown-F2', () => {
-      this.settings.skeleton = this.skeletonOn = !this.skeletonOn;
-      this.renderer3d?.setSkeletonVisible(this.skeletonOn);
-    });
     // backtick: free mouse orbit/zoom/pan inspection cam + game-frustum gizmo.
     // While on, the 3D canvas takes pointer events so the mouse drives OrbitControls.
     kb.on('keydown-BACKTICK', () => {
@@ -184,68 +234,25 @@ export class FightScene3D extends Phaser.Scene {
         r.canvas.style.pointerEvents = on ? 'auto' : 'none';
       });
     });
-    kb.on('keydown-F3', () => {
-      if (this.inspectorOn) return;
-      this.inspectorOn = true;
-      void this.renderer3d?.enableInspector();
-    });
-    kb.on('keydown-F4', () => {
-      if (!this.panel) return;
-      this.panel.el.style.display = this.panel.el.style.display === 'none' ? 'block' : 'none';
-    });
-    // taunt is now a real engine input (bound key, default V/P1) so it's
-    // deterministic + net-synced — no scene-level keypress needed. The HUD hint
-    // just shows the local player's bound taunt key.
+    // taunt is a real engine input (bound key, default V/P1) — deterministic +
+    // net-synced. The HUD hint just shows the local player's bound taunt key.
     const tauntSlot = this.online ? this.online.localSlot : 0;
     this.tauntKey = String.fromCharCode(getSettings().bindings[tauntSlot].keys.taunt);
-    kb.on('keydown-ESC', () => {
-      if (this.online) {
-        if (this.state.phase === 'matchEnd') this.rematch?.leave('you left');
-      } else this.scene.start('Menu');
-    });
-    // online: R / ENTER at matchEnd opts into a rematch on the same channel
-    const rematchKey = (): void => {
-      if (this.online && this.state.phase === 'matchEnd') {
-        play(this, 's-blip', 0.6);
-        this.rematch?.optIn();
-      }
-    };
-    kb.on('keydown-R', rematchKey);
-    kb.on('keydown-ENTER', rematchKey);
-    kb.on('keydown-F9', () => {
-      if (this.online) return; // online rematches via R, not a local restart
-      this.scene.restart({ p1: this.chars[0], p2: this.chars[1], cpu: this.cpu, stage: this.stageId });
-    });
-
-    if (this.demo) {
-      // attract mode: any input drops back to the title (` stays free for the
-      // perf overlay); the match auto-returns so the menu can cycle the demo
-      const toMenu = (): void => { this.scene.start('Menu'); };
-      this.input.keyboard!.on('keydown', (e: KeyboardEvent) => { if (e.key !== '`') toMenu(); });
-      this.input.on('pointerdown', toMenu);
-      const host = this.game.canvas.parentElement ?? document.body;
-      const hint = document.createElement('div');
-      hint.textContent = 'DEMO — PRESS ANY KEY';
-      hint.style.cssText =
-        'position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:40;' +
-        'font:bold 20px monospace;color:#ffd24a;text-shadow:0 2px 5px #000;pointer-events:none;';
-      host.appendChild(hint);
-      this.events.once('shutdown', () => hint.remove());
-    }
 
     this.scale.on('resize', this.layoutDom, this);
     this.events.once('shutdown', () => {
       this.scale.off('resize', this.layoutDom, this);
       this.renderer3d?.dispose();
       this.renderer3d = null;
-      this.hud?.dispose();
+      // hud/banner/overlays live inside the UiLayer root, which disposes
+      // itself on shutdown — drop the refs so a restart rebuilds them
       this.hud = null;
-      this.banner?.dispose();
       this.banner = null;
-      this.fatalityOverlay?.dispose();
       this.fatalityOverlay = null;
-      this.winOverlay?.dispose();
       this.winOverlay = null;
+      this.shell = null;
+      this.loading = null;
+      this.uiLayer = null;
       this.panel?.el.remove();
       this.panel = null;
     });
@@ -275,21 +282,26 @@ export class FightScene3D extends Phaser.Scene {
     renderer.applySettings(this.settings);
   }
 
-  // ---------- DOM (Three canvas + HUD components — SPEC T19/T29) ----------
+  // ---------- DOM (Three canvas + shared UI chrome — SPEC T19/T29) ----------
 
   private mountDom(canvas: HTMLCanvasElement): void {
+    const layer = this.uiLayer!;
     const parent = this.game.canvas.parentElement ?? document.body;
-    if (getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
     canvas.style.cssText = 'position:absolute;pointer-events:none;';
     parent.appendChild(canvas);
-    this.hud = new FightHud(parent, this.chars, characters);
-    this.banner = new AnnouncerBanner(parent, this.hud.root);
-    this.fatalityOverlay = new FatalityOverlay(parent, characters, this.hud.root);
-    this.winOverlay = new WinOverlay(parent, characters, this.hud.root);
+    this.hud = new FightHud(layer.root, this.chars, characters);
+    this.banner = new AnnouncerBanner(layer.root);
+    this.fatalityOverlay = new FatalityOverlay(layer.root, characters);
+    this.winOverlay = new WinOverlay(layer.root, characters, {
+      prompt: this.online ? 'R  REMATCH   ·   ESC  QUIT' : 'R  REMATCH   ·   ENTER  SELECT',
+      revealFrame: 150, // let the "<NAME> WINS" beat land + breathe first (2D parity)
+      onFirstShow: (id) => playVoice(this, id, 'victory', 0.85),
+    });
     this.layoutDom();
   }
 
-
+  /** the Three canvas tracks the game canvas rect; the UI chrome rides the
+   *  UiLayer, which tracks it on its own */
   private layoutDom(): void {
     const r3d = this.renderer3d;
     if (!r3d) return;
@@ -297,66 +309,25 @@ export class FightScene3D extends Phaser.Scene {
     const parent = game.parentElement ?? document.body;
     const pr = parent.getBoundingClientRect();
     const gr = game.getBoundingClientRect();
-    for (const el of [r3d.canvas, this.hud?.root].filter(Boolean) as HTMLElement[]) {
-      el.style.left = `${gr.left - pr.left}px`;
-      el.style.top = `${gr.top - pr.top}px`;
-      el.style.width = `${gr.width}px`;
-      el.style.height = `${gr.height}px`;
-    }
+    r3d.canvas.style.left = `${gr.left - pr.left}px`;
+    r3d.canvas.style.top = `${gr.top - pr.top}px`;
+    r3d.canvas.style.width = `${gr.width}px`;
+    r3d.canvas.style.height = `${gr.height}px`;
     r3d.setSize(Math.round(gr.width), Math.round(gr.height));
-  }
-
-  /** last written DOM values — the HUD only touches the DOM on change
-   *  (innerHTML re-parses and textContent invalidates layout every frame) */
-  private hudCache: Record<string, string | number> = {};
-
-  /** center-stage announcement for the current state (see AnnouncerBanner) */
-  private bannerMessage(): [string, BannerVariant] {
-    const s = this.state;
-    const introLen = s.roundNumber === 1 ? s.rules.introTicks : 90;
-    switch (s.phase) {
-      case 'intro': {
-        const left = introLen - s.phaseFrame;
-        if (s.roundNumber === 1 && s.rules.introTicks >= 240) {
-          if (left > 180) return [s.phaseFrame < 45 ? `ROUND ${s.roundNumber}` : 'READY?', 'pop'];
-          if (left > 120) return ['3', 'count'];
-          if (left > 60) return ['2', 'count'];
-          return ['1', 'count'];
-        }
-        return [`ROUND ${s.roundNumber}`, 'pop'];
-      }
-      case 'fight':
-        return this.fightEnteredTick >= 0 && s.tick - this.fightEnteredTick < 55
-          ? ['FIGHT!', 'slam']
-          : ['', 'pop'];
-      case 'roundEnd': {
-        if (s.roundWinner === null) return ['DOUBLE K.O.', 'slam'];
-        if (s.rules.roundTicks > 0 && s.timer <= 0) return ['TIME UP', 'slam'];
-        const w = s.fighters[s.roundWinner];
-        const perfect = w.health === characters[w.charId].health;
-        if (perfect && s.phaseFrame >= 60 && s.phaseFrame < 150) return ['PERFECT', 'shine'];
-        return s.phaseFrame < 60 ? ['K.O.!', 'slam'] : ['', 'pop'];
-      }
-      case 'finisher':
-        return ['FINISH THEM', 'pulse'];
-      case 'fatality':
-        return s.phaseFrame < 70 ? ['FATALITY', 'slam'] : ['', 'pop'];
-      default:
-        return ['', 'pop'];
-    }
   }
 
   private drawHud(): void {
     if (!this.hud) return;
-    const [text, variant] = this.bannerMessage();
+    // center-stage announcement: pure function of state (presentation/banner)
+    const [text, variant]: [string, BannerVariant] = bannerFor(this.state, characters, this.fightEnteredTick);
     this.banner?.set(text, variant);
     const clip = (slot: 0 | 1): string => {
       const ci = this.renderer3d?.clipInfo(slot);
       return ci ? `${ci.name}${ci.placeholder ? ' *PLACEHOLDER*' : ''}` : '…';
     };
     this.hud.update(this.state, {
-      ghost: this.ghostHealth,
-      combo: this.comboHits >= 2 && this.comboTicks > 0 ? `${this.comboHits} HITS` : '',
+      ghost: this.hudModel.ghost,
+      combo: this.hudModel.comboLabel,
       clips: [clip(0), clip(1)],
       tauntKey: this.tauntKey,
     });
@@ -366,38 +337,15 @@ export class FightScene3D extends Phaser.Scene {
 
   // ---------- presentation events (SPEC T18/T20/T21/T22) ----------
 
-  /** play() gated on focus: a blurred window suspends the audio context but
-   *  the sim keeps stepping — un-gated sounds queue up in the suspended
-   *  context and ALL fire at once on refocus. */
-  private snd(key: string, volume?: number): void {
-    if (document.hasFocus()) play(this, key, volume);
-  }
-
-  private voice(charId: string, kind: 'hurt' | 'kiai', volume: number): void {
-    if (document.hasFocus()) playVoice(this, charId, kind, volume);
-  }
-
+  /** Renderer-side event fx ONLY (blood, shake, flashes, scene flow) — all
+   *  audio comes from the shared soundCues table executed in afterTick. */
   private handleEvents(events: FightEvent[]): void {
     const s = this.state;
     const r = this.renderer3d;
     for (const e of events) {
       switch (e.type) {
-        case 'round-intro':
-          play(this, e.round === 2 ? 'ann-round-2' : 'ann-final-round');
-          nextTrack();
-          break;
-        case 'count':
-          this.snd('s-block', 0.35); // countdown blip
-          break;
-        case 'fight-start':
-          play(this, 'ann-fight', 1);
-          break;
         case 'round-end':
-          if (e.timeUp) play(this, 'ann-time-up');
-          else if (e.winner === null) play(this, 'ann-double-ko');
-          else {
-            play(this, 'ann-ko', 1);
-            if (e.perfect) this.time.delayedCall(800, () => play(this, 'ann-perfect'));
+          if (!e.timeUp && e.winner !== null) {
             // KO gush — MK vibes (SPEC V16)
             const loser = e.winner === 0 ? 1 : 0;
             const lf = s.fighters[loser];
@@ -406,27 +354,20 @@ export class FightScene3D extends Phaser.Scene {
           }
           break;
         case 'match-end':
-          play(this, `ann-${s.fighters[e.winner].charId}`, 1);
-          this.time.delayedCall(900, () => play(this, 'ann-victory', 1));
-          playMusic('victory', { keepOnMiss: true, once: true });
+          // don't let the KO punch (still held) instantly skip the win screen
+          this.shell?.armEndNav();
           // attract mode loops back to the title so the menu can cycle the demo
           if (this.demo) this.time.delayedCall(6000, () => this.scene.start('Menu'));
           break;
         case 'finisher':
-          play(this, 'ann-finish-them', 1);
           r?.shake(s.tick, 12, 0.05);
           break;
         case 'fatality-start':
-          play(this, 'ann-fatality', 1);
           r?.shake(s.tick, 28, 0.09);
           break;
         case 'hit': {
           const f = s.fighters[e.slot];
           const atk = s.fighters[e.slot === 0 ? 1 : 0];
-          play(this, 's-hit', e.counter ? 1 : undefined);
-          if (e.counter) play(this, 's-whoosh', 0.9);
-          playVoice(this, f.charId, 'hurt', 0.7);
-          this.ghostHoldUntil[e.slot] = s.tick + 32;
           r?.fx.spawnHitFx(s, e.slot, e.counter, e.heavy);
           // blood along the impact velocity — tiered: a whiff of red on light
           // hits, moderate on solid ones, restrained even at the top end
@@ -434,65 +375,19 @@ export class FightScene3D extends Phaser.Scene {
           r?.fx.spawnBlood(f.x - f.facing * 20, f.y - 150, atk.facing, amount, s.tick);
           r?.flashFighter(e.slot, s.tick, e.counter ? 8 : 4, e.counter ? 0xff2a1a : 0xffffff);
           r?.shake(s.tick, e.counter ? 8 : 5, e.counter ? 0.05 : 0.03);
-          this.comboHits = e.comboContinues ? this.comboHits + 1 : 1;
-          this.comboTicks = 90;
           break;
         }
         case 'block':
-          play(this, 's-block', 0.6);
           r?.fx.spawnBlockFx(s, e.slot);
           break;
         case 'attack-start':
-          play(this, 's-whoosh', 0.4);
-          if (e.special) playVoice(this, s.fighters[e.slot].charId, 'kiai', 0.8);
-          break;
-        case 'jump':
-          play(this, 's-jump', 0.35);
-          break;
-        case 'taunt':
-          playVoice(this, s.fighters[e.slot].charId, 'kiai', 0.7);
+          this.shell?.logMove(e.slot);
           break;
         case 'dust':
           r?.fx.spawnDust(s, e.slot);
-          play(this, 's-hit', 0.3);
-          break;
-        case 'projectile-spawn':
-          play(this, 's-projectile', 0.6);
-          break;
-        case 'throw-connect':
-          play(this, 's-hit', 0.8);
           break;
       }
     }
-  }
-
-  private tickGhosts(): void {
-    for (const slot of [0, 1] as const) {
-      const hp = this.state.fighters[slot].health;
-      if (this.state.tick > this.ghostHoldUntil[slot] && this.ghostHealth[slot] > hp) {
-        this.ghostHealth[slot] = Math.max(hp, this.ghostHealth[slot] - 2);
-      }
-      if (hp > this.ghostHealth[slot]) this.ghostHealth[slot] = hp; // new round reset
-    }
-  }
-
-  private showLoading(): void {
-    if (this.loadingEl) return;
-    const host = this.game.canvas.parentElement ?? document.body;
-    const el = document.createElement('div');
-    el.textContent = 'LOADING…';
-    el.style.cssText =
-      'position:absolute;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;' +
-      'background:#0c0910;color:#ffb347;font:bold 28px monospace;letter-spacing:3px;text-shadow:0 2px 6px #000;';
-    host.appendChild(el);
-    this.loadingEl = el;
-    this.events.once('shutdown', () => el.remove());
-  }
-
-  private hideLoading(): void {
-    if (!this.loadingEl) return;
-    this.loadingEl.remove();
-    this.loadingEl = null;
   }
 
   update(_time: number, deltaMs: number): void {
@@ -501,12 +396,14 @@ export class FightScene3D extends Phaser.Scene {
     // a black screen while the GLBs stream in. A loading overlay covers the wait.
     if (!this.renderer3d?.isReady) {
       this.session.resetPacing(); // don't bank the wait into a fast-forward burst
-      this.showLoading();
+      this.loading?.show();
       return;
     }
-    this.hideLoading();
-    this.session.advance(deltaMs);
-    if (this.online && this.state.phase === 'matchEnd') this.armRematch();
+    this.loading?.hide();
+    // shell: pad nav, pause state, move-log redraw, online rematch arming.
+    // While paused the sim halts but the renderer keeps presenting the frame.
+    if (this.shell?.frame() ?? true) this.session.advance(deltaMs);
+    else this.session.resetPacing();
     // pass the sub-tick alpha so clip playback interpolates between poses
     this.renderer3d?.render(this.state, this.session.alpha);
     this.drawHud();
@@ -515,53 +412,4 @@ export class FightScene3D extends Phaser.Scene {
     this.panel?.setFps(this.game.loop.actualFps, deltaMs);
   }
 
-  // ---------- online rematch (shared RematchLink; see FightScene) ----------
-
-  private armRematch(): void {
-    if (this.rematch || !this.online) return;
-    this.rematch = new RematchLink(
-      this.online,
-      characters,
-      this.stageId,
-      {
-        onPrompt: (st) => this.drawRematchPrompt(st),
-        onLaunch: (online) => this.scene.start('Select', { online }),
-        onLeave: (reason) => this.onRematchLeave(reason),
-      },
-      (fn) => this.time.delayedCall(0, fn),
-    );
-  }
-
-  private drawRematchPrompt(st: RematchState): void {
-    const msg = st.localReady
-      ? st.remoteReady
-        ? 'REMATCH! back to select…'
-        : `waiting for ${st.remoteName}…`
-      : st.remoteReady
-        ? `${st.remoteName} wants a REMATCH!  ·  [R] accept   [ESC] quit`
-        : 'REMATCH?  [R] play again   ·   [ESC] quit';
-    if (!this.rematchEl) {
-      const host = this.game.canvas.parentElement ?? document.body;
-      const el = document.createElement('div');
-      el.style.cssText =
-        'position:absolute;left:50%;bottom:26px;transform:translateX(-50%);z-index:60;' +
-        'font:bold 18px monospace;color:#ffd24a;background:#1a1020;padding:6px 12px;border-radius:4px;' +
-        'text-shadow:0 2px 4px #000;pointer-events:none;white-space:nowrap;';
-      host.appendChild(el);
-      this.rematchEl = el;
-      this.events.once('shutdown', () => el.remove());
-    }
-    this.rematchEl.textContent = msg;
-    this.rematchEl.style.color = st.localReady && st.remoteReady ? '#8fe388' : '#ffd24a';
-  }
-
-  private onRematchLeave(reason: string): void {
-    if (this.rematchLeft) return;
-    this.rematchLeft = true;
-    if (this.rematchEl) {
-      this.rematchEl.textContent = reason;
-      this.rematchEl.style.color = '#ff5a4a';
-    }
-    this.time.delayedCall(1200, () => this.scene.start('Menu'));
-  }
 }

@@ -30,6 +30,7 @@ export class MenuScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.cameras.main.fadeIn(400, 0, 0, 0); // soft cross-fade in from the prior screen
     playMusic('menu');
     this.idleMs = 0;
     this.menuReady = false;
@@ -63,6 +64,12 @@ export class MenuScene extends Phaser.Scene {
       play(this, 's-blip');
       this.scene.start('Select', { cpu, training, render3d: this.render3d });
     };
+    // showcase demo: pick both fighters + stage, then watch a CPU-vs-CPU match
+    // that walks the full moveset and ends in a guaranteed fatality
+    const goShowcase = () => {
+      play(this, 's-blip');
+      this.scene.start('Select', { showcase: true, render3d: this.render3d });
+    };
 
     // Render-mode chip in the bottom-left corner: ◄ / ► (or click) flips
     // 2D ⇄ 3D. Hidden with the rest of the menu until the coin drop.
@@ -86,18 +93,39 @@ export class MenuScene extends Phaser.Scene {
       play(this, 's-blip');
       this.scene.start('Lobby', { render3d: this.render3d });
     };
+    const toEditor = () => {
+      play(this, 's-blip');
+      this.scene.start('EditorMenu');
+    };
     const opts: { label: string; act: () => void }[] = [
       { label: '1 · VS CPU', act: () => go(true) },
       { label: '2 · TWO PLAYERS', act: () => go(false) },
       { label: '3 · ONLINE', act: toLobby },
       { label: '4 · TRAINING', act: () => go(false, true) },
-      { label: '5 · SETTINGS', act: toSettings },
+      { label: '5 · DEMO MATCH', act: goShowcase },
+      { label: '6 · SETTINGS', act: toSettings },
     ];
+    // dev-only authoring tools; never shipped on the public build
+    if (import.meta.env.DEV) opts.push({ label: '7 · DEV EDITOR', act: toEditor });
     // fit the whole list on-screen regardless of item count (STAGE_H=540):
     // pack the block below the subtitle down to a bottom margin
     const top = 336;
     const step = Math.min(52, Math.floor((STAGE_H - top - 16) / opts.length));
     const rectH = Math.min(46, step - 4);
+    // left-align every label at a common x so the "N · " prefixes stack
+    // vertically (monospace), then center the whole text block: the left edge
+    // is offset from center by half the WIDEST label's width.
+    const labelStyle = {
+      fontFamily: 'monospace', fontSize: '24px', fontStyle: 'bold', color: '#f5ead9',
+      stroke: '#000', strokeThickness: 5,
+    };
+    const maxW = Math.max(...opts.map((o) => {
+      const t = this.add.text(0, 0, o.label, labelStyle);
+      const w = t.width;
+      t.destroy();
+      return w;
+    }));
+    const labelX = Math.round(STAGE_W / 2 - maxW / 2);
     opts.forEach((o, i) => {
       const y = top + i * step + step / 2;
       const bg = this.add
@@ -105,11 +133,8 @@ export class MenuScene extends Phaser.Scene {
         .setStrokeStyle(2, 0x7a6a86)
         .setInteractive({ useHandCursor: true });
       const label = this.add
-        .text(STAGE_W / 2, y, o.label, {
-          fontFamily: 'monospace', fontSize: '24px', fontStyle: 'bold', color: '#f5ead9',
-          stroke: '#000', strokeThickness: 5,
-        })
-        .setOrigin(0.5);
+        .text(labelX, y, o.label, labelStyle)
+        .setOrigin(0, 0.5);
       this.menuItems.push(bg, label);
       this.buttons.push({ bg, label, act: o.act });
       // mouse hover moves the shared cursor here so mouse + pad agree
@@ -139,7 +164,9 @@ export class MenuScene extends Phaser.Scene {
     this.input.keyboard!.on('keydown-TWO', () => { if (this.canChoose()) go(false); });
     this.input.keyboard!.on('keydown-THREE', () => { if (this.canChoose()) toLobby(); });
     this.input.keyboard!.on('keydown-FOUR', () => { if (this.canChoose()) go(false, true); });
-    this.input.keyboard!.on('keydown-FIVE', () => { if (this.canChoose()) toSettings(); });
+    this.input.keyboard!.on('keydown-FIVE', () => { if (this.canChoose()) goShowcase(); });
+    this.input.keyboard!.on('keydown-SIX', () => { if (this.canChoose()) toSettings(); });
+    if (import.meta.env.DEV) this.input.keyboard!.on('keydown-SEVEN', () => { if (this.canChoose()) toEditor(); });
     // secret: M jumps straight into a demo (skips the 20s idle wait). In 3D it
     // goes right to the Thriller dance formation (deterministic, for testing);
     // in 2D it demos a fight.

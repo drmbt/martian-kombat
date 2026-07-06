@@ -2,7 +2,7 @@
   "id": "flo",
   "name": "FLO",
   "color": "#ffb020",
-  "stage": "estates",
+  "stage": "ski-inn",
   "winQuotes": [
     "It works on my machine....",
     "Segmentation fault. That was you.",
@@ -473,14 +473,14 @@
       }
     },
     "smokescreen": {
-      "name": "Smokescreen",
+      "name": "Flame War",
       "input": {
         "motion": "qcb",
         "button": "punch"
       },
-      "startup": 15,
-      "active": 2,
-      "recovery": 20,
+      "startup": 13,
+      "active": 4,
+      "recovery": 18,
       "damage": 0,
       "hitstun": 0,
       "blockstun": 0,
@@ -488,32 +488,37 @@
       "hitbox": null,
       "height": "mid",
       "projectile": {
-        "vx": 0,
-        "spawnX": 100,
-        "spawnY": -130,
+        "vx": 4,
+        "spawnX": 95,
+        "spawnY": -110,
         "box": {
-          "x": 0,
-          "y": 0,
-          "w": 0,
-          "h": 0
+          "x": -55,
+          "y": -80,
+          "w": 150,
+          "h": 120
         },
-        "damage": 0,
-        "hitstun": 0,
-        "blockstun": 0,
-        "knockback": 0,
-        "ttl": 150,
-        "field": true
+        "damage": 100,
+        "hitstun": 22,
+        "blockstun": 14,
+        "knockback": 7,
+        "height": "mid",
+        "ttl": 16,
+        "knockdown": true
       },
       "variants": {
         "l": {
+          "startup": 10,
           "projectile": {
-            "ttl": 90
+            "ttl": 12,
+            "damage": 82
           }
         },
         "h": {
+          "startup": 16,
           "projectile": {
-            "ttl": 240,
-            "spawnX": 120
+            "vx": 5,
+            "ttl": 22,
+            "damage": 116
           }
         }
       }

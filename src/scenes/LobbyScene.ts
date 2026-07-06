@@ -14,6 +14,7 @@ import { characters } from '../data/characters';
 import { menuNav, navDefer } from '../input/menu-nav';
 import { getSettings } from '../settings';
 import { LobbyController, type OnlineSelectData } from '../net/lobby';
+import { STAGE3D_BOUNDS } from '../renderer3d/threeCoordinates';
 import type { PeerLink } from '../net/webrtc';
 import type { Transport } from '../net/transport';
 
@@ -197,7 +198,7 @@ export class LobbyScene extends Phaser.Scene {
     const cfg = getSettings();
     // 3D uses the wider arena bounds + a 3D-capable stage; both peers build the
     // identical initialState from these rules, so V25 holds in either renderer
-    const bounds = this.render3d ? { minX: -110, maxX: 1070 } : { minX: 50, maxX: 910 };
+    const bounds = this.render3d ? STAGE3D_BOUNDS : { minX: 50, maxX: 910 };
     const hostStage = this.render3d ? 'chiba-roof' : 'salton';
     this.controller = new LobbyController(
       {

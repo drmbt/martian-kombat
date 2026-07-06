@@ -23,4 +23,5 @@ export const ROSTER: RosterEntry[] = [
   { id: 'chebel', name: 'CHEBEL', playable: true },
   { id: 'ygor', name: 'YGOR', playable: true },
   { id: 'rapha', name: 'RAPHA', playable: true, mesh3d: true },
+  { id: 'vanessa', name: 'VANESSA', playable: true },
 ];
