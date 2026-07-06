@@ -276,7 +276,7 @@ export class ThreeFighterView {
     // head-high and set back with a gentle (decay 1) linear falloff so the light
     // covers the whole body evenly — face included — instead of pooling a hot
     // spot on the chest/floor right under a close, sharp-falloff lamp
-    const fill = new THREE.PointLight(0xd8dff0, 6, 6, 1);
+    const fill = new THREE.PointLight(0xd8dff0, 3.6, 6, 1);
     fill.position.set(0, 2.3, 1.8);
     // rim kicker from behind-above: separates the silhouette from the walls
     const rim = new THREE.PointLight(0xbcd2ff, 5, 5, 1.4);

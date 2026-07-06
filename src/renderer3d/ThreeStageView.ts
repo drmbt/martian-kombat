@@ -170,7 +170,9 @@ export class ThreeStageView {
     // the painted world
     const catcher = new THREE.Mesh(
       new THREE.PlaneGeometry(40, 20),
-      new THREE.ShadowMaterial({ opacity: 0.4 }),
+      // deeper + cool-tinted so the contact shadow reads rich, not a flat pale
+      // grey smudge (a black ShadowMaterial washes out desaturated under bright art)
+      new THREE.ShadowMaterial({ color: 0x0a0a1e, opacity: 0.55 }),
     );
     catcher.rotation.x = -Math.PI / 2;
     catcher.position.set(0, 0.002, 0);
