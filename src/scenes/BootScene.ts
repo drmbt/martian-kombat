@@ -132,10 +132,27 @@ export class BootScene extends Phaser.Scene {
     // now that the whole manifest is queued, publish the file count so the
     // preloader can show "N / TOTAL assets" (totalToLoad is final here)
     this.preloadTotal = this.load.totalToLoad;
+    // bucket every queued file into its phase so the preloader can show the
+    // EARLIEST still-loading category instead of flickering between the ~32
+    // files streaming in parallel (see buildPreloader's monotonic label)
+    this.load.list.iterate((file: Phaser.Loader.File) => {
+      const label = phaseLabel(file.key);
+      this.phaseTotals.set(label, (this.phaseTotals.get(label) ?? 0) + 1);
+      return true;
+    });
   }
 
   /** Total files queued for load — read by the preloader HUD once known. */
   private preloadTotal = 0;
+  /** Canonical display order of load phases — the label walks this list. */
+  private phaseOrder = [
+    'LOADING FIGHTERS', 'LOADING PORTRAITS', 'LOADING STAGES', 'LOADING EFFECTS',
+    'LOADING FATALITIES', 'LOADING ANNOUNCER', 'LOADING VOICES', 'LOADING SOUND',
+    'LOADING ASSETS',
+  ];
+  /** files queued / completed per phase — drives the sequential-seeming label */
+  private phaseTotals = new Map<string, number>();
+  private phaseDone = new Map<string, number>();
 
   /** A slick boot HUD: the game logo, a bevelled gradient progress bar with a
    *  travelling shimmer, live percent, the asset class currently streaming in,
@@ -222,10 +239,25 @@ export class BootScene extends Phaser.Scene {
     // keep the shimmer animating even between file-complete ticks
     this.events.on('update', () => draw(lastPct));
 
-    this.load.on('fileprogress', (file: Phaser.Loader.File) => {
-      curPhase = phaseLabel(file.key);
-      phase.setText(curPhase);
-    });
+    // Files stream in CONCURRENTLY, so a naive per-file label ping-pongs between
+    // categories. Instead, on each file finishing (success OR 404), advance the
+    // label to the FIRST category (in canonical order) that still has files
+    // pending. It only ever moves forward → reads as ordered, sequential phases.
+    const bump = (key: string) => {
+      const label = phaseLabel(key);
+      this.phaseDone.set(label, (this.phaseDone.get(label) ?? 0) + 1);
+      const next = this.phaseOrder.find(
+        (l) =>
+          (this.phaseTotals.get(l) ?? 0) > 0 &&
+          (this.phaseDone.get(l) ?? 0) < (this.phaseTotals.get(l) ?? 0),
+      );
+      if (next && next !== curPhase) {
+        curPhase = next;
+        phase.setText(curPhase);
+      }
+    };
+    this.load.on('filecomplete', (key: string) => bump(key));
+    this.load.on('loaderror', (file: Phaser.Loader.File) => bump(file.key));
     this.load.on('progress', (p: number) => {
       lastPct = p;
       if (started < 0 && p > 0) started = performance.now();

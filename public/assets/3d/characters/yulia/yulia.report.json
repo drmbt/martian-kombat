@@ -612,9 +612,9 @@
   },
   {
    "name": "attack/braid-lariat",
-   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Hook Punch.fbx",
-   "frames": 33,
-   "seconds": 1.1,
+   "source": "/Users/flo/work/code/martian-kombat/public/assets/animations/punch/Hook.fbx",
+   "frames": 26,
+   "seconds": 0.867,
    "rootStripped": [
     "X",
     "Z"
