@@ -14,7 +14,7 @@ flag it as an explicit engine task.
 
 ## Input grammar (SF2 + MK), and what the engine supports
 
-`Motion` = `'qcf' | 'qcb' | 'bf' | 'dp' | 'hcb' | 'hcf' | '360' | 'du'`.
+`Motion` = `'qcf' | 'qcb' | 'bf' | 'cbf' | 'dp' | 'hcb' | 'hcf' | '360' | 'du'`.
 `button` = `'punch' | 'kick' | 'PPP' | 'KKK' | 'LPLK'`. Or `input.mash: N` (no
 motion — N fresh presses of a button class).
 
@@ -22,14 +22,19 @@ motion — N fresh presses of a button class).
 - **dp** →↓↘ = anti-air / reversal
 - **qcb** ↓↙← = advancing / teleport / lob
 - **bf** back→forward (sequence, NOT a held charge) = rush / horizontal
-- **du** hold ↓ then ↑ (TRUE charge, `CHARGE_TICKS`) = flash-kick / vertical
+- **cbf** hold ← then → (TRUE charge, `CHARGE_TICKS`) = SONIC BOOM / charge projectile ✅
+- **du** hold ↓ then ↑ (TRUE charge, `CHARGE_TICKS`) = FLASH KICK / charge anti-air ✅
 - **hcb / hcf** half-circles = command grabs, bigger specials
 - **360** full circle = command grab
-- MK-style down-up = `du`; back-forward = `bf`. **Forward-forward (ff) is NOT a
-  special trigger** (dashes are double-tap movement only) — ❌.
+- **Forward-forward (ff) is NOT a special trigger** (dashes are double-tap
+  movement only) — ❌.
 
-The grammar: quarter-circle = offense, DP = anti-air, `du` = charge vertical,
-`bf` = horizontal rush, mash = sustained, 360/hcb = grab.
+The grammar: quarter-circle = offense, DP = anti-air, `cbf` = charge projectile
+(sonic boom), `du` = charge vertical (flash kick), `bf` = horizontal rush,
+mash = sustained, 360/hcb = grab. Both charges bank a facing-relative hold
+(`f.backCharge` / `f.charge`) for `CHARGE_TICKS`, then fire on the opposite +
+button — the whole held-charge control the creator's Sonic-boom / Flash-kick
+archetypes emit.
 
 ## The plumbing catalog (✅ build with these) — field → JSON shape
 
@@ -47,6 +52,9 @@ right.** `worldBox`: `l = f.x + box.x`, `t = f.y + box.y`. Every move has
   optional `projImmune`. (vincent cloud-hands)
 - **Horizontal rush / torpedo** — `bf`+P, `forwardVel` (high), `hitbox`,
   `knockdown`. (vanessa euc-crash)
+- **Charge projectile (sonic boom)** — `cbf`+P, `hitbox:null`, `projectile:{…}`.
+  Hold back to charge, then forward. The projectile persists independently after
+  the move recovers (dies only on screen-exit / TTL / hit).
 - **Charge vertical (flash kick)** — `du`+K, `leap`/`vault`, `invuln`.
 - **Mash / rapid-tap** — `input:{button,mash:N}`, `hitbox`, often `rehit`.
 - **Command grab** — `360` or `hcb`+P, `grab:{range}`, `damage`, `knockdown`,

@@ -59,7 +59,7 @@ button's strength selects the patch).
 | b,f | ← then → (dash motion) | exists |
 | dp | → ↓ ↘ (dragon punch) | ✅ exists |
 | hcb / hcf | half circle | ✅ exists |
-| charge b,f / charge d,u | hold 2s, then opposite + button | ⚙ NEW |
+| charge b,f (`cbf`) / charge d,u (`du`) | hold ~0.6s (`CHARGE_TICKS`), then opposite + button | ✅ exists (sonic boom + flash kick; banked via `f.backCharge`/`f.charge`) |
 | 360 | full circle + button | ✅ exists (simplified: ↓+←+→ inside the window — the practical "270") |
 | 3P / 3K | all three punches / kicks together | ✅ exists (2+ of the class pressed together) |
 | LP+LK | universal throw chord (cross-class) | ✅ exists (`input.button: 'LPLK'`) |

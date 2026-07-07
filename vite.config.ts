@@ -347,6 +347,37 @@ function editorApi(): Plugin {
           .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
       });
 
+      // POST /__editor/creator/move-audio  { kind:'voice'|'sfx', text, name?, fishModelId? }
+      // -> a per-move call-out: a spoken VO line (ElevenLabs TTS / Fish clone) or a
+      //    sound effect (ElevenLabs sound-generation). Returns { base64 }. Mocks.
+      server.middlewares.use('/__editor/creator/move-audio', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        readJsonBody(req)
+          .then(async (b) => {
+            const { kind, text, fishModelId } = b as { kind?: string; text?: string; fishModelId?: string };
+            if (typeof text !== 'string' || !text.trim()) throw new Error('empty text');
+            const lib = await import('./tools/lib.mjs');
+            const env = lib.loadEnv();
+            const apiKey = env.ELEVENLABS_API_KEY;
+            if (process.env.MK_CREATOR_MOCK === '1' || !apiKey) { sendJson(res, 200, { ok: true, mock: true }); return; }
+            let buf: Buffer;
+            if (kind === 'sfx') {
+              const r = await fetch('https://api.elevenlabs.io/v1/sound-generation', {
+                method: 'POST', headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, duration_seconds: 2 }),
+              });
+              if (!r.ok) throw new Error(`elevenlabs sfx ${r.status}: ${await r.text()}`);
+              buf = Buffer.from(await r.arrayBuffer());
+            } else if (typeof fishModelId === 'string' && env.FISH_API_KEY) {
+              buf = await lib.fishTTS({ apiKey: env.FISH_API_KEY, referenceId: fishModelId, text });
+            } else {
+              buf = await elevenTts(apiKey, ELEVEN.m, text);
+            }
+            sendJson(res, 200, { ok: true, base64: buf.toString('base64') });
+          })
+          .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
+      });
+
       // POST /__editor/creator/music  { prompt, durationMs? }
       // -> ElevenLabs Music (compose) -> base64 mp3 loop. Mocks w/o key.
       server.middlewares.use('/__editor/creator/music', (req, res, next) => {
@@ -534,7 +565,7 @@ function editorApi(): Plugin {
           .then((b) => {
             const p = b as {
               id?: string; name?: string; def?: Record<string, unknown>; sheetBase64?: string; meta?: unknown;
-              portraitBase64?: string; voClips?: Record<string, string>; musicBase64?: string;
+              portraitBase64?: string; voClips?: Record<string, string>; musicBase64?: string; moveAudio?: Record<string, string>;
               stageBase64?: string; stageId?: string; fatalityPanels?: string[]; projectiles?: Record<string, string>;
             };
             if (!okId(p.id)) throw new Error('invalid id');
@@ -565,6 +596,12 @@ function editorApi(): Plugin {
               mkdirSync(join(A, 'audio/voice'), { recursive: true });
               const dest = (clip: string): string => clip === 'announcer' ? join(A, 'audio/announcer', `${id}.mp3`) : join(A, 'audio/voice', `${id}-${clip}.mp3`);
               for (const [clip, b64] of Object.entries(vo)) writeFileSync(dest(clip), Buffer.from(b64, 'base64'));
+            }
+            if (p.moveAudio && Object.keys(p.moveAudio).length) {
+              mkdirSync(join(A, 'audio/voice'), { recursive: true });
+              for (const [moveId, b64] of Object.entries(p.moveAudio)) {
+                if (typeof b64 === 'string' && /^[a-z0-9_-]+$/.test(moveId)) writeFileSync(join(A, 'audio/voice', `${id}-move-${moveId}.mp3`), Buffer.from(b64, 'base64'));
+              }
             }
             if (p.musicBase64) {
               const d = join(A, 'audio/music/stages/default'); mkdirSync(d, { recursive: true });
@@ -612,7 +649,7 @@ function editorApi(): Plugin {
           .then((b) => {
             const { id, name, def, sheetBase64, meta, portraitBase64, voClips, musicBase64, stageBase64, stageId, stageName, fatalityPanels, projectiles } = b as {
               id?: unknown; name?: unknown; def?: unknown; sheetBase64?: unknown; meta?: unknown; portraitBase64?: unknown;
-              voClips?: Record<string, string>; musicBase64?: string;
+              voClips?: Record<string, string>; musicBase64?: string; moveAudio?: Record<string, string>;
               stageBase64?: string; stageId?: string; stageName?: string; fatalityPanels?: string[]; projectiles?: Record<string, string>;
             };
             if (!okId(id)) throw new Error('invalid character id');
@@ -658,6 +695,12 @@ function editorApi(): Plugin {
               const p = join(audioRoot, rel);
               if (typeof vo[clip] === 'string') writeFileSync(p, Buffer.from(vo[clip], 'base64'));
               else if (!existsSync(p)) copyFileSync(silence, p); // silence fallback so the loader never hangs
+            }
+            // per-move call-outs → voice/<id>-move-<moveId>.mp3 (loaded for moves with voice:true)
+            if (moveAudio && typeof moveAudio === 'object') {
+              for (const [moveId, b64] of Object.entries(moveAudio)) {
+                if (typeof b64 === 'string' && /^[a-z0-9_-]+$/.test(moveId)) writeFileSync(join(audioRoot, 'voice', `${id}-move-${moveId}.mp3`), Buffer.from(b64, 'base64'));
+              }
             }
             // stage music (generated or BYO) → the character's stage folder + a default fallback
             if (typeof musicBase64 === 'string') {

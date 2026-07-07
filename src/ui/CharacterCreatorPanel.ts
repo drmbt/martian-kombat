@@ -57,6 +57,7 @@ export class CharacterCreatorPanel {
   private lastLeftW = 40;
   private regenPromptEl?: HTMLTextAreaElement; // editable copy of the selected cell's prompt
   private regenUseSelf = false; // img2img: feed the current cell image as the reference
+  private moveAudioText: Record<string, string> = {}; // per-special call-out text (transient)
   /** what the big preview shows: an animated group (idle/walk/…) or one cell/asset */
   private preview: { kind: 'group' | 'cell'; key: string } = { kind: 'group', key: 'idle' };
   private anim = 0;
@@ -697,7 +698,7 @@ export class CharacterCreatorPanel {
       gen.onclick = () => this.genSpecialCells(s.id);
       box.appendChild(gen);
       // projectile art slot — only for approved projectile-archetype specials
-      if (s.archetype === 'projectile' && s.approved) {
+      if ((s.archetype === 'projectile' || s.archetype === 'sonic-boom') && s.approved) {
         const pj = this.m.job('proj:' + s.id);
         const prow = el('div', 'display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px dashed #22303e;');
         prow.appendChild(el('span', 'font-size:11px;color:#9fb4be;', 'projectile:'));
@@ -708,6 +709,25 @@ export class CharacterCreatorPanel {
         prow.appendChild(pbtn);
         box.appendChild(prow);
       }
+      // per-move audio call-out — a spoken VO line or an SFX, generated or BYO,
+      // played when the special fires (sets move.voice=true in the JSON)
+      const arow = el('div', 'display:flex;gap:6px;align-items:center;margin-top:8px;padding-top:8px;border-top:1px dashed #22303e;flex-wrap:wrap;');
+      arow.appendChild(el('span', 'font-size:11px;color:#9fb4be;', 'call-out:'));
+      const atext = el('input', INPUT + 'flex:1;min-width:120px;font-size:11px;') as HTMLInputElement;
+      atext.placeholder = 'VO line (e.g. "Sand storm!") or an SFX description';
+      atext.value = this.moveAudioText[s.id] ?? s.name;
+      atext.oninput = () => (this.moveAudioText[s.id] = atext.value);
+      const vbtn = el('button', BTN + 'font-size:11px;', '▸ voice');
+      vbtn.onclick = () => this.genMoveAudio(s.id, atext.value, 'voice');
+      const sbtn = el('button', BTN + 'font-size:11px;', '▸ sfx');
+      sbtn.onclick = () => this.genMoveAudio(s.id, atext.value, 'sfx');
+      arow.append(atext, vbtn, sbtn);
+      const byo = el('input', 'display:none;') as HTMLInputElement; byo.type = 'file'; byo.accept = 'audio/*';
+      byo.onchange = async () => { const f = byo.files?.[0]; if (!f) return; const d = await readFile(f); this.m.moveAudio[s.id] = d.includes(',') ? d.split(',')[1] : d; this.logMsg(`BYO call-out for ${s.id}`); this.render(); };
+      const byoBtn = el('button', BTN + 'font-size:11px;', 'BYO'); byoBtn.onclick = () => byo.click();
+      arow.append(byoBtn, byo);
+      if (this.m.moveAudio[s.id]) { const pl = el('button', BTN + 'font-size:11px;', '▶'); pl.onclick = () => { new Audio('data:audio/mp3;base64,' + this.m.moveAudio[s.id]).play().catch(() => {}); }; arow.appendChild(pl); }
+      box.appendChild(arow);
       this.bodyEl.appendChild(box);
     });
     const nav = el('div', 'margin-top:8px;display:flex;gap:10px;');
@@ -745,10 +765,30 @@ export class CharacterCreatorPanel {
     rekey(`proj:${oldId}`, `proj:${newId}`, `${newName} projectile`);
     for (const ph of ['startup', 'active', 'recovery']) void this.persistFrame(`sprite:${newId}-${ph}`);
     void this.persistFrame(`proj:${newId}`);
+    // migrate the per-move call-out audio + text
+    if (this.m.moveAudio[oldId]) { this.m.moveAudio[newId] = this.m.moveAudio[oldId]; delete this.m.moveAudio[oldId]; }
+    if (this.moveAudioText[oldId]) { this.moveAudioText[newId] = this.moveAudioText[oldId]; delete this.moveAudioText[oldId]; }
     // if this move was being previewed, follow it
     if (this.preview.kind === 'group' && this.preview.key === oldId) this.preview.key = newId;
     this.logMsg(`renamed special ${oldId} → ${newId} (cells + frames migrated)`);
     this.render(); this.renderPreviewControls(); this.renderTray(); this.redrawPreview();
+  }
+
+  /** generate a per-move call-out: a spoken VO line or an SFX (ElevenLabs). */
+  private async genMoveAudio(id: string, text: string, kind: 'voice' | 'sfx'): Promise<void> {
+    if (!text.trim()) return;
+    this.logMsg(`▸ ${kind} call-out for ${id}…`);
+    try {
+      const r = await fetch('/__editor/creator/move-audio', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind, text, name: this.m.inputs.name, fishModelId: kind === 'voice' ? this.m.voiceModelId : undefined }),
+      });
+      const j = (await r.json()) as { ok?: boolean; mock?: boolean; base64?: string; error?: string };
+      if (!j.ok) throw new Error(j.error ?? 'failed');
+      if (j.base64) { this.m.moveAudio[id] = j.base64; this.logMsg(`✓ ${kind} call-out for ${id}`); }
+      else if (j.mock) this.logMsg(`${kind} ${id} mock (no ELEVENLABS_API_KEY)`);
+    } catch (e) { this.logMsg(`✕ ${kind} ${id} — ${String(e)}`); }
+    this.render();
   }
 
   /** generate the projectile art for a projectile special (inspo-free, keyable FX). */
@@ -761,7 +801,7 @@ export class CharacterCreatorPanel {
    *  (the pipeline's sequential special chain). Non-projectile specials just chain
    *  active → startup/recovery off the canonical. */
   private async genSpecial(s: SpecialDraft): Promise<void> {
-    const nm = this.m.inputs.name, id = s.id, isProj = s.archetype === 'projectile';
+    const nm = this.m.inputs.name, id = s.id, isProj = s.archetype === 'projectile' || s.archetype === 'sonic-boom';
     let projRef: string | undefined;
     if (isProj) {
       if (this.m.job('proj:' + id)?.status !== 'done') await this.fireGen('proj:' + id, 'sprite', s.name + ' projectile', this.projectilePrompt(s.name, s.description), []);
@@ -961,7 +1001,7 @@ export class CharacterCreatorPanel {
       id: this.m.id, name: this.m.inputs.name.toUpperCase(), def: this.m.buildFullCharacter(),
       sheetBase64: sheet?.sheetBase64, meta: sheet?.meta,
       portraitBase64: dataUrlToB64(this.m.job('portrait')?.dataUrl),
-      voClips: this.m.finalVoClips(), musicBase64: this.m.finalMusic(),
+      voClips: this.m.finalVoClips(), musicBase64: this.m.finalMusic(), moveAudio: this.m.moveAudio,
       stageBase64: dataUrlToB64(this.m.job('stage')?.dataUrl), stageId: this.m.id + '-home',
       stageName: this.m.inputs.name.toUpperCase() + ' HOME',
       fatalityPanels: this.m.generatedFatality.length ? this.m.generatedFatality : undefined,
@@ -1065,7 +1105,7 @@ export class CharacterCreatorPanel {
     for (const s of this.m.draft!.specials) {
       if (!s.approved) continue;
       const cells = ['startup', 'active', 'recovery'].map((ph) => this.m.job(`sprite:${s.id}-${ph}`)?.status === 'done');
-      const projMissing = s.archetype === 'projectile' && this.m.job('proj:' + s.id)?.status !== 'done';
+      const projMissing = (s.archetype === 'projectile' || s.archetype === 'sonic-boom') && this.m.job('proj:' + s.id)?.status !== 'done';
       if (cells.every(Boolean) && !projMissing) continue; // fully done — skip
       await this.genSpecial(s);
     }
@@ -1372,13 +1412,19 @@ export class CharacterCreatorPanel {
     if (g === 'block') return { job: this.cellJob(this.seqPick([['idle-a', 300], ['block', 560]], t)) ?? this.cellJob('block'), offY: 0 };
     if (g === 'fall') return { job: this.cellJob(this.seqPick([['idle-a', 220], ['hit', 260], ['fall', 320], ['down', 820]], t)) ?? this.cellJob('fall') ?? this.cellJob('down'), offY: 0 };
     // per-move animation: sequence its startup/active/recovery cells
-    const special = !!this.m.draft?.specials.some((s) => s.id === g);
-    if (special || NORMAL_MOVE_IDS.includes(g)) {
-      const cells = moveCellNames(g, special);
+    const sp = this.m.draft?.specials.find((s) => s.id === g);
+    if (sp || NORMAL_MOVE_IDS.includes(g)) {
+      const cells = moveCellNames(g, !!sp);
       const seq: [string, number][] = cells.length === 1 ? [[cells[0], 500]]
         : cells.length === 2 ? [[cells[0], 300], [cells[1], 340]]
         : [[cells[0], 200], [cells[1], 220], [cells[2], 340]];
-      return { job: this.cellJob(this.seqPick(seq, t)) ?? this.cellJob(cells.find((c) => c.endsWith('-active')) ?? cells[0]) ?? this.cellJob('idle-a'), offY: 0 };
+      // rising anti-airs (dragon-punch / flash-kick) hop off the ground during the move
+      let offY = 0;
+      if (sp && (sp.archetype === 'anti-air-dp' || sp.archetype === 'flash-kick')) {
+        const total = seq.reduce((a, [, ms]) => a + ms, 0), ph = t % total, startupMs = seq[0][1];
+        if (ph > startupMs) offY = -Math.sin(((ph - startupMs) / (total - startupMs)) * Math.PI) * 140;
+      }
+      return { job: this.cellJob(this.seqPick(seq, t)) ?? this.cellJob(cells.find((c) => c.endsWith('-active')) ?? cells[0]) ?? this.cellJob('idle-a'), offY };
     }
     return { job: this.cellJob(g), offY: 0 };
   }
@@ -1552,7 +1598,7 @@ export class CharacterCreatorPanel {
     }
     // projectile special: fire the projectile out during active→recovery
     if (this.preview.kind === 'group') {
-      const sp = this.m.draft?.specials.find((s) => s.id === this.preview.key && s.archetype === 'projectile');
+      const sp = this.m.draft?.specials.find((s) => s.id === this.preview.key && (s.archetype === 'projectile' || s.archetype === 'sonic-boom'));
       const proj = sp && this.m.job('proj:' + sp.id);
       if (sp && proj?.dataUrl) {
         const total = 200 + 220 + 340; // matches the 3-phase special sequence in previewFrame

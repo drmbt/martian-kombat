@@ -226,6 +226,8 @@ export const SPECIAL_ARCHETYPES: { key: string; label: string; desc: string; con
   { key: 'reversal', label: 'Reversal', desc: 'an invincible wake-up attack that beats pressure', controls: ['qcb+P', 'qcb+K'] },
   { key: 'teleport', label: 'Teleport', desc: 'blink behind or away to reposition (deals no damage)', controls: ['qcb+K', 'qcf+K'] },
   { key: 'mash', label: 'Mash barrage', desc: 'a rapid multi-hit flurry (mash the button, e.g. lightning legs)', controls: ['mash+P', 'mash+K'] },
+  { key: 'sonic-boom', label: 'Sonic boom (charge)', desc: 'hold BACK ~0.6s then press forward — a charge projectile (Guile)', controls: ['cbf+P', 'cbf+K'] },
+  { key: 'flash-kick', label: 'Flash kick (charge)', desc: 'hold DOWN ~0.6s then press up — a rising, invincible charge anti-air (Guile)', controls: ['du+K', 'du+P'] },
 ];
 
 export function controlsForArchetype(key: string): string {
@@ -317,6 +319,7 @@ export class CreatorModel {
   generatedVo: Record<string, string> = {};
   generatedMusic?: string; // base64 mp3
   generatedFatality: string[] = []; // 4 base64 jpg panels
+  moveAudio: Record<string, string> = {}; // specialId -> base64 mp3 (per-move VO / SFX call-out)
   voiceModelId?: string; // Fish clone reference id (if the user cloned a voice)
   skeletons: Record<string, Record<string, [number, number, number]>> = {}; // cellName -> DWPose joints
   autoHitboxes: Record<string, { x: number; y: number; w: number; h: number }> = {}; // moveId -> engine hitbox
@@ -401,7 +404,10 @@ export class CreatorModel {
     const moves: Record<string, unknown> = {};
     for (const [key, m] of Object.entries(NORMAL_MOVES)) moves[key] = { ...m };
     moves.throw = { startup: 3, active: 2, recovery: 20, damage: 0, hitstun: 0, blockstun: 0, knockback: 6, hitbox: null, height: 'mid', grab: { range: 64 }, techable: true };
-    for (const s of d.specials) moves[s.id] = buildSpecial(s);
+    for (const s of d.specials) {
+      moves[s.id] = buildSpecial(s);
+      if (this.moveAudio[s.id]) (moves[s.id] as Record<string, unknown>).voice = true; // has a per-move VO/SFX call-out
+    }
     // overlay skeleton-derived hitboxes (RIG step) over the heuristic defaults
     for (const [moveId, box] of Object.entries(this.autoHitboxes)) {
       const mv = moves[moveId] as { hitbox?: unknown } | undefined;
@@ -454,7 +460,7 @@ const BUTTON: Record<string, 'punch' | 'kick'> = { p: 'punch', k: 'kick' };
 export function parseControls(controls: string): { motion?: string; button: string; mash?: number } {
   const [rawMotion, rawBtn] = controls.toLowerCase().split('+');
   const button = BUTTON[(rawBtn ?? 'p').trim()[0]] ?? 'punch';
-  const motions = new Set(['qcf', 'qcb', 'bf', 'dp', 'hcb', 'hcf', '360', 'du']);
+  const motions = new Set(['qcf', 'qcb', 'bf', 'cbf', 'dp', 'hcb', 'hcf', '360', 'du']);
   const m = rawMotion.trim();
   if (m === 'mash') return { button, mash: 5 };
   return { motion: motions.has(m) ? m : 'qcf', button };
@@ -465,11 +471,13 @@ function buildSpecial(s: SpecialDraft): Record<string, unknown> {
   const base = { name: s.name, input, height: 'mid' as const };
   switch (s.archetype) {
     case 'projectile':
+    case 'sonic-boom': // charge (cbf) projectile — same shape, the input carries the charge
       return { ...base, startup: 13, active: 2, recovery: 24, damage: 0, hitstun: 0, blockstun: 0, knockback: 0, hitbox: null,
         projectile: { vx: 9, spawnX: 96, spawnY: -176, box: { x: -28, y: -28, w: 56, h: 56 }, damage: 60, hitstun: 18, blockstun: 12, knockback: 9 } };
     case 'teleport':
       return { ...base, startup: 10, active: 1, recovery: 18, damage: 0, hitstun: 0, blockstun: 0, knockback: 0, hitbox: null, teleport: { mode: 'behind' }, invulnFrom: 6, invuln: 12 };
     case 'anti-air-dp':
+    case 'flash-kick': // charge (du) rising anti-air — same leap+invuln shape
       return { ...base, startup: 5, active: 8, recovery: 22, damage: 80, hitstun: 20, blockstun: 12, knockback: 8, knockdown: true, hitbox: { x: 20, y: -244, w: 72, h: 120 }, leap: { vx: 4, vy: 16 }, invuln: 8 };
     case 'advancing-rush':
       return { ...base, startup: 9, active: 4, recovery: 20, damage: 70, hitstun: 18, blockstun: 12, knockback: 8, hitbox: { x: 50, y: -184, w: 92, h: 72 }, forwardVel: 10 };

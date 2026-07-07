@@ -77,6 +77,7 @@ function initFighter(charId: string, def: CharacterDef, slot: 0 | 1): FighterSta
     action: { kind: 'idle', frame: 0 },
     inputBuffer: [],
     charge: 0,
+    backCharge: 0,
     stun: 0,
     hitstop: 0,
     buffered: null,
@@ -225,7 +226,12 @@ function motionDone(f: FighterState, motion: Motion): boolean {
     return f.charge >= CHARGE_TICKS && ((buf[buf.length - 1] ?? 0) & BIT.up) !== 0;
   }
 
-  const STAGES: Record<Exclude<Motion, '360' | 'du'>, { need: number; not?: number }[]> = {
+  // charge back-forward (sonic boom): banked back-hold (f.backCharge) + forward now.
+  if (motion === 'cbf') {
+    return f.backCharge >= CHARGE_TICKS && ((buf[buf.length - 1] ?? 0) & fwd) !== 0;
+  }
+
+  const STAGES: Record<Exclude<Motion, '360' | 'du' | 'cbf'>, { need: number; not?: number }[]> = {
     qcf: [{ need: BIT.down }, { need: fwd, not: BIT.down }],
     qcb: [{ need: BIT.down }, { need: back, not: BIT.down }],
     bf: [{ need: back }, { need: fwd, not: back }],
@@ -1259,6 +1265,9 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
     // bank charge while holding down; bleed it fast on release (short grace
     // window to flick ↓→↑ without losing the charge)
     f.charge = inputs[slot].down ? Math.min(f.charge + 1, 600) : Math.max(0, f.charge - 8);
+    // same for a held BACK (facing-relative) — fuels the 'cbf' sonic-boom motion
+    const backHeld = f.facing === 1 ? inputs[slot].left : inputs[slot].right;
+    f.backCharge = backHeld ? Math.min(f.backCharge + 1, 600) : Math.max(0, f.backCharge - 8);
     // dash stock regen: one at a time, only while short (see DASH_STOCKS)
     if (f.dashStocks < DASH_STOCKS && ++f.dashRegen >= DASH_REGEN_TICKS) {
       f.dashStocks++;

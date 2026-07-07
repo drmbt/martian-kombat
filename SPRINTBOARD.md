@@ -946,10 +946,12 @@ audit lives in the `move-authoring` skill.
       button for a distinct move (new input paradigm alongside motions)
 - [ ] **More "get over here" pull moves** — plumbing exists (`projectile.pull`,
       Vine Spear); design more into kits
-- [ ] **Charge back-forward projectile** (true Guile Sonic Boom) — `bf` is
-      currently a sequence, not a held charge; add the charge-hold variant
-- [ ] **Wire the `du` charge flash-kick that already exists** — the plumbing is
-      built (charge ↓hold↑) but NO character uses it yet; give one a flash-kick
+- [x] **Charge back-forward projectile** (true Guile Sonic Boom) — DONE 2026-07-07:
+      added a new `cbf` motion (hold ← `CHARGE_TICKS` via `f.backCharge`, then →)
+      mirroring `du`; `bf` sequence left intact for the 5 chars that use it. Test.
+- [x] **`du` charge flash-kick exposed** — the engine plumbing was already built;
+      now surfaced as a **Flash-kick archetype** in the moves creator (still no
+      built-in roster char uses either — the CONTROL is available to pick).
 - [ ] **More mash / rapid single-attack specials** (Chun-Li lightning legs,
       E. Honda hundred-hands, Blanka electricity) — `input.mash` exists, underused
 - [ ] **Air command-specials / dives** — fire a motion special while airborne
@@ -1195,6 +1197,20 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-07 · engine+ui+docs · charge controls + per-move audio + projectile
+  persistence** — engine: new `cbf` motion (charge back→forward sonic boom) banked
+  via `f.backCharge` like `du`, `bf` sequence untouched; `src/engine/specials.test.ts`
+  locks in (a) a projectile persisting after its spawning move recovers — already
+  correct, now tested — and (b) `cbf` firing only with the held charge (315 tests,
+  1 pre-existing combo-scaling failure unrelated). Wizard: Sonic-boom + Flash-kick
+  archetypes in the specials editor (emit `cbf`/`du` + leap/projectile), a per-special
+  **call-out audio slot** (spoken VO via TTS/clone or SFX via ElevenLabs
+  sound-generation, or BYO upload) that sets `voice:true` and writes
+  `voice/<id>-move-<moveId>.mp3`, and anti-air specials now RISE in the preview.
+  Docs: move-authoring skill + MOVES.md mark charge b,f/`cbf` + `du` as built and
+  note projectile persistence. New endpoint `/creator/move-audio`. tsc clean;
+  archetypes + audio row verified live in mock. — Claude
 
 - **2026-07-07 · ui+tools · Character Creator — editor UX + specials pass** —
   merged SPRITES+SPECIALS into one **MOVES** step with a real specials editor:

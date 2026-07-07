@@ -105,9 +105,10 @@ export interface ProjectileDef {
 }
 
 /** Fighting-game convention motions: quarter-circles, back-forward,
- *  dragon punch (→↓↘), half-circles, a (simplified) 360, and charge
- *  down-up ('du': hold ↓ for CHARGE_TICKS, then ↑ + button). */
-export type Motion = 'qcf' | 'qcb' | 'bf' | 'dp' | 'hcb' | 'hcf' | '360' | 'du';
+ *  dragon punch (→↓↘), half-circles, a (simplified) 360, charge down-up
+ *  ('du': hold ↓ for CHARGE_TICKS, then ↑ + button — flash kick), and charge
+ *  back-forward ('cbf': hold ← for CHARGE_TICKS, then → + button — sonic boom). */
+export type Motion = 'qcf' | 'qcb' | 'bf' | 'cbf' | 'dp' | 'hcb' | 'hcf' | '360' | 'du';
 
 export interface SpecialInput {
   /** omitted for pure button-combo moves (3P lariats etc.) */
@@ -358,6 +359,8 @@ export interface FighterState {
   /** consecutive-ish ticks holding down (decays fast on release) — fuels
    *  charge motions ('du') without stretching the input buffer */
   charge: number;
+  /** same, holding BACK (facing-relative) — fuels the 'cbf' sonic-boom charge */
+  backCharge: number;
   /** dizzy accumulator: connecting hits add their damage, decays every tick,
    *  crossing STUN_THRESHOLD forces 'dazed' when the current reel ends */
   stun: number;
