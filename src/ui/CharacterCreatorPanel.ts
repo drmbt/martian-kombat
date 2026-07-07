@@ -8,7 +8,7 @@ import {
   CreatorModel, CREATOR_STEPS, makeDraft, BASE_CELLS, ATTACK_CELLS,
   ARCHETYPE_INFO, specialsForArchetype, SPECIAL_ARCHETYPES, controlsForArchetype,
   NORMAL_MOVE_IDS, moveCellNames, slugify,
-  CANONICAL_PROMPT, PORTRAIT_PROMPT, SPRITE_PROMPT,
+  CANONICAL_PROMPT, PORTRAIT_PROMPT, KO_PROMPT, SPRITE_PROMPT,
   type CreatorJob, type AttackCell, type SpecialDraft,
 } from './creatorModel';
 import { hitboxFromSkeleton, strikeKind } from './hitboxFromSkeleton';
@@ -379,6 +379,7 @@ export class CharacterCreatorPanel {
       gate.appendChild(el('div', 'font-size:12px;color:#9fb4be;margin-bottom:8px;', 'APPROVE TO CONTINUE'));
       gate.appendChild(this.approvalRow('canonical', 'Canonical'));
       gate.appendChild(this.approvalRow('portrait', 'Portrait'));
+      if (this.m.job('ko')) gate.appendChild(this.approvalRow('ko', 'KO portrait'));
       const cont = el('button', canon.approved ? BTN_HOT : BTN + 'opacity:.5;pointer-events:none;', 'Continue to Profile ▸');
       cont.style.marginTop = '10px';
       cont.onclick = () => { if (this.m.job('canonical')?.approved) { this.ensureDraft(); this.goto(1); } };
@@ -436,6 +437,9 @@ export class CharacterCreatorPanel {
     const portraitRefs = refs.length > 1 ? [refs[1], ...refs.filter((_, i) => i !== 1)] : refs;
     this.fireGen('canonical', 'canonical', 'Canonical', CANONICAL_PROMPT(desc), refs);
     this.fireGen('portrait', 'portrait', 'Portrait', PORTRAIT_PROMPT(this.m.inputs.name, desc), portraitRefs);
+    // defeated bust for the win-quote screen (chroma-keyed square, same as portrait);
+    // the neutral bust <id>-bust.png is CROPPED from the canonical at ship (bustFromCanonical)
+    this.fireGen('ko', 'ko', 'KO portrait', KO_PROMPT(this.m.inputs.name, desc), portraitRefs);
     this.render();
   }
 
@@ -501,11 +505,20 @@ export class CharacterCreatorPanel {
     this.m.inputs.stagePhotos ??= []; this.m.inputs.voiceSamples ??= [];
     this.m.inputs.kiaiClips ??= []; this.m.inputs.musicTracks ??= [];
     colB.appendChild(this.dropZone('Stage landscape (optional)', { accept: 'image/*' }, this.m.inputs.stagePhotos,
-      () => {
-        const u = this.m.inputs.stagePhotos?.[0]?.dataUrl;
-        if (u && this.m.job('stage')?.status !== 'running') this.fireGen('stage', 'stage', 'Stage', d.stagePrompt, [dataUrlToB64(u)!].filter(Boolean));
-        this.renderTray();
-      }));
+      () => { void this.genStage(); this.renderTray(); }));
+    // editable stage PROMPT + regen (same reprompt+regen as the sprite cells) — the
+    // dropped photo (if any) is the reference; text-only gen works with no photo.
+    const stageW = this.field('Stage prompt');
+    const sprompt = el('textarea', INPUT + 'height:64px;font-size:10px;line-height:1.35;') as HTMLTextAreaElement;
+    sprompt.value = d.stagePrompt;
+    sprompt.placeholder = 'stage art prompt (sent to nano-banana) — edit & regenerate';
+    sprompt.oninput = () => (d.stagePrompt = sprompt.value);
+    const sjob = this.m.job('stage');
+    const sbtn = el('button', BTN_HOT + 'font-size:12px;margin-top:6px;',
+      sjob?.status === 'running' ? '◐ generating stage…' : sjob?.status === 'done' ? '↻ Regenerate stage' : '▸ Generate stage');
+    sbtn.onclick = () => void this.genStage();
+    stageW.append(sprompt, sbtn);
+    colB.appendChild(stageW);
     colB.appendChild(this.dropZone('Voice samples for cloning (optional, multiple)', { accept: 'audio/*', multiple: true }, this.m.inputs.voiceSamples));
     if ((this.m.inputs.voiceSamples ?? []).length) {
       const cloneBtn = el('button', BTN + 'font-size:11px;margin:-6px 0 12px;',
@@ -721,9 +734,17 @@ export class CharacterCreatorPanel {
         if (pj?.dataUrl) { const im = el('img', 'width:44px;height:44px;object-fit:contain;border:1px solid #22303e;border-radius:4px;') as HTMLImageElement; im.src = pj.dataUrl; prow.appendChild(im); }
         else { const ph = el('div', 'width:44px;height:44px;border:1px dashed #3f5266;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#5c6b78;font-size:18px;', '+'); prow.appendChild(ph); }
         const pbtn = el('button', BTN + 'font-size:11px;', pj?.status === 'running' ? '◐ …' : pj?.status === 'done' ? '↻ regen projectile' : '▸ generate projectile');
-        pbtn.onclick = () => this.genProjectile(s.id, s.name, s.description);
+        pbtn.onclick = () => this.genProjectile(s);
         prow.appendChild(pbtn);
         box.appendChild(prow);
+        // editable projectile-art PROMPT (same reprompt+regen as the sprite cells) —
+        // seeded from the auto prompt, edits persist on the draft & drive regen
+        const pprompt = el('textarea', INPUT + 'height:64px;font-size:10px;line-height:1.35;margin-top:6px;') as HTMLTextAreaElement;
+        pprompt.value = s.projPrompt ?? this.projectilePrompt(s.name, s.description);
+        pprompt.placeholder = 'projectile art prompt (sent to nano-banana) — edit & regenerate';
+        pprompt.title = 'the prompt the projectile art is generated from — edit, then ↻ regen projectile';
+        pprompt.oninput = () => (s.projPrompt = pprompt.value);
+        box.appendChild(pprompt);
         // projectile render/collision tuning — sticks on export (spawnX/Y + box)
         if (pj?.status === 'done') {
           const tune = el('div', 'margin-top:6px;');
@@ -846,10 +867,28 @@ export class CharacterCreatorPanel {
     this.render();
   }
 
+  /** the projectile prompt actually sent: the special's edited override if set,
+   *  else the auto one written from its description. */
+  private effectiveProjPrompt(s: SpecialDraft): string {
+    return s.projPrompt?.trim() || this.projectilePrompt(s.name, s.description);
+  }
+
+  /** generate (or regenerate) the home-stage backdrop from the editable stage
+   *  prompt + the dropped landscape photo (if any). Text-only works with no photo. */
+  private async genStage(): Promise<void> {
+    if (this.m.job('stage')?.status === 'running') return;
+    const prompt = this.m.draft?.stagePrompt?.trim();
+    if (!prompt) { this.logMsg('stage: add a prompt first'); return; }
+    const u = this.m.inputs.stagePhotos?.[0]?.dataUrl;
+    const refs = u ? [dataUrlToB64(u)!].filter(Boolean) : [];
+    await this.fireGen('stage', 'stage', 'Stage', prompt, refs);
+    if (CREATOR_STEPS[this.m.step] === 'PROFILE') this.render();
+  }
+
   /** generate the projectile art for a projectile special (inspo-free, keyable FX). */
-  private async genProjectile(id: string, name: string, desc: string): Promise<void> {
-    await this.fireGen('proj:' + id, 'sprite', name + ' projectile', this.projectilePrompt(name, desc), []);
-    if (CREATOR_STEPS[this.m.step] === 'MOVES') this.render(); // reveal the tuning sliders
+  private async genProjectile(s: SpecialDraft): Promise<void> {
+    await this.fireGen('proj:' + s.id, 'sprite', s.name + ' projectile', this.effectiveProjPrompt(s), []);
+    if (CREATOR_STEPS[this.m.step] === 'MOVES') this.render(); // reveal the tuning sliders + prompt
   }
 
   /** generate one special's frames — projectile-first, then the ACTIVE frame that
@@ -860,7 +899,7 @@ export class CharacterCreatorPanel {
     const nm = this.m.inputs.name, id = s.id, isProj = s.archetype === 'projectile' || s.archetype === 'sonic-boom';
     let projRef: string | undefined;
     if (isProj) {
-      if (this.m.job('proj:' + id)?.status !== 'done') await this.fireGen('proj:' + id, 'sprite', s.name + ' projectile', this.projectilePrompt(s.name, s.description), []);
+      if (this.m.job('proj:' + id)?.status !== 'done') await this.fireGen('proj:' + id, 'sprite', s.name + ' projectile', this.effectiveProjPrompt(s), []);
       projRef = dataUrlToB64(this.m.job('proj:' + id)?.dataUrl);
     }
     // active — references the projectile so the fighter is shown releasing it
@@ -1005,6 +1044,38 @@ export class CharacterCreatorPanel {
     return new Promise((resolve) => { const i = new Image(); i.onload = () => resolve(i); i.src = url; });
   }
 
+  /** the roster BUST (<id>-bust.png): the canonical cropped to the centered head
+   *  + shoulders (the pipeline's portrait_crop.py, done in-browser off the alpha
+   *  silhouette instead of DWPose head keypoints). Square PNG base64, or undefined
+   *  if there's no canonical to crop. */
+  private async bustFromCanonical(): Promise<string | undefined> {
+    const canon = this.m.job('canonical'); if (!canon?.dataUrl) return undefined;
+    const img = await this.loadImg(canon.dataUrl);
+    const W = img.naturalWidth, H = img.naturalHeight;
+    const src = document.createElement('canvas'); src.width = W; src.height = H;
+    const sctx = src.getContext('2d')!; sctx.drawImage(img, 0, 0);
+    const data = sctx.getImageData(0, 0, W, H).data;
+    // figure vertical extent + the horizontal center of the top head-band
+    let headTop = -1, soleY = -1;
+    for (let y = 0; y < H && headTop < 0; y++) for (let x = 0; x < W; x++) if (data[(y * W + x) * 4 + 3] > 25) { headTop = y; break; }
+    for (let y = H - 1; y >= 0 && soleY < 0; y--) for (let x = 0; x < W; x++) if (data[(y * W + x) * 4 + 3] > 25) { soleY = y; break; }
+    if (headTop < 0 || soleY <= headTop) return dataUrlToB64(canon.dataUrl); // empty/degenerate — fall back to raw
+    const figH = soleY - headTop;
+    // head+shoulders ≈ top third of the figure; center on the head-band's alpha centroid
+    const band = Math.max(2, Math.round(figH * 0.14));
+    let sum = 0, n = 0;
+    for (let y = headTop; y < headTop + band; y++) for (let x = 0; x < W; x++) if (data[(y * W + x) * 4 + 3] > 25) { sum += x; n++; }
+    const cx = n ? sum / n : W / 2;
+    const side = Math.min(Math.max(W, H), Math.round(figH * 0.42));
+    const top = Math.max(0, headTop - Math.round(side * 0.12));
+    let left = Math.round(cx - side / 2);
+    left = Math.max(0, Math.min(left, W - side));
+    const OUT = 512;
+    const out = document.createElement('canvas'); out.width = OUT; out.height = OUT;
+    out.getContext('2d')!.drawImage(src, left, top, side, Math.min(side, H - top), 0, 0, OUT, OUT * Math.min(side, H - top) / side);
+    return out.toDataURL('image/png').split(',')[1];
+  }
+
   private async composeSheet(): Promise<{ sheetBase64: string; meta: object } | null> {
     const plan = this.m.sheetPlan(); // { name, jobKey } for base + attack-phase + special cells
     if (!plan.length) return null;
@@ -1058,6 +1129,8 @@ export class CharacterCreatorPanel {
       id: this.m.id, name: this.m.inputs.name.toUpperCase(), def: this.m.buildFullCharacter(),
       sheetBase64: sheet?.sheetBase64, meta: sheet?.meta,
       portraitBase64: dataUrlToB64(this.m.job('portrait')?.dataUrl),
+      koBase64: dataUrlToB64(this.m.job('ko')?.dataUrl),
+      bustBase64: await this.bustFromCanonical(),
       voClips: this.m.finalVoClips(), musicBase64: this.m.finalMusic(), moveAudio: this.m.moveAudio,
       stageBase64: dataUrlToB64(this.m.job('stage')?.dataUrl), stageId: this.m.id + '-home',
       stageName: this.m.inputs.name.toUpperCase() + ' HOME',
@@ -1425,6 +1498,10 @@ export class CharacterCreatorPanel {
       refs = photoRefs.length > 1 ? [photoRefs[1], ...photoRefs.filter((_, i) => i !== 1)] : photoRefs;
       kind = 'portrait'; label = 'Portrait';
       if (!prompt) prompt = PORTRAIT_PROMPT(this.m.inputs.name, desc);
+    } else if (key === 'ko') {
+      refs = photoRefs.length > 1 ? [photoRefs[1], ...photoRefs.filter((_, i) => i !== 1)] : photoRefs;
+      kind = 'ko'; label = 'KO portrait';
+      if (!prompt) prompt = KO_PROMPT(this.m.inputs.name, desc);
     } else return;
     // img2img: replace the base reference with THIS cell's current image
     if (this.regenUseSelf) {

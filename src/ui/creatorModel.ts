@@ -56,6 +56,7 @@ export interface SpecialDraft {
   projSpawnX?: number; // engine spawn offset from feet (x forward)
   projSpawnY?: number; // engine spawn offset from feet (y up = negative)
   projBox?: { x: number; y: number; w: number; h: number }; // collision box (auto from alpha)
+  projPrompt?: string; // edited projectile-art prompt (overrides the auto one on regen)
 }
 
 export interface DesignDraft {

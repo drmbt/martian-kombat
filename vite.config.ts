@@ -565,7 +565,7 @@ function editorApi(): Plugin {
           .then((b) => {
             const p = b as {
               id?: string; name?: string; def?: Record<string, unknown>; sheetBase64?: string; meta?: unknown;
-              portraitBase64?: string; voClips?: Record<string, string>; musicBase64?: string; moveAudio?: Record<string, string>;
+              portraitBase64?: string; koBase64?: string; bustBase64?: string; voClips?: Record<string, string>; musicBase64?: string; moveAudio?: Record<string, string>;
               stageBase64?: string; stageId?: string; fatalityPanels?: string[]; projectiles?: Record<string, string>;
             };
             if (!okId(p.id)) throw new Error('invalid id');
@@ -583,11 +583,12 @@ function editorApi(): Plugin {
                 if (typeof b64 === 'string' && /^[a-z0-9_-]+$/.test(moveId)) writeFileSync(join(d, `projectile-${moveId}.png`), Buffer.from(b64, 'base64'));
               }
             }
-            // portraits
+            // portraits — real bust (canonical crop) + ko when present, else the portrait
             if (p.portraitBase64) {
               const d = join(A, 'portraits'); mkdirSync(d, { recursive: true });
-              const buf = Buffer.from(p.portraitBase64, 'base64');
-              for (const s of ['', '-bust', '-ko']) writeFileSync(join(d, `${id}${s}.png`), buf);
+              writeFileSync(join(d, `${id}.png`), Buffer.from(p.portraitBase64, 'base64'));
+              writeFileSync(join(d, `${id}-bust.png`), Buffer.from(p.bustBase64 ?? p.portraitBase64, 'base64'));
+              writeFileSync(join(d, `${id}-ko.png`), Buffer.from(p.koBase64 ?? p.portraitBase64, 'base64'));
             }
             // audio (only real clips — no silence padding in an export)
             const vo = p.voClips ?? {};
@@ -647,8 +648,9 @@ function editorApi(): Plugin {
         if (req.method !== 'POST') return next();
         readJsonBody(req)
           .then((b) => {
-            const { id, name, def, sheetBase64, meta, portraitBase64, voClips, musicBase64, stageBase64, stageId, stageName, fatalityPanels, projectiles } = b as {
+            const { id, name, def, sheetBase64, meta, portraitBase64, koBase64, bustBase64, voClips, musicBase64, stageBase64, stageId, stageName, fatalityPanels, projectiles } = b as {
               id?: unknown; name?: unknown; def?: unknown; sheetBase64?: unknown; meta?: unknown; portraitBase64?: unknown;
+              koBase64?: string; bustBase64?: string;
               voClips?: Record<string, string>; musicBase64?: string; moveAudio?: Record<string, string>;
               stageBase64?: string; stageId?: string; stageName?: string; fatalityPanels?: string[]; projectiles?: Record<string, string>;
             };
@@ -670,12 +672,17 @@ function editorApi(): Plugin {
                 wroteProjectiles = true;
               }
             }
-            // portrait (+ bust/ko copies so BootScene's unconditional loads don't 404)
+            // portrait: the straight-on select icon (<id>.png), the head-centered
+            // BUST (<id>-bust.png, cropped from the canonical), and the beaten KO
+            // bust (<id>-ko.png). Each falls back to the portrait so BootScene's
+            // unconditional loads never 404.
             if (typeof portraitBase64 === 'string') {
               const portDir = join(root, 'public/assets/portraits');
               mkdirSync(portDir, { recursive: true });
-              const buf = Buffer.from(portraitBase64, 'base64');
-              for (const suffix of ['', '-bust', '-ko']) writeFileSync(join(portDir, `${id}${suffix}.png`), buf);
+              const portBuf = Buffer.from(portraitBase64, 'base64');
+              writeFileSync(join(portDir, `${id}.png`), portBuf);
+              writeFileSync(join(portDir, `${id}-bust.png`), Buffer.from(typeof bustBase64 === 'string' ? bustBase64 : portraitBase64, 'base64'));
+              writeFileSync(join(portDir, `${id}-ko.png`), Buffer.from(typeof koBase64 === 'string' ? koBase64 : portraitBase64, 'base64'));
             }
             // silent placeholder VO so BootScene's unconditional per-fighter
             // audio loads resolve (a MISSING public asset is served as HTML by
