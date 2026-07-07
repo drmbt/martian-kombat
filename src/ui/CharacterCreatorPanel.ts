@@ -1323,9 +1323,22 @@ export class CharacterCreatorPanel {
     this.render();
   }
 
+  /** keyable art (everything except a stage) must land on a flat green screen so
+   *  ffmpeg can key it — reinforce it in case an edited prompt dropped the clause. */
+  private withChromaKey(kind: string, prompt: string): string {
+    if (kind === 'stage') return prompt; // stages are full scenes, never keyed
+    if (/chroma|#00b140|green\s*(screen|background|chroma)/i.test(prompt)) return prompt;
+    return prompt.trim() + ' Background: a solid flat chroma-key green (#00B140) screen — completely uniform, no shadow, no scenery.';
+  }
+
   private async fireGen(key: string, kind: string, label: string, prompt: string, refs: string[]): Promise<void> {
+    prompt = this.withChromaKey(kind, prompt);
     const t0 = Date.now();
-    const job: CreatorJob = { key, kind, label, status: 'running', prompt, approved: false, startedAt: t0 };
+    // stash the frame we're about to replace so a worse regen can be undone
+    const existing = this.m.job(key);
+    const prevDataUrl = existing?.status === 'done' ? existing.dataUrl : undefined;
+    const prevMock = existing?.status === 'done' ? existing.mock : undefined;
+    const job: CreatorJob = { key, kind, label, status: 'running', prompt, approved: false, startedAt: t0, prevDataUrl, prevMock };
     this.m.upsertJob(job);
     this.logMsg(`▸ gen ${label}…`);
     this.renderTray(); this.renderPreviewControls(); this.redrawPreview();
@@ -1480,6 +1493,15 @@ export class CharacterCreatorPanel {
         j.status === 'running' ? '◐ regenerating…' : '↻ Regenerate ' + (j.label ?? ''));
       rr.onclick = () => this.regenSelected();
       wrap.appendChild(rr);
+      // undo/redo the last regen — flip back to the frame it replaced if it came
+      // out worse (a within-session safety net; persists the shown frame to disk)
+      if (j.prevDataUrl !== undefined) {
+        const undo = el('button', BTN + 'margin-top:6px;width:100%;font-size:11px;',
+          j.undone ? '↷ Redo — back to the regenerated frame' : '↶ Undo — revert to the previous frame');
+        undo.title = 'flip between the regenerated frame and the one it replaced';
+        undo.onclick = () => void this.undoRegen(key);
+        wrap.appendChild(undo);
+      }
     }
     this.previewInspect.appendChild(wrap);
   }
@@ -1535,6 +1557,19 @@ export class CharacterCreatorPanel {
       this.logMsg(`img2img: editing ${label} from its own image`);
     }
     this.fireGen(key, kind, label, prompt, refs);
+  }
+
+  /** flip a cell between its current (regenerated) image and the one it replaced,
+   *  writing whichever is shown back to disk — lets a worse regen be rejected. */
+  private async undoRegen(key: string): Promise<void> {
+    const j = this.m.job(key); if (!j || j.prevDataUrl === undefined) return;
+    const curUrl = j.dataUrl, curMock = j.mock;
+    j.dataUrl = j.prevDataUrl; j.mock = j.prevMock ?? false;
+    j.prevDataUrl = curUrl; j.prevMock = curMock;
+    j.undone = !j.undone;
+    await this.persistFrame(key); // the reverted frame becomes the on-disk one
+    this.logMsg(`${j.undone ? '↶ reverted' : '↷ redid'} ${j.label}`);
+    this.renderPreviewInspect(); this.renderTray(); this.renderPreviewControls(); this.redrawPreview();
   }
 
   /** the job the big preview should draw right now (animated group or one cell). */

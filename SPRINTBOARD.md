@@ -1198,6 +1198,16 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-07 · ui · regen chroma-key reinforcement + undo/reject regenerated
+  frames** — On every keyable-art regen (sprite/canonical/portrait/ko/projectile,
+  never a stage) the prompt is reinforced with the flat green chroma-key clause if
+  an edited prompt dropped it, so the frame still keys cleanly. Regen no longer
+  overwrites permanently: `fireGen` stashes the frame it replaces (`prevDataUrl`),
+  and the inspector shows a **↶ Undo / ↷ Redo** button that flips between the
+  regenerated frame and the one before it and writes whichever is shown back to
+  disk — a worse regen can be rejected. tsc clean; chroma reinforcement + undo/redo
+  round-trip verified live in mock. — Claude
+
 - **2026-07-07 · ui+engine · projectile/stage → frame inspector, projectile
   scale fix, sprite-editor bake-down** — Moved the projectile + stage reprompt/
   regenerate OFF the wizard dialog and onto the frame inspector, where every other

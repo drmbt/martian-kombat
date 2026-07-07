@@ -24,6 +24,9 @@ export interface CreatorJob {
   offY?: number;
   savedAs?: string; // filename under assets/raw/creator/<id>/img/ (live-save/resume)
   startedAt?: number; // ms epoch when this gen kicked off (elapsed display)
+  prevDataUrl?: string; // the image this frame REPLACED on the last regen (undo)
+  prevMock?: boolean; // whether prevDataUrl was a mock placeholder
+  undone?: boolean; // true while showing the reverted (previous) frame (relabel redo)
 }
 
 export interface UploadedFile {
