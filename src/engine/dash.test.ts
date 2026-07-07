@@ -62,8 +62,9 @@ describe('dash stocks', () => {
     const s = fresh();
     for (let i = 0; i < DASH_STOCKS; i++) {
       doubleTapForward(s);
-      // let the impulse bleed off so the next double-tap is clean
-      for (let t = 0; t < 30; t++) step(s, [inp(), inp()], characters);
+      // let the impulse fully bleed so residual vx can't be mistaken for a new
+      // dash below (a stronger dash decays over more ticks — see DASH_SPEED)
+      for (let t = 0; t < 45; t++) step(s, [inp(), inp()], characters);
     }
     expect(s.fighters[0].dashStocks).toBe(0);
     const xBefore = s.fighters[0].x;
