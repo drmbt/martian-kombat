@@ -1198,6 +1198,23 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-07 · ui · creator↔sprite-editor skeleton parity + childed, persisted
+  hitboxes** — Skeleton overlay is now a 1:1 port of `FightScene.drawSkeleton`:
+  the SAME body groups (orange torso / blue arms / green legs), neck, per-finger
+  hand fans, ankle→toe/heel foot bones, and joint-dot styling (face_* skipped).
+  The points/labels were already identical (both come from `named_keypoints`, the
+  full 133-pt wholebody set — `infer_keypoints.py` for the creator, the pack for
+  the game), so a creator character's `meta.skeletons` drops into the game as-is.
+  Hitboxes are now CHILDED to the sprite: the overlay anchor rides the current
+  frame's art offset (`geom.ox/oy`), so the box moves with the fighter through a
+  jump arc or anti-air rise, exactly as the in-game hitbox follows `f.y`. Manual
+  hitbox drags now flush through the same debounced autosave (`scheduleSave` on
+  drag-end) and were already in `serializeState`/`loadDraft`, so tweaks survive a
+  refresh. Verified the exported character JSON carries every attribute an existing
+  playable fighter has. tsc clean; 314/315 (pre-existing Sprint 19 fail); childing
+  (+149px with a 100-cell rise), skeleton hands/feet, and persistence verified in
+  mock. — Claude
+
 - **2026-07-07 · ui · creator auto-hitbox now matches the Sprite Editor exactly**
   — Confirmed the scale FACTOR was already identical (`hurtStand.h·1.32/384`), but
   the creator's `autoHitboxesFromSkeleton` was OMITTING the vertical render offset

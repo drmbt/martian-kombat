@@ -98,8 +98,8 @@ export class CharacterCreatorPanel {
     this.previewCanvas = el('canvas', 'flex:1;width:100%;min-height:0;image-rendering:auto;'); // transparent, fills — never shrunk by the inspect panel (fighter stays grounded)
     this.previewCanvas.onmousedown = (e) => this.onHbDown(e);
     this.previewCanvas.onmousemove = (e) => this.onHbMove(e);
-    this.previewCanvas.onmouseup = () => (this.hbDrag = undefined);
-    this.previewCanvas.onmouseleave = () => (this.hbDrag = undefined);
+    this.previewCanvas.onmouseup = () => this.endHbDrag();
+    this.previewCanvas.onmouseleave = () => this.endHbDrag();
     left.append(this.previewToggles, this.previewControls, this.previewCaption, this.previewCanvas);
     this.root.appendChild(left);
 
@@ -1624,11 +1624,10 @@ export class CharacterCreatorPanel {
     if (!this.showHitboxes) return null;
     const moveId = this.previewMoveId(); if (!moveId) return null;
     const box = this.effectiveHitbox(moveId); if (!box) return null;
-    const W = this.previewCanvas.width, feetY = this.hbFeetY(), e = this.hbScale();
-    // box.y is engine (relative to the collision origin f.y); subtract the render
-    // foot offset to draw it where FightScene renders it over the sprite feet
-    const foot = this.footOffset();
-    return { moveId, box, rx: W / 2 + box.x * e, ry: feetY + (box.y - foot) * e, rw: box.w * e, rh: box.h * e };
+    const { cx, feetY, e } = this.hbAnchor(), foot = this.footOffset();
+    // box.y is engine (relative to f.y); subtract the render foot offset to draw it
+    // where FightScene renders it over the sprite feet
+    return { moveId, box, rx: cx + box.x * e, ry: feetY + (box.y - foot) * e, rw: box.w * e, rh: box.h * e };
   }
 
   private onHbDown(ev: MouseEvent): void {
@@ -1645,6 +1644,14 @@ export class CharacterCreatorPanel {
     this.hbDrag = { moveId: r.moveId, mode, sx: mx, sy: my, box: { ...r.box } };
   }
 
+  /** end a hitbox drag and flush the edit through the same debounced autosave the
+   *  rest of the creator uses, so manual box tweaks survive a refresh. */
+  private endHbDrag(): void {
+    if (!this.hbDrag) return;
+    this.hbDrag = undefined;
+    this.scheduleSave();
+  }
+
   private onHbMove(ev: MouseEvent): void {
     if (!this.hbDrag) {
       // hover cursor feedback (only when the overlay could be grabbed)
@@ -1659,7 +1666,7 @@ export class CharacterCreatorPanel {
       this.previewCanvas.style.cursor = cur;
       return;
     }
-    const e = this.hbScale();
+    const e = this.hbAnchor().e;
     const dx = (ev.offsetX - this.hbDrag.sx) / e, dy = (ev.offsetY - this.hbDrag.sy) / e;
     const b = { ...this.hbDrag.box };
     switch (this.hbDrag.mode) {
@@ -1953,18 +1960,38 @@ export class CharacterCreatorPanel {
     }
     // skeleton + hitbox overlays (toggled by the checkboxes above the preview)
     if (this.showSkeleton) this.drawSkeletonOverlay(ctx);
-    if (this.showHitboxes) this.drawHitboxOverlay(ctx, W, floorY);
+    if (this.showHitboxes) this.drawHitboxOverlay(ctx);
     // portrait chip top-left
     const port = this.m.job('portrait');
     if (port?.dataUrl) { ctx.save(); ctx.beginPath(); ctx.rect(12, 12, 70, 70); ctx.clip(); this.drawContain(ctx, port.dataUrl, 12, 12, 70, 70); ctx.restore(); ctx.strokeStyle = '#3f6070'; ctx.lineWidth = 1; ctx.strokeRect(12, 12, 70, 70); }
   }
 
   private static readonly SPRITE_FOOT_OFFSET_Y = 16; // MUST match FightScene (render gap between f.y and the drawn feet)
-  private static readonly SKEL_BONES: [string, string, string][] = [
-    ['Lsho', 'Rsho', '#ff8c1a'], ['Lhip', 'Rhip', '#ff8c1a'], ['Lsho', 'Lhip', '#ff8c1a'], ['Rsho', 'Rhip', '#ff8c1a'],
-    ['Lsho', 'Lelb', '#33a0ff'], ['Lelb', 'Lwri', '#33a0ff'], ['Rsho', 'Relb', '#33a0ff'], ['Relb', 'Rwri', '#33a0ff'],
-    ['Lhip', 'Lkne', '#3ad64a'], ['Lkne', 'Lank', '#3ad64a'], ['Rhip', 'Rkne', '#3ad64a'], ['Rkne', 'Rank', '#3ad64a'],
+  // The SAME limb graph + colors FightScene.drawSkeleton uses (torso/head orange,
+  // arms blue, legs green; per-finger hands; ankle→toe/heel feet) so the creator
+  // overlay reads identically to the in-game/Sprite-Editor F3 skeleton.
+  private static readonly SKEL_GROUPS: { color: string; bones: [string, string][] }[] = [
+    { color: '#ff8c1a', bones: [['Lsho', 'Rsho'], ['Lhip', 'Rhip'], ['Lsho', 'Lhip'], ['Rsho', 'Rhip']] },
+    { color: '#33a0ff', bones: [['Lsho', 'Lelb'], ['Lelb', 'Lwri'], ['Rsho', 'Relb'], ['Relb', 'Rwri']] },
+    { color: '#3ad64a', bones: [['Lhip', 'Lkne'], ['Lkne', 'Lank'], ['Rhip', 'Rkne'], ['Rkne', 'Rank']] },
   ];
+  private static readonly SKEL_JOINT_COLOR: Record<string, string> = {
+    nose: '#ff8c1a', Lsho: '#ff8c1a', Rsho: '#ff8c1a', Lhip: '#ff8c1a', Rhip: '#ff8c1a',
+    Leye: '#ff8c1a', Reye: '#ff8c1a', Lear: '#ff8c1a', Rear: '#ff8c1a',
+    Lelb: '#33a0ff', Relb: '#33a0ff', Lwri: '#33a0ff', Rwri: '#33a0ff',
+    Lkne: '#3ad64a', Rkne: '#3ad64a', Lank: '#3ad64a', Rank: '#3ad64a',
+  };
+  private static readonly SKEL_HAND_BONES: [number, number][] = [
+    [0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [5, 6], [6, 7], [7, 8],
+    [0, 9], [9, 10], [10, 11], [11, 12], [0, 13], [13, 14], [14, 15], [15, 16],
+    [0, 17], [17, 18], [18, 19], [19, 20],
+  ];
+  private static readonly SKEL_FOOT_BONES: [string, string][] = [
+    ['Lank', 'Lheel'], ['Lank', 'Lbigtoe'], ['Lank', 'Lsmalltoe'],
+    ['Rank', 'Rheel'], ['Rank', 'Rbigtoe'], ['Rank', 'Rsmalltoe'],
+  ];
+  private static readonly SKEL_HAND_COLOR = '#33e0ff';
+  private static readonly SKEL_FOOT_COLOR = '#3ad64a';
 
   /** map a cell-space point (288×384) onto the drawn art in the preview. */
   private cellToPreview(jx: number, jy: number): [number, number] {
@@ -1972,41 +1999,62 @@ export class CharacterCreatorPanel {
     return [g.W / 2 + (jx - 144 + g.ox) * s, g.floorY + (jy - 384 + g.oy) * s];
   }
 
-  /** DWPose skeleton over the current frame's art (no-op if that cell has none). */
+  /** DWPose skeleton over the current frame's art — a 1:1 port of
+   *  FightScene.drawSkeleton (body groups + neck + finger + foot bones + joint
+   *  dots, face_* skipped) so both pipelines render the identical stick figure.
+   *  No-op if the current cell has no baked joints. */
   private drawSkeletonOverlay(ctx: CanvasRenderingContext2D): void {
     const g = this.geom; if (!g?.cell) return;
     const j = this.m.skeletons[g.cell]; if (!j) return;
-    const ok = (n: string): boolean => !!j[n] && j[n][2] >= 0.3;
-    ctx.save(); ctx.lineWidth = 2;
-    for (const [a, b, col] of CharacterCreatorPanel.SKEL_BONES) {
-      if (!ok(a) || !ok(b)) continue;
-      const [ax, ay] = this.cellToPreview(j[a][0], j[a][1]);
-      const [bx, by] = this.cellToPreview(j[b][0], j[b][1]);
-      ctx.strokeStyle = col; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
-    }
+    const P = CharacterCreatorPanel;
+    ctx.save();
+    const bone = (a: string, b: string, color: string, w = 2): void => {
+      const ja = j[a], jb = j[b]; if (!ja || !jb) return;
+      const [ax, ay] = this.cellToPreview(ja[0], ja[1]);
+      const [bx, by] = this.cellToPreview(jb[0], jb[1]);
+      ctx.strokeStyle = color; ctx.lineWidth = w; ctx.globalAlpha = 0.95;
+      ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+    };
+    // body
+    for (const grp of P.SKEL_GROUPS) for (const [a, b] of grp.bones) bone(a, b, grp.color);
     // neck: nose → shoulder midpoint
-    if (ok('nose') && ok('Lsho') && ok('Rsho')) {
+    if (j.nose && j.Lsho && j.Rsho) {
       const [nx, ny] = this.cellToPreview(j.nose[0], j.nose[1]);
-      const mx = (j.Lsho[0] + j.Rsho[0]) / 2, my = (j.Lsho[1] + j.Rsho[1]) / 2;
-      const [sx, sy] = this.cellToPreview(mx, my);
-      ctx.strokeStyle = '#ff8c1a'; ctx.beginPath(); ctx.moveTo(nx, ny); ctx.lineTo(sx, sy); ctx.stroke();
+      const [lx, ly] = this.cellToPreview(j.Lsho[0], j.Lsho[1]);
+      const [rx, ry] = this.cellToPreview(j.Rsho[0], j.Rsho[1]);
+      ctx.strokeStyle = '#ff8c1a'; ctx.lineWidth = 2; ctx.globalAlpha = 0.95;
+      ctx.beginPath(); ctx.moveTo(nx, ny); ctx.lineTo((lx + rx) / 2, (ly + ry) / 2); ctx.stroke();
     }
-    ctx.fillStyle = '#eaf6fb';
-    for (const n in j) { if (j[n][2] < 0.3) continue; const [x, y] = this.cellToPreview(j[n][0], j[n][1]); ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fill(); }
+    // feet + hands (finger bones)
+    for (const [a, b] of P.SKEL_FOOT_BONES) bone(a, b, P.SKEL_FOOT_COLOR, 1);
+    for (const pre of ['lhand_', 'rhand_']) for (const [a, b] of P.SKEL_HAND_BONES) bone(`${pre}${a}`, `${pre}${b}`, P.SKEL_HAND_COLOR, 1);
+    // joint dots: body big+colored, hands/feet a small point, face_* skipped
+    ctx.globalAlpha = 1;
+    for (const n in j) {
+      if (n.startsWith('face_')) continue;
+      const [x, y] = this.cellToPreview(j[n][0], j[n][1]);
+      const bodyCol = P.SKEL_JOINT_COLOR[n];
+      if (bodyCol !== undefined) { ctx.fillStyle = bodyCol; ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill(); }
+      else { ctx.fillStyle = n.startsWith('lhand_') || n.startsWith('rhand_') ? P.SKEL_HAND_COLOR : P.SKEL_FOOT_COLOR; ctx.globalAlpha = 0.9; ctx.beginPath(); ctx.arc(x, y, 1.3, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
+    }
     ctx.restore();
   }
 
-  /** engine px → preview px for hitboxes: STABLE basis (scale 1, hurtStand.h=256·
-   *  1.32) so the box never jitters as the animation cycles. */
-  private hbScale(): number { return (this.previewCanvas.height * 0.82) / (256 * 1.32); }
-
-  /** the sprite's FLOOR_FRAC feet line in the preview — the box origin (box.y=0)
-   *  after the render foot offset. hitboxFromSkeleton measures from FLOOR_FRAC
-   *  (0.88), NOT the ground line, so anchoring here makes the box track the limb
-   *  it wraps (the same reference the skeleton overlay + cellToPreview use). */
-  private hbFeetY(): number {
-    const H = this.previewCanvas.height;
-    return Math.round(H * 0.94) - H * 0.82 * (1 - 0.88); // floorY − (cell height below FLOOR_FRAC) at draw scale
+  /** where a move hitbox maps in the preview. box.x/box.y are engine px relative
+   *  to the collision origin f.y; `cx`/`feetY` locate that origin ON the drawn
+   *  sprite (FLOOR_FRAC feet line, hitboxFromSkeleton's reference — NOT the ground
+   *  line), and CHILD it to the current frame's art offset (`geom.ox/oy`) so the
+   *  box rides the jump arc / anti-air rise with the fighter, exactly as the
+   *  in-game hitbox follows f.y. `e` is engine→preview px (stable per cell). */
+  private hbAnchor(): { cx: number; feetY: number; e: number } {
+    const g = this.geom;
+    const W = this.previewCanvas.width, H = this.previewCanvas.height;
+    const drawH = g?.drawH ?? H * 0.82;
+    const s = drawH / 384;               // cell → preview px
+    const e = drawH / (256 * 1.32);      // engine → preview px
+    const floorY = g?.floorY ?? Math.round(H * 0.94);
+    const ox = (g?.ox ?? 0) * s, oy = (g?.oy ?? 0) * s; // current-frame art shift (jump/anti-air)
+    return { cx: W / 2 + ox, feetY: floorY + oy - (384 - 0.88 * 384) * s, e };
   }
 
   /** the move currently being previewed as a group (normal or special), or null. */
@@ -2037,13 +2085,12 @@ export class CharacterCreatorPanel {
   }
 
   /** hurtbox (blue, static) + the previewed move's hitbox (red, drag/scalable). */
-  private drawHitboxOverlay(ctx: CanvasRenderingContext2D, W: number, _floorY: number): void {
-    const e = this.hbScale(), foot = this.footOffset(), feetY = this.hbFeetY();
-    // anchor at the FLOOR_FRAC feet line and subtract the render foot offset (see
-    // hbFeetY / currentHbRect) so boxes register with the sprite exactly as
-    // FightScene renders them (and match the hit-test)
+  private drawHitboxOverlay(ctx: CanvasRenderingContext2D): void {
+    const { cx, feetY, e } = this.hbAnchor(), foot = this.footOffset();
+    // anchor + foot offset so boxes register with the sprite exactly as FightScene
+    // renders them (and ride the jump/anti-air rise via hbAnchor); matches the hit-test
     const rect = (b: { x: number; y: number; w: number; h: number }): [number, number, number, number] =>
-      [W / 2 + b.x * e, feetY + (b.y - foot) * e, b.w * e, b.h * e];
+      [cx + b.x * e, feetY + (b.y - foot) * e, b.w * e, b.h * e];
     ctx.save();
     // hurtbox (fixed body box)
     const hurt = { x: -52, y: -256, w: 104, h: 256 };
