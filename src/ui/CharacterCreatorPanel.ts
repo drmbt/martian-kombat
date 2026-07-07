@@ -48,8 +48,14 @@ export class CharacterCreatorPanel {
   private stepperEl: HTMLDivElement;
   private trayEl: HTMLDivElement;
   private previewControls!: HTMLDivElement;
+  private previewToggles!: HTMLDivElement; // skeleton / hitbox overlay checkboxes
   private previewCaption!: HTMLDivElement;
   private previewInspect!: HTMLDivElement;
+  private showSkeleton = false; // draw the DWPose skeleton over the fighter
+  private showHitboxes = false; // draw + drag/scale the previewed move's hitbox
+  private geom?: { W: number; floorY: number; drawH: number; ox: number; oy: number; cell?: string }; // last main-fighter draw (skeleton overlay)
+  private hbDrag?: { moveId: string; mode: 'move' | 'nw' | 'ne' | 'sw' | 'se'; sx: number; sy: number; box: { x: number; y: number; w: number; h: number } };
+  private builtCache?: { t: number; moves: Record<string, { hitbox?: unknown }> }; // throttled buildFullCharacter (default hitbox lookup)
   private backdrop!: HTMLDivElement;
   private lastBackdrop?: string;
   private leftEl!: HTMLDivElement;
@@ -86,10 +92,15 @@ export class CharacterCreatorPanel {
     const left = el('div', 'position:relative;z-index:1;display:flex;flex-direction:column;padding:8px;min-width:0;');
     left.style.width = this.leftW + '%';
     this.leftEl = left;
+    this.previewToggles = el('div', 'display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-bottom:3px;');
     this.previewControls = el('div', 'display:flex;flex-wrap:wrap;gap:4px;justify-content:center;');
     this.previewCaption = el('div', 'font-size:11px;color:#c8d6de;text-align:center;text-shadow:0 1px 3px #000;margin-top:2px;', 'live preview');
     this.previewCanvas = el('canvas', 'flex:1;width:100%;min-height:0;image-rendering:auto;'); // transparent, fills — never shrunk by the inspect panel (fighter stays grounded)
-    left.append(this.previewControls, this.previewCaption, this.previewCanvas);
+    this.previewCanvas.onmousedown = (e) => this.onHbDown(e);
+    this.previewCanvas.onmousemove = (e) => this.onHbMove(e);
+    this.previewCanvas.onmouseup = () => (this.hbDrag = undefined);
+    this.previewCanvas.onmouseleave = () => (this.hbDrag = undefined);
+    left.append(this.previewToggles, this.previewControls, this.previewCaption, this.previewCanvas);
     this.root.appendChild(left);
 
     // draggable divider between preview and dialog
@@ -181,6 +192,9 @@ export class CharacterCreatorPanel {
 
   private goto(step: number): void {
     this.m.step = Math.max(0, Math.min(CREATOR_STEPS.length - 1, step));
+    // the Rig step is all about skeleton + hitboxes — turn both overlays on by
+    // default when arriving there (skeleton stays greyed/hidden until DWPose runs)
+    if (CREATOR_STEPS[this.m.step] === 'RIG') { this.showSkeleton = true; this.showHitboxes = true; }
     this.renderStepper();
     this.render();
     this.renderPreviewControls(); // step-dependent move buttons
@@ -1414,7 +1428,34 @@ export class CharacterCreatorPanel {
     this.previewCaption.textContent = this.preview.kind === 'cell'
       ? 'viewing ' + label + ' — click a group to play, or a tray cell to inspect'
       : (groups.length ? 'playing ' + label : 'live preview');
+    this.renderPreviewToggles();
     this.renderPreviewInspect();
+  }
+
+  /** skeleton (greyed until DWPose has run) + hitbox overlay checkboxes, above
+   *  the animation. On the Rig step both default on. Hitboxes are drag/scalable. */
+  private renderPreviewToggles(): void {
+    if (!this.previewToggles) return;
+    this.previewToggles.replaceChildren();
+    const skelReady = Object.keys(this.m.skeletons).length > 0;
+    const box = (label: string, checked: boolean, enabled: boolean, title: string, onChange: (on: boolean) => void): HTMLLabelElement => {
+      const l = el('label', `display:flex;align-items:center;gap:5px;font-size:11px;cursor:${enabled ? 'pointer' : 'default'};` +
+        `color:${enabled ? '#c8d6de' : '#5c6b78'};text-shadow:0 1px 3px #000;user-select:none;`) as HTMLLabelElement;
+      l.title = title;
+      const cb = el('input', 'cursor:inherit;') as HTMLInputElement;
+      cb.type = 'checkbox'; cb.checked = checked; cb.disabled = !enabled;
+      cb.onchange = () => onChange(cb.checked);
+      l.append(cb, el('span', '', label));
+      return l;
+    };
+    this.previewToggles.append(
+      box('skeleton', this.showSkeleton && skelReady, skelReady,
+        skelReady ? 'overlay the DWPose skeleton on the fighter' : 'run the skeleton on the Rig step to enable',
+        (on) => { this.showSkeleton = on; this.redrawPreview(); }),
+      box('hitboxes', this.showHitboxes, true,
+        'overlay the move hitbox (red) + hurtbox (blue) — drag to move, drag a corner to scale',
+        (on) => { this.showHitboxes = on; this.redrawPreview(); }),
+    );
   }
 
   private closeInspect(): void {
@@ -1570,6 +1611,59 @@ export class CharacterCreatorPanel {
     await this.persistFrame(key); // the reverted frame becomes the on-disk one
     this.logMsg(`${j.undone ? '↶ reverted' : '↷ redid'} ${j.label}`);
     this.renderPreviewInspect(); this.renderTray(); this.renderPreviewControls(); this.redrawPreview();
+  }
+
+  // ── hitbox drag/scale on the preview canvas ───────────────────────────────
+  /** the previewed move's hitbox rect (preview px) + its engine box, or null. */
+  private currentHbRect(): { moveId: string; box: { x: number; y: number; w: number; h: number }; rx: number; ry: number; rw: number; rh: number } | null {
+    if (!this.showHitboxes) return null;
+    const moveId = this.previewMoveId(); if (!moveId) return null;
+    const box = this.effectiveHitbox(moveId); if (!box) return null;
+    const W = this.previewCanvas.width, floorY = Math.round(this.previewCanvas.height * 0.94), e = this.hbScale();
+    return { moveId, box, rx: W / 2 + box.x * e, ry: floorY + box.y * e, rw: box.w * e, rh: box.h * e };
+  }
+
+  private onHbDown(ev: MouseEvent): void {
+    const r = this.currentHbRect(); if (!r) return;
+    const mx = ev.offsetX, my = ev.offsetY, H = 7;
+    const near = (px: number, py: number): boolean => Math.abs(mx - px) <= H && Math.abs(my - py) <= H;
+    let mode: 'move' | 'nw' | 'ne' | 'sw' | 'se' | null = null;
+    if (near(r.rx, r.ry)) mode = 'nw'; else if (near(r.rx + r.rw, r.ry)) mode = 'ne';
+    else if (near(r.rx, r.ry + r.rh)) mode = 'sw'; else if (near(r.rx + r.rw, r.ry + r.rh)) mode = 'se';
+    else if (mx >= r.rx && mx <= r.rx + r.rw && my >= r.ry && my <= r.ry + r.rh) mode = 'move';
+    if (!mode) return;
+    ev.preventDefault();
+    this.m.autoHitboxes[r.moveId] = { ...r.box }; // pin the (possibly default) box so edits persist + export
+    this.hbDrag = { moveId: r.moveId, mode, sx: mx, sy: my, box: { ...r.box } };
+  }
+
+  private onHbMove(ev: MouseEvent): void {
+    if (!this.hbDrag) {
+      // hover cursor feedback (only when the overlay could be grabbed)
+      const r = this.currentHbRect();
+      let cur = 'default';
+      if (r) {
+        const mx = ev.offsetX, my = ev.offsetY, H = 7, near = (px: number, py: number): boolean => Math.abs(mx - px) <= H && Math.abs(my - py) <= H;
+        if (near(r.rx, r.ry) || near(r.rx + r.rw, r.ry + r.rh)) cur = 'nwse-resize';
+        else if (near(r.rx + r.rw, r.ry) || near(r.rx, r.ry + r.rh)) cur = 'nesw-resize';
+        else if (mx >= r.rx && mx <= r.rx + r.rw && my >= r.ry && my <= r.ry + r.rh) cur = 'move';
+      }
+      this.previewCanvas.style.cursor = cur;
+      return;
+    }
+    const e = this.hbScale();
+    const dx = (ev.offsetX - this.hbDrag.sx) / e, dy = (ev.offsetY - this.hbDrag.sy) / e;
+    const b = { ...this.hbDrag.box };
+    switch (this.hbDrag.mode) {
+      case 'move': b.x += dx; b.y += dy; break;
+      case 'nw': b.x += dx; b.y += dy; b.w -= dx; b.h -= dy; break;
+      case 'ne': b.y += dy; b.w += dx; b.h -= dy; break;
+      case 'sw': b.x += dx; b.w -= dx; b.h += dy; break;
+      case 'se': b.w += dx; b.h += dy; break;
+    }
+    if (b.w < 8) b.w = 8; if (b.h < 8) b.h = 8; // keep it grabbable
+    this.m.autoHitboxes[this.hbDrag.moveId] = { x: Math.round(b.x), y: Math.round(b.y), w: Math.round(b.w), h: Math.round(b.h) };
+    this.redrawPreview();
   }
 
   /** the job the big preview should draw right now (animated group or one cell). */
@@ -1824,8 +1918,8 @@ export class CharacterCreatorPanel {
     const canon = this.m.job('canonical');
     const scale = main?.scale ?? 1;
     const drawH = H * 0.82 * scale;
+    const ox = main?.offX ?? 0, oy = (main?.offY ?? 0) + pf.offY; // cell realign + sequence arc
     if (main?.dataUrl) {
-      const ox = main.offX ?? 0, oy = (main.offY ?? 0) + pf.offY; // cell realign + sequence arc
       const rise = Math.max(0, -pf.offY) * (drawH / 384); // shrink shadow as it rises
       this.drawShadow(ctx, W / 2 + ox * (drawH / 384), floorY, 96 * scale * Math.max(0.25, 1 - rise / (H * 0.3)));
       this.drawCharacter(ctx, main.dataUrl, W / 2, floorY, drawH, ox, oy);
@@ -1833,6 +1927,9 @@ export class CharacterCreatorPanel {
       this.drawShadow(ctx, W / 2, floorY, 80);
       this.drawSilhouette(ctx, W / 2, floorY, 150, this.m.draft?.color ?? '#31424f', canon?.status === 'running');
     }
+    // remember the fighter draw geometry so the skeleton overlay + hitbox drag map
+    // cell/engine coords onto exactly where the art landed
+    this.geom = { W, floorY, drawH, ox, oy, cell: main?.key?.startsWith('sprite:') ? main.key.slice('sprite:'.length) : undefined };
     // projectile: static at spawn while its cell is inspected (tuning is live),
     // else fired out during a group-play special's active→recovery window.
     if (inspectingProj) {
@@ -1846,9 +1943,96 @@ export class CharacterCreatorPanel {
         if (ph > 200) this.drawProjectile(ctx, sp, W, floorY, drawH, (ph - 200) / (total - 200)); // launched at the active frame
       }
     }
+    // skeleton + hitbox overlays (toggled by the checkboxes above the preview)
+    if (this.showSkeleton) this.drawSkeletonOverlay(ctx);
+    if (this.showHitboxes) this.drawHitboxOverlay(ctx, W, floorY);
     // portrait chip top-left
     const port = this.m.job('portrait');
     if (port?.dataUrl) { ctx.save(); ctx.beginPath(); ctx.rect(12, 12, 70, 70); ctx.clip(); this.drawContain(ctx, port.dataUrl, 12, 12, 70, 70); ctx.restore(); ctx.strokeStyle = '#3f6070'; ctx.lineWidth = 1; ctx.strokeRect(12, 12, 70, 70); }
+  }
+
+  private static readonly SKEL_BONES: [string, string, string][] = [
+    ['Lsho', 'Rsho', '#ff8c1a'], ['Lhip', 'Rhip', '#ff8c1a'], ['Lsho', 'Lhip', '#ff8c1a'], ['Rsho', 'Rhip', '#ff8c1a'],
+    ['Lsho', 'Lelb', '#33a0ff'], ['Lelb', 'Lwri', '#33a0ff'], ['Rsho', 'Relb', '#33a0ff'], ['Relb', 'Rwri', '#33a0ff'],
+    ['Lhip', 'Lkne', '#3ad64a'], ['Lkne', 'Lank', '#3ad64a'], ['Rhip', 'Rkne', '#3ad64a'], ['Rkne', 'Rank', '#3ad64a'],
+  ];
+
+  /** map a cell-space point (288×384) onto the drawn art in the preview. */
+  private cellToPreview(jx: number, jy: number): [number, number] {
+    const g = this.geom!; const s = g.drawH / 384;
+    return [g.W / 2 + (jx - 144 + g.ox) * s, g.floorY + (jy - 384 + g.oy) * s];
+  }
+
+  /** DWPose skeleton over the current frame's art (no-op if that cell has none). */
+  private drawSkeletonOverlay(ctx: CanvasRenderingContext2D): void {
+    const g = this.geom; if (!g?.cell) return;
+    const j = this.m.skeletons[g.cell]; if (!j) return;
+    const ok = (n: string): boolean => !!j[n] && j[n][2] >= 0.3;
+    ctx.save(); ctx.lineWidth = 2;
+    for (const [a, b, col] of CharacterCreatorPanel.SKEL_BONES) {
+      if (!ok(a) || !ok(b)) continue;
+      const [ax, ay] = this.cellToPreview(j[a][0], j[a][1]);
+      const [bx, by] = this.cellToPreview(j[b][0], j[b][1]);
+      ctx.strokeStyle = col; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+    }
+    // neck: nose → shoulder midpoint
+    if (ok('nose') && ok('Lsho') && ok('Rsho')) {
+      const [nx, ny] = this.cellToPreview(j.nose[0], j.nose[1]);
+      const mx = (j.Lsho[0] + j.Rsho[0]) / 2, my = (j.Lsho[1] + j.Rsho[1]) / 2;
+      const [sx, sy] = this.cellToPreview(mx, my);
+      ctx.strokeStyle = '#ff8c1a'; ctx.beginPath(); ctx.moveTo(nx, ny); ctx.lineTo(sx, sy); ctx.stroke();
+    }
+    ctx.fillStyle = '#eaf6fb';
+    for (const n in j) { if (j[n][2] < 0.3) continue; const [x, y] = this.cellToPreview(j[n][0], j[n][1]); ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+  }
+
+  /** engine px → preview px for hitboxes: anchored at feet, STABLE basis (scale 1,
+   *  hurtStand.h=256·1.32) so the box never jitters as the animation cycles. */
+  private hbScale(): number { return (this.previewCanvas.height * 0.82) / (256 * 1.32); }
+
+  /** the move currently being previewed as a group (normal or special), or null. */
+  private previewMoveId(): string | null {
+    if (this.preview.kind !== 'group') return null;
+    const k = this.preview.key;
+    return (NORMAL_MOVE_IDS.includes(k) || this.m.draft?.specials.some((s) => s.id === k)) ? k : null;
+  }
+
+  /** the move's effective engine hitbox: the RIG-tuned one, else the built default
+   *  (throttled buildFullCharacter). Returns null for boxless moves (throws/projectiles). */
+  private effectiveHitbox(moveId: string): { x: number; y: number; w: number; h: number } | null {
+    const tuned = this.m.autoHitboxes[moveId]; if (tuned) return tuned;
+    const now = Date.now();
+    if (!this.builtCache || now - this.builtCache.t > 250) this.builtCache = { t: now, moves: this.m.buildFullCharacter().moves as Record<string, { hitbox?: unknown }> };
+    const hb = this.builtCache.moves[moveId]?.hitbox;
+    return hb && typeof hb === 'object' ? { ...(hb as { x: number; y: number; w: number; h: number }) } : null;
+  }
+
+  /** hurtbox (blue, static) + the previewed move's hitbox (red, drag/scalable). */
+  private drawHitboxOverlay(ctx: CanvasRenderingContext2D, W: number, floorY: number): void {
+    const e = this.hbScale();
+    const rect = (b: { x: number; y: number; w: number; h: number }): [number, number, number, number] =>
+      [W / 2 + b.x * e, floorY + b.y * e, b.w * e, b.h * e];
+    ctx.save();
+    // hurtbox (fixed body box)
+    const hurt = { x: -52, y: -256, w: 104, h: 256 };
+    const [hx, hy, hw, hh] = rect(hurt);
+    ctx.strokeStyle = 'rgba(90,170,255,.85)'; ctx.fillStyle = 'rgba(90,170,255,.12)'; ctx.lineWidth = 1.5;
+    ctx.fillRect(hx, hy, hw, hh); ctx.strokeRect(hx, hy, hw, hh);
+    // the previewed move's hitbox
+    const moveId = this.previewMoveId();
+    const box = moveId ? this.effectiveHitbox(moveId) : null;
+    if (moveId && box) {
+      const [rx, ry, rw, rh] = rect(box);
+      ctx.strokeStyle = 'rgba(255,90,90,.95)'; ctx.fillStyle = 'rgba(255,90,90,.18)'; ctx.lineWidth = 2;
+      ctx.fillRect(rx, ry, rw, rh); ctx.strokeRect(rx, ry, rw, rh);
+      // corner resize handles
+      ctx.fillStyle = 'rgba(255,220,120,.95)';
+      for (const [cx, cy] of [[rx, ry], [rx + rw, ry], [rx, ry + rh], [rx + rw, ry + rh]]) ctx.fillRect(cx - 4, cy - 4, 8, 8);
+      ctx.fillStyle = 'rgba(255,90,90,.95)'; ctx.font = '10px monospace';
+      ctx.fillText(`${moveId} hitbox — drag to move · corner to scale`, rx, ry - 5);
+    }
+    ctx.restore();
   }
 
   /** draw a special's projectile over the fighter. `flyFrac` 0 = static at the

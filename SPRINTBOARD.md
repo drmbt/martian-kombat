@@ -1198,6 +1198,17 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-07 · ui · preview skeleton + hitbox overlay toggles (draggable
+  hitboxes)** — Added **skeleton** (greyed until DWPose has run) and **hitboxes**
+  checkboxes above the animation viewer. The skeleton overlay replays the cell's
+  baked DWPose joints (torso/arms/legs/neck) over the current frame's art; the
+  hitbox overlay draws the fighter's hurtbox (blue) + the previewed move's hitbox
+  (red) with corner handles. The move hitbox is editable at any time — drag the
+  body to move it, drag a corner to scale it — writing `m.autoHitboxes[moveId]`
+  (engine units) so edits flow straight to the exported JSON. Arriving on the Rig
+  step turns both overlays on by default. tsc clean; toggles, RIG defaults,
+  skeleton un-greying, and move/corner drag math all verified live in mock. — Claude
+
 - **2026-07-07 · ui · regen chroma-key reinforcement + undo/reject regenerated
   frames** — On every keyable-art regen (sprite/canonical/portrait/ko/projectile,
   never a stage) the prompt is reinforced with the flat green chroma-key clause if
