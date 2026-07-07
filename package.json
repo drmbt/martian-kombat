@@ -24,7 +24,7 @@
     "gen:assets": "node tools/gen-asset-manifest.mjs",
     "gen:key": "node tools/corridorkey.mjs",
     "gen:voice": "node tools/gen-voice.mjs",
-    "gen:qa": "python3 tools/qa/pose_qa.py"
+    "gen:qa": "node tools/qa/run.mjs pose_qa.py"
   },
   "dependencies": {
     "peerjs": "^1.5.5",

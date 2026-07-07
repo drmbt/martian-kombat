@@ -10,7 +10,7 @@
     "Don't worry, I'll tell everyone you tried.",
     "I heard you were tough. Someone lied to me."
   ],
-  "spriteScale": 1.18,
+  "scale": 1.18,
   "fatality": {
     "id": "hot-yoga",
     "name": "Hot Yoga",

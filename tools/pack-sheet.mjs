@@ -14,6 +14,7 @@ import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readdirSync, writeFileSync, readFileSync, existsSync, rmSync } from 'node:fs';
 import { ROOT } from './lib.mjs';
+import { resolvePython } from './qa/resolve-python.mjs';
 import { CELL_W, CELL_H, CHARACTERS, buildJobs, gridFor } from './frames-manifest.mjs';
 
 // chromakey (YUV) at low similarity, NO despill: despill bleaches the whole
@@ -65,7 +66,14 @@ function pack(charId) {
       process.exit(1);
     }
   }
-  const SCALE_PAD = `scale=${CELL_W}:${CELL_H}:force_original_aspect_ratio=decrease,pad=${CELL_W}:${CELL_H}:(ow-iw)/2:oh-ih:color=0x00000000`;
+  // Vertical safe-zone (px) reserved top+bottom so floor normalization can't
+  // clip. MUST match HEADROOM in tools/qa/pose_qa.py — the cell DWPose measures
+  // keypoints/hitboxes on must be IDENTICAL to the cell that gets packed, or the
+  // baked skeleton + measured boxes won't register with the packed art.
+  const HEADROOM = 24;
+  const SCALE_PAD =
+    `scale=${CELL_W}:${CELL_H - 2 * HEADROOM}:force_original_aspect_ratio=decrease,` +
+    `pad=${CELL_W}:${CELL_H}:(ow-iw)/2:${CELL_H - HEADROOM}-ih:color=0x00000000`;
 
   frames.forEach((f, i) => {
     ff([
@@ -79,7 +87,7 @@ function pack(charId) {
   // opt-in floor normalization on the keyed cells, before tiling
   if (NORMALIZE) {
     const names = frames.map((f) => f.replace(/^\d\d-/, '').replace(/\.png$/, ''));
-    execFileSync('python3', [
+    execFileSync(resolvePython('numpy'), [
       join(ROOT, 'tools/qa/normalize_floor.py'),
       '--dir', tmp,
       '--frames', names.join(','),

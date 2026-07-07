@@ -251,12 +251,14 @@ export interface CharacterDef {
    *  only, engine never reads it. */
   winQuotes?: string[];
   fatality?: FatalityDef;
-  /** whole-character size multiplier (default 1). Baked into the collision
-   *  geometry (bodyBox, hurtboxes, move hitboxes) once at data load
-   *  (src/data/characters/index.ts); the engine only ever sees pre-scaled
-   *  boxes, and the renderer derives sprite size from hurtStand.h so the art
-   *  follows for free. Never read at runtime. */
-  spriteScale?: number;
+  /** whole-character size multiplier (default 1) — resizes EVERYTHING about the
+   *  fighter's size + reach (bodyBox, hurtboxes, hitboxes, projectiles, grab
+   *  range) about the feet origin. Baked once at data load (applyScale in
+   *  src/data/characterScale.ts) so the engine only sees pre-scaled boxes; the
+   *  renderer derives sprite size from hurtStand.h, so the art follows for free.
+   *  Movement (speeds/velocities) is intentionally NOT scaled. Never read by the
+   *  engine at runtime. */
+  scale?: number;
   /** render hint only — extra vertical pixels added to the sprite's draw
    *  position (positive pushes the art down toward the floor); engine never
    *  reads it */

@@ -26,6 +26,8 @@ import { KeyboardSource } from '../input/keyboard';
 import { CpuDriver } from '../ai/bot';
 import { DIFFICULTIES, DIFFICULTY_AGGRESSION, type Difficulty } from '../ai/difficulty';
 import { MoveTunerPanel } from '../ui/MoveTunerPanel';
+import { SpriteEditorPanel } from '../ui/SpriteEditorPanel';
+import { SpriteSheetModel, type SheetMeta } from '../ui/spriteSheetModel';
 import { play, playVoice, runCues } from './BootScene';
 import { playMusic } from '../audio/music';
 import { getSettings } from '../settings';
@@ -174,6 +176,9 @@ export class FightScene extends Phaser.Scene {
   private hitFlashSprites: (Phaser.GameObjects.Sprite | null)[] = [null, null];
   private fighterShadows: (Phaser.GameObjects.Image | null)[] = [null, null];
   private hudPortraitShadows: Phaser.GameObjects.Image[] = [];
+  /** persistent HUD GameObjects (portraits/names/tags/timer/hint) — hidden in
+   *  spriteEditor mode, which wants a clean canvas */
+  private hudEls: Phaser.GameObjects.GameObject[] = [];
   private projSprites: Phaser.GameObjects.Image[] = [];
   private msgText!: Phaser.GameObjects.Text;
   private timerText!: Phaser.GameObjects.Text;
@@ -223,6 +228,17 @@ export class FightScene extends Phaser.Scene {
   private demo = false;
   private showcase = false;
   private tuner = false;
+  private spriteEditor = false;
+  /** sprite-editor working sheet model (edits mirror onto the fighter live) */
+  private sheetModel: SpriteSheetModel | null = null;
+  private spritePanel: SpriteEditorPanel | null = null;
+  /** sprite-editor: the move whose hitbox is drawn faint/active + draggable */
+  private editorMoveId: string | null = null;
+  /** sprite-editor loop control: current looped move/pose, cadence, pause */
+  private editorLoopMove = '__idle__';
+  private editorLoopTicks = 24;
+  private editorLoopPaused = false;
+  private showHitbox = false;
   /** [p1 driver, p2 driver] — null means that slot is human/manual */
   private bots: [CpuDriver | null, CpuDriver | null] = [null, null];
   /** move-tuner: which mode setControlMode last put each slot in — used to
@@ -265,13 +281,20 @@ export class FightScene extends Phaser.Scene {
     /** dev-only move tuner: mounts the inspector sidebar, runtime-swappable
      *  per-slot control modes (see setControlMode) */
     tuner?: boolean;
+    /** dev-only sprite editor: single-character sheet/hitbox/skeleton editor */
+    spriteEditor?: boolean;
   }): void {
-    this.chars = [data.p1 ?? 'vincent', data.p2 ?? 'yulia'];
+    this.spriteEditor = !this.online && !!data.spriteEditor;
+    // sprite editor edits ONE fighter; mirror it into both slots so the loop
+    // driver has a valid (hidden) opponent to face
+    const p1 = data.p1 ?? 'vincent';
+    this.chars = [p1, this.spriteEditor ? p1 : data.p2 ?? 'yulia'];
     this.stageId = data.stage ?? 'salton';
     this.online = data.online ?? null;
     // online is strictly 2-human: no CPU, no demo, no training upkeep
     this.cpu = !this.online && !!data.cpu;
-    this.training = !this.online && !!data.training;
+    // sprite editor rides the training sandbox (health regen, no round end)
+    this.training = !this.online && (!!data.training || this.spriteEditor);
     // showcase is a chosen CPU-vs-CPU demo — both sides are (showcase) bots
     this.showcase = !this.online && !!data.showcase;
     this.demo = !this.online && (!!data.demo || this.showcase);
@@ -321,6 +344,7 @@ export class FightScene extends Phaser.Scene {
       afterTick: (s: GameState, inp: [InputFrame, InputFrame]) => {
         if (this.training) this.trainingUpkeep();
         if (this.tuner) this.tunerHoldUpkeep(s);
+        if (this.spriteEditor) this.spriteEditorUpkeep();
         this.logInputs(inp);
         this.frameTickMs += performance.now() - this.tickStart;
         const presentStart = performance.now();
@@ -353,6 +377,7 @@ export class FightScene extends Phaser.Scene {
     this.hitFlashSprites = [null, null];
     this.fighterShadows = [null, null];
     this.hudPortraitShadows = [];
+    this.hudEls = [];
     this.projSprites = [];
     // shared DOM chrome: layer + shell + overlays (auto-disposed on shutdown)
     this.uiLayer = new UiLayer(this);
@@ -469,12 +494,17 @@ export class FightScene extends Phaser.Scene {
             .setTintFill(0x000000)
             .setAlpha(0.38),
         );
-        this.add.image(px, 46, `portrait-${id}`).setDisplaySize(48, 48).setDepth(6).setFlipX(slot === 1);
+        this.hudEls.push(this.add.image(px, 46, `portrait-${id}`).setDisplaySize(48, 48).setDepth(6).setFlipX(slot === 1));
         this.gfxHud; // portraits framed in drawHud
       }
     }
-    // mirror-match: tint P2 so the twins are tellable-apart
-    if (this.chars[0] === this.chars[1]) this.fighterSprites[1]?.setTint(0xffb0a0);
+    // mirror-match: tint P2 so the twins are tellable-apart (skipped in the
+    // sprite editor, where slot 1 is a hidden loop-driver opponent)
+    if (this.chars[0] === this.chars[1] && !this.spriteEditor) this.fighterSprites[1]?.setTint(0xffb0a0);
+
+    this.sheetModel = null;
+    this.spritePanel = null;
+    if (this.spriteEditor) this.setupSpriteEditor();
 
     const font = { fontFamily: 'monospace', color: '#f5ead9' };
     this.msgText = this.add
@@ -495,28 +525,23 @@ export class FightScene extends Phaser.Scene {
     // icon. Names justify to the bar's OUTSIDE edge (away from center); the
     // P1/P2/CPU tag tucks just inside the round-win pips (toward center).
     const nameStyle = { ...font, fontSize: '14px', stroke: '#000', strokeThickness: 3 };
-    this.add
-      .text(BAR_X1, HUD_NAME_Y, characters[this.chars[0]].name, nameStyle)
-      .setOrigin(0, 0.5)
-      .setDepth(6);
-    this.add
-      .text(STAGE_W - BAR_X1, HUD_NAME_Y, characters[this.chars[1]].name, nameStyle)
-      .setOrigin(1, 0.5)
-      .setDepth(6);
-    this.add
-      .text(BAR_X1 + BAR_W + 8, HUD_NAME_Y, this.playerLabel(0), nameStyle)
-      .setOrigin(0, 0.5)
-      .setDepth(6);
-    this.add
-      .text(STAGE_W - BAR_X1 - BAR_W - 8, HUD_NAME_Y, this.playerLabel(1), nameStyle)
-      .setOrigin(1, 0.5)
-      .setDepth(6);
-    this.add
-      .text(STAGE_W / 2, STAGE_H - 14, 'P1: WASD + RTY punches FGH kicks   P2: ARROWS + UIO punches JKL kicks   ESC pause · F2 move log · F3 stage · ` perf', {
-        ...font, fontSize: '12px', color: '#e8dcc8', stroke: '#000', strokeThickness: 3,
-      })
-      .setOrigin(0.5)
-      .setDepth(6);
+    this.hudEls.push(
+      this.add.text(BAR_X1, HUD_NAME_Y, characters[this.chars[0]].name, nameStyle).setOrigin(0, 0.5).setDepth(6),
+      this.add.text(STAGE_W - BAR_X1, HUD_NAME_Y, characters[this.chars[1]].name, nameStyle).setOrigin(1, 0.5).setDepth(6),
+      this.add.text(BAR_X1 + BAR_W + 8, HUD_NAME_Y, this.playerLabel(0), nameStyle).setOrigin(0, 0.5).setDepth(6),
+      this.add.text(STAGE_W - BAR_X1 - BAR_W - 8, HUD_NAME_Y, this.playerLabel(1), nameStyle).setOrigin(1, 0.5).setDepth(6),
+      this.add
+        .text(STAGE_W / 2, STAGE_H - 14, 'P1: WASD + RTY punches FGH kicks   P2: ARROWS + UIO punches JKL kicks   ESC pause · F2 move log · F3 stage · ` perf', {
+          ...font, fontSize: '12px', color: '#e8dcc8', stroke: '#000', strokeThickness: 3,
+        })
+        .setOrigin(0.5)
+        .setDepth(6),
+    );
+    // sprite editor wants a clean canvas — no health bars/timer/portraits/names
+    if (this.spriteEditor) {
+      const hide = [...this.hudEls, ...this.hudPortraitShadows, this.msgText, this.timerText, this.comboText];
+      for (const o of hide) (o as unknown as { setVisible(v: boolean): void }).setVisible(false);
+    }
 
     this.stageGuideTexts = [
       this.add.text(10, (260 / 720) * STAGE_H - 16, 'horizon y=260', {
@@ -547,7 +572,7 @@ export class FightScene extends Phaser.Scene {
 
     if (this.training) {
       this.add
-        .text(STAGE_W / 2, 84, this.tuner ? 'MOVE TUNER' : 'TRAINING · ENTER to leave', {
+        .text(STAGE_W / 2, 84, this.spriteEditor ? 'SPRITE EDITOR' : this.tuner ? 'MOVE TUNER' : 'TRAINING · ENTER to leave', {
           fontFamily: 'monospace', fontSize: '13px', color: '#ffd24a', stroke: '#000', strokeThickness: 3,
         })
         .setOrigin(0.5)
@@ -1134,6 +1159,12 @@ export class FightScene extends Phaser.Scene {
     const loserSlot = s.roundWinner === 0 ? 1 : 0;
 
     for (const slot of [0, 1] as const) {
+      // sprite editor edits ONE fighter; slot 1 is a hidden loop-driver dummy
+      if (this.spriteEditor && slot === 1) {
+        this.fighterSprites[1]?.setVisible(false);
+        this.fighterShadows[1]?.setVisible(false);
+        continue;
+      }
       const f = s.fighters[slot];
       const def = characters[f.charId];
       const burnt = fatalDown && slot === loserSlot;
@@ -1262,10 +1293,12 @@ export class FightScene extends Phaser.Scene {
     if (this.stageGuide) this.drawStageGuide();
     else for (const t of this.stageGuideTexts) t.setVisible(false);
     if (this.debugBoxes) this.drawDebug();
+    if (this.spriteEditor) this.drawEditorGuides();
+    if (this.spriteEditor && this.showHitbox) this.drawEditorHitbox();
     if (this.showSkeleton) this.drawSkeleton();
     perf.debug = performance.now() - sectionStart;
     sectionStart = performance.now();
-    this.drawHud();
+    if (!this.spriteEditor) this.drawHud();
     perf.hud = performance.now() - sectionStart;
     perf.draw = performance.now() - drawStart;
     this.perfDraw = perf;
@@ -1386,17 +1419,33 @@ export class FightScene extends Phaser.Scene {
     this.drawPreviewBox();
   }
 
-  /** the fixed limb graph over the DWPose joint names baked into meta.json
-   *  (see tools/pack-sheet.mjs) — each pair only drawn when both joints are
-   *  present for the current cell (low-confidence joints are simply absent) */
-  private static readonly SKELETON_BONES: [string, string][] = [
-    ['Lsho', 'Rsho'], ['Lhip', 'Rhip'],
-    ['Lsho', 'Lhip'], ['Rsho', 'Rhip'],
-    ['Lsho', 'Lelb'], ['Lelb', 'Lwri'],
-    ['Rsho', 'Relb'], ['Relb', 'Rwri'],
-    ['Lhip', 'Lkne'], ['Lkne', 'Lank'],
-    ['Rhip', 'Rkne'], ['Rkne', 'Rank'],
+  /** the limb graph over the DWPose joints baked into meta.json (see
+   *  tools/pack-sheet.mjs), grouped + colored to match the QA montage skeleton
+   *  (tools/qa/pose_qa.py draw_overlay): torso/head orange, arms blue, legs
+   *  green. Each bone is drawn only when both its joints are present. */
+  private static readonly SKELETON_GROUPS: { color: number; bones: [string, string][] }[] = [
+    { color: 0xff8c1a, bones: [['Lsho', 'Rsho'], ['Lhip', 'Rhip'], ['Lsho', 'Lhip'], ['Rsho', 'Rhip']] },
+    { color: 0x33a0ff, bones: [['Lsho', 'Lelb'], ['Lelb', 'Lwri'], ['Rsho', 'Relb'], ['Relb', 'Rwri']] },
+    { color: 0x3ad64a, bones: [['Lhip', 'Lkne'], ['Lkne', 'Lank'], ['Rhip', 'Rkne'], ['Rkne', 'Rank']] },
   ];
+  private static readonly JOINT_COLOR: Record<string, number> = {
+    nose: 0xff8c1a, Lsho: 0xff8c1a, Rsho: 0xff8c1a, Lhip: 0xff8c1a, Rhip: 0xff8c1a,
+    Leye: 0xff8c1a, Reye: 0xff8c1a, Lear: 0xff8c1a, Rear: 0xff8c1a,
+    Lelb: 0x33a0ff, Relb: 0x33a0ff, Lwri: 0x33a0ff, Rwri: 0x33a0ff,
+    Lkne: 0x3ad64a, Rkne: 0x3ad64a, Lank: 0x3ad64a, Rank: 0x3ad64a,
+  };
+  // COCO-wholebody hand topology (21 pts): wrist(0) fans to 5 fingers
+  private static readonly HAND_BONES: [number, number][] = [
+    [0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [5, 6], [6, 7], [7, 8],
+    [0, 9], [9, 10], [10, 11], [11, 12], [0, 13], [13, 14], [14, 15], [15, 16],
+    [0, 17], [17, 18], [18, 19], [19, 20],
+  ];
+  private static readonly FOOT_BONES: [string, string][] = [
+    ['Lank', 'Lheel'], ['Lank', 'Lbigtoe'], ['Lank', 'Lsmalltoe'],
+    ['Rank', 'Rheel'], ['Rank', 'Rbigtoe'], ['Rank', 'Rsmalltoe'],
+  ];
+  private static readonly HAND_COLOR = 0x33e0ff;
+  private static readonly FOOT_COLOR = 0x3ad64a;
 
   /** F3 debug overlay: a stick figure from DWPose keypoints QA'd against the
    *  actual painted sprite (tools/qa/pose_qa.py -> tools/pack-sheet.mjs ->
@@ -1407,10 +1456,12 @@ export class FightScene extends Phaser.Scene {
    *  character/cell with no baked keypoints yet. */
   private drawSkeleton(): void {
     const g = this.gfxHud;
-    for (const slot of [0, 1] as const) {
+    const slots = this.spriteEditor ? ([0] as const) : ([0, 1] as const);
+    for (const slot of slots) {
       const cellName = this.currentCellName[slot];
       if (!cellName) continue;
-      const joints = this.skeletons[slot]?.[cellName];
+      // editor reads live (edited) joints from the working sheet model
+      const joints = this.editorJoints(cellName) ?? this.skeletons[slot]?.[cellName];
       if (!joints) continue;
       const f = this.state.fighters[slot];
       const def = characters[f.charId];
@@ -1421,25 +1472,264 @@ export class FightScene extends Phaser.Scene {
         f.x + mirror * (jx - 0.5 * CELL_W) * scale,
         f.y + SPRITE_FOOT_OFFSET_Y + (def.spriteOffsetY ?? 0) + (jy - FLOOR_FRAC * CELL_H) * scale,
       ];
-      for (const [a, b] of FightScene.SKELETON_BONES) {
+      const bone = (a: string, b: string, color: number, w = 2): void => {
         const ja = joints[a];
         const jb = joints[b];
-        if (!ja || !jb) continue;
+        if (!ja || !jb) return;
         const [ax, ay] = toWorld(ja[0], ja[1]);
         const [bx, by] = toWorld(jb[0], jb[1]);
-        g.lineStyle(2, 0xff44ff, 0.9).lineBetween(ax, ay, bx, by);
-      }
+        g.lineStyle(w, color, 0.95).lineBetween(ax, ay, bx, by);
+      };
+      // body
+      for (const grp of FightScene.SKELETON_GROUPS) for (const [a, b] of grp.bones) bone(a, b, grp.color);
+      // neck: nose -> shoulder midpoint
       if (joints.nose && joints.Lsho && joints.Rsho) {
         const [nx, ny] = toWorld(joints.nose[0], joints.nose[1]);
         const [lx, ly] = toWorld(joints.Lsho[0], joints.Lsho[1]);
         const [rx, ry] = toWorld(joints.Rsho[0], joints.Rsho[1]);
-        g.lineStyle(2, 0xff44ff, 0.9).lineBetween(nx, ny, (lx + rx) / 2, (ly + ry) / 2);
+        g.lineStyle(2, 0xff8c1a, 0.95).lineBetween(nx, ny, (lx + rx) / 2, (ly + ry) / 2);
       }
+      // feet + hands (finger bones)
+      for (const [a, b] of FightScene.FOOT_BONES) bone(a, b, FightScene.FOOT_COLOR, 1);
+      for (const pre of ['lhand_', 'rhand_']) {
+        for (const [a, b] of FightScene.HAND_BONES) bone(`${pre}${a}`, `${pre}${b}`, FightScene.HAND_COLOR, 1);
+      }
+      // joint dots: body joints big+colored, hands/feet a small point. Face
+      // points (face_*) are not baked anymore, and skipped if a stale meta has them.
       for (const name in joints) {
+        if (name.startsWith('face_')) continue;
         const [jx, jy] = toWorld(joints[name][0], joints[name][1]);
-        g.fillStyle(0xff44ff, 1).fillCircle(jx, jy, 3);
+        const bodyCol = FightScene.JOINT_COLOR[name];
+        if (bodyCol !== undefined) {
+          g.fillStyle(bodyCol, 1).fillCircle(jx, jy, 3);
+        } else {
+          const col = name.startsWith('lhand_') || name.startsWith('rhand_') ? FightScene.HAND_COLOR : FightScene.FOOT_COLOR;
+          g.fillStyle(col, 0.9).fillCircle(jx, jy, 1.3);
+        }
       }
     }
+  }
+
+  // ---------- sprite editor (spriteEditor mode) ----------
+
+  /** live (edited) joints for a cell from the working sheet model, else null */
+  private editorJoints(cellName: string): Record<string, [number, number, number]> | undefined {
+    return this.spriteEditor ? this.sheetModel?.jointsFor(cellName) : undefined;
+  }
+
+  private setupSpriteEditor(): void {
+    const id = this.chars[0];
+    const meta = this.cache.json.get(`meta-${id}`) as SheetMeta | undefined;
+    const src = this.textures.exists(`sheet-${id}`)
+      ? (this.textures.get(`sheet-${id}`).getSourceImage() as CanvasImageSource)
+      : null;
+    if (meta && src) {
+      this.sheetModel = new SpriteSheetModel(this, id, src, meta);
+      // point the live fighter at the editable working texture so edits show
+      this.fighterSprites[0]?.setTexture(this.sheetModel.texKey, 0);
+      this.hitFlashSprites[0]?.setTexture(this.sheetModel.texKey, 0);
+    }
+    // one fighter only: hide the loop-driver dummy, park the subject on the left
+    this.fighterSprites[1]?.setVisible(false);
+    this.state.fighters[0].x = 168;
+    this.state.fighters[0].facing = 1;
+    this.showHitbox = true;
+    this.debugBoxes = false; // the editor draws its own selected-move box
+    this.installEditorPointer();
+    if (this.sheetModel) {
+      this.spritePanel = new SpriteEditorPanel(this.uiLayer.root, characters[id], this.sheetModel, this);
+    }
+    this.events.once('shutdown', () => {
+      this.spritePanel?.dispose();
+      this.sheetModel?.dispose();
+    });
+  }
+
+  /** keep the subject parked left + facing right between loop reps (forward-
+   *  drifting moves aside) so it stays under the editor's fighter column */
+  private spriteEditorUpkeep(): void {
+    const f = this.state.fighters[0];
+    if (f.action.kind === 'idle' || f.action.kind === 'walkF' || f.action.kind === 'walkB') {
+      f.x = 168;
+      f.vx = 0;
+    }
+    f.facing = 1;
+  }
+
+  // --- SpriteEditorHost interface (called by SpriteEditorPanel) ---
+  /** loop a move OR a pseudo-pose ('__idle__' / '__walk__'); the driver stays
+   *  in place with attack off so the pose plays under the editor's column */
+  loopMove(moveId: string): void {
+    this.editorLoopMove = moveId;
+    this.setControlMode(0, 'loop', { moveId, attack: false, pauseTicks: this.editorLoopTicks });
+    this.setLoopPaused(0, this.editorLoopPaused);
+  }
+  /** hand slot 0 back to the keyboard so the tester can drive it themselves */
+  manualControl(): void {
+    this.setControlMode(0, 'manual');
+  }
+  pauseLoop(paused: boolean): void {
+    this.editorLoopPaused = paused;
+    this.setLoopPaused(0, paused);
+  }
+  /** ticks the loop waits between reps (the "timer") — re-applied live */
+  setLoopInterval(pauseTicks: number): void {
+    this.editorLoopTicks = pauseTicks;
+    if (this.controlMode[0] === 'loop') this.loopMove(this.editorLoopMove);
+  }
+  /** which move's hitbox is drawn faint/active + is draggable (edit target) */
+  setEditorMove(moveId: string): void {
+    this.editorMoveId = moveId;
+  }
+  setShowSkeleton(on: boolean): void {
+    this.showSkeleton = on;
+  }
+  setShowHitbox(on: boolean): void {
+    this.showHitbox = on;
+  }
+
+  /** selected-move hitbox on the subject: faint at rest, bright + handled
+   *  during its active frames; draggable (see installEditorPointer) */
+  private drawEditorHitbox(): void {
+    if (!this.editorMoveId) return;
+    const f = this.state.fighters[0];
+    const def = characters[f.charId];
+    const move = def.moves[this.editorMoveId];
+    if (!move?.hitbox) return;
+    const wb = worldBox(f, move.hitbox);
+    const a = f.action;
+    const active =
+      (a.kind === 'attack' || a.kind === 'airAttack') &&
+      a.moveId === this.editorMoveId &&
+      a.frame >= move.startup &&
+      a.frame < move.startup + move.active;
+    const g = this.gfxHud;
+    const col = 0xff4d6d;
+    g.fillStyle(col, active ? 0.3 : 0.08).fillRect(wb.l, wb.t, wb.r - wb.l, wb.b - wb.t);
+    g.lineStyle(2, col, active ? 1 : 0.55).strokeRect(wb.l, wb.t, wb.r - wb.l, wb.b - wb.t);
+    for (const [hx, hy] of [[wb.l, wb.t], [wb.r, wb.t], [wb.l, wb.b], [wb.r, wb.b]] as const) {
+      g.fillStyle(0xffffff, 0.9).fillRect(hx - 4, hy - 4, 8, 8);
+    }
+  }
+
+  /** sprite-editor guides: the world floor plane (feet line) + a soft outline
+   *  around the current cell's silhouette, both in the SAME cell->world space
+   *  the sprite art is drawn in — so you can see feet-vs-shadow and the sprite
+   *  extent against the floor */
+  private drawEditorGuides(): void {
+    const g = this.gfxHud;
+    // floor plane: where the engine grounds the fighter (feet land here)
+    g.lineStyle(1, 0x00e0ff, 0.5).lineBetween(0, FLOOR_Y, STAGE_W, FLOOR_Y);
+    const name = this.currentCellName[0];
+    const box = name ? this.sheetModel?.alphaBoxForName(name) : null;
+    if (box) {
+      const [l, t] = this.cellToWorld(box.x0, box.y0);
+      const [r, b] = this.cellToWorld(box.x1, box.y1);
+      g.lineStyle(1, 0xffffff, 0.28).strokeRect(l, t, r - l, b - t);
+    }
+  }
+
+  /** the sprite's cell->world transform for slot 0 (facing right in editor) */
+  private editorCellTransform(): { scale: number; ox: number; oy: number } {
+    const f = this.state.fighters[0];
+    const def = characters[f.charId];
+    const scale = (def.hurtStand.h * 1.32) / CELL_H;
+    return { scale, ox: f.x, oy: f.y + SPRITE_FOOT_OFFSET_Y + (def.spriteOffsetY ?? 0) };
+  }
+  private cellToWorld(jx: number, jy: number): [number, number] {
+    const { scale, ox, oy } = this.editorCellTransform();
+    return [ox + (jx - 0.5 * CELL_W) * scale, oy + (jy - FLOOR_FRAC * CELL_H) * scale];
+  }
+
+  /** SpriteEditorHost: an origin-relative CELL-space box (hitboxFromSkeleton's
+   *  output, x from center / y from feet) -> an engine move.hitbox that
+   *  worldBox draws exactly over the art. Uses the RENDER scale + the y render
+   *  offset, so a box that hugs the drawn hand stays hugging it (the character
+   *  `scale` is a separate collision multiplier and must NOT be used here). */
+  cellBoxToHitbox(b: Box): Box {
+    const { scale, oy } = this.editorCellTransform();
+    const f = this.state.fighters[0];
+    return {
+      x: Math.round(b.x * scale),
+      y: Math.round(b.y * scale + (oy - f.y)),
+      w: Math.round(b.w * scale),
+      h: Math.round(b.h * scale),
+    };
+  }
+  private worldToCell(wx: number, wy: number): [number, number] {
+    const { scale, ox, oy } = this.editorCellTransform();
+    return [0.5 * CELL_W + (wx - ox) / scale, FLOOR_FRAC * CELL_H + (wy - oy) / scale];
+  }
+
+  private installEditorPointer(): void {
+    type Drag =
+      | { kind: 'joint'; joint: string; cell: string }
+      | { kind: 'move' | 'nw' | 'ne' | 'sw' | 'se'; wl: number; wt: number; wr: number; wb: number; px: number; py: number };
+    let drag: Drag | null = null;
+    const near = (a: number, b: number, r = 9) => Math.abs(a - b) <= r;
+
+    this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      const wx = p.worldX;
+      const wy = p.worldY;
+      const cell = this.currentCellName[0];
+      // joints first (only when the skeleton overlay is on)
+      if (this.showSkeleton && cell) {
+        const joints = this.editorJoints(cell) ?? this.skeletons[0]?.[cell];
+        if (joints) {
+          for (const jn in joints) {
+            const [jwx, jwy] = this.cellToWorld(joints[jn][0], joints[jn][1]);
+            if (near(jwx, wx) && near(jwy, wy)) {
+              drag = { kind: 'joint', joint: jn, cell };
+              return;
+            }
+          }
+        }
+      }
+      // hitbox move/resize
+      const move = this.editorMoveId ? characters[this.chars[0]].moves[this.editorMoveId] : undefined;
+      if (this.showHitbox && move?.hitbox) {
+        const f = this.state.fighters[0];
+        const wb = worldBox(f, move.hitbox);
+        const corner = (cx: number, cy: number, k: 'nw' | 'ne' | 'sw' | 'se') =>
+          near(cx, wx) && near(cy, wy) ? k : null;
+        const k =
+          corner(wb.l, wb.t, 'nw') ?? corner(wb.r, wb.t, 'ne') ?? corner(wb.l, wb.b, 'sw') ?? corner(wb.r, wb.b, 'se');
+        if (k) drag = { kind: k, wl: wb.l, wt: wb.t, wr: wb.r, wb: wb.b, px: wx, py: wy };
+        else if (wx >= wb.l && wx <= wb.r && wy >= wb.t && wy <= wb.b)
+          drag = { kind: 'move', wl: wb.l, wt: wb.t, wr: wb.r, wb: wb.b, px: wx, py: wy };
+      }
+    });
+
+    this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
+      if (!drag || !p.isDown) return;
+      const wx = p.worldX;
+      const wy = p.worldY;
+      if (drag.kind === 'joint') {
+        const [cx, cy] = this.worldToCell(wx, wy);
+        this.sheetModel?.setJoint(drag.cell, drag.joint, Math.round(cx * 10) / 10, Math.round(cy * 10) / 10);
+        return;
+      }
+      const move = this.editorMoveId ? characters[this.chars[0]].moves[this.editorMoveId] : undefined;
+      if (!move?.hitbox) return;
+      const f = this.state.fighters[0];
+      let { wl, wt, wr, wb } = drag;
+      const dx = wx - drag.px;
+      const dy = wy - drag.py;
+      if (drag.kind === 'move') {
+        wl += dx; wr += dx; wt += dy; wb += dy;
+      } else {
+        if (drag.kind === 'nw' || drag.kind === 'sw') wl = wx;
+        if (drag.kind === 'ne' || drag.kind === 'se') wr = wx;
+        if (drag.kind === 'nw' || drag.kind === 'ne') wt = wy;
+        if (drag.kind === 'sw' || drag.kind === 'se') wb = wy;
+      }
+      // world edges -> facing-relative box (editor faces right: l = f.x + box.x)
+      const x = Math.round(Math.min(wl, wr) - f.x);
+      const y = Math.round(Math.min(wt, wb) - f.y);
+      move.hitbox = { x, y, w: Math.max(4, Math.round(Math.abs(wr - wl))), h: Math.max(4, Math.round(Math.abs(wb - wt))) };
+    });
+
+    this.input.on('pointerup', () => (drag = null));
   }
 
   /** move-tuner soft hitbox marker — always drawn (independent of whether the

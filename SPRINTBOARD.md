@@ -995,6 +995,74 @@ Theme: smoothness + showcase already-built mechanics (low engine risk).
 - [ ] Wire the unused `du` charge + `mash` archetypes into 1–2 fighters (DATA
       ONLY — plumbing already exists, zero engine risk, immediate variety)
 
+### Sprint 25 — Dev editor: Move Tuner + Sprite Editor + Character Scale (user-directed 2026-07-06)
+Theme: turn the Sprint 23 dev-editor backbone into real content tools. All
+dev-only (EditorMenuScene → tools; `import.meta.env.DEV`; `/__editor/*` Vite
+middleware, no-op in the prod build).
+
+**Move Tuner** (`src/ui/MoveTunerPanel.ts`, FightScene `tuner` mode):
+- [x] Pick 2 fighters in a training sandbox; per-slot control Manual / CPU
+      (low/med/high, `src/ai/difficulty.ts`) / Loop-a-move (approach→attack→
+      retreat→wait, pause + timer; directional keys still nudge for positioning).
+- [x] Live move inspector (frame data + hitbox) mutating the live `characters`
+      registry; WRITE TO DISK → character JSON. Difficulty is the same dial
+      attract-mode now randomizes.
+
+**Skeleton overlay (2D, F3)** — DWPose keypoints baked into meta.json at pack time:
+- [x] `pose_qa.py` persists per-cell keypoints; `pack-sheet.mjs` bakes them into
+      `meta.skeletons` (shifted by the normalize dy); `FightScene.drawSkeleton`
+      replays them live over the sprite (no runtime inference), colored like the
+      QA montage. Body + hands (finger bones) + feet; FACE points dropped (bloat).
+- [x] Hotkeys conformed 2D↔3D: F1 hitboxes · F2 move log · F3 skeleton · F5 stage guide.
+
+**Sprite Editor** (`src/ui/SpriteEditorPanel.ts` + `spriteSheetModel.ts`, FightScene `spriteEditor` mode):
+- [x] Live looping fighter + DOM sprite grid (shift-range / ctrl-toggle select,
+      drag-swap, clipboard) + selected-cell preview w/ floor inset; resizable +
+      collapsible panels.
+- [x] Sprite ops: per-cell/batch scale/normalize/offset; regen keypoints (live
+      DWPose via `/__editor/skeleton-regen`); regen a frame via nano-banana
+      (`/__editor/gen-frame`).
+- [x] Move ops: frame-data + hitbox sliders, draggable hitbox + joints on-canvas,
+      auto-hitbox from the skeleton hand/foot cluster, soft silhouette box, floor line.
+- [x] Non-destructive; WRITE composites the sheet → `/__editor/sheet` (timestamped
+      backup to gitignored `assets/raw/sprite-edits/` before overwrite).
+
+**Character Scale** (`src/data/characterScale.ts`, renamed from `spriteScale`):
+- [x] `scale` is a uniform multiplier — art + hurt/hit boxes + joints +
+      PROJECTILES + grab range — about the feet origin. Live-editable in both
+      tools (re-bakes in place from a cached base, no drift); saved to JSON via
+      the extended `/__editor/character` endpoint.
+
+**Engine / driver / pipeline:**
+- [x] `CpuDriver` performs EVERY motion special in the loop (added dp/du/360;
+      idle/walk pseudo-poses). Regression test `src/ai/bot.test.ts`.
+- [x] Restored vincent's Matrix Teleport to the MIRROR def (28/4/20, mirror:true,
+      invulnFrom 14, invuln 24) — a parallel tuning pass had reverted it to a
+      plain `behind` blink, breaking the Sprint 20 tests + the added frames.
+- [x] `pack-sheet.mjs` SCALE_PAD now matches `pose_qa.py` HEADROOM=24 (baked
+      keypoints/hitboxes were ~24px misregistered vs the packed art).
+- [x] Python resolver (`tools/qa/resolve-python.mjs` + `run.mjs`) — bare `python3`
+      may be too new (3.14) for rtmlib; auto-picks 3.11–3.13, honors `MK_PYTHON`.
+- [x] `.gitignore`: unscoped non-frame `assets/raw/` (kept frames) to slim the repo.
+
+**Priorities / follow-ups:**
+- [ ] **Update combo/gameplay tests after auto-hitboxes are calculated for ALL
+      fighters** (PRIORITY). Auto-hitboxes hug the art tighter than the old
+      feel-tuned boxes (vincent's jab now reaches less far → the Sprint 19
+      combo-scaling `≥5-hit` test fails). Don't chase it per-fighter — re-tune the
+      whole roster via the editor, THEN update the tests to the new reach.
+- [ ] **Roster floor + keypoint migration** — only vincent & gene are normalized
+      + full-keypoint. Re-QA + `gen:pack --normalize` the other 12 (fixed
+      SCALE_PAD), then flip global `SPRITE_FOOT_OFFSET_Y`→0 and zero every
+      per-char `spriteOffsetY` (interim: vincent/gene = -16 cancel the global 16).
+      ONE atomic pass — a half-migrated roster keeps offsets fighting the normalize.
+- [ ] **Sprite Editor Phase 2: projectiles spawn from a named joint** (hand →
+      fireball, head → fire-breath, floor → low) — editor authoring aid that
+      writes spawnX/spawnY from the active cell's keypoint; engine stays pure.
+- [ ] Editor sheet edits diverge from `assets/raw/frames` — a "re-pack from raw"
+      reconciliation path (or warning) so a later `gen:pack` doesn't silently
+      clobber in-editor pixel edits.
+
 ### Icebox (do not start)
 - **Attract-mode gag reels (3D)**: occasionally, instead of a demo fight, the
   attract rotation holds on a stage with one or two fighters doing weird

@@ -13,9 +13,13 @@ dist/
 .vite/
 *.log
 
-# Asset pipeline intermediates. assets/raw/ (generated character frames) is
-# now committed so we can hand-fix individual frames later without regenerating
-# — it costs some repo size but keeps the source frames versioned.
+# Asset pipeline intermediates. Only the source FRAMES under assets/raw/frames/
+# stay versioned — a useful hand-edit point during dev. Everything else under
+# assets/raw/ (qa reports/montages, keyed, stages, style-tests, vfx, canonical,
+# icons, music, voice-tests, sprite-editor backups) is a regen intermediate and
+# is kept OUT of the repo to avoid bloat (regenerate via the gen:* scripts).
+assets/raw/*
+!assets/raw/frames/
 assets/veo-clips/
 assets/frame-dumps/
 *.mp4.tmp

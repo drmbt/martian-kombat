@@ -24,6 +24,11 @@ const TOOLS: Tool[] = [
     desc: 'pick two fighters, tune moves live, CPU/loop drivers',
     act: (s) => s.go('Select', { cpu: false, training: true, tuner: true, render3d: false }),
   },
+  {
+    label: 'SPRITE EDITOR',
+    desc: 'edit a fighter’s sheet: cells, hitboxes, skeleton, regen frames',
+    act: (s) => s.go('Select', { cpu: false, training: true, spriteEditor: true, render3d: false }),
+  },
 ];
 
 export class EditorMenuScene extends Phaser.Scene {

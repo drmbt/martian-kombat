@@ -28,6 +28,10 @@ import cv2
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 CW, CH = 288, 384
+# Vertical safe-zone (px) the packer reserves top+bottom so floor normalization
+# can't clip. MUST match HEADROOM in tools/pack-sheet.mjs, or the QA skeleton +
+# measured hitboxes won't register with the packed art.
+HEADROOM = 24
 ALPHA_THR = 16
 FFMPEG_KEY = "chromakey=0x00B140:0.15:0.06"  # matches tools/pack-sheet.mjs
 
@@ -47,6 +51,37 @@ KP = {"nose": 0, "Lsho": 5, "Rsho": 6, "Lelb": 7, "Relb": 8, "Lwri": 9,
       "Lank": 15, "Rank": 16}
 LFOOT, RFOOT = [17, 18, 19], [20, 21, 22]     # big toe / small toe / heel
 LHAND, RHAND = list(range(91, 112)), list(range(112, 133))
+
+# Full COCO-wholebody-133 index -> name. Body names match KP above (so the
+# 11-joint consumers keep working); feet/face/hands get grouped names so the
+# in-editor skeleton overlay + auto-hitbox can use the same clusters DWPose
+# (and the QA montage) draw. Baked into meta.json by tools/pack-sheet.mjs.
+WB_NAMES = [None] * 133
+for _i, _n in {0: "nose", 1: "Leye", 2: "Reye", 3: "Lear", 4: "Rear",
+               5: "Lsho", 6: "Rsho", 7: "Lelb", 8: "Relb", 9: "Lwri", 10: "Rwri",
+               11: "Lhip", 12: "Rhip", 13: "Lkne", 14: "Rkne", 15: "Lank", 16: "Rank",
+               17: "Lbigtoe", 18: "Lsmalltoe", 19: "Lheel",
+               20: "Rbigtoe", 21: "Rsmalltoe", 22: "Rheel"}.items():
+    WB_NAMES[_i] = _n
+for _i in range(23, 91):
+    WB_NAMES[_i] = f"face_{_i - 23}"
+for _i in range(91, 112):
+    WB_NAMES[_i] = f"lhand_{_i - 91}"
+for _i in range(112, 133):
+    WB_NAMES[_i] = f"rhand_{_i - 112}"
+
+
+def named_keypoints(k, s, thr=0.3):
+    """Body + feet + hands COCO-wholebody points above `thr`, as
+    {name: [x, y, conf]}. Face points (face_*) are dropped — the game skeleton
+    overlay doesn't use them and they ~7x the baked meta.json size."""
+    out = {}
+    for i, name in enumerate(WB_NAMES):
+        if name is None or name.startswith("face_"):
+            continue
+        if s[i] >= thr:
+            out[name] = [round(float(k[i][0]), 1), round(float(k[i][1]), 1), round(float(s[i]), 2)]
+    return out
 
 _MODEL = None
 def model():
@@ -133,11 +168,7 @@ def analyze_cell(rgba, name, native_edge=None):
            "components": components(mask), "people": people,
            "kp": {}, "flags": []}
     if k is not None:
-        for kn in ["Lwri", "Rwri", "Lank", "Rank", "Lkne", "Rkne",
-                   "Lsho", "Rsho", "Lhip", "Rhip", "nose"]:
-            p = kp(k, s, kn)
-            if p:
-                out["kp"][kn] = [round(p[0], 1), round(p[1], 1), round(p[2], 2)]
+        out["kp"] = named_keypoints(k, s)  # full 133-point wholebody set
         out["_k"], out["_s"] = k, s   # kept in-memory only, stripped before json
     # universal flags
     if a is None:
@@ -291,10 +322,11 @@ def load_raw_cells(frames_dir):
     """Key each raw NN-name.png with ffmpeg (same as packer), return {name: rgba}."""
     files = sorted(f for f in os.listdir(frames_dir)
                    if f[:2].isdigit() and f.endswith(".png"))
-    # key AND scale/pad to cell size, exactly like tools/pack-sheet.mjs, so the
-    # analysis runs in the same 288x384 space the engine/renderer sees
-    vf = (f"{FFMPEG_KEY},scale={CW}:{CH}:force_original_aspect_ratio=decrease,"
-          f"pad={CW}:{CH}:(ow-iw)/2:oh-ih:color=0x00000000")
+    # key AND scale/pad to cell size, exactly like tools/pack-sheet.mjs
+    # (same HEADROOM safe-zone), so the analysis runs in the same 288x384 space
+    # the engine/renderer sees and the skeleton stays registered with the art
+    vf = (f"{FFMPEG_KEY},scale={CW}:{CH - 2 * HEADROOM}:force_original_aspect_ratio=decrease,"
+          f"pad={CW}:{CH}:(ow-iw)/2:{CH - HEADROOM}-ih:color=0x00000000")
     cells, native_edges = {}, {}
     with tempfile.TemporaryDirectory() as tmp:
         for f in files:

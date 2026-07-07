@@ -31,6 +31,8 @@ export interface FightShellOpts {
   showcase?: boolean;
   /** dev-only move tuner (see FightScene) — rides into restart/character select */
   tuner?: boolean;
+  /** dev-only sprite editor (see FightScene) — rides into restart/character select */
+  spriteEditor?: boolean;
   /** which renderer this shell serves — rides into character select */
   render3d: boolean;
   /** live engine state accessor (scenes reassign state on restart) */
@@ -131,9 +133,9 @@ export class FightShell {
       else this.restartMatch();
     });
     kb.on('keydown-ENTER', () => {
-      // tuner: ENTER types into number inputs / triggers buttons in the DOM
-      // sidebar — it must never also bail out to character select underneath
-      if (this.opts.tuner) return;
+      // tuner/sprite editor: ENTER types into number inputs / triggers buttons
+      // in the DOM sidebar — it must never also bail out to char select underneath
+      if (this.opts.tuner || this.opts.spriteEditor) return;
       if (this.opts.online && this.opts.state().phase === 'matchEnd') this.optInRematch();
       else if (this.opts.training) this.toCharacterSelect();
       else if (this.opts.state().phase === 'matchEnd') this.toCharacterSelect();
@@ -239,13 +241,13 @@ export class FightShell {
   private restartMatch(): void {
     const o = this.opts;
     // keep showcase so a CPU-vs-CPU demo restarts as CPU-vs-CPU (not human P1)
-    this.scene.scene.restart({ p1: o.chars[0], p2: o.chars[1], cpu: o.cpu, training: o.training, showcase: o.showcase, tuner: o.tuner, stage: o.stageId });
+    this.scene.scene.restart({ p1: o.chars[0], p2: o.chars[1], cpu: o.cpu, training: o.training, showcase: o.showcase, tuner: o.tuner, spriteEditor: o.spriteEditor, stage: o.stageId });
   }
 
   toCharacterSelect(): void {
     const o = this.opts;
     // showcase rides back to the CPU-vs-CPU select so you can pick a new matchup
-    this.scene.scene.start('Select', { cpu: o.cpu, training: o.training, showcase: o.showcase, tuner: o.tuner, render3d: o.render3d });
+    this.scene.scene.start('Select', { cpu: o.cpu, training: o.training, showcase: o.showcase, tuner: o.tuner, spriteEditor: o.spriteEditor, render3d: o.render3d });
   }
 
   toMainMenu(): void {

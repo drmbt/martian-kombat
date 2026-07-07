@@ -1,6 +1,0 @@
-Transform the person in the reference photo into a full-body 2D fighting game character.
-CRITICAL: preserve their real facial features, hairstyle, skin tone, body type and the outfit they are wearing in the photo — it must be recognizably the same person.
-Pose: dynamic side-on martial-arts fighting stance facing right, knees bent, hands up ready to fight, full body visible head to toe with a small margin, centered.
-Background: solid flat chroma-key green (#00B140), completely uniform, no shadows cast on the background, no floor, no text, no watermark, no border.
-Art style: detailed 90s arcade pixel-art sprite (CPS-2 / Neo Geo era). Chunky visible pixels, limited vibrant palette, dark outline, crisp dithered shading — rendered large and readable.
-Character flavor: "The Cloakwright" — a tai-chi digital wizard. Add a long flowing black cloak over his black outfit and faint teal glowing arcane glyphs orbiting one open palm. Keep his round sunglasses and long dark hair.

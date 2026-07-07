@@ -1,4 +1,0 @@
-Painted cel-shaded 2D fighting game character-select icon portrait of the person in the reference photo: head and shoulders bust, facing the camera STRAIGHT-ON, fierce confident fighting-spirit expression, dramatic even lighting.
-Art style: hand-painted cel-shaded anime fighter (modern Capcom / Arc System Works aesthetic), bold clean line art, painterly cel shading — the person must stay clearly recognizable.
-Background: solid flat chroma-key green (#00B140), completely uniform, no shadows, no text, no watermark, no border, no frame.
-Use the face from the FIRST reference photo, but dress them in the same colorful outfit they wear in the SECOND reference image (their fighting sprite).

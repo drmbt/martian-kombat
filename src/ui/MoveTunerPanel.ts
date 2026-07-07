@@ -7,6 +7,8 @@
 // number-input edit is visible next frame with zero extra plumbing.
 import type { Box, CharacterDef, MoveDef } from '../engine';
 import { DIFFICULTIES, type Difficulty } from '../ai/difficulty';
+import { writeCharacterMoves } from './moveWriteback';
+import { setCharacterScale } from '../data/characterScale';
 
 /** the subset of FightScene the panel needs — avoids importing the whole
  *  scene class (structural typing: FightScene satisfies this for free) */
@@ -48,7 +50,8 @@ export class MoveTunerPanel {
   ) {
     this.el = document.createElement('div');
     this.el.style.cssText =
-      `position:absolute;right:0;top:0;bottom:0;width:${this.width}px;overflow-y:auto;box-sizing:border-box;` +
+      // bottom:10% leaves the lower-right clear for the canvas volume/mute overlay
+      `position:absolute;right:0;top:0;bottom:10%;width:${this.width}px;overflow-y:auto;box-sizing:border-box;` +
       'background:rgba(10,14,18,.62);border-left:2px solid #3f6070;padding:10px;pointer-events:auto;' +
       'font:12px monospace;color:#eaf6fb;z-index:8;';
     host.appendChild(this.el);
@@ -121,6 +124,13 @@ export class MoveTunerPanel {
       );
     }
     this.el.appendChild(inspectRow);
+
+    // character scale — uniformly resizes the inspected fighter (art + hurt/hit
+    // boxes + projectiles) live; saved with the moves on WRITE
+    const def = this.defs[this.chars[this.inspectSlot]];
+    this.el.appendChild(
+      this.numField('scale', def.scale ?? 1, (n) => setCharacterScale(def, Math.max(0.3, n))),
+    );
 
     // per-side control mode
     for (const slot of [0, 1] as const) this.el.appendChild(this.controlSection(slot));
@@ -306,45 +316,13 @@ export class MoveTunerPanel {
     });
   }
 
-  /** the live `characters` registry is spriteScale-baked (src/data/characters/
-   *  index.ts applySpriteScale bakes it into move.hitbox only — NOT
-   *  projectile.box, which is intentionally left unscaled) — undo that
-   *  before persisting, or hitboxes compound larger every WRITE TO DISK */
-  private unscaledMoves(id: string): Record<string, MoveDef> {
-    const def = this.defs[id];
-    const s = def.spriteScale ?? 1;
-    if (s === 1) return def.moves;
-    const unscaleBox = (b: { x: number; y: number; w: number; h: number }) => ({
-      x: Math.round(b.x / s), y: Math.round(b.y / s), w: Math.round(b.w / s), h: Math.round(b.h / s),
-    });
-    const out: Record<string, MoveDef> = {};
-    for (const [moveId, move] of Object.entries(def.moves)) {
-      const variants = move.variants
-        ? Object.fromEntries(
-            Object.entries(move.variants).map(([k, v]) => [k, v?.hitbox ? { ...v, hitbox: unscaleBox(v.hitbox) } : v]),
-          )
-        : undefined;
-      out[moveId] = {
-        ...move,
-        hitbox: move.hitbox ? unscaleBox(move.hitbox) : move.hitbox,
-        ...(variants ? { variants } : {}),
-      };
-    }
-    return out;
-  }
-
   private async write(): Promise<void> {
     const id = this.chars[this.inspectSlot];
     this.statusEl.textContent = 'saving…';
     this.statusEl.style.color = '#7fe3ff';
     try {
-      const res = await fetch('/__editor/character', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, moves: this.unscaledMoves(id) }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = (await res.json()) as { ok?: boolean; moveCount?: number };
+      const moveCount = await writeCharacterMoves(this.defs[id]);
+      const json = { moveCount };
       this.statusEl.textContent = `saved ${json.moveCount ?? '?'} moves → src/data/characters/${id}.json`;
       this.statusEl.style.color = '#6fe36f';
     } catch (err) {

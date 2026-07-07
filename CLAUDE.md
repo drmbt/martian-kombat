@@ -87,11 +87,17 @@ The pipeline turns a photo of a real person into a game-ready sprite sheet:
    targeted `--cells` re-roll, then pack. **Never QA the packed sheet** (scaling
    hides edge bleed). Vision is a last resort: one batched montage of only the
    failing cells. Full canon in the **`sprite-qa` skill** — invoke it for any
-   sprite gen/validation/hitbox/portrait work.
+   sprite gen/validation/hitbox/portrait work. `gen:qa` (+ `pack --normalize`)
+   need a Python with `rtmlib`/onnxruntime; the resolver (`tools/qa/run.mjs` /
+   `resolve-python.mjs`) auto-picks 3.11–3.13. If a too-new bare `python3` (e.g.
+   Homebrew 3.14, no wheels) breaks it, set `MK_PYTHON=/path/to/python`.
 3. **Key + pack** — `tools/pack-sheet.mjs`: ffmpeg colorkey/despill, scale to
    288×384 cells, tile into `public/assets/sprites/<name>/sheet.png` + meta.json.
    Pass `--normalize` to floor-align every cell (median grounded sole → origin
-   plane) so all fighters share one plane.
+   plane) so all fighters share one plane, and bake the QA skeleton keypoints
+   (`meta.skeletons`, body+hands+feet) shifted to match. The pack `SCALE_PAD` MUST
+   stay identical to `pose_qa.py`'s cell scale/pad (HEADROOM) or keypoints/hitboxes
+   misregister.
    For release-quality keying of effect-heavy sprites (flames/smoke/glow),
    `npm run gen:key -- --char <name>` runs the CorridorKey neural keyer —
    self-bootstrapping (clones/installs the sibling repo, MLX weights on Apple
@@ -245,19 +251,50 @@ Each character JSON carries an optional `stage: "<id>"` **home-stage** field
 whose art doesn't exist yet fails gracefully (falls back to RANDOM/default), so
 it's fine to assign a fighter a stage before that stage is generated.
 
-## Planned tooling (roadmap — not built yet; see SPRINTBOARD Sprint 23)
+## Dev-mode front-end editor (BUILT — Sprints 23 & 25; dev-only)
 
-A local **dev-mode front-end editor** is on the roadmap. Design decisions locked
-2026-07-05: the frontend→backend write path is a **Vite dev-server middleware
-plugin** (POST endpoint that writes data files to disk during `npm run dev`
-only — dev-guarded, a no-op in the prod build), NOT a standalone server. First
-deliverable is a **world-map pin tool** (drop each stage's pin on the
-character-select map so hovering a fighter lights their home-stage pin,
-SFII-style), built alongside a **character-creator skeleton** that will later
-wrap the 7-step pipeline (name, bring-or-generate art, voice cloning via a model
-like VibeVoice/OmniVoice, bio + move-list prompt, sprite gen with per-frame
-re-rolls). Do not expose any of this in the shipped UI until it's an approved
-sprint.
+All of this is **dev-only**: registered/reachable only under `import.meta.env.DEV`
+via the title's `7 · DEV EDITOR` item → `EditorMenuScene`, and it writes to disk
+through a **Vite dev-server middleware plugin** (`editorApi()` in `vite.config.ts`,
+`apply:'serve'`) whose `/__editor/*` POST endpoints are compiled OUT of the prod
+build. That middleware is the shared backbone the future character creator reuses.
+
+Built tools (see SPRINTBOARD Sprint 25 for detail):
+- **Stage Pin editor** — place each stage's pin on the select-screen world map
+  (`/__editor/stage-pins`).
+- **Move Tuner** (`src/ui/MoveTunerPanel.ts`) — 2 fighters in a training sandbox;
+  per-slot Manual / CPU (low/med/high, `src/ai/difficulty.ts`) / Loop-a-move;
+  live frame-data + hitbox inspector; WRITE → character JSON (`/__editor/character`).
+- **Sprite Editor** (`src/ui/SpriteEditorPanel.ts` + `spriteSheetModel.ts`) —
+  sprite grid (select/reorder/clipboard), per-cell scale/normalize/offset, regen
+  keypoints (live DWPose, `/__editor/skeleton-regen`), regen a frame via
+  nano-banana (`/__editor/gen-frame`), draggable hitbox + skeleton joints,
+  auto-hitbox from the skeleton, floor line + soft silhouette box. WRITE composites
+  the sheet → `/__editor/sheet` (timestamped backup before overwrite).
+- **2D skeleton overlay (F3)** — DWPose keypoints are baked into `meta.skeletons`
+  at pack time and replayed live over the sprite (no runtime inference). Debug
+  hotkeys are unified 2D↔3D: **F1 hitboxes · F2 move log · F3 skeleton · F5 stage guide**.
+
+**Character `scale`** (`src/data/characterScale.ts`, was `spriteScale`): one
+uniform multiplier that resizes EVERYTHING about a fighter's size + reach — art
+(via `hurtStand.h`), hurtboxes, hitboxes, joints, projectiles, grab range — about
+the feet origin. Baked at load by `applyScale`; live-edited by `setCharacterScale`
+(re-bakes in place from a cached base). **Two scales exist and differ**: the
+collision `scale` vs the render scale `hurtStand.h*1.32/CELL_H`. Anything drawn
+over the ART (skeleton, auto-hitbox, soft box) uses the RENDER scale; collision
+boxes use `scale`. Do not conflate them.
+
+**Coordinate contract** (bit us repeatedly, see Sprint 25): `pack-sheet.mjs`'s
+`SCALE_PAD` MUST equal `pose_qa.py`'s `load_raw_cells` scale/pad (`HEADROOM=24`),
+or baked keypoints/hitboxes silently misregister with the packed art. `FLOOR_FRAC`
+(0.88) MUST match across `normalize_floor.py`, `pose_qa.py`, `FightScene.ts`,
+`SelectScene.ts`. Normalize to `FLOOR_FRAC` OR hand-tune `spriteOffsetY` — never
+both (the roster is mid-migration: only vincent & gene are normalized).
+
+Still pending (SPRINTBOARD): the **character-creator skeleton** (name,
+bring-or-generate art, voice cloning, bio+move-list prompt, sprite gen with
+per-frame re-rolls) that wraps the 7-step pipeline. Do not expose any dev-editor
+UI in the shipped build.
 
 ## Conventions
 

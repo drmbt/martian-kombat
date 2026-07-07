@@ -26,7 +26,9 @@ export class PauseMenu {
   ) {
     this.el = document.createElement('div');
     this.el.style.cssText =
-      'position:absolute;inset:3.5%;display:none;flex-direction:column;gap:10px;z-index:6;' +
+      // z-index 30 keeps the pause dialog above the dev editor panels
+      // (MoveTuner/SpriteEditor sit at z-index 8) so it stays interactable
+      'position:absolute;inset:3.5%;display:none;flex-direction:column;gap:10px;z-index:30;' +
       'background:rgba(12,9,16,.95);border:2px solid #594566;padding:14px 20px;' +
       'color:#f5ead9;font:13px monospace;pointer-events:auto;';
 

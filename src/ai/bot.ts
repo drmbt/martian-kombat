@@ -2,14 +2,19 @@
 // sees the InputFrames this driver produces, so determinism of the core is
 // untouched. Decisions hash the game tick instead of Math.random so a given
 // match plays out reproducibly.
-import { EMPTY_INPUT, FLOOR_Y, GameState, InputFrame, Motion } from '../engine';
+import { CHARGE_TICKS, EMPTY_INPUT, FLOOR_Y, GameState, InputFrame, Motion } from '../engine';
 import { characters } from '../data/characters';
 
 type Dir = 'left' | 'right';
 
-/** motions enqueueMotion can perform — covers every normal special + fatality */
-type QueueableMotion = 'qcf' | 'qcb' | 'bf' | 'hcb' | 'hcf';
-const QUEUEABLE: Set<string> = new Set(['qcf', 'qcb', 'bf', 'hcb', 'hcf']);
+/** motions enqueueMotion can perform — every motion the engine matches
+ *  (motionDone in step.ts), so the loop/showcase can execute ANY special:
+ *  quarter/half circles, back-forward, dragon-punch, charge down-up, 360. */
+type QueueableMotion = 'qcf' | 'qcb' | 'bf' | 'hcb' | 'hcf' | 'dp' | 'du' | '360';
+const QUEUEABLE: Set<string> = new Set(['qcf', 'qcb', 'bf', 'hcb', 'hcf', 'dp', 'du', '360']);
+/** sprite-editor pseudo-poses (not real moves) — see loopDecide */
+const POSE_IDLE = '__idle__';
+const POSE_WALK = '__walk__';
 
 interface ReelEntry {
   /** a special: run this motion+button when roughly in range */
@@ -75,6 +80,13 @@ export class CpuDriver {
   private loopDecide(f: GameState['fighters'][number], def: typeof characters[string], toward: Dir, away: Dir, dist: number): Partial<InputFrame> {
     if (this.loopPaused) return {};
     const { moveId, pauseTicks, attack } = this.loop!;
+    // sprite-editor pseudo-poses: preview the idle or walk animation instead of
+    // a move. Walk ping-pongs so it stays roughly in place.
+    if (moveId === POSE_IDLE) return {};
+    if (moveId === POSE_WALK) {
+      this.loopTimer = (this.loopTimer + 1) % 120;
+      return this.loopTimer < 60 ? { [toward]: true } : { [away]: true };
+    }
     const move = def.moves[moveId];
     if (!move) return {};
     const isSpecial = !!move.input;
@@ -141,6 +153,23 @@ export class CpuDriver {
         { [back]: true }, { [back]: true, down: true }, { down: true },
         { down: true, [fwd]: true }, { [fwd]: true }, { [fwd]: true, [btn]: true },
       );
+    } else if (motion === 'dp') {
+      // dragon punch →↓↘: fwd(not down) -> down -> down+fwd. The closing tap
+      // MUST be the ↘ diagonal, not a clean forward: a clean forward would
+      // also complete the qcf tail (↓→) and the engine would fire the
+      // quarter-circle special instead (down+fwd fails qcf's `not: down`).
+      this.queue.push({ [fwd]: true }, { down: true }, { down: true, [fwd]: true, [btn]: true });
+    } else if (motion === '360') {
+      // down, back, then down+forward — all three seen, and the down+forward
+      // close avoids also completing a qcf on the same button
+      this.queue.push({ down: true }, { [back]: true }, { down: true, [fwd]: true, [btn]: true });
+    } else if (motion === 'du') {
+      // charge down-up: bank the charge by holding down, then release up +
+      // button. The engine bleeds charge by 8 the instant down releases (grace
+      // window), and that bleed happens BEFORE the motion is read, so hold
+      // CHARGE_TICKS + >8 to still clear the threshold on the release tick.
+      for (let i = 0; i < CHARGE_TICKS + 12; i++) this.queue.push({ down: true });
+      this.queue.push({ up: true, [btn]: true });
     } else {
       // bf (back-forward)
       this.queue.push({ [back]: true }, { [back]: true }, {}, { [fwd]: true }, { [fwd]: true, [btn]: true });

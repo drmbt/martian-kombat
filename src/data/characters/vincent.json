@@ -10,10 +10,10 @@
     "I am the signal. You were noise.",
     "The mirror reflects the truth, and the truth reflects your weakness."
   ],
-  "spriteScale": 1.18,
-  "spriteOffsetY": 20,
+  "scale": 1.18,
+  "spriteOffsetY": -16,
   "health": 1000,
-  "walkSpeed": 5.0,
+  "walkSpeed": 5,
   "backSpeed": 3.7,
   "jumpVel": 18,
   "gravity": 0.9,
@@ -46,10 +46,10 @@
       "blockstun": 9,
       "knockback": 7,
       "hitbox": {
-        "x": 65,
-        "y": -251,
-        "w": 92,
-        "h": 69
+        "x": 44,
+        "y": -169,
+        "w": 61,
+        "h": 46
       },
       "height": "mid",
       "chains": [
@@ -69,10 +69,10 @@
       "blockstun": 11,
       "knockback": 9,
       "hitbox": {
-        "x": 69,
-        "y": -261,
-        "w": 78,
-        "h": 85
+        "x": 46,
+        "y": -173,
+        "w": 53,
+        "h": 54
       },
       "height": "mid",
       "cancel": true
@@ -86,27 +86,27 @@
       "blockstun": 14,
       "knockback": 11,
       "hitbox": {
-        "x": 62,
-        "y": -237,
-        "w": 68,
-        "h": 65
+        "x": 47,
+        "y": -178,
+        "w": 48,
+        "h": 54
       },
       "height": "mid",
       "cancel": true
     },
     "lk": {
-      "startup": 5,
-      "active": 3,
-      "recovery": 10,
+      "startup": 1,
+      "active": 12,
+      "recovery": 5,
       "damage": 40,
       "hitstun": 13,
       "blockstun": 9,
       "knockback": 6,
       "hitbox": {
-        "x": 69,
-        "y": -210,
-        "w": 84,
-        "h": 86
+        "x": 45,
+        "y": -141,
+        "w": 57,
+        "h": 57
       },
       "height": "mid",
       "chains": [
@@ -125,27 +125,27 @@
       "blockstun": 12,
       "knockback": 10,
       "hitbox": {
-        "x": 50,
-        "y": -269,
-        "w": 90,
-        "h": 86
+        "x": 31,
+        "y": -180,
+        "w": 62,
+        "h": 58
       },
       "height": "mid",
       "cancel": true
     },
     "hk": {
-      "startup": 12,
-      "active": 4,
-      "recovery": 20,
+      "startup": 6,
+      "active": 16,
+      "recovery": 9,
       "damage": 100,
       "hitstun": 24,
       "blockstun": 15,
       "knockback": 12,
       "hitbox": {
-        "x": 55,
-        "y": -271,
-        "w": 85,
-        "h": 74
+        "x": 53,
+        "y": -174,
+        "w": 45,
+        "h": 105
       },
       "height": "mid",
       "knockdown": true
@@ -350,7 +350,7 @@
       "hitstun": 22,
       "blockstun": 13,
       "knockback": 11,
-      "comment": "hitbox is authored, NOT pose-measured: the drawn crescent-kick leg sits high (measured y=-218) but jhk's role is an air overhead that must reach a grounded/crouching defender on descent \u2014 an art-vs-intent divergence, so the box is intentionally lower/bigger than the limb. Do not --calibrate-force this cell.",
+      "comment": "hitbox is authored, NOT pose-measured: the drawn crescent-kick leg sits high (measured y=-218) but jhk's role is an air overhead that must reach a grounded/crouching defender on descent — an art-vs-intent divergence, so the box is intentionally lower/bigger than the limb. Do not --calibrate-force this cell.",
       "hitbox": {
         "x": 30,
         "y": -140,
@@ -532,9 +532,9 @@
         "motion": "qcf",
         "button": "kick"
       },
-      "startup": 14,
-      "active": 2,
-      "recovery": 10,
+      "startup": 28,
+      "active": 4,
+      "recovery": 20,
       "damage": 0,
       "hitstun": 0,
       "blockstun": 0,
@@ -542,9 +542,11 @@
       "hitbox": null,
       "height": "mid",
       "teleport": {
-        "mode": "behind"
+        "mode": "behind",
+        "mirror": true
       },
-      "invuln": 14
+      "invulnFrom": 14,
+      "invuln": 24
     },
     "throw": {
       "name": "Throw",
