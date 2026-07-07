@@ -251,6 +251,72 @@ function editorApi(): Plugin {
           })
           .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
       });
+
+      // POST /__editor/creator/write  { id, name, def, sheetBase64, meta, portraitBase64 }
+      // The wizard's SHIP step: writes a playable fighter to disk and registers
+      // it — sheet.png + meta.json, portrait (+ bust/ko copies so boot is clean),
+      // <id>.json, and idempotent inserts into roster.ts + characters/index.ts.
+      // A lean pack path (no old QA/normalize, per docs §11a). Dev-only.
+      server.middlewares.use('/__editor/creator/write', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        readJsonBody(req)
+          .then((b) => {
+            const { id, name, def, sheetBase64, meta, portraitBase64 } = b as {
+              id?: unknown; name?: unknown; def?: unknown; sheetBase64?: unknown; meta?: unknown; portraitBase64?: unknown;
+            };
+            if (!okId(id)) throw new Error('invalid character id');
+            if (typeof sheetBase64 !== 'string' || typeof meta !== 'object' || meta === null) throw new Error('missing sheet/meta');
+            if (typeof def !== 'object' || def === null) throw new Error('missing def');
+            const disp = typeof name === 'string' && name ? name : id.toUpperCase();
+            // sprites
+            const spriteDir = join(root, 'public/assets/sprites', id);
+            mkdirSync(spriteDir, { recursive: true });
+            writeFileSync(join(spriteDir, 'sheet.png'), Buffer.from(sheetBase64, 'base64'));
+            writeFileSync(join(spriteDir, 'meta.json'), JSON.stringify(meta, null, 2) + '\n');
+            // portrait (+ bust/ko copies so BootScene's unconditional loads don't 404)
+            if (typeof portraitBase64 === 'string') {
+              const portDir = join(root, 'public/assets/portraits');
+              mkdirSync(portDir, { recursive: true });
+              const buf = Buffer.from(portraitBase64, 'base64');
+              for (const suffix of ['', '-bust', '-ko']) writeFileSync(join(portDir, `${id}${suffix}.png`), buf);
+            }
+            // silent placeholder VO so BootScene's unconditional per-fighter
+            // audio loads resolve (a MISSING public asset is served as HTML by
+            // the dev server and hangs the Phaser loader — see the roster-verify
+            // note). One ffmpeg-generated silence, copied to all 17 clips.
+            const audioRoot = join(root, 'public/assets/audio');
+            mkdirSync(join(audioRoot, 'announcer'), { recursive: true });
+            mkdirSync(join(audioRoot, 'voice'), { recursive: true });
+            const silence = join(tmpdir(), `mk-silence-${Date.now()}.mp3`);
+            execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=mono', '-t', '0.25', '-q:a', '9', silence]);
+            const clips = [join('announcer', `${id}.mp3`)];
+            for (let i = 1; i <= 6; i++) clips.push(join('voice', `${id}-kiai-${i}.mp3`), join('voice', `${id}-hurt-${i}.mp3`));
+            for (let i = 1; i <= 4; i++) clips.push(join('voice', `${id}-victory-${i}.mp3`));
+            for (const c of clips) { const p = join(audioRoot, c); if (!existsSync(p)) copyFileSync(silence, p); }
+            // character JSON (drop the fatality block for now — no panels generated
+            // yet, and BootScene would 404 on the missing panels)
+            const cleanDef = { ...(def as Record<string, unknown>) };
+            delete cleanDef.fatality;
+            writeFileSync(join(root, 'src/data/characters', `${id}.json`), JSON.stringify(cleanDef, null, 2) + '\n');
+            // register (idempotent) — characters/index.ts + roster.ts
+            const varName = id.replace(/-/g, '_');
+            const idxPath = join(root, 'src/data/characters/index.ts');
+            let idx = readFileSync(idxPath, 'utf-8');
+            if (!idx.includes(`'./${id}.json'`)) {
+              idx = idx.replace(/(import vanessa from '\.\/vanessa\.json';)/, `$1\nimport ${varName} from './${id}.json';`);
+              idx = idx.replace(/(\n\};\s*)$/, `\n  '${id}': load(${varName}),$1`);
+              writeFileSync(idxPath, idx);
+            }
+            const rosPath = join(root, 'src/data/roster.ts');
+            let ros = readFileSync(rosPath, 'utf-8');
+            if (!new RegExp(`id: '${id}'`).test(ros)) {
+              ros = ros.replace(/(\n\];)/, `\n  { id: '${id}', name: '${disp}', playable: true },$1`);
+              writeFileSync(rosPath, ros);
+            }
+            sendJson(res, 200, { ok: true, id, wrote: ['sheet.png', 'meta.json', `${id}.json`, 'portrait', 'roster', 'index'] });
+          })
+          .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
+      });
     },
   };
 }

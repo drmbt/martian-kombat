@@ -122,6 +122,7 @@ export class CharacterCreatorPanel {
     switch (CREATOR_STEPS[this.m.step]) {
       case 'SEED': return this.renderSeed();
       case 'PROFILE': return this.renderProfile();
+      case 'SHIP': return this.renderShip();
       default: return this.renderStub();
     }
   }
@@ -330,6 +331,60 @@ export class CharacterCreatorPanel {
       const nx = el('button', BTN_HOT, 'Next ▸'); nx.onclick = () => this.goto(this.m.step + 1); nav.appendChild(nx);
     }
     this.bodyEl.appendChild(nav);
+  }
+
+  // ── D8 · SHIP ─────────────────────────────────────────────────────────
+  private renderShip(): void {
+    this.h('Ship it', 'Composite the base cells into a sheet, write the character + register it, then reload and pick it on the select screen.');
+    const cells = this.m.baseCellNames();
+    this.bodyEl.appendChild(el('div', 'font-size:12px;color:#8fa6b2;margin-bottom:8px;',
+      `${cells.length} base cells ready: ${cells.join(', ') || '(none — generate the base batch on Profile first)'}`));
+    this.bodyEl.appendChild(el('pre', FONT + 'font-size:10px;color:#8fa6b2;background:#0b1119;border:1px solid #22303e;' +
+      'border-radius:6px;padding:10px;white-space:pre-wrap;max-height:220px;overflow:auto;', JSON.stringify(this.m.buildFullCharacter(), null, 2)));
+    const status = el('div', 'font-size:12px;color:#bff0ff;margin:10px 0;');
+    const write = el('button', cells.length ? BTN_HOT : BTN + 'opacity:.5;pointer-events:none;', '⤓ WRITE + REGISTER fighter');
+    write.onclick = async () => {
+      status.textContent = 'compositing sheet…';
+      const sheet = await this.composeSheet();
+      if (!sheet) { status.textContent = '✕ no base cells to pack'; return; }
+      status.textContent = 'writing to disk…';
+      try {
+        const r = await fetch('/__editor/creator/write', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: this.m.id, name: this.m.inputs.name.toUpperCase(), def: this.m.buildFullCharacter(),
+            sheetBase64: sheet.sheetBase64, meta: sheet.meta,
+            portraitBase64: dataUrlToB64(this.m.job('portrait')?.dataUrl),
+          }),
+        });
+        const j = (await r.json()) as { ok?: boolean; error?: string };
+        status.textContent = j.ok
+          ? `✓ wrote ${this.m.id} — registered as playable. The page will reload; pick ${this.m.inputs.name.toUpperCase()} on the SELECT screen.`
+          : '✕ ' + (j.error ?? 'write failed');
+      } catch (e) { status.textContent = '✕ ' + String(e); }
+    };
+    const nav = el('div', 'margin-top:14px;display:flex;gap:10px;');
+    const bk = el('button', BTN, '‹ Back'); bk.onclick = () => this.goto(this.m.step - 1);
+    nav.append(bk, write);
+    this.bodyEl.append(status, nav);
+  }
+
+  private loadImg(url: string): Promise<HTMLImageElement> {
+    return new Promise((resolve) => { const i = new Image(); i.onload = () => resolve(i); i.src = url; });
+  }
+
+  private async composeSheet(): Promise<{ sheetBase64: string; meta: object } | null> {
+    const names = this.m.baseCellNames();
+    if (!names.length) return null;
+    const cw = 288, ch = 384, cols = 3, rows = Math.ceil(names.length / cols);
+    const c = document.createElement('canvas'); c.width = cols * cw; c.height = rows * ch;
+    const ctx = c.getContext('2d')!;
+    for (let i = 0; i < names.length; i++) {
+      const url = this.m.job('sprite:' + names[i])?.dataUrl; if (!url) continue;
+      const img = await this.loadImg(url);
+      ctx.drawImage(img, (i % cols) * cw, Math.floor(i / cols) * ch, cw, ch);
+    }
+    return { sheetBase64: c.toDataURL('image/png').split(',')[1], meta: { cellW: cw, cellH: ch, cols, rows, frames: names } };
   }
 
   // ── generation ─────────────────────────────────────────────────────────

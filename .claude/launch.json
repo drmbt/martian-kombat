@@ -12,6 +12,19 @@
       "autoPort": true
     },
     {
+      "name": "martian-kombat-mock",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "port": 5173,
+      "autoPort": true,
+      "env": {
+        "MK_CREATOR_MOCK": "1"
+      }
+    },
+    {
       "name": "martian-kombat-preview",
       "runtimeExecutable": "npm",
       "runtimeArgs": [

@@ -1096,11 +1096,20 @@ the approved jump image, crouch ref crouch, specials projectile-first).
       fallback** draws client placeholders when no GEMINI key / `MK_CREATOR_MOCK=1`
       so the flow is walkable with zero setup). Dev-only (`apply:'serve'`).
 
-**Backlog (this sprint — crunching toward playable end-to-end):**
-- [ ] Engine-valid default move set (27 normals w/ frame data + heuristic
-      hitboxes) so `buildJson` emits a real CharacterDef.
-- [ ] SHIP writer: composite base cells → sheet.png + meta.json, write
-      `<id>.json` + portrait, register roster + `characters/index.ts` → PLAY NOW.
+**Playable end-to-end — DONE 2026-07-07** (verified live in mock mode: seed →
+profile → base batch → SHIP → reload → **playable MIRAGE vs VINCENT fight**,
+503/503 assets, 0 load failures):
+- [x] Engine-valid default kit (`buildFullCharacter`): 18 button normals +
+      throw + specials mapped from archetype → engine fields (projectile/
+      teleport/leap/forwardVel/grab/invuln/rehit), measured-default boxes.
+- [x] SHIP writer: client composites base cells → sheet.png + meta.json; POST
+      `/__editor/creator/write` writes `<id>.json` + portrait (+bust/ko copies) +
+      **17 silent VO placeholders** (missing per-fighter assets otherwise hang the
+      dev loader) + idempotent roster + `characters/index.ts` registration.
+- [x] `martian-kombat-mock` launch config (`MK_CREATOR_MOCK=1`) so the whole
+      flow is testable with zero API spend (nano-banana hit a monthly cap mid-test).
+
+**Backlog (this sprint):**
 - [ ] D3 normal sprite batches (jump ref=jump, crouch ref=crouch, standing
       ref=canonical); D5 specials 4-slot table (projectile-first chains).
 - [ ] Real Gemini design-draft (server `/__editor/creator/design` + context
@@ -1137,6 +1146,14 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-07 · tools+ui+data · Sprint 26: Character Creator — playable SHIP path** —
+  engine-valid default kit (`buildFullCharacter`: 18 normals + throw + archetype-
+  mapped specials) + SHIP writer (client composites sheet → `/__editor/creator/
+  write` writes sheet/meta/JSON/portrait + 17 silent VO placeholders + idempotent
+  roster/index registration) + `martian-kombat-mock` launch config. Verified live
+  end-to-end in mock mode: seed → profile → base batch → SHIP → reload → playable
+  MIRAGE-vs-VINCENT training fight, 503/503 assets, 0 load failures. Mock test char
+  cleaned from the repo. tsc clean. — Claude
 - **2026-07-07 · tools+ui+data · Sprint 26: Character Creator wizard scaffold** —
   dev-only browser wizard (`CharacterCreatorScene` + `CharacterCreatorPanel` +
   `creatorModel`) running the pipeline from the front-end. D1 Seed (name/desc/
