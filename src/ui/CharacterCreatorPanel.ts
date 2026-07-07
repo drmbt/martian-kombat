@@ -8,7 +8,7 @@ import {
   CreatorModel, CREATOR_STEPS, makeDraft, BASE_CELLS, ATTACK_CELLS,
   ARCHETYPE_INFO, specialsForArchetype, SPECIAL_ARCHETYPES, controlsForArchetype,
   NORMAL_MOVE_IDS, moveCellNames, slugify,
-  CANONICAL_PROMPT, PORTRAIT_PROMPT, KO_PROMPT, SPRITE_PROMPT,
+  CANONICAL_PROMPT, PORTRAIT_PROMPT, KO_PROMPT, SPRITE_PROMPT, fatalityBeats,
   type CreatorJob, type AttackCell, type SpecialDraft,
 } from './creatorModel';
 import { hitboxFromSkeleton, strikeKind } from './hitboxFromSkeleton';
@@ -205,7 +205,7 @@ export class CharacterCreatorPanel {
   private serializeState(): Record<string, unknown> {
     return {
       version: 1, step: this.m.step, inputs: this.m.inputs, draft: this.m.draft,
-      generatedVo: this.m.generatedVo, generatedMusic: this.m.generatedMusic, generatedFatality: this.m.generatedFatality,
+      generatedVo: this.m.generatedVo, generatedMusic: this.m.generatedMusic, generatedFatality: this.m.generatedFatality, fatalityBeats: this.m.fatalityBeats,
       skeletons: this.m.skeletons, autoHitboxes: this.m.autoHitboxes, voiceModelId: this.m.voiceModelId,
       jobs: [...this.m.jobs.values()].map((j) => ({
         key: j.key, kind: j.kind, label: j.label, status: j.status, prompt: j.prompt,
@@ -239,7 +239,7 @@ export class CharacterCreatorPanel {
       if (!j.ok || !j.state) throw new Error(j.error ?? 'load failed');
       const s = j.state as {
         step?: number; inputs?: CreatorModel['inputs']; draft?: CreatorModel['draft'];
-        generatedVo?: Record<string, string>; generatedMusic?: string; generatedFatality?: string[];
+        generatedVo?: Record<string, string>; generatedMusic?: string; generatedFatality?: string[]; fatalityBeats?: string[];
         skeletons?: CreatorModel['skeletons']; autoHitboxes?: CreatorModel['autoHitboxes']; voiceModelId?: string;
         jobs?: { key: string; kind: string; label: string; status: CreatorJob['status']; prompt?: string; mock?: boolean; approved?: boolean; scale?: number; offX?: number; offY?: number; mime?: string; savedAs?: string }[];
       };
@@ -249,6 +249,7 @@ export class CharacterCreatorPanel {
       this.m.generatedVo = (s.generatedVo ?? {});
       this.m.generatedMusic = s.generatedMusic;
       this.m.generatedFatality = (s.generatedFatality ?? []);
+      this.m.fatalityBeats = (s.fatalityBeats ?? []);
       this.m.skeletons = (s.skeletons ?? {});
       this.m.autoHitboxes = (s.autoHitboxes ?? {});
       this.m.voiceModelId = s.voiceModelId;
@@ -376,6 +377,14 @@ export class CharacterCreatorPanel {
     descI.oninput = () => (this.m.inputs.description = descI.value);
     descW.appendChild(descI);
     this.bodyEl.appendChild(descW);
+
+    const loreW = this.field('Lore / backstory (optional)');
+    const loreI = el('textarea', INPUT + 'height:70px;resize:vertical;') as HTMLTextAreaElement;
+    loreI.value = this.m.inputs.lore ?? '';
+    loreI.placeholder = 'arcade backstory — who they are on Mars, running jokes, rivalries. Written into the character; leave blank for an auto-draft.';
+    loreI.oninput = () => (this.m.inputs.lore = loreI.value);
+    loreW.appendChild(loreI);
+    this.bodyEl.appendChild(loreW);
 
     this.m.inputs.referencePhotos ??= [];
     this.bodyEl.appendChild(this.dropZone('Reference photo(s) — full-body first, face/others optional',
@@ -956,15 +965,26 @@ export class CharacterCreatorPanel {
       this.m.fatalityStatus === 'running' ? '◐ generating panels…' : this.m.fatalityStatus === 'done' ? '✓ 4 panels ready — regenerate' : '▸ Generate fatality (4 panels)');
     fatBtn.onclick = () => this.genFatality();
     fatW.appendChild(fatBtn);
-    if (this.m.generatedFatality.length) {
-      const strip = el('div', 'display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;');
-      this.m.generatedFatality.forEach((p, i) => {
-        const im = el('img', 'width:120px;height:68px;object-fit:cover;border:1px solid #22303e;border-radius:4px;') as HTMLImageElement;
-        im.src = 'data:image/jpeg;base64,' + p; im.title = 'panel ' + (i + 1);
-        strip.appendChild(im);
-      });
-      fatW.appendChild(strip);
+    // per-panel editable beat + thumbnail + single-panel reroll (like sprite cells)
+    this.ensureFatalityBeats();
+    const panels = el('div', 'margin-top:10px;display:flex;flex-direction:column;gap:8px;');
+    for (let i = 0; i < 4; i++) {
+      const row = el('div', 'display:flex;gap:8px;align-items:flex-start;border:1px solid #22303e;border-radius:6px;padding:8px;background:#0b1119;');
+      const img = this.m.generatedFatality[i];
+      if (img) { const im = el('img', 'width:120px;height:68px;object-fit:cover;border:1px solid #22303e;border-radius:4px;flex:0 0 auto;') as HTMLImageElement; im.src = 'data:image/jpeg;base64,' + img; row.appendChild(im); }
+      else row.appendChild(el('div', 'width:120px;height:68px;border:1px dashed #3f5266;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#5c6b78;font-size:11px;flex:0 0 auto;', 'panel ' + (i + 1)));
+      const col = el('div', 'flex:1;min-width:0;');
+      const ta = el('textarea', INPUT + 'height:52px;font-size:10px;line-height:1.35;') as HTMLTextAreaElement;
+      ta.value = this.m.fatalityBeats[i] ?? '';
+      ta.placeholder = `panel ${i + 1} beat — what happens in this cutscene frame`;
+      ta.oninput = () => (this.m.fatalityBeats[i] = ta.value);
+      const rr = el('button', BTN + 'font-size:10px;margin-top:5px;', this.m.fatalityStatus === 'running' ? '◐ …' : '↻ reroll panel ' + (i + 1));
+      rr.onclick = () => this.genFatality(i);
+      col.append(ta, rr);
+      row.appendChild(col);
+      panels.appendChild(row);
     }
+    fatW.appendChild(panels);
     this.bodyEl.appendChild(fatW);
     this.bodyEl.appendChild(el('div', 'font-size:11px;color:#8fa6b2;margin-bottom:12px;',
       'Portraits, VO and stage music were generated earlier (Seed/Profile) — review them there. Un-generated fatality = no FINISH THEM (degrades gracefully).'));
@@ -1094,9 +1114,20 @@ export class CharacterCreatorPanel {
       ctx.drawImage(img, x + (cw - dw) / 2 + ox, y + (ch - dh) + oy, dw, dh); // scale about feet + realign
       ctx.restore();
     }
-    // bake the local DWPose skeletons for the packed cells (F3 overlay in-game)
+    // bake the local DWPose skeletons for the packed cells (F3 overlay in-game),
+    // applying the SAME per-cell scale/offset the art got so joints track the moved
+    // art (jx' = 144(1−s)+ox+jx·s ; jy' = 384(1−s)+oy+jy·s — the inverse of the
+    // drawImage transform above)
     const skeletons: Record<string, Record<string, [number, number, number]>> = {};
-    for (const p of plan) if (this.m.skeletons[p.name]) skeletons[p.name] = this.m.skeletons[p.name];
+    for (const p of plan) {
+      const j = this.m.skeletons[p.name]; if (!j) continue;
+      const job = this.m.job(p.jobKey);
+      const s = job?.scale ?? 1, ox = job?.offX ?? 0, oy = job?.offY ?? 0;
+      if (s === 1 && !ox && !oy) { skeletons[p.name] = j; continue; }
+      const t: Record<string, [number, number, number]> = {};
+      for (const k in j) t[k] = [144 * (1 - s) + ox + j[k][0] * s, 384 * (1 - s) + oy + j[k][1] * s, j[k][2]];
+      skeletons[p.name] = t;
+    }
     const meta: Record<string, unknown> = { cellW: cw, cellH: ch, cols, rows, frames: plan.map((p) => p.name) };
     if (Object.keys(skeletons).length) meta.skeletons = skeletons;
     return { sheetBase64: c.toDataURL('image/png').split(',')[1], meta };
@@ -1289,18 +1320,29 @@ export class CharacterCreatorPanel {
     if (render) this.render();
   }
 
-  private async genFatality(): Promise<void> {
+  /** seed the editable per-panel beats from the default if they aren't set yet. */
+  private ensureFatalityBeats(): void {
+    if (this.m.fatalityBeats.length !== 4) this.m.fatalityBeats = fatalityBeats(this.m.inputs.name, this.m.draft!.fatality.name);
+  }
+
+  /** generate the fatality panels from the (editable) per-panel beats. `only` set
+   *  → reroll just that one panel; else all four. */
+  private async genFatality(only?: number): Promise<void> {
     this.ensureDraft();
+    this.ensureFatalityBeats();
     this.m.fatalityStatus = 'running'; this.render();
     try {
       const canon = dataUrlToB64(this.m.job('canonical')?.dataUrl) ?? dataUrlToB64(this.m.inputs.referencePhotos?.[0]?.dataUrl);
       const r = await fetch('/__editor/creator/fatality', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: this.m.inputs.name, fatalityName: this.m.draft!.fatality.name, referenceBase64: canon ? [canon] : [] }),
+        body: JSON.stringify({ name: this.m.inputs.name, fatalityName: this.m.draft!.fatality.name, referenceBase64: canon ? [canon] : [], panelPrompts: this.m.fatalityBeats, only }),
       });
       const j = (await r.json()) as { ok?: boolean; mock?: boolean; panels?: string[]; error?: string };
       if (!j.ok) throw new Error(j.error ?? 'fatality failed');
-      if (j.panels) this.m.generatedFatality = j.panels;
+      if (j.panels) {
+        if (typeof only === 'number') { const arr = [...this.m.generatedFatality]; if (j.panels[only]) arr[only] = j.panels[only]; this.m.generatedFatality = arr; }
+        else this.m.generatedFatality = j.panels;
+      }
       this.m.fatalityStatus = 'done';
       if (j.mock) console.info('[creator] fatality mock — no GEMINI key; no panels written, fatality omitted');
     } catch (e) { this.m.fatalityStatus = 'error'; console.error(e); }

@@ -37,6 +37,9 @@ export interface UploadedFile {
 export interface CreatorInputs {
   name: string;
   description: string;
+  /** optional free-text lore/backstory entered at Seed; overrides the drafted
+   *  backstory in the exported character when set */
+  lore?: string;
   /** all drop-zone inputs are arrays so items are individually removable and
    *  survive a panel re-render (the zone renders from the model, not closure state) */
   referencePhotos?: UploadedFile[]; // [0] = full body, extras = face/other refs
@@ -98,6 +101,19 @@ export const PORTRAIT_PROMPT = (name: string, desc: string): string =>
   `This is a close-up: do NOT show a full body, do NOT show the torso below the chest, hands, legs or ` +
   `feet, do NOT zoom out. ${STYLE_ART} ${STYLE_BG}`;
 
+/** the 4 default fatality panel BEATS (the editable part of each cutscene panel's
+ *  prompt — the endpoint wraps each in the shared cinematic frame). Mirrors the
+ *  server default so the creator's per-panel editors seed correctly. */
+export function fatalityBeats(name: string, fatalityName: string): string[] {
+  const N = (name || 'the fighter').toUpperCase(), F = fatalityName || 'the finisher';
+  return [
+    `${N} seizes the dazed, beaten opponent and begins the finishing move "${F}" — the opponent recoiling in terror`,
+    `mid-execution of "${F}", ${N} unleashing the move at full force, the opponent's body contorting`,
+    `the brutal peak of "${F}", dramatic impact, the opponent breaking apart, stylized gore`,
+    `the aftermath — ${N} standing victorious over the destroyed opponent, a smouldering husk`,
+  ];
+}
+
 export const KO_PROMPT = (name: string, desc: string): string =>
   `Tight head-and-shoulders BUST portrait of ${name} (${desc}), beaten and exhausted, head bowed, ` +
   `bruised, downcast. Close-up on the head and shoulders only — no full body, torso, hands or legs. ` +
@@ -113,6 +129,7 @@ export const BASE_CELLS: { id: string; ref: 'canonical'; pose: string }[] = [
   { id: 'crouch', ref: 'canonical', pose: 'squatting EXTREMELY low, knees folded, hips at heel height — the whole figure occupies ONLY the BOTTOM HALF of the frame.' },
   { id: 'jump', ref: 'canonical', pose: 'airborne, knees tucked, the whole figure lifted off the ground.' },
   { id: 'block', ref: 'canonical', pose: 'guard up, forearms shielding the face and body, braced.' },
+  { id: 'block-crouch', ref: 'canonical', pose: 'a CROUCHING BLOCK — squatting EXTREMELY low (hips at heel height, the whole figure occupying ONLY the BOTTOM HALF of the frame) with the guard up, forearms shielding the head and body, braced. A low defensive crouch, NOT standing, NOT an attack.' },
   { id: 'hit', ref: 'canonical', pose: 'a HIT reaction — recoiling from a blow, head snapped back, torso twisted away, off balance, one arm flailing up. NOT an attack, NOT a block.' },
   { id: 'fall', ref: 'canonical', pose: 'knocked backward off balance, mid-air, arms flailing.' },
   { id: 'down', ref: 'canonical', pose: 'lying flat on the back on the ground — a HORIZONTAL shape along the BOTTOM QUARTER of the frame.' },
@@ -328,6 +345,7 @@ export class CreatorModel {
   generatedVo: Record<string, string> = {};
   generatedMusic?: string; // base64 mp3
   generatedFatality: string[] = []; // 4 base64 jpg panels
+  fatalityBeats: string[] = []; // 4 editable per-panel prompt beats (seeded from fatalityBeats())
   moveAudio: Record<string, string> = {}; // specialId -> base64 mp3 (per-move VO / SFX call-out)
   voiceModelId?: string; // Fish clone reference id (if the user cloned a voice)
   skeletons: Record<string, Record<string, [number, number, number]>> = {}; // cellName -> DWPose joints
@@ -426,7 +444,7 @@ export class CreatorModel {
       id: this.id,
       name: this.inputs.name.toUpperCase(),
       color: hslToHex(d.color),
-      lore: d.lore,
+      lore: this.inputs.lore?.trim() ? { ...d.lore, backstory: this.inputs.lore.trim() } : d.lore,
       winQuotes: d.winQuotes,
       health: d.physics.health,
       walkSpeed: d.physics.walkSpeed,

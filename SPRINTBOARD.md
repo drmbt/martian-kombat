@@ -1198,6 +1198,21 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-07 · ui · block-crouch cell, Seed lore, fatality panel prompts/reroll,
+  skeleton-follows-transform** — Added the missing **`block-crouch`** base cell
+  (FightScene resolves it for crouch-guard; a creator character was shipping
+  without it). Seed (D1) gains an **optional lore/backstory** field that overrides
+  the drafted backstory in the exported JSON. Fatality is no longer a black box:
+  four **editable per-panel prompt beats** (seeded from the default) each with a
+  **reroll-this-panel** button (`/creator/fatality` now takes `panelPrompts` +
+  `only`); beats persist in the draft. Investigated the "ZIP ignores sprite
+  scale/position" report — `composeSheet` DOES bake per-cell scale/offX/offY into
+  the packed sheet (verified: 0.5× + offX40 shrinks + shifts the cell), but it was
+  NOT applying the same transform to `meta.skeletons`, so the in-game F3 skeleton
+  drifted off moved art — now transformed to match (verified joint maps exactly).
+  tsc clean; block-crouch wiring, lore→export, 4 panel editors + reroll, and the
+  skeleton transform all verified in mock. — Claude
+
 - **2026-07-07 · ui · creator↔sprite-editor skeleton parity + childed, persisted
   hitboxes** — Skeleton overlay is now a 1:1 port of `FightScene.drawSkeleton`:
   the SAME body groups (orange torso / blue arms / green legs), neck, per-finger

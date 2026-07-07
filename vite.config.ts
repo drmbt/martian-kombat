@@ -414,7 +414,7 @@ function editorApi(): Plugin {
         if (req.method !== 'POST') return next();
         readJsonBody(req)
           .then(async (b) => {
-            const { name, fatalityName, referenceBase64 } = b as { name?: string; fatalityName?: string; referenceBase64?: unknown };
+            const { name, fatalityName, referenceBase64, panelPrompts, only } = b as { name?: string; fatalityName?: string; referenceBase64?: unknown; panelPrompts?: unknown; only?: number };
             const lib = await import('./tools/lib.mjs');
             const apiKey = lib.loadEnv().GEMINI_API_KEY;
             if (process.env.MK_CREATOR_MOCK === '1' || !apiKey) { sendJson(res, 200, { ok: true, mock: true }); return; }
@@ -423,14 +423,17 @@ function editorApi(): Plugin {
             const refPaths: string[] = [];
             refs.forEach((r, i) => { if (typeof r === 'string') { const p = join(scratch, `ref-${i}.png`); writeFileSync(p, Buffer.from(r, 'base64')); refPaths.push(p); } });
             const N = (name ?? 'the fighter').toUpperCase(), F = fatalityName ?? 'the finisher';
-            const beats = [
+            const defaults = [
               `${N} seizes the dazed, beaten opponent and begins the finishing move "${F}" — the opponent recoiling in terror`,
               `mid-execution of "${F}", ${N} unleashing the move at full force, the opponent's body contorting`,
               `the brutal peak of "${F}", dramatic impact, the opponent breaking apart, stylized gore`,
               `the aftermath — ${N} standing victorious over the destroyed opponent, a smouldering husk`,
             ];
+            // client-edited beats win; a single `only` index rerolls just that panel
+            const src = Array.isArray(panelPrompts) && panelPrompts.length === 4 ? (panelPrompts as unknown[]).map((p, i) => (typeof p === 'string' && p.trim() ? p : defaults[i])) : defaults;
+            const idxs = typeof only === 'number' && only >= 0 && only < 4 ? [only] : [0, 1, 2, 3];
             const panels: string[] = [];
-            await lib.pool(beats.map((beat, i) => ({ beat, i })), 2, async (j: { beat: string; i: number }) => {
+            await lib.pool(idxs.map((i) => ({ beat: src[i], i })), 2, async (j: { beat: string; i: number }) => {
               const prompt = `16:9 cinematic fighting-game fatality cutscene panel, hand-painted cel-shaded style: ${j.beat}. Dramatic lighting, dynamic composition, full-bleed.`;
               const raw = await lib.geminiImage({ apiKey, model: 'gemini-3-pro-image', prompt, referencePaths: refPaths, aspectRatio: '16:9' });
               const rp = join(scratch, `p-${j.i}.png`); writeFileSync(rp, raw);
