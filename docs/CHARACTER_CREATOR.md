@@ -11,6 +11,13 @@
 > data — UI, assets list, JSON state, and the exact prompts+images sent at each step.
 
 ## Locked decisions (2026-07-06)
+- **Remote-vs-local boundary — in local dev, ONLY the LLM + image gen are remote.**
+  Everything else runs locally: skeleton/keypoints via the existing local Python DWPose
+  (`/__editor/skeleton-regen` → `tools/qa/infer_keypoints.py`), ffmpeg keying/packing, all file
+  writes to today's `public/assets` + `src/data` paths, QA, and storage. **`fal` (DWPose) and
+  `R2` (CDN storage) are the *production* substitutions** for the local skeleton + local disk when
+  the app is deployed — never used in `npm run dev`. Elsewhere "local DWPose (fal in prod)" means local
+  Python DWPose in dev, fal in prod; "R2" means local `public/assets` in dev, R2 in prod.
 - **One provider — Gemini — for BOTH text and images.** All dialog/LLM authoring runs on Gemini
   (text) and all image gen on nano-banana (`gemini-3-pro-image`). Because it's one provider, we keep
   **one Gemini context cache per character** (§16): inspo photo + `style.md` + the growing character
@@ -88,7 +95,7 @@ canonical ─► idle + walk                (approve)
  canonical       ─► standing normals (lp…hk)    (ref = canonical)
  specials (4 slots, each cookable in parallel from the UI; each internally sequential):
    projectile (approve) ─► active frames (ref = projectile + inspo) ─► startup/recovery (ref = active)
-          ─► skeleton + auto-hitboxes (fal DWPose)   ← AFTER specials, once every cell exists
+          ─► skeleton + auto-hitboxes (local DWPose (fal in prod))   ← AFTER specials, once every cell exists
           ─► FINAL floor-normalize (single pass, shifts art + baked keypoints) ← the very end only
 ```
 Within a batch, independent cells fan out concurrently (`pool()`, 6-wide); only the special chains go
@@ -113,7 +120,7 @@ user does text work.
 | **C · Look gate** | **the one hard gate**: Accept / Re-roll (tweak prompt) / Upload-your-own canonical. Now we have canonical + full profile | on Accept → background-bake **portraits + fatality panels + VO synth** (gate nothing, reviewed in F) |
 | **D · Sprites** *(staged, approved, live preview lower-left like Sprite Editor)* | **B1** idle + walk → approve · **B2** jump, crouch, block, fall, down → approve (measure `hurtCrouch` here) · **B3** jump normals (ref=jump), crouch normals (ref=crouch), standing normals (ref=canonical) — watch each land, **tune startup/active/recovery**, **reroll a single sprite** (from base ref, or img2img on the bad cell with guiding text) | each batch fans out concurrently; keypoints bake per-cell as sprites land |
 | **E · Specials** | **4-slot table** — each row: name · **controls dropdown** (archetype-sensible combos) · short description · **Reroll** (instant, from the pre-gen pool) · **Generate** · async state chip. Cook multiple slots at once; while slot 1 bakes, start slot 2. Each internally: **projectile first** → active (ref=proj+inspo) → startup/recovery (ref=active). **Click a completed row → the fighter performs it** in the preview; rows auto-play as they finish | special chains gen; pool feeds instant rerolls |
-| **F · Rig** | **skeleton + auto-hitboxes** (fal DWPose) across every cell now that all exist; review/edit boxes + per-move timing | keypoints/boxes compute |
+| **F · Rig** | **skeleton + auto-hitboxes** (local DWPose (fal in prod)) across every cell now that all exist; review/edit boxes + per-move timing | keypoints/boxes compute |
 | **G · Polish** | review background-baked **portraits / fatality panels / audio**; approve/reroll; optional per-move **VFX** | reroll jobs |
 | **H · Ship** | home-stage **pin** (already gen'd in Phase B); **FINAL floor-normalize pass**; write files → register → `gen:assets` → **run audit in-browser** → green → **PLAY NOW** / **PUBLISH** | normalize + write |
 
@@ -245,7 +252,7 @@ locked base; all are re-rollable with user edits.
 1. **Job-runner backbone** (`/__editor/jobs` + registry) — hardest new plumbing, unblocks all.
 2. **Wizard shell** — dev-gated `CharacterCreatorScene`: stepper + Bake Tray + live preview + EditorMenu entry.
 3. **A→C slice** — upload → Gemini design draft → Profile Q&A (lock/reroll) → canonical gate → JSON baseline.
-4. **Phase D sprite batches** — B1→B4 staged/approved, ref-chained, live preview, per-cell reroll, per-move timing, fal skeleton/auto-hitbox.
+4. **Phase D sprite batches** — B1→B4 staged/approved, ref-chained, live preview, per-cell reroll, per-move timing, local DWPose skeleton (fal in prod)/auto-hitbox.
 5. **Phase E specials** — projectile-first chains + lock/reroll; two-tier LLM wiring.
 6. **Phase F/G** — background portraits/fatality/audio review + pin + register + audit + PLAY NOW.
 7. **R2 seams** — storage adapter + `resolveAssetBase` + custom registry + publish/pull (local mock first).
@@ -257,9 +264,9 @@ locked base; all are re-rollable with user edits.
 - Prod serverless backend (Cloudflare Worker) shape + auth (who can create in the shipped game?).
 - Moderation/safety gate on user-uploaded photos before generation in prod.
 - Do custom (R2) characters appear in the main roster, or a separate "Custom" tab until canonized?
-- **fal for DWPose** — the wizard runs skeleton/auto-hitbox via a fal endpoint (browser-friendly, no
-  local Python) instead of / in addition to the local `pose_qa.py`. Confirm fal is the skeleton route
-  in-wizard, with local `pose_qa.py` as the canonize-time backstop.
+- *(Resolved)* **Skeleton route** — in dev the wizard runs skeleton/auto-hitbox via the **local Python
+  DWPose** already wired at `/__editor/skeleton-regen` (`tools/qa/infer_keypoints.py`). **fal is the
+  prod-only** swap for that local call once deployed. Only the LLM + image gen are remote in dev.
 - *(Resolved)* Frame-bake latency — handled by staged **batch approval + live preview** (§3), not a
   quick-draft sheet. The user is always looking at/tuning the last batch while the next bakes.
 - **Revisit: pull hitbox tuning earlier?** Move *timing* is tuned live in D4/D5; hitboxes are
@@ -297,7 +304,7 @@ Per **keyed cell** (run on the ffmpeg-keyed PNG, *pre-pack, un-normalized*):
    figure / detached limb chunk). Warn, don't block.
 
 Once, **post-canonical-approval** — *measure*, don't author:
-4. From the canonical silhouette + fal skeleton: feet-Y (sole), head-top, shoulder/hip width →
+4. From the canonical silhouette + local DWPose skeleton (fal in prod): feet-Y (sole), head-top, shoulder/hip width →
    `hurtStand` (head-to-feet × shoulder width), `bodyBox` (torso, narrower), render `spriteOffsetY`.
    `hurtCrouch` measured the same way from the approved **crouch** base (Phase D B2).
 
@@ -337,7 +344,7 @@ reroll (from-base or img2img), inline startup/active/recovery tuning.
 state chip. Multiple slots cook at once; projectile-first chain internally; click a done row → fighter
 performs it; auto-play on completion.
 
-**D6 · Rig.** fal DWPose across all cells → auto-hitboxes; review/edit boxes + timing per move.
+**D6 · Rig.** local DWPose (fal in prod) across all cells → auto-hitboxes; review/edit boxes + timing per move.
 
 **D7 · Polish.** Review background portraits / fatality panels / audio; approve/reroll; optional VFX.
 
@@ -456,7 +463,8 @@ FLOOR_FRAC must-match constants, floor normalization) is **cruft we are delibera
 For the wizard:
 - Build a **new, lean pack path** for in-wizard writes that bypasses the old QA + normalization and
   writes straight from the in-browser working model → `sheet.png` + `meta.json` in today's locations.
-- Advisory edge-clearance is the only gate (§11). Skeleton via **fal**, not local Python.
+- Advisory edge-clearance is the only gate (§11). Skeleton via the **local Python DWPose**
+  (`/__editor/skeleton-regen`) in dev — fal is the prod-only swap.
 - **Design so it's all testable here and preserved in the repo** — local dev keeps writing to the exact
   paths it uses now; nothing about the wizard forces a second source of truth.
 - **Follow-up (post-wizard):** unify/replace the old QA+normalize machinery so there's ONE pack path,
@@ -469,7 +477,7 @@ pixels instead of guesses. All boxes are **feet-origin, y-negative-up** (the eng
 
 1. **Alpha bounds** — key the canonical, find the opaque bounding box: `topY` (head crown), `botY`
    (grounded sole = the **feet origin**), `leftX`/`rightX` (widest silhouette).
-2. **fal skeleton** (same DWPose we run on cells) refines it: ankle/heel keypoints confirm the sole
+2. **local DWPose skeleton (fal in prod)** (same DWPose we run on cells) refines it: ankle/heel keypoints confirm the sole
    plane; shoulder & hip x-spread give a torso width that isn't thrown off by an outstretched
    arm/prop; head-top keypoint confirms crown.
 3. **Derive:**

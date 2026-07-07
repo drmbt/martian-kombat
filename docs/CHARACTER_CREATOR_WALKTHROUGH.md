@@ -271,7 +271,7 @@ loop, no vocals, clean loop point, mixed to sit under SFX.
 
 **UI**
 ```
-[ Run skeleton (fal DWPose) ]  → keypoints overlaid on every cell
+[ Run skeleton (local DWPose · fal in prod) ]  → keypoints overlaid on every cell
 Auto-hitboxes from hand/foot clusters  → editable boxes on-canvas
  move [ st.HP ▾ ]  hitbox drag ⬚   timing startup[9] active[4] recovery[17]
 ```
@@ -288,7 +288,7 @@ Auto-hitboxes from hand/foot clusters  → editable boxes on-canvas
         "knockback": 3, "hitbox": { "x": 40, "y": -196, "w": 64, "h": 40 }, "height": "mid" }  // ← AUTO, editable
 ```
 
-*(No image prompts here — pure measurement/edit. fal endpoint call, not nano-banana.)*
+*(No image prompts here — pure measurement/edit. local /__editor/skeleton-regen call (fal in prod), not nano-banana.)*
 
 ---
 
