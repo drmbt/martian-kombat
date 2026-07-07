@@ -55,7 +55,7 @@ export class CharacterCreatorPanel {
   private showHitboxes = false; // draw + drag/scale the previewed move's hitbox
   private geom?: { W: number; floorY: number; drawH: number; ox: number; oy: number; cell?: string }; // last main-fighter draw (skeleton overlay)
   private hbDrag?: { moveId: string; mode: 'move' | 'nw' | 'ne' | 'sw' | 'se'; sx: number; sy: number; box: { x: number; y: number; w: number; h: number } };
-  private builtCache?: { t: number; moves: Record<string, { hitbox?: unknown }> }; // throttled buildFullCharacter (default hitbox lookup)
+  private builtCache?: { t: number; def: { moves: Record<string, { hitbox?: unknown }>; spriteOffsetY?: number } }; // throttled buildFullCharacter
   private backdrop!: HTMLDivElement;
   private lastBackdrop?: string;
   private leftEl!: HTMLDivElement;
@@ -1271,15 +1271,20 @@ export class CharacterCreatorPanel {
 
   /** auto-fit each attack move's hitbox from its ACTIVE cell's skeleton. */
   private autoHitboxesFromSkeleton(render = true): void {
-    const def = this.m.buildFullCharacter() as { hurtStand: { h: number }; moves: Record<string, { input?: unknown }> };
-    const rs = (def.hurtStand.h * 1.32) / 384; // cell-px → engine units (RENDER scale, per CLAUDE.md)
+    const def = this.m.buildFullCharacter() as { hurtStand: { h: number }; spriteOffsetY?: number; moves: Record<string, { input?: unknown }> };
+    // EXACTLY the Sprite Editor's FightScene.cellBoxToHitbox: the render scale
+    // (hurtStand.h·1.32/384) AND the vertical render offset between the collision
+    // origin (f.y) and the drawn feet (SPRITE_FOOT_OFFSET_Y + spriteOffsetY). The
+    // offset was missing before, so auto boxes sat a few px off the sprite editor's.
+    const rs = (def.hurtStand.h * 1.32) / 384;
+    const foot = CharacterCreatorPanel.SPRITE_FOOT_OFFSET_Y + (def.spriteOffsetY ?? 0);
     for (const c of this.m.allAttackCells()) {
       if (!c.active) continue;
       const joints = this.m.skeletons[c.name]; if (!joints) continue;
       const kind = strikeKind(c.move, def.moves[c.move] as never);
       const box = hitboxFromSkeleton(joints, kind);
       if (!box) continue;
-      this.m.autoHitboxes[c.move] = { x: Math.round(box.x * rs), y: Math.round(box.y * rs), w: Math.round(box.w * rs), h: Math.round(box.h * rs) };
+      this.m.autoHitboxes[c.move] = { x: Math.round(box.x * rs), y: Math.round(box.y * rs + foot), w: Math.round(box.w * rs), h: Math.round(box.h * rs) };
     }
     if (render) this.render();
   }
@@ -1619,8 +1624,11 @@ export class CharacterCreatorPanel {
     if (!this.showHitboxes) return null;
     const moveId = this.previewMoveId(); if (!moveId) return null;
     const box = this.effectiveHitbox(moveId); if (!box) return null;
-    const W = this.previewCanvas.width, floorY = Math.round(this.previewCanvas.height * 0.94), e = this.hbScale();
-    return { moveId, box, rx: W / 2 + box.x * e, ry: floorY + box.y * e, rw: box.w * e, rh: box.h * e };
+    const W = this.previewCanvas.width, feetY = this.hbFeetY(), e = this.hbScale();
+    // box.y is engine (relative to the collision origin f.y); subtract the render
+    // foot offset to draw it where FightScene renders it over the sprite feet
+    const foot = this.footOffset();
+    return { moveId, box, rx: W / 2 + box.x * e, ry: feetY + (box.y - foot) * e, rw: box.w * e, rh: box.h * e };
   }
 
   private onHbDown(ev: MouseEvent): void {
@@ -1951,6 +1959,7 @@ export class CharacterCreatorPanel {
     if (port?.dataUrl) { ctx.save(); ctx.beginPath(); ctx.rect(12, 12, 70, 70); ctx.clip(); this.drawContain(ctx, port.dataUrl, 12, 12, 70, 70); ctx.restore(); ctx.strokeStyle = '#3f6070'; ctx.lineWidth = 1; ctx.strokeRect(12, 12, 70, 70); }
   }
 
+  private static readonly SPRITE_FOOT_OFFSET_Y = 16; // MUST match FightScene (render gap between f.y and the drawn feet)
   private static readonly SKEL_BONES: [string, string, string][] = [
     ['Lsho', 'Rsho', '#ff8c1a'], ['Lhip', 'Rhip', '#ff8c1a'], ['Lsho', 'Lhip', '#ff8c1a'], ['Rsho', 'Rhip', '#ff8c1a'],
     ['Lsho', 'Lelb', '#33a0ff'], ['Lelb', 'Lwri', '#33a0ff'], ['Rsho', 'Relb', '#33a0ff'], ['Relb', 'Rwri', '#33a0ff'],
@@ -1987,9 +1996,18 @@ export class CharacterCreatorPanel {
     ctx.restore();
   }
 
-  /** engine px → preview px for hitboxes: anchored at feet, STABLE basis (scale 1,
-   *  hurtStand.h=256·1.32) so the box never jitters as the animation cycles. */
+  /** engine px → preview px for hitboxes: STABLE basis (scale 1, hurtStand.h=256·
+   *  1.32) so the box never jitters as the animation cycles. */
   private hbScale(): number { return (this.previewCanvas.height * 0.82) / (256 * 1.32); }
+
+  /** the sprite's FLOOR_FRAC feet line in the preview — the box origin (box.y=0)
+   *  after the render foot offset. hitboxFromSkeleton measures from FLOOR_FRAC
+   *  (0.88), NOT the ground line, so anchoring here makes the box track the limb
+   *  it wraps (the same reference the skeleton overlay + cellToPreview use). */
+  private hbFeetY(): number {
+    const H = this.previewCanvas.height;
+    return Math.round(H * 0.94) - H * 0.82 * (1 - 0.88); // floorY − (cell height below FLOOR_FRAC) at draw scale
+  }
 
   /** the move currently being previewed as a group (normal or special), or null. */
   private previewMoveId(): string | null {
@@ -1998,21 +2016,34 @@ export class CharacterCreatorPanel {
     return (NORMAL_MOVE_IDS.includes(k) || this.m.draft?.specials.some((s) => s.id === k)) ? k : null;
   }
 
+  /** throttled build of the full character (default hitboxes + spriteOffsetY). */
+  private builtDef(): { moves: Record<string, { hitbox?: unknown }>; spriteOffsetY?: number } {
+    const now = Date.now();
+    if (!this.builtCache || now - this.builtCache.t > 250) this.builtCache = { t: now, def: this.m.buildFullCharacter() as { moves: Record<string, { hitbox?: unknown }>; spriteOffsetY?: number } };
+    return this.builtCache.def;
+  }
+
+  /** the render y-offset between the collision origin (f.y) and the drawn sprite
+   *  feet — SPRITE_FOOT_OFFSET_Y + spriteOffsetY, exactly as FightScene applies it
+   *  (and as the Sprite Editor's cellBoxToHitbox bakes into an auto hitbox). */
+  private footOffset(): number { return CharacterCreatorPanel.SPRITE_FOOT_OFFSET_Y + (this.builtDef().spriteOffsetY ?? 0); }
+
   /** the move's effective engine hitbox: the RIG-tuned one, else the built default
    *  (throttled buildFullCharacter). Returns null for boxless moves (throws/projectiles). */
   private effectiveHitbox(moveId: string): { x: number; y: number; w: number; h: number } | null {
     const tuned = this.m.autoHitboxes[moveId]; if (tuned) return tuned;
-    const now = Date.now();
-    if (!this.builtCache || now - this.builtCache.t > 250) this.builtCache = { t: now, moves: this.m.buildFullCharacter().moves as Record<string, { hitbox?: unknown }> };
-    const hb = this.builtCache.moves[moveId]?.hitbox;
+    const hb = this.builtDef().moves[moveId]?.hitbox;
     return hb && typeof hb === 'object' ? { ...(hb as { x: number; y: number; w: number; h: number }) } : null;
   }
 
   /** hurtbox (blue, static) + the previewed move's hitbox (red, drag/scalable). */
-  private drawHitboxOverlay(ctx: CanvasRenderingContext2D, W: number, floorY: number): void {
-    const e = this.hbScale();
+  private drawHitboxOverlay(ctx: CanvasRenderingContext2D, W: number, _floorY: number): void {
+    const e = this.hbScale(), foot = this.footOffset(), feetY = this.hbFeetY();
+    // anchor at the FLOOR_FRAC feet line and subtract the render foot offset (see
+    // hbFeetY / currentHbRect) so boxes register with the sprite exactly as
+    // FightScene renders them (and match the hit-test)
     const rect = (b: { x: number; y: number; w: number; h: number }): [number, number, number, number] =>
-      [W / 2 + b.x * e, floorY + b.y * e, b.w * e, b.h * e];
+      [W / 2 + b.x * e, feetY + (b.y - foot) * e, b.w * e, b.h * e];
     ctx.save();
     // hurtbox (fixed body box)
     const hurt = { x: -52, y: -256, w: 104, h: 256 };

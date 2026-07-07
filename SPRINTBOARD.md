@@ -1198,6 +1198,19 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-07 · ui · creator auto-hitbox now matches the Sprite Editor exactly**
+  — Confirmed the scale FACTOR was already identical (`hurtStand.h·1.32/384`), but
+  the creator's `autoHitboxesFromSkeleton` was OMITTING the vertical render offset
+  (`SPRITE_FOOT_OFFSET_Y + spriteOffsetY`) that the Sprite Editor's
+  `FightScene.cellBoxToHitbox` bakes into `y` — so creator auto boxes sat a few px
+  off. Now applies it, so the two produce identical boxes. Also fixed the preview
+  overlay anchor: it was pinned to the ground line (`floorY`) while
+  `hitboxFromSkeleton` measures from the FLOOR_FRAC feet line (0.88), leaving the
+  drawn/grabbable box ~60px below the limb — now anchored at the FLOOR_FRAC line so
+  the box (auto + manual) tracks the hand it wraps, matching the skeleton overlay.
+  tsc clean; identical scale factor, foot offset, and limb-tracking verified live
+  in mock. — Claude
+
 - **2026-07-07 · ui · preview skeleton + hitbox overlay toggles (draggable
   hitboxes)** — Added **skeleton** (greyed until DWPose has run) and **hitboxes**
   checkboxes above the animation viewer. The skeleton overlay replays the cell's
