@@ -506,18 +506,15 @@ export class CharacterCreatorPanel {
     this.m.inputs.kiaiClips ??= []; this.m.inputs.musicTracks ??= [];
     colB.appendChild(this.dropZone('Stage landscape (optional)', { accept: 'image/*' }, this.m.inputs.stagePhotos,
       () => { void this.genStage(); this.renderTray(); }));
-    // editable stage PROMPT + regen (same reprompt+regen as the sprite cells) — the
-    // dropped photo (if any) is the reference; text-only gen works with no photo.
-    const stageW = this.field('Stage prompt');
-    const sprompt = el('textarea', INPUT + 'height:64px;font-size:10px;line-height:1.35;') as HTMLTextAreaElement;
-    sprompt.value = d.stagePrompt;
-    sprompt.placeholder = 'stage art prompt (sent to nano-banana) — edit & regenerate';
-    sprompt.oninput = () => (d.stagePrompt = sprompt.value);
+    // just the generate button here; the editable prompt + regenerate live on the
+    // frame inspector (click the stage cell in the tray), like every other frame.
     const sjob = this.m.job('stage');
-    const sbtn = el('button', BTN_HOT + 'font-size:12px;margin-top:6px;',
+    const stageW = this.field('Home stage');
+    const sbtn = el('button', BTN_HOT + 'font-size:12px;',
       sjob?.status === 'running' ? '◐ generating stage…' : sjob?.status === 'done' ? '↻ Regenerate stage' : '▸ Generate stage');
     sbtn.onclick = () => void this.genStage();
-    stageW.append(sprompt, sbtn);
+    stageW.appendChild(sbtn);
+    if (sjob?.status === 'done') stageW.appendChild(el('div', 'font-size:11px;color:#8fa6b2;margin-top:6px;', 'click the stage cell in the tray to edit its prompt & regenerate'));
     colB.appendChild(stageW);
     colB.appendChild(this.dropZone('Voice samples for cloning (optional, multiple)', { accept: 'audio/*', multiple: true }, this.m.inputs.voiceSamples));
     if ((this.m.inputs.voiceSamples ?? []).length) {
@@ -726,39 +723,23 @@ export class CharacterCreatorPanel {
         !s.approved ? '▸ approve first to generate' : doneN === 3 ? '↻ regen sprites' : `▸ generate sprites (${doneN}/3)`);
       gen.onclick = () => this.genSpecialCells(s.id);
       box.appendChild(gen);
-      // projectile art slot — only for approved projectile-archetype specials
+      // projectile art slot — only for approved projectile-archetype specials.
+      // Just the thumbnail + a generate/inspect button here; the prompt, size,
+      // spawn and auto-hitbox all live on the frame inspector (click the thumb).
       if ((s.archetype === 'projectile' || s.archetype === 'sonic-boom') && s.approved) {
         const pj = this.m.job('proj:' + s.id);
         const prow = el('div', 'display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px dashed #22303e;');
         prow.appendChild(el('span', 'font-size:11px;color:#9fb4be;', 'projectile:'));
-        if (pj?.dataUrl) { const im = el('img', 'width:44px;height:44px;object-fit:contain;border:1px solid #22303e;border-radius:4px;') as HTMLImageElement; im.src = pj.dataUrl; prow.appendChild(im); }
-        else { const ph = el('div', 'width:44px;height:44px;border:1px dashed #3f5266;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#5c6b78;font-size:18px;', '+'); prow.appendChild(ph); }
-        const pbtn = el('button', BTN + 'font-size:11px;', pj?.status === 'running' ? '◐ …' : pj?.status === 'done' ? '↻ regen projectile' : '▸ generate projectile');
-        pbtn.onclick = () => this.genProjectile(s);
+        if (pj?.dataUrl) {
+          const im = el('img', 'width:44px;height:44px;object-fit:contain;border:1px solid #22303e;border-radius:4px;cursor:pointer;') as HTMLImageElement;
+          im.src = pj.dataUrl; im.title = 'click to inspect — prompt · size · spawn · auto-hitbox';
+          im.onclick = () => this.selectCell('proj:' + s.id);
+          prow.appendChild(im);
+        } else { const ph = el('div', 'width:44px;height:44px;border:1px dashed #3f5266;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#5c6b78;font-size:18px;', '+'); prow.appendChild(ph); }
+        const pbtn = el('button', BTN + 'font-size:11px;', pj?.status === 'running' ? '◐ …' : pj?.status === 'done' ? '⤢ inspect / tune' : '▸ generate projectile');
+        pbtn.onclick = () => pj?.status === 'done' ? this.selectCell('proj:' + s.id) : void this.genProjectile(s);
         prow.appendChild(pbtn);
         box.appendChild(prow);
-        // editable projectile-art PROMPT (same reprompt+regen as the sprite cells) —
-        // seeded from the auto prompt, edits persist on the draft & drive regen
-        const pprompt = el('textarea', INPUT + 'height:64px;font-size:10px;line-height:1.35;margin-top:6px;') as HTMLTextAreaElement;
-        pprompt.value = s.projPrompt ?? this.projectilePrompt(s.name, s.description);
-        pprompt.placeholder = 'projectile art prompt (sent to nano-banana) — edit & regenerate';
-        pprompt.title = 'the prompt the projectile art is generated from — edit, then ↻ regen projectile';
-        pprompt.oninput = () => (s.projPrompt = pprompt.value);
-        box.appendChild(pprompt);
-        // projectile render/collision tuning — sticks on export (spawnX/Y + box)
-        if (pj?.status === 'done') {
-          const tune = el('div', 'margin-top:6px;');
-          const redraw = (): void => this.redrawPreview();
-          tune.appendChild(this.sliderRow('proj size', () => s.projScale ?? 1, (v) => (s.projScale = v), 0.4, 2, 0.05, (v) => v.toFixed(2), redraw));
-          tune.appendChild(this.sliderRow('spawn x', () => s.projSpawnX ?? 96, (v) => (s.projSpawnX = v), 0, 200, 2, (v) => String(Math.round(v)), redraw));
-          tune.appendChild(this.sliderRow('spawn y', () => s.projSpawnY ?? -176, (v) => (s.projSpawnY = v), -300, -40, 2, (v) => String(Math.round(v)), redraw));
-          const autoBtn = el('button', BTN + 'font-size:10px;', s.projBox ? `↻ auto-hitbox (${s.projBox.w}²)` : '▸ auto-hitbox (square around alpha)');
-          autoBtn.title = 'fit a square collision box around the projectile’s visible pixels';
-          autoBtn.onclick = () => void this.autoProjBox(s);
-          tune.appendChild(autoBtn);
-          tune.appendChild(el('div', 'font-size:10px;color:#5c6b78;margin-top:3px;', 'tune it, then play this special (top-left) to see the projectile fire'));
-          box.appendChild(tune);
-        }
       }
       // per-move audio call-out — a spoken VO line or an SFX, generated or BYO,
       // played when the special fires (sets move.voice=true in the JSON)
@@ -859,10 +840,17 @@ export class CharacterCreatorPanel {
       if (data[(y * c.width + x) * 4 + 3] > 25) { any = true; if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y; }
     }
     if (!any) { this.logMsg('proj auto-hitbox: image is empty'); return; }
-    // fraction of the frame the object fills → engine-unit square (matches the preview render size)
-    const frac = Math.max((maxX - minX) / c.width, (maxY - minY) / c.height);
-    const side = Math.max(16, Math.round(0.3 * (s.projScale ?? 1) * frac * 256));
-    s.projBox = { x: -Math.round(side / 2), y: -Math.round(side / 2), w: side, h: side };
+    // convert image-px → engine-px on the SAME basis drawProjectile uses: the art
+    // is drawn so its max dimension = 72·projScale world px, so k scales alpha
+    // extents into that world. Square the box to the larger side, CENTER it on the
+    // alpha centroid (art is rarely centered), so it wraps the visible pixels.
+    const world = 72 * (s.projScale ?? 1);
+    const k = world / Math.max(c.width, c.height);
+    const bw = (maxX - minX + 1) * k, bh = (maxY - minY + 1) * k;
+    const side = Math.max(12, Math.round(Math.max(bw, bh)));
+    const offX = ((minX + maxX) / 2 - c.width / 2) * k; // alpha centroid, engine px from center
+    const offY = ((minY + maxY) / 2 - c.height / 2) * k;
+    s.projBox = { x: Math.round(offX - side / 2), y: Math.round(offY - side / 2), w: side, h: side };
     this.logMsg(`proj auto-hitbox for ${s.id}: ${side}² around the alpha`);
     this.render();
   }
@@ -1436,7 +1424,11 @@ export class CharacterCreatorPanel {
     close.onclick = () => this.closeInspect();
     head.append(close);
     this.previewInspect.appendChild(head);
-    const canRegen = this.preview.key.startsWith('sprite:') || this.preview.key === 'canonical' || this.preview.key === 'portrait';
+    const key = this.preview.key;
+    const isProj = key.startsWith('proj:');
+    const isStage = key === 'stage';
+    const projS = isProj ? this.m.draft?.specials.find((s) => 'proj:' + s.id === key) : undefined;
+    const canRegen = key.startsWith('sprite:') || key === 'canonical' || key === 'portrait' || key === 'ko' || isProj || isStage;
     const wrap = el('div', '');
     // scale + x/y realign (baked into preview, the packed sheet, and downstream refs)
     const slider = (label: string, get: () => number, set: (v: number) => void, min: number, max: number, step: number, fmt: (v: number) => string): HTMLDivElement => {
@@ -1447,26 +1439,47 @@ export class CharacterCreatorPanel {
       r.oninput = () => { set(parseFloat(r.value)); lbl.textContent = `${label} ${fmt(get())}`; this.redrawPreview(); this.renderTray(); };
       row.append(lbl, r); return row;
     };
-    wrap.appendChild(slider('scale', () => j.scale ?? 1, (v) => (j.scale = v), 0.5, 1.6, 0.02, (v) => v.toFixed(2)));
-    wrap.appendChild(slider('off x', () => j.offX ?? 0, (v) => (j.offX = v), -120, 120, 1, (v) => (v > 0 ? '+' : '') + Math.round(v)));
-    wrap.appendChild(slider('off y', () => j.offY ?? 0, (v) => (j.offY = v), -120, 120, 1, (v) => (v > 0 ? '+' : '') + Math.round(v)));
-    const reset = el('button', BTN + 'padding:2px 8px;font-size:10px;margin-bottom:6px;', 'reset scale/offset');
-    reset.onclick = () => { j.scale = 1; j.offX = 0; j.offY = 0; this.renderPreviewInspect(); this.redrawPreview(); this.renderTray(); };
-    wrap.appendChild(reset);
+    if (!isProj && !isStage) {
+      // ART cells (sprite / canonical / portrait / ko): per-cell scale + realign
+      wrap.appendChild(slider('scale', () => j.scale ?? 1, (v) => (j.scale = v), 0.5, 1.6, 0.02, (v) => v.toFixed(2)));
+      wrap.appendChild(slider('off x', () => j.offX ?? 0, (v) => (j.offX = v), -120, 120, 1, (v) => (v > 0 ? '+' : '') + Math.round(v)));
+      wrap.appendChild(slider('off y', () => j.offY ?? 0, (v) => (j.offY = v), -120, 120, 1, (v) => (v > 0 ? '+' : '') + Math.round(v)));
+      const reset = el('button', BTN + 'padding:2px 8px;font-size:10px;margin-bottom:6px;', 'reset scale/offset');
+      reset.onclick = () => { j.scale = 1; j.offX = 0; j.offY = 0; this.renderPreviewInspect(); this.redrawPreview(); this.renderTray(); };
+      wrap.appendChild(reset);
+    }
+    if (isProj && projS) {
+      // PROJECTILE tuning — live in the preview (drawn statically at spawn while
+      // this cell is inspected); size exports as projectile.renderSize (px).
+      const s = projS, redraw = (): void => this.redrawPreview();
+      wrap.appendChild(el('div', 'font-size:11px;color:#9fb4be;margin-bottom:4px;', 'PROJECTILE · size · spawn · hitbox'));
+      wrap.appendChild(this.sliderRow('size', () => s.projScale ?? 1, (v) => (s.projScale = v), 0.4, 2.5, 0.05, (v) => Math.round(72 * v) + 'px', redraw));
+      wrap.appendChild(this.sliderRow('spawn x', () => s.projSpawnX ?? 96, (v) => (s.projSpawnX = v), 0, 220, 2, (v) => String(Math.round(v)), redraw));
+      wrap.appendChild(this.sliderRow('spawn y', () => s.projSpawnY ?? -176, (v) => (s.projSpawnY = v), -300, -20, 2, (v) => String(Math.round(v)), redraw));
+      const autoBtn = el('button', BTN + 'padding:2px 8px;font-size:10px;margin-bottom:8px;', s.projBox ? `↻ auto-hitbox (${s.projBox.w}²)` : '▸ auto-hitbox (square around alpha)');
+      autoBtn.title = 'fit a square collision box around the projectile’s visible pixels';
+      autoBtn.onclick = () => void this.autoProjBox(s);
+      wrap.appendChild(autoBtn);
+    }
     if (canRegen) {
       wrap.appendChild(el('div', 'font-size:11px;color:#9fb4be;margin-bottom:3px;', 'PROMPT (sent to nano-banana — edit & regenerate)'));
       const prompt = el('textarea', INPUT + 'height:112px;font-size:11px;line-height:1.35;') as HTMLTextAreaElement;
-      prompt.value = j.prompt ?? '';
+      prompt.value = isProj && projS ? this.effectiveProjPrompt(projS) : isStage ? (this.m.draft?.stagePrompt ?? j.prompt ?? '') : (j.prompt ?? '');
       prompt.placeholder = 'the prompt this cell was generated from';
       this.regenPromptEl = prompt;
-      const tog = el('label', 'display:flex;align-items:center;gap:6px;font-size:11px;color:#9fb4be;margin-top:6px;cursor:pointer;');
-      const cb = el('input', '') as HTMLInputElement; cb.type = 'checkbox'; cb.checked = this.regenUseSelf;
-      cb.onchange = () => (this.regenUseSelf = cb.checked);
-      tog.append(cb, el('span', '', 'edit THIS image (img2img — use it as the reference instead of the base)'));
+      wrap.appendChild(prompt);
+      // img2img makes no sense for the inspo-free projectile FX — omit it there
+      if (!isProj) {
+        const tog = el('label', 'display:flex;align-items:center;gap:6px;font-size:11px;color:#9fb4be;margin-top:6px;cursor:pointer;');
+        const cb = el('input', '') as HTMLInputElement; cb.type = 'checkbox'; cb.checked = this.regenUseSelf;
+        cb.onchange = () => (this.regenUseSelf = cb.checked);
+        tog.append(cb, el('span', '', 'edit THIS image (img2img — use it as the reference instead of the base)'));
+        wrap.appendChild(tog);
+      }
       const rr = el('button', BTN_HOT + 'margin-top:5px;width:100%;font-size:12px;',
         j.status === 'running' ? '◐ regenerating…' : '↻ Regenerate ' + (j.label ?? ''));
       rr.onclick = () => this.regenSelected();
-      wrap.append(prompt, tog, rr);
+      wrap.appendChild(rr);
     }
     this.previewInspect.appendChild(wrap);
   }
@@ -1502,9 +1515,21 @@ export class CharacterCreatorPanel {
       refs = photoRefs.length > 1 ? [photoRefs[1], ...photoRefs.filter((_, i) => i !== 1)] : photoRefs;
       kind = 'ko'; label = 'KO portrait';
       if (!prompt) prompt = KO_PROMPT(this.m.inputs.name, desc);
+    } else if (key.startsWith('proj:')) {
+      const s = this.m.draft?.specials.find((x) => 'proj:' + x.id === key); if (!s) return;
+      if (!prompt) prompt = this.effectiveProjPrompt(s);
+      s.projPrompt = prompt; // persist the edit so the special-chain uses it too
+      kind = 'sprite'; label = s.name + ' projectile'; refs = []; // inspo-free keyable FX
+    } else if (key === 'stage') {
+      if (!prompt) prompt = this.m.draft?.stagePrompt ?? '';
+      if (this.m.draft) this.m.draft.stagePrompt = prompt;
+      kind = 'stage'; label = 'Stage';
+      const u = this.m.inputs.stagePhotos?.[0]?.dataUrl;
+      refs = u ? ([dataUrlToB64(u)!].filter(Boolean) as string[]) : [];
     } else return;
-    // img2img: replace the base reference with THIS cell's current image
-    if (this.regenUseSelf) {
+    // img2img: replace the base reference with THIS cell's current image (art +
+    // stage only — the projectile is deliberately character/scene-free)
+    if (this.regenUseSelf && !key.startsWith('proj:')) {
       const own = dataUrlToB64(job?.dataUrl);
       if (own) refs = [own];
       this.logMsg(`img2img: editing ${label} from its own image`);
@@ -1754,7 +1779,12 @@ export class CharacterCreatorPanel {
     ctx.clearRect(0, 0, W, H); // transparent — the stage backdrop shows through
     // ground line matches the stage floor contract (bottom band); leave a hair of margin
     const floorY = Math.round(H * 0.94);
-    const pf = this.previewFrame(); // sequenced motion (jump arc, crouch/block/fall cycles)
+    // while inspecting the projectile cell, stand the fighter idle and show the
+    // projectile statically at its spawn (so size/spawn/hitbox tuning is visible)
+    const inspectingProj = this.preview.kind === 'cell' && this.preview.key.startsWith('proj:');
+    const pf = inspectingProj
+      ? { job: this.cellJob('idle-a') ?? this.m.job('canonical'), offY: 0 }
+      : this.previewFrame(); // sequenced motion (jump arc, crouch/block/fall cycles)
     const main = pf.job;
     const canon = this.m.job('canonical');
     const scale = main?.scale ?? 1;
@@ -1768,31 +1798,40 @@ export class CharacterCreatorPanel {
       this.drawShadow(ctx, W / 2, floorY, 80);
       this.drawSilhouette(ctx, W / 2, floorY, 150, this.m.draft?.color ?? '#31424f', canon?.status === 'running');
     }
-    // projectile special: fire the projectile out during active→recovery
-    if (this.preview.kind === 'group') {
+    // projectile: static at spawn while its cell is inspected (tuning is live),
+    // else fired out during a group-play special's active→recovery window.
+    if (inspectingProj) {
+      const sp = this.m.draft?.specials.find((s) => 'proj:' + s.id === this.preview.key);
+      if (sp) this.drawProjectile(ctx, sp, W, floorY, drawH, 0);
+    } else if (this.preview.kind === 'group') {
       const sp = this.m.draft?.specials.find((s) => s.id === this.preview.key && (s.archetype === 'projectile' || s.archetype === 'sonic-boom'));
-      const proj = sp && this.m.job('proj:' + sp.id);
-      if (sp && proj?.dataUrl) {
+      if (sp) {
         const total = 200 + 220 + 340; // matches the 3-phase special sequence in previewFrame
         const ph = Date.now() % total;
-        if (ph > 200) { // launched at the active frame
-          const fly = (ph - 200) / (total - 200);
-          const im = this.img(proj.dataUrl);
-          if (im) {
-            const rs = drawH / 384; // cell-px → preview-px
-            const size = drawH * 0.3 * (sp.projScale ?? 1), sc = size / Math.max(im.naturalWidth, im.naturalHeight);
-            const pw = im.naturalWidth * sc, phh = im.naturalHeight * sc;
-            const cx = W / 2 + (sp.projSpawnX ?? 96) * rs + fly * W * 0.5; // launch from the spawn point, fly right
-            const cy = floorY + (sp.projSpawnY ?? -176) * rs;
-            ctx.drawImage(im, cx - pw / 2, cy - phh / 2, pw, phh);
-            if (sp.projBox) { const b = sp.projBox; ctx.strokeStyle = 'rgba(127,227,255,.7)'; ctx.lineWidth = 1; ctx.strokeRect(cx + b.x * rs, cy + b.y * rs, b.w * rs, b.h * rs); }
-          }
-        }
+        if (ph > 200) this.drawProjectile(ctx, sp, W, floorY, drawH, (ph - 200) / (total - 200)); // launched at the active frame
       }
     }
     // portrait chip top-left
     const port = this.m.job('portrait');
     if (port?.dataUrl) { ctx.save(); ctx.beginPath(); ctx.rect(12, 12, 70, 70); ctx.clip(); this.drawContain(ctx, port.dataUrl, 12, 12, 70, 70); ctx.restore(); ctx.strokeStyle = '#3f6070'; ctx.lineWidth = 1; ctx.strokeRect(12, 12, 70, 70); }
+  }
+
+  /** draw a special's projectile over the fighter. `flyFrac` 0 = static at the
+   *  spawn point (for tuning), →1 travels right. World size is 72·projScale px
+   *  (the in-game default is 72, exported as projectile.renderSize), so the
+   *  preview matches the game; the collision box is drawn to the same basis. */
+  private drawProjectile(ctx: CanvasRenderingContext2D, sp: SpecialDraft, W: number, floorY: number, drawH: number, flyFrac: number): void {
+    const proj = this.m.job('proj:' + sp.id);
+    const im = proj?.dataUrl ? this.img(proj.dataUrl) : null;
+    if (!im) return;
+    const rs = drawH / 384; // engine-px → preview-px
+    const world = 72 * (sp.projScale ?? 1); // engine px (square, matches in-game)
+    const sc = (world * rs) / Math.max(im.naturalWidth, im.naturalHeight);
+    const pw = im.naturalWidth * sc, phh = im.naturalHeight * sc;
+    const cx = W / 2 + (sp.projSpawnX ?? 96) * rs + flyFrac * W * 0.5;
+    const cy = floorY + (sp.projSpawnY ?? -176) * rs;
+    ctx.drawImage(im, cx - pw / 2, cy - phh / 2, pw, phh);
+    if (sp.projBox) { const b = sp.projBox; ctx.strokeStyle = 'rgba(127,227,255,.85)'; ctx.lineWidth = 1.5; ctx.strokeRect(cx + b.x * rs, cy + b.y * rs, b.w * rs, b.h * rs); }
   }
 
   /** cache the loaded HTMLImageElements so draws don't flicker; repaint on decode. */

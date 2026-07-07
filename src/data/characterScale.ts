@@ -23,6 +23,7 @@ function scaleProjectile(p: ProjectileDef, s: number): ProjectileDef {
     box: scaleBox(p.box, s),
     spawnX: Math.round(p.spawnX * s),
     spawnY: Math.round(p.spawnY * s),
+    ...(p.renderSize != null ? { renderSize: Math.round(p.renderSize * s) } : {}),
     ...(p.detonate ? { detonate: { ...p.detonate, box: scaleBox(p.detonate.box, s) } } : {}),
   };
 }
@@ -80,6 +81,13 @@ function baseOf(def: CharacterDef): CharacterDef {
     baseCache.set(def.id, base);
   }
   return base;
+}
+
+/** Bake-down: after flattening a character's scale into its geometry (def.scale
+ *  reset to 1 with the scaled boxes kept), drop the cached UNSCALED base so the
+ *  next live scale edit re-snapshots from the new identity geometry. */
+export function resetScaleBase(def: CharacterDef): void {
+  baseCache.delete(def.id);
 }
 
 /** Dev editor: set a character's scale and re-bake its geometry from the cached

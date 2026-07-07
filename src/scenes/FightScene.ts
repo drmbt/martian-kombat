@@ -1256,7 +1256,7 @@ export class FightScene extends Phaser.Scene {
         : `proj-${ownerChar}`;
       if (this.textures.exists(key)) {
         if (img.texture.key !== key) img.setTexture(key);
-        const size = PROJ_SIZE[p.moveId] ?? 72;
+        const size = PROJ_SIZE[p.moveId] ?? characters[ownerChar].moves[p.moveId]?.projectile?.renderSize ?? 72;
         const feet = PROJ_FEET_ANCHORED.has(p.moveId);
         const oy = PROJ_RENDER_OFFSET_Y[p.moveId] ?? 0; // render-only nudge
         img.setOrigin(0.5, feet ? 1 : 0.5);

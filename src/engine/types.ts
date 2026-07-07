@@ -72,6 +72,11 @@ export interface ProjectileDef {
   knockback: number;
   /** lows must be crouch-blocked (Jazzper runs ankle-height); default mid */
   height?: MoveHeight;
+  /** render-only draw size in px (square, matches in-game setDisplaySize). The
+   *  character creator writes this from its projectile-scale slider; FightScene
+   *  falls back to PROJ_SIZE[moveId] then 72. Scales with def.scale. Never read
+   *  by the deterministic core. */
+  renderSize?: number;
   /** lifetime in ticks for short-range projectiles (fire breath); default unlimited */
   ttl?: number;
   /** spawn several at once (knife fans); default 1 */

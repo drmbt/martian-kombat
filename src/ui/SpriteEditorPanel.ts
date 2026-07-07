@@ -9,8 +9,8 @@
 import type { Box, CharacterDef, MoveDef } from '../engine';
 import type { SpriteSheetModel } from './spriteSheetModel';
 import { hitboxFromSkeleton, strikeKind } from './hitboxFromSkeleton';
-import { writeCharacterMoves } from './moveWriteback';
-import { setCharacterScale } from '../data/characterScale';
+import { writeCharacterMoves, writeFlattenedCharacter } from './moveWriteback';
+import { setCharacterScale, resetScaleBase } from '../data/characterScale';
 
 /** what the panel needs from FightScene (structural — FightScene satisfies it) */
 export interface SpriteEditorHost {
@@ -440,6 +440,7 @@ export class SpriteEditorPanel {
 
     this.sideEl.appendChild(this.wideButton('WRITE MOVES → character.json', '#6fe36f', () => this.writeMoves()));
     this.sideEl.appendChild(this.wideButton('WRITE SHEET → sheet.png/meta', '#6fe36f', () => this.writeSheet()));
+    this.sideEl.appendChild(this.wideButton('COMMIT — bake scale+offset → identity', '#ffb347', () => this.flatten()));
   }
 
   private renderSpriteTab(): void {
@@ -489,6 +490,7 @@ export class SpriteEditorPanel {
     this.sideEl.appendChild(this.wideButton('GENERATE → replace selected', '#ff8adf', () => this.regenFrame()));
 
     this.sideEl.appendChild(this.wideButton('WRITE SHEET → sheet.png/meta', '#6fe36f', () => this.writeSheet()));
+    this.sideEl.appendChild(this.wideButton('COMMIT — bake scale+offset → identity', '#ffb347', () => this.flatten()));
   }
 
   private afterEdit(): void {
@@ -589,24 +591,64 @@ export class SpriteEditorPanel {
     }
   }
 
+  /** POST the current composited sheet + meta; throws on failure. */
+  private async postSheet(): Promise<string> {
+    const res = await fetch('/__editor/sheet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: this.def.id,
+        pngBase64: this.model.exportPngBase64(),
+        meta: this.model.exportMeta(),
+        manifest: this.model.manifest,
+      }),
+    });
+    const json = (await res.json()) as { ok?: boolean; backup?: string; error?: string };
+    if (!res.ok || !json.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+    return json.backup ?? '';
+  }
+
   private async writeSheet(): Promise<void> {
     this.status('writing sheet…', '#7fe3ff');
     try {
-      const res = await fetch('/__editor/sheet', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: this.def.id,
-          pngBase64: this.model.exportPngBase64(),
-          meta: this.model.exportMeta(),
-          manifest: this.model.manifest,
-        }),
-      });
-      const json = (await res.json()) as { ok?: boolean; backup?: string; error?: string };
-      if (!res.ok || !json.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
-      this.status(`sheet written · backup ${json.backup} · reload to re-slice`, '#6fe36f');
+      const backup = await this.postSheet();
+      this.status(`sheet written · backup ${backup} · reload to re-slice`, '#6fe36f');
     } catch (err) {
       this.status(`sheet write failed (${String(err)})`, '#ff7a6a');
+    }
+  }
+
+  /** Bake-down / flatten: commit the tuned character `scale` + `spriteOffsetY`
+   *  into the committed data with an IDENTITY transform — the fighter looks the
+   *  same, but scale=1 and spriteOffsetY=0. Scale is folded into the persisted
+   *  geometry (hurtStand drives render size, so no pixel change is needed for it);
+   *  spriteOffsetY is baked into the sheet pixels (every cell shifted) then zeroed.
+   *  Overwrites sheet.png + meta + character.json. */
+  private async flatten(): Promise<void> {
+    const S = this.def.scale ?? 1;
+    const oy = this.def.spriteOffsetY ?? 0;
+    if (S === 1 && oy === 0 && this.model.manifest.length === 0) {
+      this.status('already flat — nothing to bake (scale 1, offset 0, no edits)', '#8fa6b2');
+      return;
+    }
+    this.status('flattening scale + offset → identity…', '#7fe3ff');
+    try {
+      // bake spriteOffsetY (render-only, world px) into the sheet by shifting every
+      // cell by offset / renderScale cell-px (renderScale = hurtStand.h·1.32/CELL_H)
+      if (oy !== 0) {
+        const renderScale = (this.def.hurtStand.h * 1.32) / this.model.cellH;
+        const dy = Math.round(oy / renderScale);
+        if (dy !== 0) this.model.offsetCells(this.model.frames.map((_, i) => i), 0, dy);
+      }
+      await this.postSheet(); // baked pixels (+ shifted keypoints) → sheet.png/meta
+      const n = await writeFlattenedCharacter(this.def); // scaled geometry, scale=1, offset=0
+      // reflect the identity transform in the live def so the editor stays consistent
+      this.def.scale = 1;
+      this.def.spriteOffsetY = 0;
+      resetScaleBase(this.def);
+      this.status(`flattened ${n} moves → scale=1, offset=0 · sheet overwritten · reload to re-slice`, '#6fe36f');
+    } catch (err) {
+      this.status(`flatten failed (${String(err)}) — dev server only`, '#ff7a6a');
     }
   }
 

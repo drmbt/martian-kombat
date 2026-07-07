@@ -83,16 +83,23 @@ function editorApi(): Plugin {
         req.on('data', (c) => (body += c));
         req.on('end', () => {
           try {
-            const { id, moves, scale } = JSON.parse(body || '{}') as {
+            const { id, moves, scale, hurtStand, bodyBox, hurtCrouch, spriteOffsetY } = JSON.parse(body || '{}') as {
               id?: string;
               moves?: Record<string, unknown>;
               scale?: number;
+              hurtStand?: unknown; bodyBox?: unknown; hurtCrouch?: unknown; spriteOffsetY?: number;
             };
             if (!id || !/^[a-z0-9_-]+$/.test(id)) throw new Error('invalid character id');
             const file = fileURLToPath(new URL(`./src/data/characters/${id}.json`, import.meta.url));
-            const parsed = JSON.parse(readFileSync(file, 'utf-8')) as { moves?: Record<string, unknown>; scale?: number };
+            const parsed = JSON.parse(readFileSync(file, 'utf-8')) as Record<string, unknown> & { moves?: Record<string, unknown> };
             if (moves) parsed.moves = { ...parsed.moves, ...moves };
-            if (typeof scale === 'number') parsed.scale = scale;
+            // scale/offset bake-down: scale 1 and offset 0 are identity — drop the
+            // keys instead of writing them so the JSON stays clean.
+            if (typeof scale === 'number') { if (scale === 1) delete parsed.scale; else parsed.scale = scale; }
+            if (hurtStand && typeof hurtStand === 'object') parsed.hurtStand = hurtStand;
+            if (bodyBox && typeof bodyBox === 'object') parsed.bodyBox = bodyBox;
+            if (hurtCrouch && typeof hurtCrouch === 'object') parsed.hurtCrouch = hurtCrouch;
+            if (typeof spriteOffsetY === 'number') { if (spriteOffsetY === 0) delete parsed.spriteOffsetY; else parsed.spriteOffsetY = spriteOffsetY; }
             writeFileSync(file, JSON.stringify(parsed, null, 2) + '\n');
             res.statusCode = 200;
             res.setHeader('Content-Type', 'application/json');

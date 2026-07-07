@@ -1198,6 +1198,26 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-07 · ui+engine · projectile/stage → frame inspector, projectile
+  scale fix, sprite-editor bake-down** — Moved the projectile + stage reprompt/
+  regenerate OFF the wizard dialog and onto the frame inspector, where every other
+  frame's prompt lives (dialog now just has a thumbnail + generate button). The
+  projectile inspector also carries its size/spawn/auto-hitbox tuning, drawn LIVE:
+  selecting the projectile cell stands the fighter idle and renders the projectile
+  statically at its spawn with the collision box, so tuning is immediately visible.
+  Fixed the projectile scale/hitbox math: preview + box + export now share one
+  basis — 72·projScale px (the in-game default is 72), so auto-hitbox squares the
+  visible alpha correctly (centered on its centroid) and the tuned values actually
+  propagate. New render-only `ProjectileDef.renderSize` (scales with `def.scale`);
+  the creator writes it from the size slider and FightScene reads it
+  (PROJ_SIZE[moveId] → renderSize → 72). Sprite Editor gains **COMMIT — bake
+  scale+offset → identity**: flattens the tuned character `scale` into the
+  persisted geometry (hurtStand drives render size, so no pixel change) and bakes
+  `spriteOffsetY` into the sheet pixels, then zeros both — overwrites sheet.png +
+  meta + character.json with an identity transform. tsc clean; 314/315 tests (the
+  1 fail is the pre-existing Sprint 19 combo-scaling case); projectile + stage
+  inspectors, auto-hitbox, renderSize export all verified live in mock. — Claude
+
 - **2026-07-07 · ui · jump preview + audio BYO chips + frame drop + projectile
   tuning** — Wizard preview: jump normals now play idle→jump→execute over a full
   jump arc. Every audio sample (announcer / kiai / hurt / victory / per-move

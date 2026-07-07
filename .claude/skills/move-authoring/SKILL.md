@@ -45,7 +45,10 @@ right.** `worldBox`: `l = f.x + box.x`, `t = f.y + box.y`. Every move has
 `variants:{l,h}` (L/M/H, merged over the base).
 
 - **Straight projectile (fireball)** — `hitbox:null`, `projectile:{vx,spawnX,
-  spawnY,box,damage,hitstun,blockstun,knockback,ttl}`. (gene mana-burst)
+  spawnY,box,damage,hitstun,blockstun,knockback,ttl}`. Optional render-only
+  `renderSize` (px, square draw size; FightScene falls back to PROJ_SIZE[moveId]
+  then 72 — the character creator writes it from its projectile-size slider,
+  scales with `def.scale`). (gene mana-burst)
 - **Anti-air reversal (DP)** — `dp`+P, tall `hitbox`, `invuln:N`, `knockdown`,
   `leap:{vx,vy}` (rises at first active frame). (vincent rising-glyph)
 - **Advancing / hurricane** — `forwardVel:N` (forward drift over startup+active),
