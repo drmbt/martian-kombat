@@ -6,8 +6,10 @@
 // so the flow is walkable out of the box. See docs/CHARACTER_CREATOR.md.
 import {
   CreatorModel, CREATOR_STEPS, makeDraft, BASE_CELLS, ATTACK_CELLS,
+  ARCHETYPE_INFO, specialsForArchetype, SPECIAL_ARCHETYPES, controlsForArchetype,
+  NORMAL_MOVE_IDS, moveCellNames,
   CANONICAL_PROMPT, PORTRAIT_PROMPT, SPRITE_PROMPT,
-  type CreatorJob, type AttackCell,
+  type CreatorJob, type AttackCell, type SpecialDraft,
 } from './creatorModel';
 import { hitboxFromSkeleton, strikeKind } from './hitboxFromSkeleton';
 
@@ -54,6 +56,7 @@ export class CharacterCreatorPanel {
   private leftW = 40; // preview column width %, drag-resizable
   private lastLeftW = 40;
   private regenPromptEl?: HTMLTextAreaElement; // editable copy of the selected cell's prompt
+  private regenUseSelf = false; // img2img: feed the current cell image as the reference
   /** what the big preview shows: an animated group (idle/walk/…) or one cell/asset */
   private preview: { kind: 'group' | 'cell'; key: string } = { kind: 'group', key: 'idle' };
   private anim = 0;
@@ -84,9 +87,8 @@ export class CharacterCreatorPanel {
     this.leftEl = left;
     this.previewControls = el('div', 'display:flex;flex-wrap:wrap;gap:4px;justify-content:center;');
     this.previewCaption = el('div', 'font-size:11px;color:#c8d6de;text-align:center;text-shadow:0 1px 3px #000;margin-top:2px;', 'live preview');
-    this.previewCanvas = el('canvas', 'flex:1;width:100%;min-height:0;image-rendering:auto;'); // transparent, fills
-    this.previewInspect = el('div', 'width:100%;'); // per-cell scale + regen (translucent)
-    left.append(this.previewControls, this.previewCaption, this.previewCanvas, this.previewInspect);
+    this.previewCanvas = el('canvas', 'flex:1;width:100%;min-height:0;image-rendering:auto;'); // transparent, fills — never shrunk by the inspect panel (fighter stays grounded)
+    left.append(this.previewControls, this.previewCaption, this.previewCanvas);
     this.root.appendChild(left);
 
     // draggable divider between preview and dialog
@@ -102,14 +104,21 @@ export class CharacterCreatorPanel {
     const right = el('div', 'position:relative;z-index:1;flex:1;display:flex;flex-direction:column;min-width:0;background:rgba(9,13,20,.82);backdrop-filter:blur(2px);');
     this.stepperEl = el('div', 'display:flex;gap:4px;padding:12px 16px;border-bottom:1px solid #22303e;' +
       'flex-wrap:wrap;align-items:center;');
-    this.bodyEl = el('div', 'flex:1;overflow:auto;padding:16px 20px;');
+    // body region: the wizard dialog + the cell-inspect panel that OVERLAYS it
+    // (absolute, so opening inspect never reflows the left preview → fighter stays
+    // on the ground). Inspect replaces the dialog until closed.
+    const bodyWrap = el('div', 'position:relative;flex:1;min-height:0;');
+    this.bodyEl = el('div', 'position:absolute;inset:0;overflow:auto;padding:16px 20px;');
+    this.previewInspect = el('div', 'position:absolute;inset:0;z-index:20;overflow:auto;padding:14px 18px;' +
+      'background:rgba(9,13,20,.97);display:none;');
+    bodyWrap.append(this.bodyEl, this.previewInspect);
     // activity log: every gen start / done / error with timing (debug the "stuck wheel")
     this.logEl = el('div', "flex:0 0 auto;max-height:84px;overflow:auto;border-top:1px solid #22303e;" +
       "padding:5px 12px;font-family:monospace;font-size:10px;line-height:1.5;color:#8fa6b2;background:#080b11;white-space:pre-wrap;");
     this.trayEl = el('div', 'border-top:1px solid #22303e;padding:8px 12px;display:flex;gap:6px;' +
       'overflow-x:auto;min-height:64px;align-items:center;background:#0b1119;');
     right.appendChild(this.stepperEl);
-    right.appendChild(this.bodyEl);
+    right.appendChild(bodyWrap);
     right.appendChild(this.logEl);
     right.appendChild(this.trayEl);
     this.root.appendChild(right);
@@ -158,11 +167,13 @@ export class CharacterCreatorPanel {
       const done = i < this.m.step;
       const on = i === this.m.step;
       const chip = el('div',
-        'padding:4px 10px;border-radius:12px;font-size:11px;letter-spacing:.5px;' +
+        'padding:4px 10px;border-radius:12px;font-size:11px;letter-spacing:.5px;cursor:pointer;' +
         `border:1px solid ${on ? '#7fe3ff' : done ? '#3f6070' : '#22303e'};` +
         `color:${on ? '#bff0ff' : done ? '#8fd6a0' : '#5c6b78'};` +
         `background:${on ? '#12232e' : 'transparent'};`,
         `${done ? '✓ ' : ''}${i + 1}·${s}`);
+      chip.title = 'go to ' + s;
+      chip.onclick = () => this.goto(i);
       this.stepperEl.appendChild(chip);
     });
   }
@@ -171,6 +182,7 @@ export class CharacterCreatorPanel {
     this.m.step = Math.max(0, Math.min(CREATOR_STEPS.length - 1, step));
     this.renderStepper();
     this.render();
+    this.renderPreviewControls(); // step-dependent move buttons
   }
 
   // ── live save / resume ────────────────────────────────────────────────────
@@ -182,7 +194,7 @@ export class CharacterCreatorPanel {
       skeletons: this.m.skeletons, autoHitboxes: this.m.autoHitboxes, voiceModelId: this.m.voiceModelId,
       jobs: [...this.m.jobs.values()].map((j) => ({
         key: j.key, kind: j.kind, label: j.label, status: j.status, prompt: j.prompt,
-        mock: j.mock, approved: j.approved, scale: j.scale, mime: j.dataUrl?.startsWith('data:image/jpeg') ? 'image/jpeg' : 'image/png', savedAs: j.savedAs,
+        mock: j.mock, approved: j.approved, scale: j.scale, offX: j.offX, offY: j.offY, mime: j.dataUrl?.startsWith('data:image/jpeg') ? 'image/jpeg' : 'image/png', savedAs: j.savedAs,
       })),
     };
   }
@@ -214,7 +226,7 @@ export class CharacterCreatorPanel {
         step?: number; inputs?: CreatorModel['inputs']; draft?: CreatorModel['draft'];
         generatedVo?: Record<string, string>; generatedMusic?: string; generatedFatality?: string[];
         skeletons?: CreatorModel['skeletons']; autoHitboxes?: CreatorModel['autoHitboxes']; voiceModelId?: string;
-        jobs?: { key: string; kind: string; label: string; status: CreatorJob['status']; prompt?: string; mock?: boolean; approved?: boolean; scale?: number; mime?: string; savedAs?: string }[];
+        jobs?: { key: string; kind: string; label: string; status: CreatorJob['status']; prompt?: string; mock?: boolean; approved?: boolean; scale?: number; offX?: number; offY?: number; mime?: string; savedAs?: string }[];
       };
       this.m.inputs = (s.inputs ?? { name: '', description: '' });
       this.m.draft = (s.draft ?? null);
@@ -228,7 +240,10 @@ export class CharacterCreatorPanel {
       this.m.jobs = new Map();
       for (const jb of s.jobs ?? []) {
         const img = j.images?.[jb.key];
-        this.m.jobs.set(jb.key, { key: jb.key, kind: jb.kind, label: jb.label, status: jb.status, prompt: jb.prompt, mock: jb.mock, approved: jb.approved, scale: jb.scale, savedAs: jb.savedAs, dataUrl: img ? `data:${jb.mime ?? 'image/png'};base64,${img}` : undefined });
+        // an image on disk = done; a stale 'running' with no image can't resume its
+        // fetch, so surface it as an error (regenable) instead of an eternal spinner
+        const status: CreatorJob['status'] = img ? 'done' : jb.status === 'running' ? 'error' : jb.status;
+        this.m.jobs.set(jb.key, { key: jb.key, kind: jb.kind, label: jb.label, status, prompt: jb.prompt, mock: jb.mock, approved: jb.approved, scale: jb.scale, offX: jb.offX, offY: jb.offY, savedAs: jb.savedAs, error: status === 'error' ? 'interrupted — regenerate' : undefined, dataUrl: img ? `data:${jb.mime ?? 'image/png'};base64,${img}` : undefined });
       }
       this.renderStepper(); this.render(); this.renderPreviewControls(); this.renderTray(); this.redrawPreview();
     } catch (e) { console.error(e); alert('Could not load draft: ' + String(e)); }
@@ -259,7 +274,7 @@ export class CharacterCreatorPanel {
     switch (CREATOR_STEPS[this.m.step]) {
       case 'SEED': return this.renderSeed();
       case 'PROFILE': return this.renderProfile();
-      case 'SPRITES': return this.renderSprites();
+      case 'MOVES': return this.renderMoves();
       case 'RIG': return this.renderRig();
       case 'POLISH': return this.renderPolish();
       case 'SHIP': return this.renderShip();
@@ -439,12 +454,28 @@ export class CharacterCreatorPanel {
     two.append(colA, colB);
     this.bodyEl.appendChild(two);
 
-    // col A — identity
+    // col A — identity. Archetype is a dropdown (recommended pre-selected); picking
+    // a different one re-rolls the default special kit to match.
     const arch = this.field('Archetype · color');
-    const ai = el('input', INPUT) as HTMLInputElement; ai.value = d.archetype;
-    ai.oninput = () => (d.archetype = ai.value);
-    const sw = el('span', `display:inline-block;width:16px;height:16px;border-radius:3px;margin-left:8px;vertical-align:middle;background:${d.color};`);
-    arch.append(ai, sw); colA.appendChild(arch);
+    const row = el('div', 'display:flex;align-items:center;gap:8px;');
+    const sel = el('select', INPUT + 'flex:1;cursor:pointer;') as HTMLSelectElement;
+    for (const a of ARCHETYPE_INFO) {
+      const opt = el('option', '', `${a.label} — ${a.desc}`) as HTMLOptionElement;
+      opt.value = a.key; if (a.key === d.archetype) opt.selected = true;
+      sel.appendChild(opt);
+    }
+    if (!ARCHETYPE_INFO.some((a) => a.key === d.archetype)) { const o = el('option', '', d.archetype) as HTMLOptionElement; o.value = d.archetype; o.selected = true; sel.appendChild(o); }
+    const sw = el('span', `flex:0 0 auto;width:16px;height:16px;border-radius:3px;background:${d.color};`);
+    row.append(sel, sw); arch.appendChild(row);
+    const desc = el('div', 'font-size:11px;color:#8fa6b2;margin-top:4px;', ARCHETYPE_INFO.find((a) => a.key === d.archetype)?.desc ?? '');
+    arch.appendChild(desc);
+    sel.onchange = () => {
+      d.archetype = sel.value;
+      d.specials = specialsForArchetype(sel.value); // re-roll the default kit to match
+      desc.textContent = ARCHETYPE_INFO.find((a) => a.key === sel.value)?.desc ?? '';
+      this.logMsg('archetype → ' + sel.value + ' (special kit re-rolled)');
+    };
+    colA.appendChild(arch);
 
     const pers = this.field('Personality');
     const pi = el('textarea', INPUT + 'height:44px;') as HTMLTextAreaElement; pi.value = d.lore.personality;
@@ -592,22 +623,139 @@ export class CharacterCreatorPanel {
     return p[Math.floor(Date.now() / 137) % p.length];
   }
 
-  // ── D3 · SPRITES (attack art) ─────────────────────────────────────────────
-  private renderSprites(): void {
+  // ── D3 · MOVES (attack sprites + specials editor, combined) ───────────────
+  private renderMoves(): void {
     this.ensureDraft();
-    this.h('Attack sprites', 'Distinct startup/active/recovery frames per normal + special (jump moves ref the jump image, crouch the crouch image, standing/specials the canonical). Click any tray cell to inspect/scale/regen.');
+    this.h('Moves & specials', 'Distinct startup/active/recovery frames per normal + special (jump moves ref the jump image, crouch the crouch image, standing/specials the canonical). Play any move top-left; click a tray cell to inspect/scale/regen.');
     const cells = this.m.allAttackCells();
     const total = cells.length;
     const done = cells.filter((c) => this.m.job('sprite:' + c.name)?.status === 'done').length;
-    const run = el('button', BTN_HOT + 'font-size:13px;', done ? `↻ Continue attack frames (${done}/${total})` : `▸ Generate attack frames (${total} cells, 5 at a time)`);
+    const run = el('button', BTN_HOT + 'font-size:13px;', done ? `↻ Continue attack frames (${done}/${total})` : `▸ Generate all attack frames (${total} cells, 5 at a time)`);
     run.onclick = () => this.genAttacks();
     this.bodyEl.appendChild(run);
-    this.bodyEl.appendChild(el('div', 'font-size:11px;color:#8fa6b2;margin-top:8px;',
-      done ? `${done}/${total} frames generated. Cells not generated fall back to the idle pose in-game.` : 'not generated yet — attacks reuse the idle pose until you generate them.'));
-    const nav = el('div', 'margin-top:16px;display:flex;gap:10px;');
+    this.bodyEl.appendChild(el('div', 'font-size:11px;color:#8fa6b2;margin:8px 0 14px;',
+      `${done}/${total} frames generated. Un-generated moves reuse the idle pose in-game; grab a single one from its ghost slot in the tray.`));
+    this.bodyEl.appendChild(el('div', 'font-size:12px;font-weight:bold;color:#bff0ff;margin-bottom:8px;', 'Specials'));
+    const d = this.m.draft!;
+    d.specials.forEach((s, i) => {
+      const box = el('div', 'border:1px solid #22303e;border-radius:6px;padding:10px 12px;margin-bottom:10px;background:#0b1119;');
+      const top = el('div', 'display:flex;gap:8px;align-items:center;margin-bottom:6px;');
+      const name = el('input', INPUT + 'flex:2;font-size:13px;') as HTMLInputElement;
+      name.value = s.name; name.oninput = () => (s.name = name.value);
+      // archetype dropdown (full catalog)
+      const arch = el('select', INPUT + 'flex:2;cursor:pointer;font-size:12px;') as HTMLSelectElement;
+      for (const a of SPECIAL_ARCHETYPES) { const o = el('option', '', a.label) as HTMLOptionElement; o.value = a.key; if (a.key === s.archetype) o.selected = true; arch.appendChild(o); }
+      // controls dropdown (archetype-sensible inputs)
+      const ctrl = el('select', INPUT + 'flex:1;cursor:pointer;font-size:12px;') as HTMLSelectElement;
+      const fillCtrl = (): void => {
+        ctrl.replaceChildren();
+        const opts = SPECIAL_ARCHETYPES.find((a) => a.key === s.archetype)?.controls ?? ['qcf+P'];
+        for (const c of opts) { const o = el('option', '', c) as HTMLOptionElement; o.value = c; if (c === s.controls) o.selected = true; ctrl.appendChild(o); }
+      };
+      fillCtrl();
+      const info = el('div', 'font-size:11px;color:#8fa6b2;margin-top:2px;', SPECIAL_ARCHETYPES.find((a) => a.key === s.archetype)?.desc ?? '');
+      arch.onchange = () => {
+        s.archetype = arch.value; s.controls = controlsForArchetype(arch.value);
+        fillCtrl(); info.textContent = SPECIAL_ARCHETYPES.find((a) => a.key === s.archetype)?.desc ?? '';
+      };
+      ctrl.onchange = () => (s.controls = ctrl.value);
+      top.append(el('span', 'font-size:11px;color:#5c6b78;width:14px;', String(i + 1)), name, arch, ctrl);
+      box.append(top, info);
+      // editable flavor description — drives the projectile art + active-frame prompt
+      const descIn = el('input', INPUT + 'font-size:11px;margin-top:5px;') as HTMLInputElement;
+      descIn.value = s.description; descIn.placeholder = 'description — what it looks like (used for the projectile + special art)';
+      descIn.oninput = () => (s.description = descIn.value);
+      box.appendChild(descIn);
+      // swap for one of the extra drafted moves (pool) + approve gate
+      const ctrlRow = el('div', 'display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;');
+      const pool = this.m.draft!.specialPool;
+      if (pool.length) {
+        const swap = el('select', INPUT + 'flex:1;min-width:150px;cursor:pointer;font-size:11px;') as HTMLSelectElement;
+        const ph0 = el('option', '', '↔ swap for a drafted move…') as HTMLOptionElement; ph0.value = ''; swap.appendChild(ph0);
+        for (const p of pool) { const o = el('option', '', `${p.name} — ${p.description}`) as HTMLOptionElement; o.value = p.id; swap.appendChild(o); }
+        swap.onchange = () => {
+          const idx = pool.findIndex((p) => p.id === swap.value); if (idx < 0) return;
+          const incoming = pool[idx], outgoing = this.m.draft!.specials[i];
+          this.m.draft!.specials[i] = { ...incoming, approved: false }; // fresh move — re-approve
+          pool[idx] = { ...outgoing, approved: false }; // old goes back to the pool
+          this.logMsg(`special ${i + 1}: swapped → ${incoming.name}`);
+          this.render();
+        };
+        ctrlRow.appendChild(swap);
+      }
+      const appr = el('button', (s.approved ? BTN_HOT : BTN) + 'font-size:11px;', s.approved ? '✓ approved' : 'Approve');
+      appr.onclick = () => { s.approved = !s.approved; this.render(); };
+      ctrlRow.appendChild(appr);
+      box.appendChild(ctrlRow);
+      // per-special sprite status + generate — gated on approval
+      const phases = ['startup', 'active', 'recovery'].map((ph) => this.m.job(`sprite:${s.id}-${ph}`)?.status === 'done');
+      const doneN = phases.filter(Boolean).length;
+      const gen = el('button', (s.approved ? BTN : BTN + 'opacity:.4;pointer-events:none;') + 'font-size:11px;margin-top:8px;',
+        !s.approved ? '▸ approve first to generate' : doneN === 3 ? '↻ regen sprites' : `▸ generate sprites (${doneN}/3)`);
+      gen.onclick = () => this.genSpecialCells(s.id);
+      box.appendChild(gen);
+      // projectile art slot — only for approved projectile-archetype specials
+      if (s.archetype === 'projectile' && s.approved) {
+        const pj = this.m.job('proj:' + s.id);
+        const prow = el('div', 'display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px dashed #22303e;');
+        prow.appendChild(el('span', 'font-size:11px;color:#9fb4be;', 'projectile:'));
+        if (pj?.dataUrl) { const im = el('img', 'width:44px;height:44px;object-fit:contain;border:1px solid #22303e;border-radius:4px;') as HTMLImageElement; im.src = pj.dataUrl; prow.appendChild(im); }
+        else { const ph = el('div', 'width:44px;height:44px;border:1px dashed #3f5266;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#5c6b78;font-size:18px;', '+'); prow.appendChild(ph); }
+        const pbtn = el('button', BTN + 'font-size:11px;', pj?.status === 'running' ? '◐ …' : pj?.status === 'done' ? '↻ regen projectile' : '▸ generate projectile');
+        pbtn.onclick = () => this.genProjectile(s.id, s.name, s.description);
+        prow.appendChild(pbtn);
+        box.appendChild(prow);
+      }
+      this.bodyEl.appendChild(box);
+    });
+    const nav = el('div', 'margin-top:8px;display:flex;gap:10px;');
     const bk = el('button', BTN, '‹ Back'); bk.onclick = () => this.goto(this.m.step - 1);
     const nx = el('button', BTN_HOT, 'Next ▸'); nx.onclick = () => this.goto(this.m.step + 1);
     nav.append(bk, nx); this.bodyEl.appendChild(nav);
+  }
+
+  /** the projectile-art prompt, written from the special's + character's description. */
+  private projectilePrompt(name: string, desc: string): string {
+    const color = this.m.draft?.color ?? 'bright';
+    const who = this.m.inputs.description ? ` fired by a ${this.m.inputs.description}` : '';
+    return `A fighting-game projectile${who} — the special move "${name}": ${desc}. Depict it as a ${color} ` +
+      `keyable energy/FX effect, side view travelling to the RIGHT, dynamic, NO character, NO hands, NO background scenery. ` +
+      `Solid flat chroma-key green (#00B140) background, completely uniform, no shadow, no text, no border.`;
+  }
+
+  /** generate the projectile art for a projectile special (inspo-free, keyable FX). */
+  private genProjectile(id: string, name: string, desc: string): void {
+    this.fireGen('proj:' + id, 'sprite', name + ' projectile', this.projectilePrompt(name, desc), []);
+  }
+
+  /** generate one special's frames — projectile-first, then the ACTIVE frame that
+   *  references the projectile, then startup/recovery referencing the active frame
+   *  (the pipeline's sequential special chain). Non-projectile specials just chain
+   *  active → startup/recovery off the canonical. */
+  private async genSpecial(s: SpecialDraft): Promise<void> {
+    const nm = this.m.inputs.name, id = s.id, isProj = s.archetype === 'projectile';
+    let projRef: string | undefined;
+    if (isProj) {
+      if (this.m.job('proj:' + id)?.status !== 'done') await this.fireGen('proj:' + id, 'sprite', s.name + ' projectile', this.projectilePrompt(s.name, s.description), []);
+      projRef = dataUrlToB64(this.m.job('proj:' + id)?.dataUrl);
+    }
+    // active — references the projectile so the fighter is shown releasing it
+    const canon = await this.refFor('canonical');
+    const activePose = isProj
+      ? `at the moment of release of the special "${s.name}" (${s.description}): front hand thrust forward, body coiled behind it, the projectile shown in the reference image leaving the hand`
+      : `performing the special "${s.name}" (${s.description}) at the moment of release/impact — a dynamic, committed action pose`;
+    await this.fireGen(`sprite:${id}-active`, 'sprite', `${id}-active`, SPRITE_PROMPT(nm, activePose), isProj && projRef ? [...canon, projRef] : canon);
+    // startup + recovery reference the finished active frame for consistency
+    const activeImg = dataUrlToB64(this.m.job(`sprite:${id}-active`)?.dataUrl);
+    const chain = activeImg ? [activeImg] : canon;
+    await this.fireGen(`sprite:${id}-startup`, 'sprite', `${id}-startup`, SPRITE_PROMPT(nm, `the frame just BEFORE the active pose of "${s.name}" — winding up, gathering power`), chain);
+    await this.fireGen(`sprite:${id}-recovery`, 'sprite', `${id}-recovery`, SPRITE_PROMPT(nm, `the frame just AFTER the active pose of "${s.name}" — recovering, settling back toward neutral`), chain);
+  }
+
+  /** per-special button: run the full chain (projectile-first) for one special. */
+  private async genSpecialCells(id: string): Promise<void> {
+    const s = this.m.draft?.specials.find((x) => x.id === id);
+    if (s) await this.genSpecial(s);
   }
 
   // ── D6 · RIG (local skeleton + auto-hitboxes) ─────────────────────────────
@@ -742,10 +890,10 @@ export class CharacterCreatorPanel {
       const job = this.m.job(plan[i].jobKey); const url = job?.dataUrl; if (!url) continue;
       const img = await this.loadImg(url);
       const x = (i % cols) * cw, y = Math.floor(i / cols) * ch;
-      const s = job?.scale ?? 1;
+      const s = job?.scale ?? 1, ox = job?.offX ?? 0, oy = job?.offY ?? 0;
+      const dw = cw * s, dh = ch * s;
       ctx.save(); ctx.beginPath(); ctx.rect(x, y, cw, ch); ctx.clip();
-      if (s === 1) ctx.drawImage(img, x, y, cw, ch);
-      else ctx.drawImage(img, x + (cw - cw * s) / 2, y + (ch - ch * s), cw * s, ch * s); // scale about feet
+      ctx.drawImage(img, x + (cw - dw) / 2 + ox, y + (ch - dh) + oy, dw, dh); // scale about feet + realign
       ctx.restore();
     }
     // bake the local DWPose skeletons for the packed cells (F3 overlay in-game)
@@ -761,7 +909,7 @@ export class CharacterCreatorPanel {
     // resize baked in once: every base cell is conditioned on the same (scaled) canonical
     const refs = await this.refFor('canonical');
     for (const c of BASE_CELLS) {
-      if (this.m.job('sprite:' + c.id)) continue;
+      if (this.m.job('sprite:' + c.id)?.status === 'done') continue; // re-run failed/missing only
       this.fireGen('sprite:' + c.id, 'sprite', c.id, SPRITE_PROMPT(this.m.inputs.name, c.pose), refs);
     }
     this.render();
@@ -775,7 +923,13 @@ export class CharacterCreatorPanel {
   /** the full build payload (shared by SHIP write + ZIP export). */
   private async buildPayload(): Promise<Record<string, unknown>> {
     const sheet = await this.composeSheet();
+    const projectiles: Record<string, string> = {};
+    for (const [key, job] of this.m.jobs) {
+      if (!key.startsWith('proj:') || !job.dataUrl) continue;
+      const b = dataUrlToB64(job.dataUrl); if (b) projectiles[key.slice('proj:'.length)] = b;
+    }
     return {
+      projectiles,
       id: this.m.id, name: this.m.inputs.name.toUpperCase(), def: this.m.buildFullCharacter(),
       sheetBase64: sheet?.sheetBase64, meta: sheet?.meta,
       portraitBase64: dataUrlToB64(this.m.job('portrait')?.dataUrl),
@@ -829,15 +983,15 @@ export class CharacterCreatorPanel {
   private async scaledRefB64(jobKey: string): Promise<string | undefined> {
     const job = this.m.job(jobKey);
     if (!job?.dataUrl) return undefined;
-    const s = job.scale ?? 1;
-    if (s === 1) return dataUrlToB64(job.dataUrl);
+    const s = job.scale ?? 1, ox = job.offX ?? 0, oy = job.offY ?? 0;
+    if (s === 1 && !ox && !oy) return dataUrlToB64(job.dataUrl);
     const img = await this.loadImg(job.dataUrl);
     const W = img.naturalWidth, H = img.naturalHeight;
     const c = document.createElement('canvas'); c.width = W; c.height = H;
     const ctx = c.getContext('2d')!;
     const dw = W * s, dh = H * s;
     const square = Math.abs(W - H) < 4; // portrait: center; full-body cell: feet at bottom
-    ctx.drawImage(img, (W - dw) / 2, square ? (H - dh) / 2 : (H - dh), dw, dh);
+    ctx.drawImage(img, (W - dw) / 2 + ox, (square ? (H - dh) / 2 : (H - dh)) + oy, dw, dh);
     return c.toDataURL('image/png').split(',')[1];
   }
 
@@ -866,15 +1020,28 @@ export class CharacterCreatorPanel {
   /** D3: generate distinct startup/active/recovery frames for every normal + special. */
   private async genAttacks(): Promise<void> {
     this.ensureDraft();
-    const cells: AttackCell[] = this.m.allAttackCells();
-    const tasks = cells
-      .filter((c) => !this.m.job('sprite:' + c.name))
+    // normals: pooled per-cell (each conditions on its base image)
+    const normals: AttackCell[] = ATTACK_CELLS;
+    const tasks = normals
+      .filter((c) => this.m.job('sprite:' + c.name)?.status !== 'done') // re-run failed/missing only
       .map((c) => async () => {
         const refs = await this.refFor(c.ref);
         await this.fireGen('sprite:' + c.name, 'sprite', c.name, SPRITE_PROMPT(this.m.inputs.name, c.pose), refs);
       });
     this.render();
     await this.poolFire(tasks, 5);
+    // specials: only APPROVED ones; sequential chain — projectile-first, then
+    // active(ref proj) → startup/recovery(ref active)
+    const unapproved = this.m.draft!.specials.filter((s) => !s.approved).length;
+    if (unapproved) this.logMsg(`${unapproved} special(s) not approved — skipped (approve them on the specials list)`);
+    for (const s of this.m.draft!.specials) {
+      if (!s.approved) continue;
+      const cells = ['startup', 'active', 'recovery'].map((ph) => this.m.job(`sprite:${s.id}-${ph}`)?.status === 'done');
+      const projMissing = s.archetype === 'projectile' && this.m.job('proj:' + s.id)?.status !== 'done';
+      if (cells.every(Boolean) && !projMissing) continue; // fully done — skip
+      await this.genSpecial(s);
+    }
+    this.render();
   }
 
   /** RIG: run the LOCAL Python DWPose over every generated cell (fal is ship-only). */
@@ -979,7 +1146,7 @@ export class CharacterCreatorPanel {
     try {
       const r = await fetch('/__editor/creator/gen', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind, prompt, referenceBase64: refs, id: this.m.id, key }),
+        body: JSON.stringify({ kind, prompt, referenceBase64: refs, id: this.m.id, key, frame: this.m.frameNameFor(key) }),
       });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const j = (await r.json()) as { ok?: boolean; mock?: boolean; pngBase64?: string; mime?: string; savedAs?: string; error?: string };
@@ -1023,6 +1190,22 @@ export class CharacterCreatorPanel {
       b.onclick = () => { this.preview = { kind: 'group', key: g.key }; this.renderPreviewControls(); this.renderTray(); this.redrawPreview(); };
       this.previewControls.appendChild(b);
     }
+    // per-move player buttons (grey until generated, lit when done) on the moves/rig steps
+    const step = CREATOR_STEPS[this.m.step];
+    if (step === 'MOVES' || step === 'RIG' || step === 'SHIP') {
+      const moves = [...NORMAL_MOVE_IDS, ...(this.m.draft?.specials ?? []).map((s) => s.id)];
+      for (const mv of moves) {
+        const special = !!this.m.draft?.specials.some((s) => s.id === mv);
+        const cells = moveCellNames(mv, special);
+        const active = cells.find((c) => c.endsWith('-active')) ?? cells[0];
+        const done = this.m.job('sprite:' + active)?.status === 'done';
+        const on = this.preview.kind === 'group' && this.preview.key === mv;
+        const b = el('button', (on ? BTN_HOT : BTN) + `padding:2px 5px;font-size:9px;${done ? '' : 'opacity:.38;'}`, mv.toUpperCase());
+        b.title = done ? 'play ' + mv : mv + ' — not generated yet';
+        b.onclick = () => { this.preview = { kind: 'group', key: mv }; this.renderPreviewControls(); this.renderTray(); this.redrawPreview(); };
+        this.previewControls.appendChild(b);
+      }
+    }
     if (this.preview.kind === 'cell') {
       const back = el('button', BTN + 'padding:3px 9px;font-size:11px;', '↩ back to animation');
       back.onclick = () => { this.preview = { kind: 'group', key: 'idle' }; this.renderPreviewControls(); this.renderTray(); this.redrawPreview(); };
@@ -1035,33 +1218,57 @@ export class CharacterCreatorPanel {
     this.renderPreviewInspect();
   }
 
-  /** per-cell scale slider + a regen box (guidance text appended to the prompt). */
+  private closeInspect(): void {
+    this.preview = { kind: 'group', key: 'idle' };
+    this.renderPreviewControls(); this.renderTray(); this.redrawPreview();
+  }
+
+  /** cell-inspect panel — scale/offset + regen. OVERLAYS the wizard dialog (never
+   *  reflows the left preview, so the fighter stays on the ground). Hidden until
+   *  a tray cell is selected; ✕ closes it back to the animation. */
   private renderPreviewInspect(): void {
     if (!this.previewInspect) return;
     this.previewInspect.replaceChildren();
-    if (this.preview.kind !== 'cell') return;
-    const j = this.m.job(this.preview.key); if (!j) return;
+    if (this.preview.kind !== 'cell') { this.previewInspect.style.display = 'none'; return; }
+    const j = this.m.job(this.preview.key); if (!j) { this.previewInspect.style.display = 'none'; return; }
+    this.previewInspect.style.display = 'block';
+    const head = el('div', 'display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;');
+    head.append(el('div', 'font-size:15px;font-weight:bold;color:#bff0ff;', 'Inspect · ' + (j.label ?? '')));
+    const close = el('button', BTN_HOT + 'padding:4px 12px;', '✕ close');
+    close.onclick = () => this.closeInspect();
+    head.append(close);
+    this.previewInspect.appendChild(head);
     const canRegen = this.preview.key.startsWith('sprite:') || this.preview.key === 'canonical' || this.preview.key === 'portrait';
-    const wrap = el('div', 'margin-top:6px;padding:8px;border-radius:6px;border:1px solid #22303e;background:rgba(9,13,20,.85);');
-    // scale (helps size-match a cell into the animation before packing)
-    const s = j.scale ?? 1;
-    const srow = el('div', 'display:flex;align-items:center;gap:8px;margin-bottom:8px;');
-    const slabel = el('span', 'font-size:11px;color:#9fb4be;white-space:nowrap;', 'scale ' + s.toFixed(2));
-    const range = el('input', 'flex:1;') as HTMLInputElement;
-    range.type = 'range'; range.min = '0.5'; range.max = '1.6'; range.step = '0.02'; range.value = String(s);
-    range.oninput = () => { j.scale = parseFloat(range.value); slabel.textContent = 'scale ' + j.scale.toFixed(2); this.redrawPreview(); this.renderTray(); };
-    srow.append(slabel, range);
-    wrap.appendChild(srow);
+    const wrap = el('div', '');
+    // scale + x/y realign (baked into preview, the packed sheet, and downstream refs)
+    const slider = (label: string, get: () => number, set: (v: number) => void, min: number, max: number, step: number, fmt: (v: number) => string): HTMLDivElement => {
+      const row = el('div', 'display:flex;align-items:center;gap:8px;margin-bottom:6px;');
+      const lbl = el('span', 'font-size:11px;color:#9fb4be;white-space:nowrap;width:66px;', `${label} ${fmt(get())}`);
+      const r = el('input', 'flex:1;') as HTMLInputElement;
+      r.type = 'range'; r.min = String(min); r.max = String(max); r.step = String(step); r.value = String(get());
+      r.oninput = () => { set(parseFloat(r.value)); lbl.textContent = `${label} ${fmt(get())}`; this.redrawPreview(); this.renderTray(); };
+      row.append(lbl, r); return row;
+    };
+    wrap.appendChild(slider('scale', () => j.scale ?? 1, (v) => (j.scale = v), 0.5, 1.6, 0.02, (v) => v.toFixed(2)));
+    wrap.appendChild(slider('off x', () => j.offX ?? 0, (v) => (j.offX = v), -120, 120, 1, (v) => (v > 0 ? '+' : '') + Math.round(v)));
+    wrap.appendChild(slider('off y', () => j.offY ?? 0, (v) => (j.offY = v), -120, 120, 1, (v) => (v > 0 ? '+' : '') + Math.round(v)));
+    const reset = el('button', BTN + 'padding:2px 8px;font-size:10px;margin-bottom:6px;', 'reset scale/offset');
+    reset.onclick = () => { j.scale = 1; j.offX = 0; j.offY = 0; this.renderPreviewInspect(); this.redrawPreview(); this.renderTray(); };
+    wrap.appendChild(reset);
     if (canRegen) {
       wrap.appendChild(el('div', 'font-size:11px;color:#9fb4be;margin-bottom:3px;', 'PROMPT (sent to nano-banana — edit & regenerate)'));
       const prompt = el('textarea', INPUT + 'height:112px;font-size:11px;line-height:1.35;') as HTMLTextAreaElement;
       prompt.value = j.prompt ?? '';
       prompt.placeholder = 'the prompt this cell was generated from';
       this.regenPromptEl = prompt;
+      const tog = el('label', 'display:flex;align-items:center;gap:6px;font-size:11px;color:#9fb4be;margin-top:6px;cursor:pointer;');
+      const cb = el('input', '') as HTMLInputElement; cb.type = 'checkbox'; cb.checked = this.regenUseSelf;
+      cb.onchange = () => (this.regenUseSelf = cb.checked);
+      tog.append(cb, el('span', '', 'edit THIS image (img2img — use it as the reference instead of the base)'));
       const rr = el('button', BTN_HOT + 'margin-top:5px;width:100%;font-size:12px;',
         j.status === 'running' ? '◐ regenerating…' : '↻ Regenerate ' + (j.label ?? ''));
       rr.onclick = () => this.regenSelected();
-      wrap.append(prompt, rr);
+      wrap.append(prompt, tog, rr);
     }
     this.previewInspect.appendChild(wrap);
   }
@@ -1094,48 +1301,128 @@ export class CharacterCreatorPanel {
       kind = 'portrait'; label = 'Portrait';
       if (!prompt) prompt = PORTRAIT_PROMPT(this.m.inputs.name, desc);
     } else return;
+    // img2img: replace the base reference with THIS cell's current image
+    if (this.regenUseSelf) {
+      const own = dataUrlToB64(job?.dataUrl);
+      if (own) refs = [own];
+      this.logMsg(`img2img: editing ${label} from its own image`);
+    }
     this.fireGen(key, kind, label, prompt, refs);
   }
 
   /** the job the big preview should draw right now (animated group or one cell). */
-  private currentPreviewJob(): CreatorJob | undefined {
+  /** the done sprite job for a cell name, or undefined. */
+  private cellJob(name: string): CreatorJob | undefined {
+    const j = this.m.job('sprite:' + name);
+    return j?.status === 'done' ? j : undefined;
+  }
+
+  /** which cell name a timed [cell, ms] sequence is on right now (looped). */
+  private seqPick(seq: [string, number][], t: number): string {
+    const total = seq.reduce((s, [, ms]) => s + ms, 0);
+    let x = t % total;
+    for (const [name, ms] of seq) { if (x < ms) return name; x -= ms; }
+    return seq[seq.length - 1][0];
+  }
+
+  /** the frame to draw + a vertical offset (jump arc), sequencing real motion
+   *  for jump/crouch/block/fall instead of a single static cell. */
+  private previewFrame(): { job?: CreatorJob; offY: number } {
     const p = this.preview;
-    if (p.kind === 'cell') return this.m.job(p.key);
-    const grp = this.previewGroups().find((g) => g.key === p.key);
-    const done = grp?.cells.filter((c) => this.m.job('sprite:' + c)?.status === 'done') ?? [];
-    if (done.length) return this.m.job('sprite:' + done[Math.floor(Date.now() / 300) % done.length]);
-    for (const g of this.previewGroups()) {
-      const d = g.cells.filter((c) => this.m.job('sprite:' + c)?.status === 'done');
-      if (d.length) return this.m.job('sprite:' + d[0]);
+    if (p.kind === 'cell') return { job: this.m.job(p.key), offY: 0 };
+    const t = Date.now();
+    const g = p.key;
+    if (g === 'idle') return { job: this.cellJob((t >> 9) % 2 ? 'idle-b' : 'idle-a') ?? this.cellJob('idle-a'), offY: 0 };
+    if (g === 'walk') return { job: this.cellJob((t >> 8) % 2 ? 'walk-b' : 'walk-a') ?? this.cellJob('walk-a'), offY: 0 };
+    if (g === 'jump') {
+      const ph = (t % 1200) / 1200; // idle prep → airborne arc → idle land
+      if (ph < 0.14 || ph > 0.86) return { job: this.cellJob('idle-a') ?? this.cellJob('jump'), offY: 0 };
+      const a = (ph - 0.14) / 0.72;
+      return { job: this.cellJob('jump') ?? this.cellJob('idle-a'), offY: -Math.sin(a * Math.PI) * 150 };
     }
-    return this.m.job('canonical');
+    if (g === 'crouch') return { job: this.cellJob(this.seqPick([['idle-a', 240], ['crouch', 640], ['idle-a', 240]], t)) ?? this.cellJob('crouch'), offY: 0 };
+    if (g === 'block') return { job: this.cellJob(this.seqPick([['idle-a', 300], ['block', 560]], t)) ?? this.cellJob('block'), offY: 0 };
+    if (g === 'fall') return { job: this.cellJob(this.seqPick([['idle-a', 220], ['hit', 260], ['fall', 320], ['down', 820]], t)) ?? this.cellJob('fall') ?? this.cellJob('down'), offY: 0 };
+    // per-move animation: sequence its startup/active/recovery cells
+    const special = !!this.m.draft?.specials.some((s) => s.id === g);
+    if (special || NORMAL_MOVE_IDS.includes(g)) {
+      const cells = moveCellNames(g, special);
+      const seq: [string, number][] = cells.length === 1 ? [[cells[0], 500]]
+        : cells.length === 2 ? [[cells[0], 300], [cells[1], 340]]
+        : [[cells[0], 200], [cells[1], 220], [cells[2], 340]];
+      return { job: this.cellJob(this.seqPick(seq, t)) ?? this.cellJob(cells.find((c) => c.endsWith('-active')) ?? cells[0]) ?? this.cellJob('idle-a'), offY: 0 };
+    }
+    return { job: this.cellJob(g), offY: 0 };
   }
 
   // ── tray + preview ─────────────────────────────────────────────────────
+  /** the sheet cells the current step expects to exist (base always; attacks +
+   *  specials once you're on/past the Sprites step or any attack was generated). */
+  private expectedCells(): string[] {
+    const base = BASE_CELLS.map((c) => c.id);
+    const attacks = this.m.allAttackCells().map((c) => c.name);
+    const step = CREATOR_STEPS[this.m.step];
+    const showAttacks = step === 'MOVES' || step === 'RIG' || step === 'SHIP' || attacks.some((n) => this.m.job('sprite:' + n));
+    return showAttacks ? [...base, ...attacks] : base;
+  }
+
   private renderTray(): void {
     this.trayEl.replaceChildren();
     const jobs = [...this.m.jobs.values()];
-    if (!jobs.length) { this.trayEl.appendChild(el('div', 'font-size:11px;color:#5c6b78;', 'bake tray — generated assets appear here')); return; }
-    for (const j of jobs) {
-      const cell = el('div', 'flex:0 0 auto;width:52px;text-align:center;position:relative;cursor:pointer;');
-      const selected = this.preview.kind === 'cell' && this.preview.key === j.key;
-      const err = j.status === 'error';
-      const border = err ? '#e0736a' : selected ? '#7fe3ff' : j.approved ? '#8fd6a0' : '#22303e';
-      const c = el('canvas', `width:52px;height:66px;border-radius:4px;border:1px solid ${border};background:` + this.gridBg());
-      c.width = 52; c.height = 66;
-      this.paintJob(c, j);
-      cell.appendChild(c);
-      cell.appendChild(el('div', 'font-size:9px;color:' + (err ? '#e0736a' : selected ? '#bff0ff' : '#8fa6b2') + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;', j.label));
-      if (j.status === 'running') {
-        cell.appendChild(this.shimmer());
-        const secs = j.startedAt ? Math.round((Date.now() - j.startedAt) / 1000) : 0;
-        cell.appendChild(el('div', 'position:absolute;top:1px;right:2px;font-size:9px;color:#bff0ff;text-shadow:0 1px 2px #000;', secs + 's'));
-      }
-      if (err) { cell.appendChild(el('div', 'position:absolute;top:0;left:0;right:0;bottom:18px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#e0736a;', '✕')); cell.title = 'error: ' + (j.error ?? '') + ' — click to see prompt & retry'; }
-      else cell.title = 'click to inspect ' + j.label + ' larger';
-      cell.onclick = () => this.selectCell(j.key);
-      this.trayEl.appendChild(cell);
+    // non-cell assets first (canonical / portrait / stage), then the sheet cells
+    // in canonical order — each a real job or a clickable "missing" ghost slot.
+    for (const j of jobs) if (!j.key.startsWith('sprite:')) this.trayEl.appendChild(this.trayCell(j));
+    const order = this.expectedCells();
+    const inOrder = new Set(order);
+    for (const name of order) {
+      const j = this.m.job('sprite:' + name);
+      this.trayEl.appendChild(j ? this.trayCell(j) : this.ghostCell(name));
     }
+    for (const j of jobs) if (j.key.startsWith('sprite:') && !inOrder.has(j.key.slice('sprite:'.length))) this.trayEl.appendChild(this.trayCell(j));
+    if (!this.trayEl.children.length) this.trayEl.appendChild(el('div', 'font-size:11px;color:#5c6b78;', 'bake tray — generated assets appear here'));
+  }
+
+  private trayCell(j: CreatorJob): HTMLDivElement {
+    const cell = el('div', 'flex:0 0 auto;width:52px;text-align:center;position:relative;cursor:pointer;');
+    const selected = this.preview.kind === 'cell' && this.preview.key === j.key;
+    const err = j.status === 'error';
+    const border = err ? '#e0736a' : selected ? '#7fe3ff' : j.approved ? '#8fd6a0' : '#22303e';
+    const c = el('canvas', `width:52px;height:66px;border-radius:4px;border:1px solid ${border};background:` + this.gridBg());
+    c.width = 52; c.height = 66;
+    this.paintJob(c, j);
+    cell.appendChild(c);
+    cell.appendChild(el('div', 'font-size:9px;color:' + (err ? '#e0736a' : selected ? '#bff0ff' : '#8fa6b2') + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;', j.label));
+    if (j.status === 'running') {
+      cell.appendChild(this.shimmer());
+      const secs = j.startedAt ? Math.round((Date.now() - j.startedAt) / 1000) : 0;
+      cell.appendChild(el('div', 'position:absolute;top:1px;right:2px;font-size:9px;color:#bff0ff;text-shadow:0 1px 2px #000;', secs + 's'));
+    }
+    if (err) { cell.appendChild(el('div', 'position:absolute;top:0;left:0;right:0;bottom:18px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#e0736a;', '✕')); cell.title = 'error: ' + (j.error ?? '') + ' — click to see prompt & retry'; }
+    else cell.title = 'click to inspect ' + j.label + ' larger';
+    cell.onclick = () => this.selectCell(j.key);
+    return cell;
+  }
+
+  /** an expected-but-not-yet-generated cell: a clickable "missing" slot → gen just it. */
+  private ghostCell(name: string): HTMLDivElement {
+    const cell = el('div', 'flex:0 0 auto;width:52px;text-align:center;position:relative;cursor:pointer;');
+    const c = el('canvas', 'width:52px;height:66px;border-radius:4px;border:1px dashed #3f5266;background:#0b1119;');
+    c.width = 52; c.height = 66;
+    const ctx = c.getContext('2d')!;
+    ctx.fillStyle = '#5c6b78'; ctx.font = '22px monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('+', 26, 30);
+    cell.appendChild(c);
+    cell.appendChild(el('div', 'font-size:9px;color:#5c6b78;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;', name));
+    cell.title = `${name} — not generated. Click to generate just this cell.`;
+    cell.onclick = () => void this.genOneCell(name);
+    return cell;
+  }
+
+  /** generate a single sheet cell (base/attack/special) from its own spec. */
+  private async genOneCell(name: string): Promise<void> {
+    const spec = this.cellSpec(name); if (!spec) return;
+    const refs = await this.refFor(spec.ref);
+    this.fireGen('sprite:' + name, 'sprite', name, SPRITE_PROMPT(this.m.inputs.name, spec.pose), refs);
   }
 
   private shimmer(): HTMLDivElement {
@@ -1143,13 +1430,6 @@ export class CharacterCreatorPanel {
       'background:linear-gradient(110deg,transparent 30%,rgba(127,227,255,.35) 50%,transparent 70%);' +
       'background-size:200% 100%;animation:mkShimmer 1.1s linear infinite;');
     return s;
-  }
-
-  /** the pose currently shown (group key, or the selected cell's base name). */
-  private currentPose(): string {
-    const p = this.preview;
-    const raw = p.kind === 'cell' ? (this.m.job(p.key)?.label ?? '') : p.key;
-    return raw.replace(/-[ab]$/, '');
   }
 
   /** the generated stage becomes the whole generator's backdrop (full-bleed). */
@@ -1174,15 +1454,16 @@ export class CharacterCreatorPanel {
     ctx.clearRect(0, 0, W, H); // transparent — the stage backdrop shows through
     // ground line matches the stage floor contract (bottom band); leave a hair of margin
     const floorY = Math.round(H * 0.94);
-    const main = this.currentPreviewJob();
+    const pf = this.previewFrame(); // sequenced motion (jump arc, crouch/block/fall cycles)
+    const main = pf.job;
     const canon = this.m.job('canonical');
     const scale = main?.scale ?? 1;
-    const pose = this.currentPose();
-    // jump actually hops off the ground; grounded poses sit on the floor line
-    const hop = pose === 'jump' ? Math.abs(Math.sin(Date.now() / 320)) * H * 0.26 : 0;
+    const drawH = H * 0.82 * scale;
     if (main?.dataUrl) {
-      this.drawShadow(ctx, W / 2, floorY, 96 * scale * Math.max(0.25, 1 - hop / (H * 0.3)));
-      this.drawCharacter(ctx, main.dataUrl, W / 2, floorY - hop, H * 0.82 * scale);
+      const ox = main.offX ?? 0, oy = (main.offY ?? 0) + pf.offY; // cell realign + sequence arc
+      const rise = Math.max(0, -pf.offY) * (drawH / 384); // shrink shadow as it rises
+      this.drawShadow(ctx, W / 2 + ox * (drawH / 384), floorY, 96 * scale * Math.max(0.25, 1 - rise / (H * 0.3)));
+      this.drawCharacter(ctx, main.dataUrl, W / 2, floorY, drawH, ox, oy);
     } else {
       this.drawShadow(ctx, W / 2, floorY, 80);
       this.drawSilhouette(ctx, W / 2, floorY, 150, this.m.draft?.color ?? '#31424f', canon?.status === 'running');
@@ -1207,12 +1488,13 @@ export class CharacterCreatorPanel {
     ctx.drawImage(im, x + (w - dw) / 2, y + (h - dh), dw, dh);
   }
 
-  /** draw the fighter with feet (image bottom) planted at (feetX, feetY). */
-  private drawCharacter(ctx: CanvasRenderingContext2D, url: string, feetX: number, feetY: number, targetH: number): void {
+  /** draw the fighter with feet (image bottom) planted at (feetX, feetY), with an
+   *  optional cell-space x/y realign offset. */
+  private drawCharacter(ctx: CanvasRenderingContext2D, url: string, feetX: number, feetY: number, targetH: number, offX = 0, offY = 0): void {
     const im = this.img(url); if (!im) return;
-    const s = targetH / im.naturalHeight;
+    const s = targetH / im.naturalHeight; // cell-px → preview-px
     const dw = im.naturalWidth * s;
-    ctx.drawImage(im, feetX - dw / 2, feetY - targetH, dw, targetH);
+    ctx.drawImage(im, feetX - dw / 2 + offX * s, feetY - targetH + offY * s, dw, targetH);
   }
 
   private drawCover(ctx: CanvasRenderingContext2D, url: string, x: number, y: number, w: number, h: number): void {

@@ -20,6 +20,8 @@ export interface CreatorJob {
   approved?: boolean;
   error?: string;
   scale?: number; // per-cell render scale (editor size-match tweak; default 1)
+  offX?: number; // per-cell x/y realign offset in CELL pixels (288x384 space)
+  offY?: number;
   savedAs?: string; // filename under assets/raw/creator/<id>/img/ (live-save/resume)
   startedAt?: number; // ms epoch when this gen kicked off (elapsed display)
 }
@@ -48,6 +50,7 @@ export interface SpecialDraft {
   controls: string; // e.g. 'qcf+P'
   archetype: string; // catalog id
   description: string;
+  approved?: boolean; // lock the kit before spending gen calls on its sprites
 }
 
 export interface DesignDraft {
@@ -91,15 +94,17 @@ export const KO_PROMPT = (name: string, desc: string): string =>
   `bruised, downcast. Close-up on the head and shoulders only — no full body, torso, hands or legs. ` +
   `${STYLE_ART} ${STYLE_BG}`;
 
-/** the 11 shared base cells the first sprite batch covers, with their pose text */
+/** the shared base cells the first batch covers (pipeline order: the same order
+ *  the raw frames are numbered — idle/walk/crouch/jump/block/hit/fall/down). */
 export const BASE_CELLS: { id: string; ref: 'canonical'; pose: string }[] = [
   { id: 'idle-a', ref: 'canonical', pose: 'relaxed fighting idle, weight settled, BOTH feet flat, guard loosely up. NOT an attack — no raised knee, kick or lunge.' },
   { id: 'idle-b', ref: 'canonical', pose: 'relaxed fighting idle, chest risen on the breath, BOTH feet flat. NOT an attack.' },
   { id: 'walk-a', ref: 'canonical', pose: 'walking forward, mid-stride: the LEFT leg lifted and striding FORWARD with a bent knee, the RIGHT leg trailing BEHIND and extended, weight shifting onto the front foot, arms swinging in opposition. A clear exaggerated walk-cycle step — NOT a neutral standing pose.' },
   { id: 'walk-b', ref: 'canonical', pose: 'walking forward, the OPPOSITE step of the other walk frame: the RIGHT leg lifted and striding FORWARD with a bent knee, the LEFT leg trailing BEHIND and extended, opposite arm swing. Legs clearly in a DIFFERENT position from the first walk frame.' },
-  { id: 'jump', ref: 'canonical', pose: 'airborne, knees tucked, the whole figure lifted off the ground.' },
   { id: 'crouch', ref: 'canonical', pose: 'squatting EXTREMELY low, knees folded, hips at heel height — the whole figure occupies ONLY the BOTTOM HALF of the frame.' },
+  { id: 'jump', ref: 'canonical', pose: 'airborne, knees tucked, the whole figure lifted off the ground.' },
   { id: 'block', ref: 'canonical', pose: 'guard up, forearms shielding the face and body, braced.' },
+  { id: 'hit', ref: 'canonical', pose: 'a HIT reaction — recoiling from a blow, head snapped back, torso twisted away, off balance, one arm flailing up. NOT an attack, NOT a block.' },
   { id: 'fall', ref: 'canonical', pose: 'knocked backward off balance, mid-air, arms flailing.' },
   { id: 'down', ref: 'canonical', pose: 'lying flat on the back on the ground — a HORIZONTAL shape along the BOTTOM QUARTER of the frame.' },
 ];
@@ -158,26 +163,83 @@ const hash = (s: string): number => {
   return h >>> 0;
 };
 
-const ARCHETYPES: { key: string; words: string[]; specials: Omit<SpecialDraft, 'id'>[] }[] = [
-  { key: 'zoner', words: ['sand', 'illusion', 'mirage', 'dust', 'ghost', 'shadow', 'glitch', 'digital', 'wizard'],
+const ARCHETYPES: { key: string; label: string; desc: string; words: string[]; specials: Omit<SpecialDraft, 'id'>[] }[] = [
+  { key: 'zoner', label: 'Zoner', desc: 'keep-away — projectiles + a teleport + anti-air; controls space from range',
+    words: ['sand', 'illusion', 'mirage', 'dust', 'ghost', 'shadow', 'glitch', 'digital', 'wizard'],
     specials: [
       { name: 'Bolt', controls: 'qcf+P', archetype: 'projectile', description: 'ranged energy projectile' },
       { name: 'Step', controls: 'qcb+K', archetype: 'teleport', description: 'blink to reposition' },
       { name: 'Pillar', controls: 'dp+P', archetype: 'anti-air-dp', description: 'rising anti-air' },
       { name: 'Double', controls: 'qcf+K', archetype: 'advancing-rush', description: 'dash-in mixup' } ] },
-  { key: 'grappler', words: ['strong', 'wrestle', 'grab', 'bear', 'heavy', 'chef', 'cook', 'staff'],
+  { key: 'grappler', label: 'Grappler', desc: 'close-range bruiser — command grabs + armored advance; wants to get in',
+    words: ['strong', 'wrestle', 'grab', 'bear', 'heavy', 'chef', 'cook', 'staff'],
     specials: [
       { name: 'Grab', controls: 'hcb+P', archetype: 'command-grab', description: 'unblockable command throw' },
       { name: 'Charge', controls: 'qcf+K', archetype: 'advancing-rush', description: 'armored advance' },
       { name: 'Slam', controls: 'dp+P', archetype: 'anti-air-dp', description: 'anti-air smash' },
       { name: 'Quake', controls: 'qcb+K', archetype: 'reversal', description: 'ground pound reversal' } ] },
-  { key: 'rushdown', words: ['fast', 'fire', 'acrobat', 'kick', 'flip', 'burn', 'hack', 'punk'],
+  { key: 'rushdown', label: 'Rushdown', desc: 'fast pressure — advancing rushes + a mash barrage; relentless offense',
+    words: ['fast', 'fire', 'acrobat', 'kick', 'flip', 'burn', 'hack', 'punk'],
     specials: [
       { name: 'Rush', controls: 'qcf+K', archetype: 'advancing-rush', description: 'fast advancing strike' },
       { name: 'Flurry', controls: 'mash+P', archetype: 'mash', description: 'rapid-hit barrage' },
       { name: 'Rise', controls: 'dp+K', archetype: 'anti-air-dp', description: 'flip-kick anti-air' },
       { name: 'Spark', controls: 'qcf+P', archetype: 'projectile', description: 'short-range projectile' } ] },
+  { key: 'all-rounder', label: 'All-rounder', desc: 'balanced — one of each: projectile, anti-air, advancing rush, grab',
+    words: ['balanced', 'monk', 'martial', 'yogi', 'tai'],
+    specials: [
+      { name: 'Bolt', controls: 'qcf+P', archetype: 'projectile', description: 'ranged projectile' },
+      { name: 'Rise', controls: 'dp+P', archetype: 'anti-air-dp', description: 'rising anti-air' },
+      { name: 'Dash', controls: 'qcf+K', archetype: 'advancing-rush', description: 'advancing strike' },
+      { name: 'Clinch', controls: 'hcb+P', archetype: 'command-grab', description: 'command grab' } ] },
+  { key: 'trickster', label: 'Trickster', desc: 'evasive mixups — teleports, a reversal, and an odd projectile',
+    words: ['trick', 'clown', 'chaos', 'gambler', 'jester', 'con'],
+    specials: [
+      { name: 'Blink', controls: 'qcb+K', archetype: 'teleport', description: 'teleport behind' },
+      { name: 'Hex', controls: 'qcf+P', archetype: 'projectile', description: 'curved projectile' },
+      { name: 'Reversal', controls: 'qcb+P', archetype: 'reversal', description: 'invincible reversal' },
+      { name: 'Snap', controls: 'hcf+P', archetype: 'advancing-rush', description: 'lunge mixup' } ] },
 ];
+
+/** the archetype picker's options (label + description) — drives the dropdown. */
+export const ARCHETYPE_INFO: { key: string; label: string; desc: string }[] = ARCHETYPES.map((a) => ({ key: a.key, label: a.label, desc: a.desc }));
+
+const mkSpecials = (list: Omit<SpecialDraft, 'id'>[]): SpecialDraft[] =>
+  list.map((s) => ({ ...s, id: s.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') }));
+
+/** the default 4 specials for an archetype key (used on archetype change). */
+export function specialsForArchetype(key: string): SpecialDraft[] {
+  const a = ARCHETYPES.find((x) => x.key === key) ?? ARCHETYPES[0];
+  return mkSpecials(a.specials);
+}
+
+/** the buildable SPECIAL-MOVE archetypes (the move-authoring catalog). The
+ *  descriptions are user guidance ONLY — never sent to the image/text model.
+ *  `controls` lists the sensible motion+button inputs for that archetype. */
+export const SPECIAL_ARCHETYPES: { key: string; label: string; desc: string; controls: string[] }[] = [
+  { key: 'projectile', label: 'Projectile', desc: 'a ranged projectile thrown across the screen (fireball)', controls: ['qcf+P', 'qcf+K', 'hcf+P'] },
+  { key: 'anti-air-dp', label: 'Anti-air (DP)', desc: 'a rising, invincible reversal that swats jumpers (dragon punch)', controls: ['dp+P', 'dp+K'] },
+  { key: 'command-grab', label: 'Command grab', desc: 'an unblockable throw at close range', controls: ['hcb+P', '360+P'] },
+  { key: 'advancing-rush', label: 'Advancing rush', desc: 'a forward-moving strike that closes distance', controls: ['qcf+K', 'hcf+K'] },
+  { key: 'reversal', label: 'Reversal', desc: 'an invincible wake-up attack that beats pressure', controls: ['qcb+P', 'qcb+K'] },
+  { key: 'teleport', label: 'Teleport', desc: 'blink behind or away to reposition (deals no damage)', controls: ['qcb+K', 'qcf+K'] },
+  { key: 'mash', label: 'Mash barrage', desc: 'a rapid multi-hit flurry (mash the button, e.g. lightning legs)', controls: ['mash+P', 'mash+K'] },
+];
+
+export function controlsForArchetype(key: string): string {
+  return (SPECIAL_ARCHETYPES.find((a) => a.key === key)?.controls[0]) ?? 'qcf+P';
+}
+
+/** the 18 button-normal move ids (for the per-move animation player). */
+export const NORMAL_MOVE_IDS = ['lp', 'mp', 'hp', 'lk', 'mk', 'hk', 'clp', 'cmp', 'chp', 'clk', 'cmk', 'chk', 'jlp', 'jmp', 'jhp', 'jlk', 'jmk', 'jhk'];
+
+/** the phase sheet-cells for a move, in play order (matches ATTACK_CELLS naming). */
+export function moveCellNames(moveId: string, special: boolean): string[] {
+  if (special) return [`${moveId}-startup`, `${moveId}-active`, `${moveId}-recovery`];
+  if (moveId.startsWith('j')) return [moveId]; // air = single cell
+  if (moveId.startsWith('c')) return [`${moveId}-active`, `${moveId}-recovery`]; // crouch = active + recovery
+  return [`${moveId}-startup`, `${moveId}-active`, `${moveId}-recovery`]; // standing
+}
 
 const pickArchetype = (desc: string): typeof ARCHETYPES[number] => {
   const d = desc.toLowerCase();
@@ -193,11 +255,16 @@ export function makeDraft(name: string, description: string): DesignDraft {
   const mk = (list: Omit<SpecialDraft, 'id'>[]): SpecialDraft[] =>
     list.map((s) => ({ ...s, id: s.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') }));
   const specials = mk(arch.specials);
+  // extra candidates across every archetype — the "safety" moves to swap in
   const poolBase: Omit<SpecialDraft, 'id'>[] = [
-    { name: 'Overdrive', controls: 'qcb+P', archetype: 'reversal', description: 'invincible reversal' },
-    { name: 'Vortex', controls: 'hcf+P', archetype: 'projectile', description: 'spiralling projectile' },
-    { name: 'Lunge', controls: 'qcf+K', archetype: 'advancing-rush', description: 'long-range lunge' },
-    { name: 'Snare', controls: 'hcb+K', archetype: 'command-grab', description: 'ranged pull grab' },
+    { name: 'Overdrive', controls: 'qcb+P', archetype: 'reversal', description: 'an invincible reversal' },
+    { name: 'Vortex', controls: 'hcf+P', archetype: 'projectile', description: 'a spiralling projectile' },
+    { name: 'Lunge', controls: 'qcf+K', archetype: 'advancing-rush', description: 'a long-range lunge' },
+    { name: 'Snare', controls: 'hcb+P', archetype: 'command-grab', description: 'a close-range grab' },
+    { name: 'Uppercut', controls: 'dp+P', archetype: 'anti-air-dp', description: 'a rising anti-air' },
+    { name: 'Fade', controls: 'qcb+K', archetype: 'teleport', description: 'a teleport to reposition' },
+    { name: 'Barrage', controls: 'mash+P', archetype: 'mash', description: 'a rapid multi-hit flurry' },
+    { name: 'Comet', controls: 'qcf+P', archetype: 'projectile', description: 'a fast straight projectile' },
   ];
   return {
     color,
@@ -232,7 +299,7 @@ export function makeDraft(name: string, description: string): DesignDraft {
 }
 
 // ── the model ───────────────────────────────────────────────────────────────
-export const CREATOR_STEPS = ['SEED', 'PROFILE', 'SPRITES', 'SPECIALS', 'RIG', 'POLISH', 'SHIP'] as const;
+export const CREATOR_STEPS = ['SEED', 'PROFILE', 'MOVES', 'RIG', 'POLISH', 'SHIP'] as const;
 export type CreatorStep = typeof CREATOR_STEPS[number];
 
 export function slugify(name: string): string {
@@ -276,6 +343,21 @@ export class CreatorModel {
   /** every attack/special cell that should be generated (for progress counts). */
   allAttackCells(): AttackCell[] {
     return [...ATTACK_CELLS, ...this.specialCellList()];
+  }
+
+  /** the full ordered sheet-cell name list (base → attacks → specials). */
+  cellOrder(): string[] {
+    return [...BASE_CELLS.map((c) => c.id), ...ATTACK_CELLS.map((c) => c.name), ...this.specialCellList().map((c) => c.name)];
+  }
+
+  /** raw-frame filename base for a job, matching the pipeline (`NN-cellname`);
+   *  canonical/portrait/stage keep their key. Extension added by the server. */
+  frameNameFor(key: string): string {
+    if (key.startsWith('proj:')) return 'projectile-' + key.slice('proj:'.length);
+    if (!key.startsWith('sprite:')) return key;
+    const name = key.slice('sprite:'.length);
+    const i = this.cellOrder().indexOf(name);
+    return (i >= 0 ? String(i).padStart(2, '0') + '-' : '') + name;
   }
 
   /** final VO map for the SHIP write: BYO clips override generated ones, slot by slot. */

@@ -225,8 +225,8 @@ function editorApi(): Plugin {
         if (req.method !== 'POST') return next();
         readJsonBody(req)
           .then(async (b) => {
-            const { kind, prompt, referenceBase64, id, key } = b as {
-              kind?: unknown; prompt?: unknown; referenceBase64?: unknown; id?: string; key?: string;
+            const { kind, prompt, referenceBase64, id, key, frame } = b as {
+              kind?: unknown; prompt?: unknown; referenceBase64?: unknown; id?: string; key?: string; frame?: string;
             };
             if (typeof prompt !== 'string' || !prompt.trim()) throw new Error('empty prompt');
             const lib = await import('./tools/lib.mjs');
@@ -267,7 +267,9 @@ function editorApi(): Plugin {
             if (okId(id) && typeof key === 'string' && key) {
               const dir = join(root, 'assets/raw/creator', id, 'img');
               mkdirSync(dir, { recursive: true });
-              savedAs = key.replace(/[^a-z0-9]+/gi, '_') + (isStage ? '.jpg' : '.png');
+              // pipeline-style name (NN-cellname / canonical / portrait / stage), hyphens kept
+              const base = (typeof frame === 'string' && frame ? frame : key.replace(/^sprite:/, '')).replace(/[^a-z0-9-]+/gi, '-');
+              savedAs = base + (isStage ? '.jpg' : '.png');
               copyFileSync(cellPath, join(dir, savedAs));
             }
             sendJson(res, 200, { ok: true, pngBase64: readFileSync(cellPath).toString('base64'), mime: isStage ? 'image/jpeg' : 'image/png', savedAs });
@@ -467,11 +469,16 @@ function editorApi(): Plugin {
             const statePath = join(dir, 'state.json');
             if (!existsSync(statePath)) { sendJson(res, 404, { ok: false, error: 'no saved draft' }); return; }
             const state = JSON.parse(readFileSync(statePath, 'utf-8')) as { jobs?: { key: string; savedAs?: string }[] };
+            const imgDir = join(dir, 'img');
+            const files = existsSync(imgDir) ? readdirSync(imgDir) : [];
             const images: Record<string, string> = {};
             for (const j of state.jobs ?? []) {
-              if (!j.savedAs) continue;
-              const p = join(dir, 'img', j.savedAs);
-              if (existsSync(p)) images[j.key] = readFileSync(p).toString('base64');
+              // prefer the recorded filename; else recover by cell name (handles the
+              // pipeline `NN-cellname` naming + interrupted gens with no savedAs)
+              const cell = j.key.replace(/^sprite:/, '');
+              const match = (j.savedAs && files.includes(j.savedAs) && j.savedAs)
+                || files.find((f) => f === `${cell}.png` || f === `${cell}.jpg` || f.endsWith(`-${cell}.png`) || f.endsWith(`-${cell}.jpg`));
+              if (match) images[j.key] = readFileSync(join(imgDir, match)).toString('base64');
             }
             sendJson(res, 200, { ok: true, state, images });
           })
@@ -509,7 +516,7 @@ function editorApi(): Plugin {
             const p = b as {
               id?: string; name?: string; def?: Record<string, unknown>; sheetBase64?: string; meta?: unknown;
               portraitBase64?: string; voClips?: Record<string, string>; musicBase64?: string;
-              stageBase64?: string; stageId?: string; fatalityPanels?: string[];
+              stageBase64?: string; stageId?: string; fatalityPanels?: string[]; projectiles?: Record<string, string>;
             };
             if (!okId(p.id)) throw new Error('invalid id');
             const id = p.id;
@@ -522,6 +529,9 @@ function editorApi(): Plugin {
               const d = join(A, 'sprites', id); mkdirSync(d, { recursive: true });
               writeFileSync(join(d, 'sheet.png'), Buffer.from(p.sheetBase64, 'base64'));
               writeFileSync(join(d, 'meta.json'), JSON.stringify(p.meta, null, 2) + '\n');
+              for (const [moveId, b64] of Object.entries(p.projectiles ?? {})) {
+                if (typeof b64 === 'string' && /^[a-z0-9_-]+$/.test(moveId)) writeFileSync(join(d, `projectile-${moveId}.png`), Buffer.from(b64, 'base64'));
+              }
             }
             // portraits
             if (p.portraitBase64) {
@@ -581,10 +591,10 @@ function editorApi(): Plugin {
         if (req.method !== 'POST') return next();
         readJsonBody(req)
           .then((b) => {
-            const { id, name, def, sheetBase64, meta, portraitBase64, voClips, musicBase64, stageBase64, stageId, stageName, fatalityPanels } = b as {
+            const { id, name, def, sheetBase64, meta, portraitBase64, voClips, musicBase64, stageBase64, stageId, stageName, fatalityPanels, projectiles } = b as {
               id?: unknown; name?: unknown; def?: unknown; sheetBase64?: unknown; meta?: unknown; portraitBase64?: unknown;
               voClips?: Record<string, string>; musicBase64?: string;
-              stageBase64?: string; stageId?: string; stageName?: string; fatalityPanels?: string[];
+              stageBase64?: string; stageId?: string; stageName?: string; fatalityPanels?: string[]; projectiles?: Record<string, string>;
             };
             if (!okId(id)) throw new Error('invalid character id');
             if (typeof sheetBase64 !== 'string' || typeof meta !== 'object' || meta === null) throw new Error('missing sheet/meta');
@@ -595,6 +605,15 @@ function editorApi(): Plugin {
             mkdirSync(spriteDir, { recursive: true });
             writeFileSync(join(spriteDir, 'sheet.png'), Buffer.from(sheetBase64, 'base64'));
             writeFileSync(join(spriteDir, 'meta.json'), JSON.stringify(meta, null, 2) + '\n');
+            // per-move projectile art → sprites/<id>/projectile-<moveId>.png
+            let wroteProjectiles = false;
+            if (projectiles && typeof projectiles === 'object') {
+              for (const [moveId, b64] of Object.entries(projectiles)) {
+                if (typeof b64 !== 'string' || !/^[a-z0-9_-]+$/.test(moveId)) continue;
+                writeFileSync(join(spriteDir, `projectile-${moveId}.png`), Buffer.from(b64, 'base64'));
+                wroteProjectiles = true;
+              }
+            }
             // portrait (+ bust/ko copies so BootScene's unconditional loads don't 404)
             if (typeof portraitBase64 === 'string') {
               const portDir = join(root, 'public/assets/portraits');
@@ -673,6 +692,9 @@ function editorApi(): Plugin {
               ros = ros.replace(/(\n\];)/, `\n  { id: '${id}', name: '${disp}', playable: true },$1`);
               writeFileSync(rosPath, ros);
             }
+            // rescan optional assets (projectiles/vfx) → assetManifest.json so the
+            // loader requests the new projectile art
+            if (wroteProjectiles) { try { execFileSync('node', [join(root, 'tools/gen-asset-manifest.mjs')], { stdio: 'ignore' }); } catch { /* non-fatal */ } }
             sendJson(res, 200, { ok: true, id, wrote: ['sheet.png', 'meta.json', `${id}.json`, 'portrait', 'roster', 'index'] });
           })
           .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));

@@ -1135,13 +1135,37 @@ profile → base batch → SHIP → reload → **playable MIRAGE vs VINCENT figh
       + debounced `state.json`; **RESUME** bar; **⤓ ZIP export** (playable bundle +
       raw progress, `/creator/export`).
 
+**Editor UX + specials pass — DONE 2026-07-07 (all verified live in mock):**
+- [x] **Specials editor** (the D5 table) — combined into a single **MOVES** step
+      (SPRITES+SPECIALS merged; 7 steps → 6). Per special: full **archetype dropdown**
+      (7 buildable catalog entries + helper descriptions that never hit the prompt),
+      **controls dropdown** (archetype-sensible motions), **editable description**
+      (drives the projectile + active-frame art), **swap from the drafted pool**
+      (8 candidates), and **approve-before-gen** (gen buttons gated; batch skips
+      unapproved). **Projectile-first chain** confirmed (projectile art from the
+      description → active frame refs it → startup/recovery ref active).
+- [x] **Projectile slots** — projectile-archetype specials render a projectile art
+      slot (dashed placeholder / thumbnail); written to `projectile-<move>.png` on
+      SHIP/export + asset-manifest rescan; non-projectile specials stay blank.
+- [x] **Per-move animation player buttons** (top-left) — one per normal + special,
+      grey until generated, lit when done, click to play the move's phase sequence.
+- [x] **Real preview animations** — jump (idle→airborne arc→land), crouch, block,
+      fall (idle→hit→fall→down) sequence real cells; added the **`hit`** base cell.
+- [x] **In-level backdrop** — the generated stage textures the whole generator;
+      fighter stands on the ground line; inspect panel OVERLAYS the dialog (never
+      shifts the fighter). **Ghost "missing" cell slots** generate one cell.
+- [x] **Cell realign** — per-cell scale + **x/y offset** (baked into preview, sheet,
+      refs); **img2img regen** toggle; regen box **pre-fills the original prompt**.
+- [x] **Character archetype dropdown** (5, with descriptions; re-rolls the kit).
+- [x] **Per-line VO play/regen** + announcer (Maverick) via `/creator/audio-clip`.
+- [x] **Pipeline frame naming** (`NN-cellname.png`) + **resume hardening** (image→
+      done, orphaned-frame relink by cell name, clickable stepper, batch re-runs
+      only failed cells) + periodic autosave + **activity log** (timers, error cells).
+
 **Backlog (this sprint):**
-- [ ] Real Gemini design-draft (server `/__editor/creator/design` + context cache §16);
-      D5 specials 4-slot table (projectile-first, controls dropdown, pool rerolls).
+- [ ] Real Gemini design-draft (server `/__editor/creator/design` + context cache §16).
 - [ ] Advisory edge-QA badges; R2 publish/pull seams (local-mock first).
 - [ ] Consolidate: audit/tests + skills + CLAUDE.md; fold Tuner/Editor in.
-- [ ] Commit the `earl`/`vanessa` voice-inspo + `tools/voices.json` asset changes
-      separately (user's test-clone artifacts, left out of the wizard commit).
 
 ### Icebox (do not start)
 - **Attract-mode gag reels (3D)**: occasionally, instead of a demo fight, the
@@ -1171,6 +1195,28 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-07 · ui+tools · Character Creator — editor UX + specials pass** —
+  merged SPRITES+SPECIALS into one **MOVES** step with a real specials editor:
+  archetype dropdown (7-entry buildable catalog + prompt-free helper descriptions),
+  controls dropdown, editable description, swap-from-pool (8 candidates), and
+  approve-before-gen (gen gated, batch skips unapproved); projectile-first chain
+  (description→projectile→active refs it) + per-move projectile art slots written
+  on ship/export. Added per-move animation player buttons (grey→lit), real jump/
+  crouch/block/fall preview sequences + a `hit` base cell, full-bleed in-level
+  stage backdrop with the fighter grounded, inspect panel overlaying the dialog,
+  ghost "missing" cell slots, per-cell scale + x/y offset (baked into preview/
+  sheet/refs), img2img regen + prompt pre-fill, character-archetype dropdown,
+  per-line VO play/regen + announcer (`/creator/audio-clip`), pipeline frame
+  naming (`NN-cellname`), resume hardening (image→done, orphaned-frame relink,
+  clickable stepper, failed-only batch re-run), periodic autosave, and an activity
+  log with timers/error cells. tsc clean; each slice verified live in mock. Scoped
+  to Panel/model/vite. — Claude
+- **2026-07-07 · assets · earl inputs + earl voice clone** — added earl reference
+  face (`earl-head.jpg`) + `voice-inspo/earl/` samples, removed the stale
+  `vanessa.wav`, and registered earl's Fish voice-clone id in `tools/voices.json`
+  (safe to commit; useless without the key). Test-character asset curation from the
+  Character Creator dogfooding. — Vincent
 
 - **2026-07-07 · tools+ui · Sprint 26: Character Creator — full in-browser pipeline** —
   the wizard now runs the whole character pipeline end-to-end from the front-end:
