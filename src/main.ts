@@ -13,6 +13,7 @@ import { ControlsScene } from './scenes/ControlsScene';
 import { VolumeOverlayScene } from './scenes/VolumeOverlayScene';
 import { EditorMenuScene } from './scenes/EditorMenuScene';
 import { StagePinEditorScene } from './scenes/StagePinEditorScene';
+import { CharacterCreatorScene } from './scenes/CharacterCreatorScene';
 import { LaunchData, rememberDevLaunch } from './devLaunch';
 
 const devWindow = window as unknown as { __mkScenePatch?: boolean; __game?: Phaser.Game };
@@ -71,7 +72,7 @@ const game = new Phaser.Game({
     SettingsScene, ControlsScene, VolumeOverlayScene,
     // dev-only authoring tools — reachable only via the title's DEV EDITOR item
     // (import.meta.env.DEV). Registering them is harmless in prod (unreachable).
-    ...(import.meta.env.DEV ? [EditorMenuScene, StagePinEditorScene] : []),
+    ...(import.meta.env.DEV ? [EditorMenuScene, StagePinEditorScene, CharacterCreatorScene] : []),
   ],
   scale: {
     mode: Phaser.Scale.FIT,

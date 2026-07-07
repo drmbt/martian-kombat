@@ -209,6 +209,48 @@ function editorApi(): Plugin {
           })
           .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
       });
+
+      // POST /__editor/creator/gen  { kind, prompt, referenceBase64?[] }
+      // Character Creator wizard's one generate endpoint. Returns a keyed 288x384
+      // cell as base64. When GEMINI_API_KEY is missing OR MK_CREATOR_MOCK=1 it
+      // returns { mock:true } and the client draws a placeholder silhouette — so
+      // the whole wizard is walkable with zero setup. Dev-only (apply:'serve').
+      server.middlewares.use('/__editor/creator/gen', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        readJsonBody(req)
+          .then(async (b) => {
+            const { kind, prompt, referenceBase64 } = b as {
+              kind?: unknown; prompt?: unknown; referenceBase64?: unknown;
+            };
+            if (typeof prompt !== 'string' || !prompt.trim()) throw new Error('empty prompt');
+            const lib = await import('./tools/lib.mjs');
+            const env = lib.loadEnv();
+            const apiKey = env.GEMINI_API_KEY;
+            const mock = process.env.MK_CREATOR_MOCK === '1' || !apiKey;
+            if (mock) {
+              sendJson(res, 200, { ok: true, mock: true, kind: String(kind ?? 'sprite') });
+              return;
+            }
+            const scratch = join(tmpdir(), `mk-cc-${Date.now()}`);
+            mkdirSync(scratch, { recursive: true });
+            const refPaths: string[] = [];
+            const refs = Array.isArray(referenceBase64) ? (referenceBase64 as unknown[]) : [];
+            refs.forEach((r, i) => {
+              if (typeof r === 'string') {
+                const p = join(scratch, `ref-${i}.png`);
+                writeFileSync(p, Buffer.from(r, 'base64'));
+                refPaths.push(p);
+              }
+            });
+            const raw = await lib.geminiImage({ apiKey, model: 'gemini-3-pro-image', prompt, referencePaths: refPaths });
+            const rawPath = join(scratch, 'gen.png');
+            writeFileSync(rawPath, raw);
+            const cellPath = join(scratch, 'cell.png');
+            execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', rawPath, '-vf', FF_KEY_PAD, '-frames:v', '1', cellPath]);
+            sendJson(res, 200, { ok: true, pngBase64: readFileSync(cellPath).toString('base64') });
+          })
+          .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
+      });
     },
   };
 }

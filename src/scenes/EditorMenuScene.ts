@@ -15,6 +15,11 @@ interface Tool {
 
 const TOOLS: Tool[] = [
   {
+    label: 'CHARACTER CREATOR',
+    desc: 'zero → hero wizard: photo + name → full playable fighter',
+    act: (s) => s.go('CharacterCreator'),
+  },
+  {
     label: 'STAGE PINS',
     desc: 'place each stage on the select-screen world map',
     act: (s) => s.go('StagePinEditor'),

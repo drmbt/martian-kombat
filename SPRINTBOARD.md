@@ -1063,6 +1063,51 @@ middleware, no-op in the prod build).
       reconciliation path (or warning) so a later `gen:pack` doesn't silently
       clobber in-editor pixel edits.
 
+### Sprint 26 — Character Creator wizard (user-directed 2026-07-07, IN PROGRESS)
+Theme: a dev-only, full-service **browser wizard** that runs the whole 7-step
+pipeline from the front-end — zero (name + photo + description) → hero (playable
+fighter) — eventually subsuming Move Tuner + Sprite Editor and gaining a
+Cloudflare R2 publish/pull path. Full design + worked example in
+`docs/CHARACTER_CREATOR.md` + `docs/CHARACTER_CREATOR_WALKTHROUGH.md`.
+
+**Locked decisions:** one provider (Gemini text + nano-banana images) with a
+per-character context cache · QA is advisory-only (edge-clearance warns, never
+blocks) · everything assembled in an in-browser working model → `<id>.json` +
+`meta.json` + `sheet.png` on write · `lore` block on CharacterDef · QA/pack/
+normalize stack gets a ground-up rethink (wizard uses a lean pack path) · R2
+bidirectional publish/pull · staged ref-chained sprite batches (jump normals ref
+the approved jump image, crouch ref crouch, specials projectile-first).
+
+**Built this turn (2026-07-07) — the scaffold, verified live w/ real nano-banana:**
+- [x] Dev-only `CharacterCreatorScene` (grid backdrop + UiLayer DOM overlay,
+      like Sprite Editor) + EditorMenu "CHARACTER CREATOR" entry + dev-only
+      registration in `main.ts`.
+- [x] Wizard shell (`src/ui/CharacterCreatorPanel.ts` + `creatorModel.ts`):
+      7-step stepper, live stage-preview with diffusion shimmer, bake tray.
+- [x] **D1 Seed** — name + desc + full-body/face photo → fires canonical +
+      portrait → approval gate (approve/reroll) → gated Continue. Verified: real
+      on-model canonical + portrait generated.
+- [x] **D2 Profile** — client-side design draft (archetype auto-detected,
+      color, lore, backstory, win-quotes/kiai/hurt lock-grids w/ pool reroll);
+      stage + voice upload; **auto-fires the base sprite batch** (idle/walk/jump/
+      crouch/block/fall/down) on entry; live preview **animates** the walk cycle
+      as cells return. Verified: all 11 base cells generated real art.
+- [x] Backend `/__editor/creator/gen` (nano-banana + ffmpeg key; **mock
+      fallback** draws client placeholders when no GEMINI key / `MK_CREATOR_MOCK=1`
+      so the flow is walkable with zero setup). Dev-only (`apply:'serve'`).
+
+**Backlog (this sprint — crunching toward playable end-to-end):**
+- [ ] Engine-valid default move set (27 normals w/ frame data + heuristic
+      hitboxes) so `buildJson` emits a real CharacterDef.
+- [ ] SHIP writer: composite base cells → sheet.png + meta.json, write
+      `<id>.json` + portrait, register roster + `characters/index.ts` → PLAY NOW.
+- [ ] D3 normal sprite batches (jump ref=jump, crouch ref=crouch, standing
+      ref=canonical); D5 specials 4-slot table (projectile-first chains).
+- [ ] Real Gemini design-draft (server `/__editor/creator/design` + context
+      cache §16); fal skeleton + auto-hitbox (D6); background portraits/KO/
+      fatality/audio; advisory edge-QA badges; R2 publish/pull seams.
+- [ ] Consolidate: audit/tests + skills + CLAUDE.md; fold Tuner/Editor in.
+
 ### Icebox (do not start)
 - **Attract-mode gag reels (3D)**: occasionally, instead of a demo fight, the
   attract rotation holds on a stage with one or two fighters doing weird
@@ -1091,6 +1136,16 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-07 · tools+ui+data · Sprint 26: Character Creator wizard scaffold** —
+  dev-only browser wizard (`CharacterCreatorScene` + `CharacterCreatorPanel` +
+  `creatorModel`) running the pipeline from the front-end. D1 Seed (name/desc/
+  photo → canonical + portrait, approval gate) and D2 Profile (auto design draft,
+  lock-grid reroll, stage/voice upload, auto base-sprite batch with an animating
+  live preview) functional; D3–D8 stubbed. Backend `/__editor/creator/gen`
+  (nano-banana + mock fallback). Full design spec + worked walkthrough in
+  `docs/CHARACTER_CREATOR*.md`. Verified live end-to-end with real nano-banana
+  (Mirage: canonical + portrait + 9 base cells). tsc clean. — Claude
 
 - **2026-07-05 · assets · portrait bust re-crop pass** — reran
   `tools/qa/portrait_crop.py --all` across the roster so every `-bust.png`
