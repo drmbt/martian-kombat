@@ -1198,6 +1198,19 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-07 · ui · jump preview + audio BYO chips + frame drop + projectile
+  tuning** — Wizard preview: jump normals now play idle→jump→execute over a full
+  jump arc. Every audio sample (announcer / kiai / hurt / victory / per-move
+  call-out / stage music) gets a play + **download** + **upload(BYO)** chip that
+  also accepts a dropped audio file. Sprite frame cells accept a dropped image
+  file (BYO frame, normalized to the 288×384 cell) with a tiny hover download
+  button. Specials editor gains **projectile tuning** — proj size / spawn x /
+  spawn y sliders that drive the flying-projectile preview live and persist on
+  export (projectile `spawnX/spawnY/box`), plus an **auto-hitbox** button that
+  fits a square box around the projectile's visible alpha. Fixed special-gen
+  paths to re-render MOVES so tuning UI appears post-gen. tsc clean; 18 audio
+  chips + projectile sliders + auto-hitbox verified live in mock. — Claude
+
 - **2026-07-07 · engine+ui+docs · charge controls + per-move audio + projectile
   persistence** — engine: new `cbf` motion (charge back→forward sonic boom) banked
   via `f.backCharge` like `du`, `bf` sequence untouched; `src/engine/specials.test.ts`
