@@ -7,7 +7,7 @@
 import {
   CreatorModel, CREATOR_STEPS, makeDraft, BASE_CELLS, ATTACK_CELLS,
   ARCHETYPE_INFO, specialsForArchetype, SPECIAL_ARCHETYPES, controlsForArchetype,
-  NORMAL_MOVE_IDS, moveCellNames,
+  NORMAL_MOVE_IDS, moveCellNames, slugify,
   CANONICAL_PROMPT, PORTRAIT_PROMPT, SPRITE_PROMPT,
   type CreatorJob, type AttackCell, type SpecialDraft,
 } from './creatorModel';
@@ -642,6 +642,8 @@ export class CharacterCreatorPanel {
       const top = el('div', 'display:flex;gap:8px;align-items:center;margin-bottom:6px;');
       const name = el('input', INPUT + 'flex:2;font-size:13px;') as HTMLInputElement;
       name.value = s.name; name.oninput = () => (s.name = name.value);
+      name.onchange = () => this.renameSpecial(s, name.value.trim() || s.name); // commit id rename on blur
+      name.title = 'rename — the move id, cells, frames and player button follow the new name';
       // archetype dropdown (full catalog)
       const arch = el('select', INPUT + 'flex:2;cursor:pointer;font-size:12px;') as HTMLSelectElement;
       for (const a of SPECIAL_ARCHETYPES) { const o = el('option', '', a.label) as HTMLOptionElement; o.value = a.key; if (a.key === s.archetype) o.selected = true; arch.appendChild(o); }
@@ -723,6 +725,32 @@ export class CharacterCreatorPanel {
       `Solid flat chroma-key green (#00B140) background, completely uniform, no shadow, no text, no border.`;
   }
 
+  /** rename a special: sync its id so cells, on-disk frames, the player button
+   *  and the JSON move key all follow the new name (migrates any generated cells). */
+  private renameSpecial(s: SpecialDraft, newName: string): void {
+    s.name = newName;
+    const oldId = s.id;
+    let newId = slugify(newName);
+    if (!newId || newId === oldId) { this.render(); this.renderPreviewControls(); return; }
+    const taken = new Set([...NORMAL_MOVE_IDS, ...this.m.draft!.specials.filter((x) => x !== s).map((x) => x.id)]);
+    if (taken.has(newId)) { let n = 2; while (taken.has(`${newId}-${n}`)) n++; newId = `${newId}-${n}`; }
+    const rekey = (oldKey: string, newKey: string, cellLabel?: string): void => {
+      const j = this.m.jobs.get(oldKey); if (!j) return;
+      this.m.jobs.delete(oldKey);
+      j.key = newKey; if (cellLabel) j.label = cellLabel; j.savedAs = undefined;
+      this.m.jobs.set(newKey, j);
+    };
+    s.id = newId; // set before persistFrame so frameNameFor uses the new id
+    for (const ph of ['startup', 'active', 'recovery']) rekey(`sprite:${oldId}-${ph}`, `sprite:${newId}-${ph}`, `${newId}-${ph}`);
+    rekey(`proj:${oldId}`, `proj:${newId}`, `${newName} projectile`);
+    for (const ph of ['startup', 'active', 'recovery']) void this.persistFrame(`sprite:${newId}-${ph}`);
+    void this.persistFrame(`proj:${newId}`);
+    // if this move was being previewed, follow it
+    if (this.preview.kind === 'group' && this.preview.key === oldId) this.preview.key = newId;
+    this.logMsg(`renamed special ${oldId} → ${newId} (cells + frames migrated)`);
+    this.render(); this.renderPreviewControls(); this.renderTray(); this.redrawPreview();
+  }
+
   /** generate the projectile art for a projectile special (inspo-free, keyable FX). */
   private genProjectile(id: string, name: string, desc: string): void {
     this.fireGen('proj:' + id, 'sprite', name + ' projectile', this.projectilePrompt(name, desc), []);
@@ -742,7 +770,7 @@ export class CharacterCreatorPanel {
     // active — references the projectile so the fighter is shown releasing it
     const canon = await this.refFor('canonical');
     const activePose = isProj
-      ? `at the moment of release of the special "${s.name}" (${s.description}): front hand thrust forward, body coiled behind it, the projectile shown in the reference image leaving the hand`
+      ? `SHOOTING the projectile of the special "${s.name}" (${s.description}): a full throwing/casting motion — the front arm fully extended forward, body coiled behind the release, hand open, and the projectile shown in the reference image LAUNCHING from the hand and travelling to the RIGHT (draw the projectile only just leaving the hand, still inside the frame)`
       : `performing the special "${s.name}" (${s.description}) at the moment of release/impact — a dynamic, committed action pose`;
     await this.fireGen(`sprite:${id}-active`, 'sprite', `${id}-active`, SPRITE_PROMPT(nm, activePose), isProj && projRef ? [...canon, projRef] : canon);
     // startup + recovery reference the finished active frame for consistency
@@ -1398,12 +1426,29 @@ export class CharacterCreatorPanel {
       cell.appendChild(el('div', 'position:absolute;top:1px;right:2px;font-size:9px;color:#bff0ff;text-shadow:0 1px 2px #000;', secs + 's'));
     }
     if (err) { cell.appendChild(el('div', 'position:absolute;top:0;left:0;right:0;bottom:18px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#e0736a;', '✕')); cell.title = 'error: ' + (j.error ?? '') + ' — click to see prompt & retry'; }
-    else cell.title = 'click to inspect ' + j.label + ' larger';
+    else cell.title = 'click to inspect · drag onto another cell to SWAP (hold Shift = copy over)';
     cell.onclick = () => this.selectCell(j.key);
+    // drag-to-copy/swap on the timeline — sprite cells only
+    if (j.key.startsWith('sprite:') && j.status === 'done') {
+      cell.draggable = true;
+      cell.ondragstart = (e) => { e.dataTransfer?.setData('text/mk-cell', j.key); if (e.dataTransfer) e.dataTransfer.effectAllowed = 'copyMove'; };
+    }
+    if (j.key.startsWith('sprite:')) this.wireDropTarget(cell, () => j.key.slice('sprite:'.length), false);
     return cell;
   }
 
-  /** an expected-but-not-yet-generated cell: a clickable "missing" slot → gen just it. */
+  /** allow a dragged sprite cell to drop here. `ghost` targets always copy. */
+  private wireDropTarget(cell: HTMLDivElement, targetName: () => string, ghost: boolean): void {
+    cell.ondragover = (e) => { if (e.dataTransfer?.types.includes('text/mk-cell')) { e.preventDefault(); cell.style.outline = '2px solid #7fe3ff'; } };
+    cell.ondragleave = () => { cell.style.outline = ''; };
+    cell.ondrop = (e) => {
+      e.preventDefault(); cell.style.outline = '';
+      const src = e.dataTransfer?.getData('text/mk-cell');
+      if (src) void this.copyOrSwapCell(src, targetName(), ghost || e.shiftKey ? 'copy' : 'swap');
+    };
+  }
+
+  /** an expected-but-not-yet-generated cell: click to gen, or drop a cell to copy in. */
   private ghostCell(name: string): HTMLDivElement {
     const cell = el('div', 'flex:0 0 auto;width:52px;text-align:center;position:relative;cursor:pointer;');
     const c = el('canvas', 'width:52px;height:66px;border-radius:4px;border:1px dashed #3f5266;background:#0b1119;');
@@ -1413,8 +1458,9 @@ export class CharacterCreatorPanel {
     ctx.fillText('+', 26, 30);
     cell.appendChild(c);
     cell.appendChild(el('div', 'font-size:9px;color:#5c6b78;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;', name));
-    cell.title = `${name} — not generated. Click to generate just this cell.`;
+    cell.title = `${name} — not generated. Click to generate, or drag another cell here to reuse it.`;
     cell.onclick = () => void this.genOneCell(name);
+    this.wireDropTarget(cell, () => name, true);
     return cell;
   }
 
@@ -1423,6 +1469,42 @@ export class CharacterCreatorPanel {
     const spec = this.cellSpec(name); if (!spec) return;
     const refs = await this.refFor(spec.ref);
     this.fireGen('sprite:' + name, 'sprite', name, SPRITE_PROMPT(this.m.inputs.name, spec.pose), refs);
+  }
+
+  /** timeline copy/swap: move one cell's image onto another slot. `swap` exchanges
+   *  the two images; `copy` overwrites the target with the source (source kept). */
+  private async copyOrSwapCell(srcKey: string, targetName: string, mode: 'swap' | 'copy'): Promise<void> {
+    const src = this.m.job(srcKey); if (!src?.dataUrl) return;
+    const targetKey = 'sprite:' + targetName;
+    if (srcKey === targetKey) return;
+    const grab = (j: CreatorJob): Partial<CreatorJob> => ({ dataUrl: j.dataUrl, scale: j.scale, offX: j.offX, offY: j.offY, mock: j.mock, prompt: j.prompt });
+    const put = (j: CreatorJob, v: Partial<CreatorJob>): void => { j.dataUrl = v.dataUrl; j.scale = v.scale; j.offX = v.offX; j.offY = v.offY; j.mock = v.mock; j.prompt = v.prompt; j.status = 'done'; j.error = undefined; };
+    const tgt = this.m.job(targetKey);
+    if (mode === 'swap' && tgt?.dataUrl) {
+      const a = grab(src), b = grab(tgt);
+      put(src, b); put(tgt, a);
+      this.logMsg(`swapped ${srcKey.slice(7)} ↔ ${targetName}`);
+      await this.persistFrame(srcKey); await this.persistFrame(targetKey);
+    } else {
+      const job = tgt ?? { key: targetKey, kind: 'sprite', label: targetName } as CreatorJob;
+      put(job, grab(src));
+      this.m.upsertJob(job);
+      this.logMsg(`copied ${srcKey.slice(7)} → ${targetName}`);
+      await this.persistFrame(targetKey);
+    }
+    this.renderTray(); this.renderPreviewControls(); this.redrawPreview();
+  }
+
+  /** rewrite a cell's frame on disk (its own filename) after a copy/swap. */
+  private async persistFrame(key: string): Promise<void> {
+    const job = this.m.job(key); const b = dataUrlToB64(job?.dataUrl); if (!job || !b) return;
+    job.savedAs = job.savedAs ?? this.m.frameNameFor(key) + '.png';
+    try {
+      await fetch('/__editor/creator/save-frame', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: this.m.id, savedAs: job.savedAs, pngBase64: b }),
+      });
+    } catch { /* non-fatal */ }
   }
 
   private shimmer(): HTMLDivElement {
@@ -1467,6 +1549,24 @@ export class CharacterCreatorPanel {
     } else {
       this.drawShadow(ctx, W / 2, floorY, 80);
       this.drawSilhouette(ctx, W / 2, floorY, 150, this.m.draft?.color ?? '#31424f', canon?.status === 'running');
+    }
+    // projectile special: fire the projectile out during active→recovery
+    if (this.preview.kind === 'group') {
+      const sp = this.m.draft?.specials.find((s) => s.id === this.preview.key && s.archetype === 'projectile');
+      const proj = sp && this.m.job('proj:' + sp.id);
+      if (sp && proj?.dataUrl) {
+        const total = 200 + 220 + 340; // matches the 3-phase special sequence in previewFrame
+        const ph = Date.now() % total;
+        if (ph > 200) { // launched at the active frame
+          const fly = (ph - 200) / (total - 200);
+          const im = this.img(proj.dataUrl);
+          if (im) {
+            const size = drawH * 0.3, s = size / Math.max(im.naturalWidth, im.naturalHeight);
+            const pw = im.naturalWidth * s, phh = im.naturalHeight * s;
+            ctx.drawImage(im, W * 0.52 + fly * W * 0.5 - pw / 2, floorY - drawH * 0.52 - phh / 2, pw, phh);
+          }
+        }
+      }
     }
     // portrait chip top-left
     const port = this.m.job('portrait');

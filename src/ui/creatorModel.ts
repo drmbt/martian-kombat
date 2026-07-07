@@ -154,7 +154,9 @@ export const specialCells = (id: string, name: string, desc: string): AttackCell
 export const SPRITE_PROMPT = (name: string, pose: string): string =>
   `Same character as the reference — identical face, hair, outfit, colors and proportions, drawn at ` +
   `EXACTLY the same size, height and framing as the reference image (do NOT zoom in or out, do NOT ` +
-  `resize the character between frames — the head and feet reach the same edges every frame). ${name}, ${pose} ${STYLE}`;
+  `resize the character between frames — the head and feet reach the same edges every frame). ` +
+  `Keep the ENTIRE figure — every limb, weapon and effect — fully INSIDE the frame with a small margin; ` +
+  `nothing may be cropped or bleed off any edge, even on wide dynamic poses. ${name}, ${pose} ${STYLE}`;
 
 // ── deterministic client-side draft (real Gemini text is a follow-up) ───────
 const hash = (s: string): number => {

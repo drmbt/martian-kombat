@@ -457,6 +457,25 @@ function editorApi(): Plugin {
           .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
       });
 
+      // POST /__editor/creator/save-frame  { id, savedAs, pngBase64 }
+      // -> writes one frame to the raw dir (after a timeline copy/swap) so the
+      //    on-disk frames + resume stay in sync with the in-browser edit.
+      server.middlewares.use('/__editor/creator/save-frame', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        readJsonBody(req)
+          .then((b) => {
+            const { id, savedAs, pngBase64 } = b as { id?: string; savedAs?: string; pngBase64?: string };
+            if (!okId(id)) throw new Error('invalid id');
+            if (typeof savedAs !== 'string' || !/^[a-z0-9._-]+$/i.test(savedAs)) throw new Error('bad filename');
+            if (typeof pngBase64 !== 'string') throw new Error('no image');
+            const dir = join(root, 'assets/raw/creator', id, 'img');
+            mkdirSync(dir, { recursive: true });
+            writeFileSync(join(dir, savedAs), Buffer.from(pngBase64, 'base64'));
+            sendJson(res, 200, { ok: true });
+          })
+          .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
+      });
+
       // POST /__editor/creator/state  { id } -> { state, images: { <jobKey>: base64 } }
       // Rehydrates a saved run: the state JSON + every persisted frame read back.
       server.middlewares.use('/__editor/creator/state', (req, res, next) => {
