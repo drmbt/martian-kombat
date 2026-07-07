@@ -535,12 +535,9 @@ export class CharacterCreatorPanel {
     audio.append(voBtn, musicBtn);
     const voReady = Object.keys(this.m.finalVoClips()).length;
     if (voReady) audio.appendChild(el('div', 'font-size:11px;color:#8fa6b2;margin-top:6px;', `${voReady}/17 VO clips ready — play/regen each line on the left`));
-    const mus = this.m.finalMusic();
-    if (mus) {
-      const mp = el('button', BTN + 'padding:2px 7px;font-size:10px;margin-top:6px;', '▶ stage theme');
-      mp.onclick = () => { new Audio('data:audio/mp3;base64,' + mus).play().catch(() => {}); };
-      audio.appendChild(mp);
-    }
+    const musRow = el('div', 'display:flex;align-items:center;gap:6px;margin-top:6px;');
+    musRow.append(el('span', 'font-size:11px;color:#9fb4be;', 'stage theme:'), this.audioChip(() => this.m.finalMusic(), (b) => (this.m.generatedMusic = b), `${this.m.id}-theme.mp3`));
+    audio.appendChild(musRow);
     if (this.m.voStatus === 'error' || this.m.musicStatus === 'error')
       audio.appendChild(el('div', 'font-size:11px;color:#e08a8a;margin-top:6px;', 'audio/music gen error — see console'));
     colB.appendChild(audio);
@@ -570,12 +567,31 @@ export class CharacterCreatorPanel {
     return w;
   }
 
-  private playBtn(clip: string): HTMLButtonElement {
-    const has = !!this.m.finalVoClips()[clip];
-    const b = el('button', BTN + `padding:4px 8px;font-size:11px;${has ? '' : 'opacity:.4;'}`, '▶');
-    b.title = has ? 'play ' + clip : 'generate this line first';
-    b.onclick = () => { const a = this.m.finalVoClips()[clip]; if (a) new Audio('data:audio/mp3;base64,' + a).play().catch(() => {}); };
-    return b;
+  private playBtn(clip: string): HTMLDivElement {
+    return this.audioChip(() => this.m.finalVoClips()[clip], (b) => (this.m.generatedVo[clip] = b), `${this.m.id}-${clip}.mp3`);
+  }
+
+  /** play + download + drop-to-replace(BYO) for one audio sample (base64 mp3). */
+  private audioChip(get: () => string | undefined, set: (b64: string) => void, filename: string): HTMLDivElement {
+    const wrap = el('div', 'display:inline-flex;align-items:center;gap:3px;border-radius:4px;');
+    const has = !!get();
+    const play = el('button', BTN + `padding:4px 7px;font-size:11px;${has ? '' : 'opacity:.4;'}`, '▶');
+    play.title = has ? 'play' : 'not generated';
+    play.onclick = () => { const b = get(); if (b) new Audio('data:audio/mp3;base64,' + b).play().catch(() => {}); };
+    const dl = el('button', BTN + `padding:4px 7px;font-size:11px;${has ? '' : 'opacity:.4;'}`, '⤓');
+    dl.title = 'download ' + filename;
+    dl.onclick = () => { const b = get(); if (!b) return; const a = document.createElement('a'); a.href = 'data:audio/mp3;base64,' + b; a.download = filename; document.body.appendChild(a); a.click(); a.remove(); };
+    const inp = el('input', 'display:none;') as HTMLInputElement; inp.type = 'file'; inp.accept = 'audio/*';
+    const take = async (f?: File): Promise<void> => { if (!f) return; const d = await readFile(f); set(d.includes(',') ? d.split(',')[1] : d); this.logMsg(`BYO audio → ${filename}`); this.render(); };
+    inp.onchange = () => void take(inp.files?.[0]);
+    const up = el('button', BTN + 'padding:4px 7px;font-size:11px;', '⤒');
+    up.title = 'BYO — upload an audio file (or drop one onto these controls)';
+    up.onclick = () => inp.click();
+    wrap.ondragover = (e) => { if (e.dataTransfer?.types.includes('Files')) { e.preventDefault(); wrap.style.outline = '2px solid #7fe3ff'; } };
+    wrap.ondragleave = () => { wrap.style.outline = ''; };
+    wrap.ondrop = (e) => { e.preventDefault(); wrap.style.outline = ''; void take(e.dataTransfer?.files?.[0]); };
+    wrap.append(play, dl, up, inp);
+    return wrap;
   }
 
   private regenClipBtn(clip: string, text: () => string): HTMLButtonElement {
@@ -708,6 +724,20 @@ export class CharacterCreatorPanel {
         pbtn.onclick = () => this.genProjectile(s.id, s.name, s.description);
         prow.appendChild(pbtn);
         box.appendChild(prow);
+        // projectile render/collision tuning — sticks on export (spawnX/Y + box)
+        if (pj?.status === 'done') {
+          const tune = el('div', 'margin-top:6px;');
+          const redraw = (): void => this.redrawPreview();
+          tune.appendChild(this.sliderRow('proj size', () => s.projScale ?? 1, (v) => (s.projScale = v), 0.4, 2, 0.05, (v) => v.toFixed(2), redraw));
+          tune.appendChild(this.sliderRow('spawn x', () => s.projSpawnX ?? 96, (v) => (s.projSpawnX = v), 0, 200, 2, (v) => String(Math.round(v)), redraw));
+          tune.appendChild(this.sliderRow('spawn y', () => s.projSpawnY ?? -176, (v) => (s.projSpawnY = v), -300, -40, 2, (v) => String(Math.round(v)), redraw));
+          const autoBtn = el('button', BTN + 'font-size:10px;', s.projBox ? `↻ auto-hitbox (${s.projBox.w}²)` : '▸ auto-hitbox (square around alpha)');
+          autoBtn.title = 'fit a square collision box around the projectile’s visible pixels';
+          autoBtn.onclick = () => void this.autoProjBox(s);
+          tune.appendChild(autoBtn);
+          tune.appendChild(el('div', 'font-size:10px;color:#5c6b78;margin-top:3px;', 'tune it, then play this special (top-left) to see the projectile fire'));
+          box.appendChild(tune);
+        }
       }
       // per-move audio call-out — a spoken VO line or an SFX, generated or BYO,
       // played when the special fires (sets move.voice=true in the JSON)
@@ -721,12 +751,7 @@ export class CharacterCreatorPanel {
       vbtn.onclick = () => this.genMoveAudio(s.id, atext.value, 'voice');
       const sbtn = el('button', BTN + 'font-size:11px;', '▸ sfx');
       sbtn.onclick = () => this.genMoveAudio(s.id, atext.value, 'sfx');
-      arow.append(atext, vbtn, sbtn);
-      const byo = el('input', 'display:none;') as HTMLInputElement; byo.type = 'file'; byo.accept = 'audio/*';
-      byo.onchange = async () => { const f = byo.files?.[0]; if (!f) return; const d = await readFile(f); this.m.moveAudio[s.id] = d.includes(',') ? d.split(',')[1] : d; this.logMsg(`BYO call-out for ${s.id}`); this.render(); };
-      const byoBtn = el('button', BTN + 'font-size:11px;', 'BYO'); byoBtn.onclick = () => byo.click();
-      arow.append(byoBtn, byo);
-      if (this.m.moveAudio[s.id]) { const pl = el('button', BTN + 'font-size:11px;', '▶'); pl.onclick = () => { new Audio('data:audio/mp3;base64,' + this.m.moveAudio[s.id]).play().catch(() => {}); }; arow.appendChild(pl); }
+      arow.append(atext, vbtn, sbtn, this.audioChip(() => this.m.moveAudio[s.id], (b) => (this.m.moveAudio[s.id] = b), `${this.m.id}-move-${s.id}.mp3`));
       box.appendChild(arow);
       this.bodyEl.appendChild(box);
     });
@@ -791,9 +816,40 @@ export class CharacterCreatorPanel {
     this.render();
   }
 
+  /** a labelled range slider row (reused by projectile tuning). */
+  private sliderRow(label: string, get: () => number, set: (v: number) => void, min: number, max: number, step: number, fmt: (v: number) => string, onChange: () => void): HTMLDivElement {
+    const row = el('div', 'display:flex;align-items:center;gap:8px;margin-bottom:5px;');
+    const lbl = el('span', 'font-size:11px;color:#9fb4be;white-space:nowrap;width:74px;', `${label} ${fmt(get())}`);
+    const r = el('input', 'flex:1;') as HTMLInputElement;
+    r.type = 'range'; r.min = String(min); r.max = String(max); r.step = String(step); r.value = String(get());
+    r.oninput = () => { set(parseFloat(r.value)); lbl.textContent = `${label} ${fmt(get())}`; onChange(); };
+    row.append(lbl, r); return row;
+  }
+
+  /** fit a square collision box around the projectile's visible (non-transparent) pixels. */
+  private async autoProjBox(s: SpecialDraft): Promise<void> {
+    const job = this.m.job('proj:' + s.id); if (!job?.dataUrl) return;
+    const img = await this.loadImg(job.dataUrl);
+    const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+    const ctx = c.getContext('2d')!; ctx.drawImage(img, 0, 0);
+    const data = ctx.getImageData(0, 0, c.width, c.height).data;
+    let minX = c.width, minY = c.height, maxX = 0, maxY = 0, any = false;
+    for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) {
+      if (data[(y * c.width + x) * 4 + 3] > 25) { any = true; if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y; }
+    }
+    if (!any) { this.logMsg('proj auto-hitbox: image is empty'); return; }
+    // fraction of the frame the object fills → engine-unit square (matches the preview render size)
+    const frac = Math.max((maxX - minX) / c.width, (maxY - minY) / c.height);
+    const side = Math.max(16, Math.round(0.3 * (s.projScale ?? 1) * frac * 256));
+    s.projBox = { x: -Math.round(side / 2), y: -Math.round(side / 2), w: side, h: side };
+    this.logMsg(`proj auto-hitbox for ${s.id}: ${side}² around the alpha`);
+    this.render();
+  }
+
   /** generate the projectile art for a projectile special (inspo-free, keyable FX). */
-  private genProjectile(id: string, name: string, desc: string): void {
-    this.fireGen('proj:' + id, 'sprite', name + ' projectile', this.projectilePrompt(name, desc), []);
+  private async genProjectile(id: string, name: string, desc: string): Promise<void> {
+    await this.fireGen('proj:' + id, 'sprite', name + ' projectile', this.projectilePrompt(name, desc), []);
+    if (CREATOR_STEPS[this.m.step] === 'MOVES') this.render(); // reveal the tuning sliders
   }
 
   /** generate one special's frames — projectile-first, then the ACTIVE frame that
@@ -824,6 +880,7 @@ export class CharacterCreatorPanel {
   private async genSpecialCells(id: string): Promise<void> {
     const s = this.m.draft?.specials.find((x) => x.id === id);
     if (s) await this.genSpecial(s);
+    if (CREATOR_STEPS[this.m.step] === 'MOVES') this.render(); // refresh the N/3 count
   }
 
   // ── D6 · RIG (local skeleton + auto-hitboxes) ─────────────────────────────
@@ -1413,6 +1470,13 @@ export class CharacterCreatorPanel {
     if (g === 'fall') return { job: this.cellJob(this.seqPick([['idle-a', 220], ['hit', 260], ['fall', 320], ['down', 820]], t)) ?? this.cellJob('fall') ?? this.cellJob('down'), offY: 0 };
     // per-move animation: sequence its startup/active/recovery cells
     const sp = this.m.draft?.specials.find((s) => s.id === g);
+    // air normals: idle → jump → execute the move, riding a full jump arc
+    if (!sp && NORMAL_MOVE_IDS.includes(g) && g.startsWith('j')) {
+      const seq: [string, number][] = [['idle-a', 160], ['jump', 220], [g, 440]];
+      const total = 820, ph = t % total;
+      const offY = ph > 160 ? -Math.sin(((ph - 160) / (total - 160)) * Math.PI) * 150 : 0;
+      return { job: this.cellJob(this.seqPick(seq, t)) ?? this.cellJob(g) ?? this.cellJob('jump') ?? this.cellJob('idle-a'), offY };
+    }
     if (sp || NORMAL_MOVE_IDS.includes(g)) {
       const cells = moveCellNames(g, !!sp);
       const seq: [string, number][] = cells.length === 1 ? [[cells[0], 500]]
@@ -1480,18 +1544,49 @@ export class CharacterCreatorPanel {
       cell.ondragstart = (e) => { e.dataTransfer?.setData('text/mk-cell', j.key); if (e.dataTransfer) e.dataTransfer.effectAllowed = 'copyMove'; };
     }
     if (j.key.startsWith('sprite:')) this.wireDropTarget(cell, () => j.key.slice('sprite:'.length), false);
+    // tiny download button, upper-left, revealed on hover
+    if (j.dataUrl) {
+      const dl = el('button', 'position:absolute;top:1px;left:1px;z-index:4;padding:0 3px;font-size:10px;line-height:1.4;border:none;border-radius:3px;background:rgba(9,13,20,.9);color:#bff0ff;cursor:pointer;display:none;', '⤓');
+      dl.title = 'download this frame';
+      dl.onclick = (e) => { e.stopPropagation(); const a = document.createElement('a'); a.href = j.dataUrl!; a.download = (j.savedAs ?? j.label + (j.dataUrl!.startsWith('data:image/jpeg') ? '.jpg' : '.png')); document.body.appendChild(a); a.click(); a.remove(); };
+      cell.appendChild(dl);
+      cell.onmouseenter = () => { dl.style.display = 'block'; };
+      cell.onmouseleave = () => { dl.style.display = 'none'; };
+    }
     return cell;
   }
 
-  /** allow a dragged sprite cell to drop here. `ghost` targets always copy. */
+  /** allow a dragged sprite CELL (copy/swap) OR an uploaded image FILE (BYO frame)
+   *  to drop here. `ghost` targets always copy. */
   private wireDropTarget(cell: HTMLDivElement, targetName: () => string, ghost: boolean): void {
-    cell.ondragover = (e) => { if (e.dataTransfer?.types.includes('text/mk-cell')) { e.preventDefault(); cell.style.outline = '2px solid #7fe3ff'; } };
+    cell.ondragover = (e) => { const dt = e.dataTransfer; if (dt && (dt.types.includes('text/mk-cell') || dt.types.includes('Files'))) { e.preventDefault(); cell.style.outline = '2px solid #7fe3ff'; } };
     cell.ondragleave = () => { cell.style.outline = ''; };
     cell.ondrop = (e) => {
       e.preventDefault(); cell.style.outline = '';
-      const src = e.dataTransfer?.getData('text/mk-cell');
-      if (src) void this.copyOrSwapCell(src, targetName(), ghost || e.shiftKey ? 'copy' : 'swap');
+      const dt = e.dataTransfer; if (!dt) return;
+      const src = dt.getData('text/mk-cell');
+      if (src) { void this.copyOrSwapCell(src, targetName(), ghost || e.shiftKey ? 'copy' : 'swap'); return; }
+      const f = dt.files?.[0];
+      if (f && f.type.startsWith('image/')) void this.setCellImage(targetName(), f);
     };
+  }
+
+  /** replace one sheet cell with an uploaded image (normalized to the 288×384 cell). */
+  private async setCellImage(name: string, file: File): Promise<void> {
+    const dataUrl = await readFile(file);
+    const img = await this.loadImg(dataUrl);
+    const c = document.createElement('canvas'); c.width = 288; c.height = 384;
+    const ctx = c.getContext('2d')!;
+    const s = Math.min(288 / img.naturalWidth, 384 / img.naturalHeight);
+    const w = img.naturalWidth * s, h = img.naturalHeight * s;
+    ctx.drawImage(img, (288 - w) / 2, 384 - h, w, h); // contain, feet at bottom
+    const key = 'sprite:' + name;
+    const job = this.m.job(key) ?? ({ key, kind: 'sprite', label: name } as CreatorJob);
+    job.dataUrl = c.toDataURL('image/png'); job.status = 'done'; job.mock = false; job.error = undefined; job.scale = job.scale ?? 1;
+    this.m.upsertJob(job);
+    await this.persistFrame(key);
+    this.logMsg(`BYO frame → ${name}`);
+    this.renderTray(); this.renderPreviewControls(); this.redrawPreview();
   }
 
   /** an expected-but-not-yet-generated cell: click to gen, or drop a cell to copy in. */
@@ -1607,9 +1702,13 @@ export class CharacterCreatorPanel {
           const fly = (ph - 200) / (total - 200);
           const im = this.img(proj.dataUrl);
           if (im) {
-            const size = drawH * 0.3, s = size / Math.max(im.naturalWidth, im.naturalHeight);
-            const pw = im.naturalWidth * s, phh = im.naturalHeight * s;
-            ctx.drawImage(im, W * 0.52 + fly * W * 0.5 - pw / 2, floorY - drawH * 0.52 - phh / 2, pw, phh);
+            const rs = drawH / 384; // cell-px → preview-px
+            const size = drawH * 0.3 * (sp.projScale ?? 1), sc = size / Math.max(im.naturalWidth, im.naturalHeight);
+            const pw = im.naturalWidth * sc, phh = im.naturalHeight * sc;
+            const cx = W / 2 + (sp.projSpawnX ?? 96) * rs + fly * W * 0.5; // launch from the spawn point, fly right
+            const cy = floorY + (sp.projSpawnY ?? -176) * rs;
+            ctx.drawImage(im, cx - pw / 2, cy - phh / 2, pw, phh);
+            if (sp.projBox) { const b = sp.projBox; ctx.strokeStyle = 'rgba(127,227,255,.7)'; ctx.lineWidth = 1; ctx.strokeRect(cx + b.x * rs, cy + b.y * rs, b.w * rs, b.h * rs); }
           }
         }
       }

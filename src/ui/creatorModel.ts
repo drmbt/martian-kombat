@@ -51,6 +51,11 @@ export interface SpecialDraft {
   archetype: string; // catalog id
   description: string;
   approved?: boolean; // lock the kit before spending gen calls on its sprites
+  // projectile render/collision tuning (stick on export → the projectile JSON)
+  projScale?: number; // render size multiplier
+  projSpawnX?: number; // engine spawn offset from feet (x forward)
+  projSpawnY?: number; // engine spawn offset from feet (y up = negative)
+  projBox?: { x: number; y: number; w: number; h: number }; // collision box (auto from alpha)
 }
 
 export interface DesignDraft {
@@ -473,7 +478,7 @@ function buildSpecial(s: SpecialDraft): Record<string, unknown> {
     case 'projectile':
     case 'sonic-boom': // charge (cbf) projectile — same shape, the input carries the charge
       return { ...base, startup: 13, active: 2, recovery: 24, damage: 0, hitstun: 0, blockstun: 0, knockback: 0, hitbox: null,
-        projectile: { vx: 9, spawnX: 96, spawnY: -176, box: { x: -28, y: -28, w: 56, h: 56 }, damage: 60, hitstun: 18, blockstun: 12, knockback: 9 } };
+        projectile: { vx: 9, spawnX: s.projSpawnX ?? 96, spawnY: s.projSpawnY ?? -176, box: s.projBox ?? { x: -28, y: -28, w: 56, h: 56 }, damage: 60, hitstun: 18, blockstun: 12, knockback: 9 } };
     case 'teleport':
       return { ...base, startup: 10, active: 1, recovery: 18, damage: 0, hitstun: 0, blockstun: 0, knockback: 0, hitbox: null, teleport: { mode: 'behind' }, invulnFrom: 6, invuln: 12 };
     case 'anti-air-dp':
