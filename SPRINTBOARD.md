@@ -1109,13 +1109,39 @@ profile → base batch → SHIP → reload → **playable MIRAGE vs VINCENT figh
 - [x] `martian-kombat-mock` launch config (`MK_CREATOR_MOCK=1`) so the whole
       flow is testable with zero API spend (nano-banana hit a monthly cap mid-test).
 
+**Full pipeline in-browser — DONE 2026-07-07** (all verified live in mock mode):
+- [x] **D3 attack sprites** — flat 3-phase cells (standing startup/active/recovery,
+      crouch active/recovery, air single, specials 3-phase), ref-chained (jump→jump
+      img, crouch→crouch img, standing/special→canonical), pooled 5-at-a-time.
+- [x] **D6 RIG** — LOCAL Python DWPose via the existing `/__editor/skeleton-regen`
+      (fal is ship-only, per direction) → keypoints baked into `meta.skeletons`;
+      auto-hitboxes from the active-cell skeleton (`hitboxFromSkeleton`, render-scale
+      converted) overlaid onto move data.
+- [x] **Audio + music** — real ElevenLabs VO (`/creator/audio` + per-line
+      `/creator/audio-clip`; announcer = Maverick, same as roster), per-line play +
+      regen for kiai/hurt/victory + announcer; ElevenLabs music (`/creator/music`);
+      **Fish voice-clone** (`/creator/voice-clone` → routes grunts through the clone);
+      BYO voice/kiai/music routed into the write; silent-clip fallback so the loader
+      never hangs.
+- [x] **Fatality** (`/creator/fatality`, 4×16:9 panels) + **stage registration**
+      (un-keyed 21:9 bg written + registered in `stages.ts` + claimed on the fighter)
+      + **square portraits** (512²).
+- [x] **UX** — drag-drop + batch + removable uploads; group/single-cell **preview
+      switcher** + per-cell **scale** (bakes into refs + sheet) + **regen with the
+      original prompt** pre-filled; **in-level backdrop** (stage textures the whole
+      generator, fighter stands on the ground line); resizable/collapsible panels;
+      **activity log** + running timers + red error cells; **3 victory quotes**.
+- [x] **Persistence** — live-save every frame to gitignored `assets/raw/creator/<id>/`
+      + debounced `state.json`; **RESUME** bar; **⤓ ZIP export** (playable bundle +
+      raw progress, `/creator/export`).
+
 **Backlog (this sprint):**
-- [ ] D3 normal sprite batches (jump ref=jump, crouch ref=crouch, standing
-      ref=canonical); D5 specials 4-slot table (projectile-first chains).
-- [ ] Real Gemini design-draft (server `/__editor/creator/design` + context
-      cache §16); fal skeleton + auto-hitbox (D6); background portraits/KO/
-      fatality/audio; advisory edge-QA badges; R2 publish/pull seams.
+- [ ] Real Gemini design-draft (server `/__editor/creator/design` + context cache §16);
+      D5 specials 4-slot table (projectile-first, controls dropdown, pool rerolls).
+- [ ] Advisory edge-QA badges; R2 publish/pull seams (local-mock first).
 - [ ] Consolidate: audit/tests + skills + CLAUDE.md; fold Tuner/Editor in.
+- [ ] Commit the `earl`/`vanessa` voice-inspo + `tools/voices.json` asset changes
+      separately (user's test-clone artifacts, left out of the wizard commit).
 
 ### Icebox (do not start)
 - **Attract-mode gag reels (3D)**: occasionally, instead of a demo fight, the
@@ -1145,6 +1171,22 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-07 · tools+ui · Sprint 26: Character Creator — full in-browser pipeline** —
+  the wizard now runs the whole character pipeline end-to-end from the front-end:
+  D3 3-phase attack sprites (ref-chained, pooled), D6 rig via LOCAL DWPose
+  (`/__editor/skeleton-regen`; fal is ship-only) → baked `meta.skeletons` +
+  auto-hitboxes, real ElevenLabs VO (bulk + per-line play/regen, announcer =
+  Maverick) + music + Fish voice-clone, fatality panels, stage gen→register,
+  square portraits. UX: drag-drop/batch/removable uploads, preview switcher +
+  per-cell scale (propagates into refs + sheet), regen pre-filled with the
+  original prompt, full-bleed in-level stage backdrop with the fighter on the
+  ground line, resizable/collapsible panels, activity log + timers + error cells.
+  Persistence: live-save frames + `state.json` to gitignored `assets/raw/creator/`,
+  RESUME bar, and a ⤓ ZIP export (playable bundle + raw progress). New endpoints:
+  `/creator/{audio,audio-clip,music,fatality,voice-clone,save,state,list,export}`.
+  Scoped to the 3 wizard files (Panel/model/vite) + this board. tsc clean; each
+  slice verified live in mock mode. — Claude
 
 - **2026-07-07 · tools+ui+data · Sprint 26: Character Creator — playable SHIP path** —
   engine-valid default kit (`buildFullCharacter`: 18 normals + throw + archetype-

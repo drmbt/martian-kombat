@@ -19,15 +19,27 @@ export interface CreatorJob {
   mock?: boolean;
   approved?: boolean;
   error?: string;
+  scale?: number; // per-cell render scale (editor size-match tweak; default 1)
+  savedAs?: string; // filename under assets/raw/creator/<id>/img/ (live-save/resume)
+  startedAt?: number; // ms epoch when this gen kicked off (elapsed display)
+}
+
+export interface UploadedFile {
+  dataUrl: string;
+  name: string;
 }
 
 export interface CreatorInputs {
   name: string;
   description: string;
-  fullBodyDataUrl?: string;
-  faceDataUrl?: string;
-  voiceName?: string;
-  stageImageDataUrl?: string;
+  /** all drop-zone inputs are arrays so items are individually removable and
+   *  survive a panel re-render (the zone renders from the model, not closure state) */
+  referencePhotos?: UploadedFile[]; // [0] = full body, extras = face/other refs
+  stagePhotos?: UploadedFile[];
+  /** BYO assets — used at SHIP time in place of generated/placeholder audio */
+  voiceSamples?: UploadedFile[]; // for voice cloning
+  kiaiClips?: UploadedFile[]; // BYO kiai/hurt/victory VO
+  musicTracks?: UploadedFile[]; // BYO stage music
 }
 
 export interface SpecialDraft {
@@ -53,28 +65,38 @@ export interface DesignDraft {
 }
 
 // ── prompt templates (docs/CHARACTER_CREATOR.md §14) ────────────────────────
+const STYLE_ART = 'Art style: hand-painted cel-shaded 2D anime fighter, bold clean line art, painterly cel shading.';
+const STYLE_BG = 'Background: solid flat chroma-key green (#00B140), completely uniform, no shadow, no floor, no text, no border.';
+// full-body frame rules (canonical + sprite cells ONLY — never portraits)
 const STYLE =
-  'Art style: hand-painted cel-shaded 2D anime fighter, bold clean line art, painterly cel shading. ' +
-  'Full body head to toe, feet on an invisible ground line just above the bottom edge, centered, ' +
-  'facing right. Background: solid flat chroma-key green (#00B140), completely uniform, no shadow, ' +
-  'no floor, no text, no border.';
+  `${STYLE_ART} Full body head to toe at the SAME scale and camera distance as the reference image — ` +
+  `the top of the head near the top edge and the soles of the feet on an invisible ground line just ` +
+  `above the bottom edge, the figure filling the frame vertically the same amount as the reference, ` +
+  `centered horizontally, facing right. ${STYLE_BG}`;
 
 export const CANONICAL_PROMPT = (d: string): string =>
   `Full-body fighting-game character sheet of ${d}. Neutral confident standing pose, arms relaxed, ` +
   `facing right. ${STYLE}`;
 
-export const PORTRAIT_PROMPT = (name: string): string =>
-  `Head-and-shoulders portrait of ${name}, straight-on, neutral confident expression. ${STYLE}`;
+// selection icon: a TIGHT bust — must NOT inherit the full-body frame rules.
+export const PORTRAIT_PROMPT = (name: string, desc: string): string =>
+  `Tight head-and-shoulders BUST portrait of ${name} (${desc}) for a fighting-game character-select ` +
+  `icon. ONLY the head and shoulders fill the frame — face straight-on toward the viewer, direct gaze, ` +
+  `neutral confident expression, top of the head near the top edge, shoulders cropped at the bottom edge. ` +
+  `This is a close-up: do NOT show a full body, do NOT show the torso below the chest, hands, legs or ` +
+  `feet, do NOT zoom out. ${STYLE_ART} ${STYLE_BG}`;
 
-export const KO_PROMPT = (name: string): string =>
-  `${name} beaten and exhausted, head bowed, bruised, downcast. ${STYLE}`;
+export const KO_PROMPT = (name: string, desc: string): string =>
+  `Tight head-and-shoulders BUST portrait of ${name} (${desc}), beaten and exhausted, head bowed, ` +
+  `bruised, downcast. Close-up on the head and shoulders only — no full body, torso, hands or legs. ` +
+  `${STYLE_ART} ${STYLE_BG}`;
 
 /** the 11 shared base cells the first sprite batch covers, with their pose text */
 export const BASE_CELLS: { id: string; ref: 'canonical'; pose: string }[] = [
   { id: 'idle-a', ref: 'canonical', pose: 'relaxed fighting idle, weight settled, BOTH feet flat, guard loosely up. NOT an attack — no raised knee, kick or lunge.' },
   { id: 'idle-b', ref: 'canonical', pose: 'relaxed fighting idle, chest risen on the breath, BOTH feet flat. NOT an attack.' },
-  { id: 'walk-a', ref: 'canonical', pose: 'mid-stride walk, left foot forward, torso upright, clearly distinct from idle.' },
-  { id: 'walk-b', ref: 'canonical', pose: 'mid-stride walk, right foot forward, torso upright.' },
+  { id: 'walk-a', ref: 'canonical', pose: 'walking forward, mid-stride: the LEFT leg lifted and striding FORWARD with a bent knee, the RIGHT leg trailing BEHIND and extended, weight shifting onto the front foot, arms swinging in opposition. A clear exaggerated walk-cycle step — NOT a neutral standing pose.' },
+  { id: 'walk-b', ref: 'canonical', pose: 'walking forward, the OPPOSITE step of the other walk frame: the RIGHT leg lifted and striding FORWARD with a bent knee, the LEFT leg trailing BEHIND and extended, opposite arm swing. Legs clearly in a DIFFERENT position from the first walk frame.' },
   { id: 'jump', ref: 'canonical', pose: 'airborne, knees tucked, the whole figure lifted off the ground.' },
   { id: 'crouch', ref: 'canonical', pose: 'squatting EXTREMELY low, knees folded, hips at heel height — the whole figure occupies ONLY the BOTTOM HALF of the frame.' },
   { id: 'block', ref: 'canonical', pose: 'guard up, forearms shielding the face and body, braced.' },
@@ -82,8 +104,52 @@ export const BASE_CELLS: { id: string; ref: 'canonical'; pose: string }[] = [
   { id: 'down', ref: 'canonical', pose: 'lying flat on the back on the ground — a HORIZONTAL shape along the BOTTOM QUARTER of the frame.' },
 ];
 
+/** one sheet cell of an attack, with the base image to condition on and a
+ *  DISTINCT per-phase pose (startup wind-up → active impact → recovery return),
+ *  so attacks read as real 3-frame animations, not a held pose. `move` is the
+ *  owning move id (for auto-hitbox lookup by the active cell). */
+export interface AttackCell { name: string; move: string; ref: 'canonical' | 'crouch' | 'jump'; pose: string; active: boolean }
+// FightScene cell contract: standing = startup/active/recovery, crouch = active
+// (covers startup) + recovery, air = a single cell. Only generate what it reads.
+const phases = (id: string, ref: 'canonical' | 'crouch' | 'jump', desc: string, low = false): AttackCell[] => {
+  const stance = low ? 'staying in a LOW crouch (copy the reference body height, do NOT stand up), ' : ref === 'jump' ? 'airborne off the ground (copy the airborne framing of the reference), ' : '';
+  const out: AttackCell[] = [];
+  if (ref === 'canonical') out.push({ name: `${id}-startup`, move: id, ref, active: false, pose: `${stance}winding up to throw ${desc} — the frame just BEFORE the strike, weight loaded back, limb cocked` });
+  out.push({ name: ref === 'jump' ? id : `${id}-active`, move: id, ref, active: true, pose: `${stance}${desc} at FULL extension — the point of impact, committed forward` });
+  if (ref !== 'jump') out.push({ name: `${id}-recovery`, move: id, ref, active: false, pose: `${stance}recovering from ${desc} — the striking limb retracting back toward guard` });
+  return out;
+};
+export const ATTACK_CELLS: AttackCell[] = [
+  ...phases('lp', 'canonical', 'a fast straight jab with the lead hand at head height'),
+  ...phases('mp', 'canonical', 'a strong straight punch, arm fully extended forward'),
+  ...phases('hp', 'canonical', 'a heavy committed hook punch, whole body behind it'),
+  ...phases('lk', 'canonical', 'a quick front snap kick, lead leg forward at mid height'),
+  ...phases('mk', 'canonical', 'a strong roundhouse kick at mid height'),
+  ...phases('hk', 'canonical', 'a heavy high roundhouse kick, leg swung up high'),
+  ...phases('clp', 'crouch', 'a short quick punch forward', true),
+  ...phases('cmp', 'crouch', 'a strong rising punch forward', true),
+  ...phases('chp', 'crouch', 'a rising uppercut punch', true),
+  ...phases('clk', 'crouch', 'a short low kick along the ground', true),
+  ...phases('cmk', 'crouch', 'a sweeping mid kick, leg out low', true),
+  ...phases('chk', 'crouch', 'a low sweep kick, back leg fully extended', true),
+  ...phases('jlp', 'jump', 'a downward air punch'),
+  ...phases('jmp', 'jump', 'a strong downward air punch'),
+  ...phases('jhp', 'jump', 'a heavy diving punch'),
+  ...phases('jlk', 'jump', 'a quick downward air kick'),
+  ...phases('jmk', 'jump', 'a strong jumping kick, leg out'),
+  ...phases('jhk', 'jump', 'a heavy diving kick, leg extended downward'),
+];
+/** special phase cells for the 4 draft specials (built at runtime from the draft). */
+export const specialCells = (id: string, name: string, desc: string): AttackCell[] => [
+  { name: `${id}-startup`, move: id, ref: 'canonical', active: false, pose: `winding up for the special move "${name}" (${desc}) — gathering power, the frame just before release` },
+  { name: `${id}-active`, move: id, ref: 'canonical', active: true, pose: `performing "${name}" (${desc}) at the moment of release/impact — a dynamic committed action pose` },
+  { name: `${id}-recovery`, move: id, ref: 'canonical', active: false, pose: `recovering from "${name}" — settling back toward a neutral stance` },
+];
+
 export const SPRITE_PROMPT = (name: string, pose: string): string =>
-  `Same character as the reference — identical face, hair, outfit, colors and proportions. ${name}, ${pose} ${STYLE}`;
+  `Same character as the reference — identical face, hair, outfit, colors and proportions, drawn at ` +
+  `EXACTLY the same size, height and framing as the reference image (do NOT zoom in or out, do NOT ` +
+  `resize the character between frames — the head and feet reach the same edges every frame). ${name}, ${pose} ${STYLE}`;
 
 // ── deterministic client-side draft (real Gemini text is a follow-up) ───────
 const hash = (s: string): number => {
@@ -145,9 +211,6 @@ export function makeDraft(name: string, description: string): DesignDraft {
       `${N} wins. Obviously.`,
       'You fought well. You still lost.',
       'The desert always collects.',
-      'Come back when you mean it.',
-      'That was the warm-up.',
-      'Dust to dust.',
     ],
     vo: {
       kiai: ['Hah!', 'Rrragh!', 'Take this!', 'Come on!', 'Hyah!', 'Now!'],
@@ -181,6 +244,54 @@ export class CreatorModel {
   draft: DesignDraft | null = null;
   step = 0;
   jobs = new Map<string, CreatorJob>();
+  /** clip name (announcer, kiai-1..6, hurt-1..6, victory-1..4) -> base64 mp3 */
+  generatedVo: Record<string, string> = {};
+  generatedMusic?: string; // base64 mp3
+  generatedFatality: string[] = []; // 4 base64 jpg panels
+  voiceModelId?: string; // Fish clone reference id (if the user cloned a voice)
+  skeletons: Record<string, Record<string, [number, number, number]>> = {}; // cellName -> DWPose joints
+  autoHitboxes: Record<string, { x: number; y: number; w: number; h: number }> = {}; // moveId -> engine hitbox
+  voStatus: 'idle' | 'running' | 'done' | 'error' = 'idle';
+  musicStatus: 'idle' | 'running' | 'done' | 'error' = 'idle';
+  fatalityStatus: 'idle' | 'running' | 'done' | 'error' = 'idle';
+  cloneStatus: 'idle' | 'running' | 'done' | 'error' = 'idle';
+  rigStatus: 'idle' | 'running' | 'done' | 'error' = 'idle';
+
+  /** all special phase cells for the draft (startup/active/recovery × each special). */
+  specialCellList(): AttackCell[] {
+    return (this.draft?.specials ?? []).flatMap((s) => specialCells(s.id, s.name, s.description));
+  }
+
+  /** every sheet cell → the job whose image fills it (base + attack phases + specials).
+   *  Each phase cell is its own generated frame now (real 3-frame animations). */
+  sheetPlan(): { name: string; jobKey: string }[] {
+    const plan: { name: string; jobKey: string }[] = [];
+    const add = (name: string): void => { if (this.job('sprite:' + name)?.status === 'done') plan.push({ name, jobKey: 'sprite:' + name }); };
+    for (const c of BASE_CELLS) add(c.id);
+    for (const c of ATTACK_CELLS) add(c.name);
+    for (const c of this.specialCellList()) add(c.name);
+    return plan;
+  }
+
+  /** every attack/special cell that should be generated (for progress counts). */
+  allAttackCells(): AttackCell[] {
+    return [...ATTACK_CELLS, ...this.specialCellList()];
+  }
+
+  /** final VO map for the SHIP write: BYO clips override generated ones, slot by slot. */
+  finalVoClips(): Record<string, string> {
+    const out = { ...this.generatedVo };
+    const byo = this.inputs.kiaiClips ?? [];
+    const slots = ['kiai-1', 'kiai-2', 'kiai-3', 'kiai-4', 'kiai-5', 'kiai-6', 'hurt-1', 'hurt-2', 'hurt-3', 'hurt-4', 'hurt-5', 'hurt-6', 'victory-1', 'victory-2', 'victory-3', 'victory-4'];
+    byo.forEach((f, i) => { if (slots[i]) out[slots[i]] = f.dataUrl.includes(',') ? f.dataUrl.split(',')[1] : f.dataUrl; });
+    return out;
+  }
+
+  finalMusic(): string | undefined {
+    const byo = this.inputs.musicTracks?.[0];
+    if (byo) return byo.dataUrl.includes(',') ? byo.dataUrl.split(',')[1] : byo.dataUrl;
+    return this.generatedMusic;
+  }
 
   get id(): string {
     return slugify(this.inputs.name);
@@ -207,6 +318,11 @@ export class CreatorModel {
     for (const [key, m] of Object.entries(NORMAL_MOVES)) moves[key] = { ...m };
     moves.throw = { startup: 3, active: 2, recovery: 20, damage: 0, hitstun: 0, blockstun: 0, knockback: 6, hitbox: null, height: 'mid', grab: { range: 64 }, techable: true };
     for (const s of d.specials) moves[s.id] = buildSpecial(s);
+    // overlay skeleton-derived hitboxes (RIG step) over the heuristic defaults
+    for (const [moveId, box] of Object.entries(this.autoHitboxes)) {
+      const mv = moves[moveId] as { hitbox?: unknown } | undefined;
+      if (mv && mv.hitbox !== null) mv.hitbox = box; // keep null for pure-projectile specials
+    }
     return {
       id: this.id,
       name: this.inputs.name.toUpperCase(),
