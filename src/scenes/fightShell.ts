@@ -66,14 +66,23 @@ export class FightShell {
     this.moveLogOverlay.setVisible(this.moveLogOn);
 
     const kb = scene.input.keyboard!;
+    const debugKeys = new Set(['F2', ...(opts.debugKeys ?? []).map((d) => d.key.toUpperCase())]);
+    const registerDebugKeys = (): void => {
+      kb.on('keydown-F2', () => {
+        this.moveLogOn = !this.moveLogOn;
+        this.moveLogOverlay.setVisible(this.moveLogOn);
+      });
+      for (const d of opts.debugKeys ?? []) kb.on(`keydown-${d.key}`, d.act);
+    };
+    const isDebugKey = (e: KeyboardEvent): boolean => debugKeys.has(e.key.toUpperCase());
 
     if (opts.demo) {
+      registerDebugKeys();
       if (opts.showcase) {
         // explicitly chosen from the menu (DEMO MATCH): plays out to the
         // finish (auto-returns to the menu after the win screen, see
-        // FightScene/FightScene3D) — only ESC or a pad Start/Select press
-        // interrupts it, via the same pause menu a human match uses. No
-        // "press any key" banner here — nothing should hint at an exit.
+        // FightScene/FightScene3D) — ESC or a pad Start/Select press interrupts
+        // it via the same pause menu a human match uses. Debug keys stay live.
         this.pauseMenu = new PauseMenu(
           opts.layer.root,
           [opts.defs[opts.chars[0]], opts.defs[opts.chars[1]]],
@@ -81,7 +90,7 @@ export class FightShell {
             { label: 'RESUME', act: () => this.togglePause() },
             { label: 'MAIN MENU', act: () => this.toMainMenu() },
           ],
-          { onNavSound: () => play(scene, 's-blip', 0.4) },
+          { hint: opts.pauseHint, onNavSound: () => play(scene, 's-blip', 0.4) },
         );
         kb.on('keydown-ESC', () => this.togglePause());
         // R restarts the current CPU-vs-CPU matchup at any time
@@ -89,13 +98,13 @@ export class FightShell {
         return;
       }
       // idle-triggered attract mode: a blinking banner, and ANY input returns
-      // to the title (` stays free for the perf overlay); pad exit polled in frame()
+      // to the title, except debug/perf keys; pad exit polled in frame().
       new DemoHint(opts.layer.root); // torn down with the layer on shutdown
       kb.on('keydown', (e: KeyboardEvent) => {
-        if (e.key !== '`') this.toMainMenu();
+        if (e.key !== '`' && !isDebugKey(e)) this.toMainMenu();
       });
       scene.input.on('pointerdown', () => this.toMainMenu());
-      return; // none of the human-match keybinds below apply to the demo
+      return; // navigation keybinds below do not apply to idle attract
     }
 
     this.pauseMenu = new PauseMenu(

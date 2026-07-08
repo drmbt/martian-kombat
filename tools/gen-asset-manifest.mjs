@@ -33,8 +33,12 @@ const legacyProj = [];
 const moveProj = [];
 const moveBurst = [];
 const moveVfx = [];
-for (const id of ls(join(PUB, 'sprites'))) {
-  const dir = join(PUB, 'sprites', id);
+const spritesRoot = join(PUB, 'sprites');
+const spriteDirs = existsSync(spritesRoot)
+  ? readdirSync(spritesRoot, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name)
+  : [];
+for (const id of spriteDirs) {
+  const dir = join(spritesRoot, id);
   const files = ls(dir);
   if (!files.length) continue;
   if (files.includes('projectile.png')) legacyProj.push(id);

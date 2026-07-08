@@ -1191,6 +1191,10 @@ profile → base batch → SHIP → reload → **playable MIRAGE vs VINCENT figh
       specials, updated packed sheet/meta/projectile, tuned `vincent.json`,
       Vincent home stage, cloned/generated Vincent voice assets, and stage/voice
       registry updates.
+- [x] **CPU demo debug utilities** — menu-chosen demo and idle attract fights now
+      keep F1/F2/F3 renderer debug controls live (hitboxes, move log, skeletons;
+      plus renderer-specific debug keys) without making idle attract exit on
+      those keys.
 - [ ] Real Gemini design-draft (server `/__editor/creator/design` + context cache §16).
 - [ ] Advisory edge-QA badges; R2 publish/pull seams (local-mock first).
 - [ ] Consolidate: audit/tests + skills + CLAUDE.md; fold Tuner/Editor in.
@@ -1223,6 +1227,16 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-08 · ui+tools · CPU demo debug overlays stay live** — `FightShell`
+  now registers F2 move log and renderer debug keys even in CPU demo/showcase
+  and idle attract fights, so F1 hitboxes and F3 skeleton overlays can be toggled
+  while bots are demonstrating moves. Idle attract still exits on normal input,
+  but no longer treats debug/perf keys as an exit command. Also hardened
+  `gen-asset-manifest` to skip non-directory entries under `public/assets/sprites`
+  so stray macOS `.DS_Store` files cannot break prebuild; regenerated the asset
+  manifest after Vincent's legacy projectile removal. `tsc --noEmit` and
+  `vite build` passed. — Codex
 
 - **2026-07-08 · assets+data · Vincent creator/edit checkpoint** — Committed
   the current Vincent dogfood state before the next code pass: raw frames were
