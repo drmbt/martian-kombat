@@ -402,6 +402,9 @@ export class FightScene extends Phaser.Scene {
       demo: this.demo,
       showcase: this.showcase,
       tuner: this.tuner,
+      spriteEditor: this.spriteEditor,
+      studio: this.studio,
+      module: this.studioModule,
       render3d: false,
       state: () => this.state,
       debugKeys: [

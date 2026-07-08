@@ -1447,6 +1447,18 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-08 · ui · studio route fix: VersusScene was dropping the flag** —
+  User-reported: DEV EDITOR → CHARACTER STUDIO landed in plain training.
+  Root cause: the VS-card VersusScene sits between Select and Fight and
+  RE-ENUMERATES the fight payload — `studio`/`module` weren't in its list,
+  so they silently vanished (the exact hop the first live test bypassed).
+  VersusScene now carries them (with a warning comment: every fight flag
+  must pass through), fightShell's restart/character-select routes and
+  FightScene's shell opts forward studio/module (+ spriteEditor, which had
+  the same latent gap on restart). Verified the REAL flow end-to-end in
+  the browser: Select picks → stage → Versus → Fight shows CHARACTER
+  STUDIO header + rail. 361/361, tsc clean. — Claude (Fable)
+
 - **2026-07-08 · ui · post-migration polish: shadows up + corner volume** —
   With feet floor-normalized, the fighter shadows read low: every shadow
   anchor raised 6px (sprite shadows FLOOR_Y+10→+4, fallback ellipses

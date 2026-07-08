@@ -33,6 +33,10 @@ export interface FightShellOpts {
   tuner?: boolean;
   /** dev-only sprite editor (see FightScene) — rides into restart/character select */
   spriteEditor?: boolean;
+  /** dev-only Character Studio (see FightScene) — rides into restart/character select */
+  studio?: boolean;
+  /** studio deep link: which module opens active */
+  module?: string;
   /** which renderer this shell serves — rides into character select */
   render3d: boolean;
   /** live engine state accessor (scenes reassign state on restart) */
@@ -250,13 +254,13 @@ export class FightShell {
   private restartMatch(): void {
     const o = this.opts;
     // keep showcase so a CPU-vs-CPU demo restarts as CPU-vs-CPU (not human P1)
-    this.scene.scene.restart({ p1: o.chars[0], p2: o.chars[1], cpu: o.cpu, training: o.training, showcase: o.showcase, tuner: o.tuner, spriteEditor: o.spriteEditor, stage: o.stageId });
+    this.scene.scene.restart({ p1: o.chars[0], p2: o.chars[1], cpu: o.cpu, training: o.training, showcase: o.showcase, tuner: o.tuner, spriteEditor: o.spriteEditor, studio: o.studio, module: o.module, stage: o.stageId });
   }
 
   toCharacterSelect(): void {
     const o = this.opts;
     // showcase rides back to the CPU-vs-CPU select so you can pick a new matchup
-    this.scene.scene.start('Select', { cpu: o.cpu, training: o.training, showcase: o.showcase, tuner: o.tuner, spriteEditor: o.spriteEditor, render3d: o.render3d });
+    this.scene.scene.start('Select', { cpu: o.cpu, training: o.training, showcase: o.showcase, tuner: o.tuner, spriteEditor: o.spriteEditor, studio: o.studio, module: o.module, render3d: o.render3d });
   }
 
   toMainMenu(): void {

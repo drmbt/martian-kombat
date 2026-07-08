@@ -24,12 +24,19 @@ interface VersusData {
   tuner?: boolean;
   /** dev-only sprite editor (see FightScene) */
   spriteEditor?: boolean;
+  /** dev-only Character Studio: module rail over the fight (see FightScene) */
+  studio?: boolean;
+  /** studio deep link: which module opens active */
+  module?: string;
   stage?: string;
   render3d?: boolean;
 }
 
 export class VersusScene extends Phaser.Scene {
-  private fight: Required<VersusData> = { p1: 'vincent', p2: 'yulia', cpu: false, training: false, showcase: false, tuner: false, spriteEditor: false, stage: 'salton', render3d: false };
+  private fight: Required<Omit<VersusData, 'module'>> & { module?: string } = {
+    p1: 'vincent', p2: 'yulia', cpu: false, training: false, showcase: false,
+    tuner: false, spriteEditor: false, studio: false, stage: 'salton', render3d: false,
+  };
   private started = false;
 
   constructor() {
@@ -37,6 +44,8 @@ export class VersusScene extends Phaser.Scene {
   }
 
   init(data: VersusData): void {
+    // NOTE: this scene sits between Select and Fight — every fight flag must
+    // pass through here or it silently vanishes (the studio flag did once).
     this.fight = {
       p1: data.p1 ?? 'vincent',
       p2: data.p2 ?? 'yulia',
@@ -45,6 +54,8 @@ export class VersusScene extends Phaser.Scene {
       showcase: !!data.showcase,
       tuner: !!data.tuner,
       spriteEditor: !!data.spriteEditor,
+      studio: !!data.studio,
+      module: data.module,
       stage: data.stage ?? 'salton',
       render3d: !!data.render3d,
     };
@@ -144,7 +155,7 @@ export class VersusScene extends Phaser.Scene {
   private startFight(): void {
     if (this.started) return;
     this.started = true;
-    const { p1, p2, cpu, training, showcase, tuner, spriteEditor, stage, render3d } = this.fight;
-    this.scene.start(render3d ? 'Fight3D' : 'Fight', { p1, p2, cpu, training, showcase, tuner, spriteEditor, stage });
+    const { p1, p2, cpu, training, showcase, tuner, spriteEditor, studio, module, stage, render3d } = this.fight;
+    this.scene.start(render3d ? 'Fight3D' : 'Fight', { p1, p2, cpu, training, showcase, tuner, spriteEditor, studio, module, stage });
   }
 }
