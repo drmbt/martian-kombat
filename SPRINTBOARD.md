@@ -1224,8 +1224,13 @@ library, and one coordinate contract — with an auto-pilot "images in →
 shippable fighter out" mode, a graceful Adopt/upgrade path for legacy
 characters, and a local-now/R2-later storage seam. **Full plan + audit
 findings in `docs/CHARACTER_STUDIO.md`** (read that first; this is the
-checkbox mirror). Awaiting user answers to the plan's Part-4 questions
-before build starts.
+checkbox mirror). Part-4 decisions LOCKED with the user 2026-07-08: atomic
+migration approved (inventory + rename + fill missing cells as part of it);
+dogfood = ONE full real-API run of a new lore-sheet fighter, max one re-run
+per asset, quality front-loaded via the §2.9 reference-chaining strategy
+(canonical gate → crouch/jump anchors → a→b idle/walk → sequential special
+refs); ben/earl get kits + themed fatalities; R2 = seam + local mock only;
+projectile origin/consistency tooling is a first-class Phase-3 deliverable.
 - [ ] Phase 0 — guardrails + cruft sweep (no API calls): delete orphan assets
       (haidai portraits, flo rm-rf panels, catherine legacy projectile.png);
       gate ThreeFxSystem's legacy-projectile load (kills 15 404s per 3D
@@ -1307,8 +1312,11 @@ fixed-screen SF2 framing is intentional).
   one `tools/core/` shared library, CharacterProject + meta v2, job runner,
   auto-pilot + manual modes, Adopt/upgrade flow, StorageDriver R2 seam;
   5-phase build plan + open questions). Sprint 27 section added; the three
-  open Sprint 26 consolidation items marked superseded. No code changes.
-  — Claude (Fable)
+  open Sprint 26 consolidation items marked superseded. Follow-up same day:
+  Part-4 decisions locked with the user (atomic migration approved, full-run
+  dogfood with one-reroll-max, ben/earl kits + themed fatalities, R2 seam
+  only) and the reference-chaining generation strategy + projectile-tooling
+  requirement captured as plan §2.9/§2.10. No code changes. — Claude (Fable)
 
 - **2026-07-08 · ui · creator special archetype catalog expanded** — The
   Character Creator special dropdown and Gemini design-draft prompt now allow

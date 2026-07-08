@@ -302,7 +302,46 @@ same machinery, not a separate migration script.
 - **429 backoff** in the shared pool (finally), so concurrency can go up
   safely instead of failing batches.
 
-### 2.9 QA, audits, and guardrails
+### 2.9 Reference-chaining generation strategy *(locked with the user, 2026-07-08)*
+
+Quality comes from giving the model the **right reference images**, not from
+QA-reroll loops. The shared prompt/cells library encodes this chain for both
+rosters (it generalizes gen-frames' projectile-first sequencing and the
+creator's jump→jump refs into one explicit policy):
+
+1. **Canonical first, then validate before anything else.** Gate check: arms
+   must NOT be extended far forward (an extended-arm canonical kills the
+   horizontal variety of every punch generated from it). Same check applies
+   to the crouch/jump anchors below.
+2. **Crouch and jump anchors early.** Generate the crouch and jump cells
+   right after the canonical and use them as the reference for their whole
+   move families (crouching normals ref the crouch anchor, air normals ref
+   the jump anchor) — pose variety comes from the anchor, not the prompt.
+3. **Idle/walk pairs chain a→b.** `idle-b` references `idle-a` (not the
+   canonical); `walk-b` references `walk-a` — so loop frames stay coherent
+   with deliberate small variation instead of flickering.
+4. **Specials chain sequentially:** startup references the **idle** cell;
+   the **projectile** is generated alone (inspo only, never the canonical);
+   the **active** cell references startup + projectile + idle (all three);
+   the **recovery** references active + idle. Where we're coming from and
+   going to is always in the reference set.
+5. **One re-run per asset, max.** QA is advisory; a flagged cell gets one
+   targeted reroll with a corrected prompt/reference, then ships or is left
+   for a manual pass. No automated validate-regenerate loops.
+
+### 2.10 Projectile consistency + origin tooling *(gap called out by the user)*
+
+Projectiles today have no front-end fix path: inconsistent art scale/keying
+across a kit, no way to correct the spawn origin, and hitbox/origin edits
+live only in JSON. The MOVES module gets a **projectile editor**: per-
+projectile preview in flight over the stage, spawn point set from a named
+skeleton joint on the active cell (the pending Sprint 25 Phase-2 item),
+scale/renderSize/box sliders on the shared geometry transform, and reroll
+that follows the §2.9 reference chain (inspo-only refs). The Adopt flow
+audits projectile art consistency (dimensions, key color, naming
+`projectile-<moveId>.png`) across the whole roster.
+
+### 2.11 QA, audits, and guardrails
 
 - **Advisory QA badges** (spec §11): pose_qa's edge-bleed/floor/extra-limb
   rules exposed via a `/qa` job; per-cell warn badges in SPRITES; never
@@ -363,6 +402,10 @@ fallout handled inside the same phase.
 - [ ] Re-pack all 16 from raw frames: normalize + skeletons + meta v2
 - [ ] Delete `SPRITE_FOOT_OFFSET_Y` + every `spriteOffsetY`; derive the 3D
       floor constant from shared constants
+- [ ] Cell + projectile inventory sweep: per-fighter list of missing /
+      misnamed / inconsistent cells and projectile art (dimensions, key
+      color, naming); renames applied; the (small) generation gap list
+      presented with cost before firing
 - [ ] Roster hitbox pass: skeleton-measured boxes proposed per fighter,
       eyeballed in the tuner, written; update the Sprint-19 combo test →
       **suite goes fully green for the first time since Sprint 25**
@@ -378,8 +421,11 @@ fallout handled inside the same phase.
       layout
 - [ ] `tools/core/kit.mjs`: full-grammar default kit + one archetype catalog;
       design-draft prompt emits chains/variants/cancel + themed fatality
-- [ ] Backfill ben + earl kits (chains/variants/cancel; themed fatalities —
-      regen panels only if approved) + vanessa quotes; schema lint goes green
+- [ ] Projectile editor in MOVES (§2.10): joint-anchored spawn point,
+      in-flight preview, renderSize/box on shared geometry, ref-chained
+      reroll — closes the "no frontend way to fix projectiles" gap
+- [ ] Backfill ben + earl kits (chains/variants/cancel) + themed fatalities
+      (~8 panels, approved) + vanessa quotes; schema lint goes green
 - [ ] Adopt flow v1: upgrade checklist + diff view over the audit/lint
 
 ### Phase 4 — Auto-pilot + jobs + lore *(mock-tested; one real dogfood run)*
@@ -395,8 +441,12 @@ fallout handled inside the same phase.
       pipeline step 8); fatality beats get the canon craft library
 - [ ] Cost UI: estimated-call counters, no auto-fire, context cache §16,
       seed/prompt manifest
+- [ ] Reference-chaining policy (§2.9) implemented in `core/cells.mjs` +
+      the job DAG: canonical gate, crouch/jump anchors, a→b idle/walk,
+      sequential special refs, one-reroll-max
 - [ ] **End-to-end validation**: full auto-pilot run in mock ($0), then ONE
-      real run on a small budget (see Q5 below) with QA + audit green
+      real FULL run on a new lore-sheet fighter (opt-out checked; ~70 images
+      + ~20 TTS), advisory QA only, max one re-run per asset
 
 ### Phase 5 — Storage seam + publish *(no API calls; R2 optional)*
 - [ ] `StorageDriver` + `LocalRepoStorage` + `R2Storage` (env-gated, local
@@ -418,26 +468,30 @@ fallout handled inside the same phase.
 
 ---
 
-## Part 4 — Open questions
+## Part 4 — Decisions (user, 2026-07-08)
 
-1. **Studio shape** — replace the three EditorMenu entries outright, or keep
-   Sprite Editor / Move Tuner reachable standalone for one transition release?
-   (Plan assumes: aliases for one release, then retire.)
-2. **Atomic migration consent** — Phase 2 re-packs all 16 sheets and re-tunes
-   roster hitboxes (gameplay reach changes, one combo test rewritten). OK to
-   do this early, as one pass, per the Sprint 25 direction?
-3. **ben/earl backfill** — kits are JSON-only, but themed fatalities mean
-   ~8 replacement panel images. Regenerate, or keep the generic "finish"
-   fatalities until each character's next art pass?
-4. **Dogfood budget** — for the Phase 4 real-API validation: new fighter from
-   the lore sheet, or re-run of an existing one? Full run (~70 images + ~20
-   TTS) or a reduced smoke set (~15 images: canonical, portraits, 6 base
-   cells, 1 special chain, 2 fatality panels)?
-5. **Lore sheet access** — OK for the dev server to fetch the public Google
-   Sheet (CSV export) at design time? (Read-only; the opt-out column becomes
-   machine-enforced.)
-6. **R2 now vs later** — Phase 5 ships the seam + local mock. Stand up a real
-   bucket + creds in this build too, or defer until the prod Worker exists?
-7. **Client pack fallback** — once packing is server-side, is it OK to
-   *require* the dev server (ffmpeg) for SHIP, deleting the client-side
-   compositor entirely? (Mock mode keeps a stub so the wizard stays walkable.)
+1. **Atomic migration: APPROVED** — do it where it fits best. Vincent, Ben,
+   Yulia and Earl have been manually dialed, but inconsistency and missing
+   sprites remain; starting from scratch on the coordinate/pack layer is
+   acceptable. Expect to (a) inventory missing/inconsistent cells per
+   fighter during Phase 2 and generate the gaps (small, costed list
+   presented before firing), and (b) rename assets where needed for
+   consistency. Projectile consistency/origin fixing must get a real
+   front-end answer (→ §2.10).
+2. **Dogfood: FULL RUN** of a new fighter — but **no QA validation loops**:
+   at most one re-run per asset, with quality front-loaded via the §2.9
+   reference-chaining strategy (right prompt + right reference images the
+   first time).
+3. **ben/earl: kits + themed fatalities** (~8 panel images via the upgraded
+   design-draft + fatality craft library).
+4. **R2: seam + local mock only** this build; real bucket is a later env
+   flip.
+
+Defaults adopted for the remaining minor questions (flag if wrong):
+- EditorMenu entries become studio aliases for one release, then retire.
+- The dev server fetches the public lore sheet (read-only CSV export) at
+  design time; the privacy opt-out column becomes machine-enforced.
+- Packing becomes server-side-only (dev server + ffmpeg required for SHIP);
+  the client compositor is deleted; mock mode keeps a walkable stub.
+- The dogfood subject will be a new fighter chosen from the lore sheet
+  (opt-out column re-checked first), proposed before the run starts.
