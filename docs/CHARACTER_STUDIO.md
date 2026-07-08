@@ -169,19 +169,32 @@ FX         per-move VFX overlays · spark wiring · fatality (beats + panels)
 TEST       drive the fighter in the live scene: manual P1 · P1 vs CPU ·
            CPU vs CPU (difficulty per slot) · loop-a-move — the Move Tuner
            driver controls, promoted to a first-class pipeline step
+STAGES     assign existing / create new named stage · **pin it on the world
+           map** (the Stage Pin editor's map as an in-studio overlay) ·
+           registration/asset mismatch cleanup
 SHIP       readiness audit · normalize+pack · write/register · ZIP · publish (R2) ·
-           stage assign/cleanup · (later) offline/hide characters & stages
+           (later) offline/hide characters & stages
 ```
 
 Move Tuner's fight sandbox and the Sprite Editor's grid don't get rewritten —
 they get *mounted* as the MOVES and SPRITES modules over the shared project
 (they are already panels over FightScene; the studio hosts the same panels).
-The unified debug overlays work throughout: **F1 hitboxes · F2 move log ·
-F3 skeleton · F5 stage guide**, identical to a normal fight, and every panel
-collapses out of the way so the scene is playable at any point in the
-pipeline — not just at the end. The standalone EditorMenu entries survive
-one release as thin aliases that open the studio at the right module, then
-retire.
+The Stage Pin editor folds in the same way: its world-map UI becomes the
+STAGES module's pin overlay, writing through the existing
+`/__editor/stage-pins` endpoint. The unified debug overlays work
+throughout: **F1 hitboxes · F2 move log · F3 skeleton · F5 stage guide**,
+identical to a normal fight, and every panel collapses out of the way so
+the scene is playable at any point in the pipeline — not just at the end.
+
+**Access model (decided):** the individual dev tools are NOT retired as
+entry points — they become **separately-addressable modules of the studio**.
+EditorMenu turns into a launcher of deep links: "CHARACTER STUDIO" (full
+wizard from IDENTITY), "MOVE TUNER" (studio opened at MOVES + TEST),
+"SPRITE EDITOR" (studio at SPRITES), "STAGES & MAP" (studio at STAGES, no
+character required). One implementation, many doors — the standalone scene
+*implementations* (`StagePinEditorScene`, `CharacterCreatorScene`'s own
+backdrop) retire so no duplicate code paths survive, but every focused
+workflow keeps a direct entrance.
 
 **Two drive modes over the same job graph:**
 - **Auto-pilot** ("simple mode"): name + 1–3 images (+ optional voice sample,
@@ -397,12 +410,13 @@ validate-regenerate loops anywhere (one reroll max, §2.9).
 
 ### 2.12 Stage management + roster lifecycle
 
-The SHIP module owns stages as part of publishing, not as a separate tool:
+The STAGES module owns stages as part of publishing, not as a separate tool:
 - **Assign or create**: pick any existing stage as the home stage, or create
   a new *named* stage in-flow (reference photo or prompt → `gen-stage` job →
-  register in `stages.ts` + pin placeholder). The stale-registration drift
-  (earl-home/vincent-home, 2026-07-08) can't recur because registration and
-  asset generation are one transaction.
+  register in `stages.ts` → **place its pin on the world map** via the
+  folded-in pin-editor overlay). Creation, registration, and pinning are one
+  transaction — the stale-registration drift (earl-home/vincent-home,
+  2026-07-08) and unpinned-stage gaps can't recur.
 - **Cleanup**: SHIP surfaces stages whose registration and assets disagree
   (registered-but-missing art, art-but-unregistered, orphaned inspo folders)
   with one-click fixes.
@@ -474,13 +488,17 @@ fallout handled inside the same phase.
       CharacterProject model, Sprite Editor + Move Tuner panels mounted as
       SPRITES/MOVES modules; the creator wizard panels re-hosted (the
       standalone CharacterCreatorScene grid backdrop retires); unified debug
-      overlays (F1/F2/F3/F5) live throughout; EditorMenu entries become aliases
+      overlays (F1/F2/F3/F5) live throughout
 - [ ] TEST module: manual / P1-vs-CPU / CPU-vs-CPU / loop-a-move driver
       controls as a first-class pipeline step, all panels hideable so the
       scene is fully playable
-- [ ] LOOK/SHIP stage flow: assign an existing stage or create a new named
-      one in-flow (gen + register as one transaction); stage registration/
-      asset mismatch cleanup surface (§2.12)
+- [ ] STAGES module: assign an existing stage or create a new named one
+      in-flow (gen + register + **world-map pin placement** as one
+      transaction — the Stage Pin editor folds in as the module's map
+      overlay); registration/asset mismatch cleanup surface (§2.12)
+- [ ] EditorMenu becomes a deep-link launcher into studio modules (Move
+      Tuner → MOVES+TEST, Sprite Editor → SPRITES, Stages & Map → STAGES);
+      standalone `StagePinEditorScene` + creator-scene backdrop retire
 - [ ] Single character-write endpoint with module-scoped merges + provenance;
       canon-reopen hydrates a project; ZIP import/export moves to the project
       layout
@@ -579,9 +597,13 @@ Additional directives (user, 2026-07-08, second pass):
 10. **Publishing owns stages**: assign existing or create new named stages
     in-flow; clean up old/missing registrations; eventually offline
     characters and stages via hide or guided delete (§2.12).
+11. **All dev tools fold into the studio, stage-pinning included** (third
+    pass): creating a stage includes placing its map pin. Access model was
+    left to Claude's judgment — decision: modules stay **separately
+    addressable** via EditorMenu deep links (one implementation, many
+    doors); only the standalone scene implementations retire (§2.1).
 
 Defaults adopted for the remaining minor questions (flag if wrong):
-- EditorMenu entries become studio aliases for one release, then retire.
 - The dev server fetches the public lore sheet (read-only CSV export) at
   design time; the privacy opt-out column becomes machine-enforced.
 - Packing becomes server-side-only (dev server + ffmpeg required for SHIP);

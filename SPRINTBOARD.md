@@ -1241,7 +1241,13 @@ CLI character creation = the studio pipeline); sprite QA stays MINIMAL
 pose-rule QA deferred); fal never runs locally (skeletons are local Python;
 fal is shipped-prod only); publishing owns stages (assign existing / create
 named / clean up mismatches) with a later hide/delete lifecycle for
-characters and stages.
+characters and stages. Third pass: **stage creation includes world-map pin
+placement** — the Stage Pin editor folds into the studio's STAGES module as
+a map overlay, so ALL dev tools live in the studio; access model (Claude's
+call): modules stay separately addressable via EditorMenu deep links (Move
+Tuner → MOVES+TEST, Sprite Editor → SPRITES, Stages & Map → STAGES) — one
+implementation, many doors; only the standalone scene implementations
+(StagePinEditorScene, the creator scene's own backdrop) retire.
 - [ ] Phase 0 — guardrails + cruft sweep (no API calls): delete orphan assets
       (haidai portraits, flo rm-rf panels, catherine legacy projectile.png);
       gate ThreeFxSystem's legacy-projectile load (kills 15 404s per 3D
@@ -1269,9 +1275,13 @@ characters and stages.
       Ship over the live scene; creator panels re-hosted, standalone
       creator scene retires) mounting the existing Sprite Editor + Move
       Tuner panels over one CharacterProject; TEST module (manual /
-      P1-vs-CPU / CPU-vs-CPU / loop drivers, all panels hideable); stage
-      assign/create-in-flow + registration-mismatch cleanup; projectile
-      editor (joint-anchored spawn, in-flight preview, ref-chained reroll);
+      P1-vs-CPU / CPU-vs-CPU / loop drivers, all panels hideable); STAGES
+      module (assign / create-in-flow + register + world-map pin placement
+      as one transaction — Stage Pin editor folded in as the map overlay;
+      registration-mismatch cleanup); EditorMenu → deep-link launcher into
+      studio modules (standalone pin-editor/creator scenes retire);
+      projectile editor (joint-anchored spawn, in-flight preview,
+      ref-chained reroll);
       single character-write endpoint with module-scoped merges +
       provenance; `core/kit.mjs` full-grammar default kit (chains/variants/
       cancel — fixes the ben/earl regression) + themed fatality slots;
@@ -1323,6 +1333,14 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-08 · docs · Sprint 27 third pass: pin editor folds in, deep-link
+  access model** — Stage creation in the studio now includes world-map pin
+  placement (Stage Pin editor becomes the STAGES module's map overlay —
+  every dev tool now lives in the studio). Access model decided: modules
+  stay separately addressable via EditorMenu deep links; only the standalone
+  scene implementations retire. `docs/CHARACTER_STUDIO.md` §2.1/§2.12 +
+  Part 4 item 11. — Claude (Fable)
 
 - **2026-07-08 · docs · Sprint 27 second-pass directives folded in** — The
   Character Studio plan now locks: FightScene-hosted WYSIWYG shell (studio
