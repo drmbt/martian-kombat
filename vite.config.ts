@@ -83,11 +83,13 @@ function editorApi(): Plugin {
         req.on('data', (c) => (body += c));
         req.on('end', () => {
           try {
-            const { id, moves, scale, hurtStand, bodyBox, hurtCrouch, spriteOffsetY } = JSON.parse(body || '{}') as {
+            const { id, moves, scale, hurtStand, bodyBox, hurtCrouch, spriteOffsetY, stage } = JSON.parse(body || '{}') as {
               id?: string;
               moves?: Record<string, unknown>;
               scale?: number;
               hurtStand?: unknown; bodyBox?: unknown; hurtCrouch?: unknown; spriteOffsetY?: number;
+              /** home stage: a stage id sets it, null clears it (studio STAGES module) */
+              stage?: string | null;
             };
             if (!id || !/^[a-z0-9_-]+$/.test(id)) throw new Error('invalid character id');
             const file = fileURLToPath(new URL(`./src/data/characters/${id}.json`, import.meta.url));
@@ -100,6 +102,7 @@ function editorApi(): Plugin {
             if (bodyBox && typeof bodyBox === 'object') parsed.bodyBox = bodyBox;
             if (hurtCrouch && typeof hurtCrouch === 'object') parsed.hurtCrouch = hurtCrouch;
             if (typeof spriteOffsetY === 'number') { if (spriteOffsetY === 0) delete parsed.spriteOffsetY; else parsed.spriteOffsetY = spriteOffsetY; }
+            if (stage !== undefined) { if (stage === null || stage === '') delete parsed.stage; else if (/^[a-z0-9_-]+$/.test(stage)) parsed.stage = stage; }
             writeFileSync(file, JSON.stringify(parsed, null, 2) + '\n');
             res.statusCode = 200;
             res.setHeader('Content-Type', 'application/json');

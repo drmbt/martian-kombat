@@ -28,6 +28,7 @@ import { DIFFICULTIES, DIFFICULTY_AGGRESSION, type Difficulty } from '../ai/diff
 import { MoveTunerPanel } from '../ui/MoveTunerPanel';
 import { SpriteEditorPanel } from '../ui/SpriteEditorPanel';
 import { CharacterCreatorPanel } from '../ui/CharacterCreatorPanel';
+import { StagesPanel } from '../ui/StagesPanel';
 import { StudioRail } from '../ui/StudioRail';
 import { SpriteSheetModel, type SheetMeta } from '../ui/spriteSheetModel';
 import { play, playVoice, runCues } from './BootScene';
@@ -1639,12 +1640,31 @@ export class FightScene extends Phaser.Scene {
       else creatorPanel.setMounted(true);
     };
     const creatorOff = (): void => creatorPanel?.setMounted(false);
+    // stage registry / home-stage assignment / world-map pin round-trip
+    let stagesPanel: StagesPanel | null = null;
+    const stagesOn = (): void => {
+      if (!stagesPanel) {
+        stagesPanel = new StagesPanel(this.uiLayer.root, characters, {
+          openPinEditor: () =>
+            this.scene.start('StagePinEditor', {
+              returnTo: {
+                scene: 'Fight',
+                data: { p1: this.chars[0], p2: this.chars[1], cpu: false, training: true, studio: true, module: 'stages', stage: this.stageId, render3d: false },
+              },
+            }),
+        });
+      } else {
+        stagesPanel.setMounted(true);
+      }
+    };
+    const stagesOff = (): void => stagesPanel?.setMounted(false);
     this.studioRail = new StudioRail(
       this.uiLayer.root,
       [
         { key: 'creator', label: 'CREATOR', hint: 'zero → hero wizard: seed · profile · moves · rig · polish · ship', activate: creatorOn, deactivate: creatorOff },
         { key: 'sprites', label: 'SPRITES', hint: 'sheet cells · regen · keypoints · auto-hitbox', activate: spritesOn, deactivate: spritesOff },
         { key: 'moves', label: 'MOVES', hint: 'frame data · hitboxes · CPU/loop drivers · write to JSON', activate: movesOn, deactivate: movesOff },
+        { key: 'stages', label: 'STAGES', hint: 'registry · home-stage assignment · world-map pins', activate: stagesOn, deactivate: stagesOff },
         { key: 'test', label: 'TEST', hint: 'play it — all panels hidden · F1 boxes · F2 log · F3 skeleton', activate: () => this.setHudVisible(true), deactivate: () => undefined },
       ],
       this.studioModule ?? 'moves',
@@ -1652,6 +1672,8 @@ export class FightScene extends Phaser.Scene {
     this.events.once('shutdown', () => {
       creatorPanel?.dispose();
       creatorPanel = null;
+      stagesPanel?.dispose();
+      stagesPanel = null;
       this.studioRail?.dispose();
       this.studioRail = null;
     });

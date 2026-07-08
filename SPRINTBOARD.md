@@ -1447,6 +1447,19 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-08 · ui+tools · Sprint 27 Phase 3f: STAGES module** — the rail
+  is now CREATOR / SPRITES / MOVES / STAGES / TEST. `src/ui/StagesPanel.ts`:
+  the stage registry as a panel (per-stage world-map pin status + home-stage
+  owner), a fighter ⇄ home-stage assignment row (writes `def.stage` through
+  `/__editor/character`, which grew a validated `stage` field — set or
+  clear; verified round-trip on vincent, file byte-identical after
+  restore), and a WORLD-MAP PIN EDITOR jump — StagePinEditorScene gained a
+  `returnTo` payload so BACK round-trips to the studio instead of dumping
+  to the editor menu. Stage CREATION stays in CREATOR → PROFILE (noted in
+  the panel); gen-in-flow rides the Phase 4 job runner. Verified live:
+  panel renders all 27 stages with pins + owners. 361/361, tsc clean.
+  — Claude (Fable)
+
 - **2026-07-08 · ui · Sprint 27 Phase 3d: the creator wizard is a studio
   module** — CharacterCreatorPanel re-hosted as the rail's CREATOR module
   (lazily mounted over the live fight; drafts flush-save on unmount; the

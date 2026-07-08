@@ -39,8 +39,16 @@ export class StagePinEditorScene extends Phaser.Scene {
   private statusText!: Phaser.GameObjects.Text;
   private selNameText!: Phaser.GameObjects.Text;
 
+  /** where BACK returns: the studio STAGES module passes its Fight payload
+   *  so the pin editor round-trips instead of dumping to the editor menu */
+  private returnTo: { scene: string; data?: object } | null = null;
+
   constructor() {
     super('StagePinEditor');
+  }
+
+  init(data: { returnTo?: { scene: string; data?: object } }): void {
+    this.returnTo = data?.returnTo ?? null;
   }
 
   create(): void {
@@ -294,7 +302,8 @@ export class StagePinEditorScene extends Phaser.Scene {
 
   private back(): void {
     play(this, 's-blip');
-    this.scene.start('EditorMenu');
+    if (this.returnTo) this.scene.start(this.returnTo.scene, this.returnTo.data);
+    else this.scene.start('EditorMenu');
   }
 
   update(): void {
