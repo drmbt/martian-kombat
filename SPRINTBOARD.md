@@ -1231,6 +1231,17 @@ per asset, quality front-loaded via the §2.9 reference-chaining strategy
 (canonical gate → crouch/jump anchors → a→b idle/walk → sequential special
 refs); ben/earl get kits + themed fatalities; R2 = seam + local mock only;
 projectile origin/consistency tooling is a first-class Phase-3 deliverable.
+Second-pass directives (same day): the studio is a **FightScene mode**
+(WYSIWYG — the character always stands in a valid fight scene; collapsible
+panels; unified F1/F2/F3/F5 debug overlays; a TEST module for manual /
+P1-vs-CPU / CPU-vs-CPU play as a pipeline step); **CLI ⇄ studio ⇄ skills
+parity is in scope** (skills rewritten against tools/core so Claude Code
+CLI character creation = the studio pipeline); sprite QA stays MINIMAL
+(human QA + vision check of canonical/crouch/jump reference images only;
+pose-rule QA deferred); fal never runs locally (skeletons are local Python;
+fal is shipped-prod only); publishing owns stages (assign existing / create
+named / clean up mismatches) with a later hide/delete lifecycle for
+characters and stages.
 - [ ] Phase 0 — guardrails + cruft sweep (no API calls): delete orphan assets
       (haidai portraits, flo rm-rf panels, catherine legacy projectile.png);
       gate ThreeFxSystem's legacy-projectile load (kills 15 404s per 3D
@@ -1253,26 +1264,36 @@ projectile origin/consistency tooling is a first-class Phase-3 deliverable.
       SPRITE_FOOT_OFFSET_Y and every per-char spriteOffsetY deleted; roster
       hitbox pass from baked skeletons; Sprint-19 combo test updated →
       suite fully green (clears the standing 314/315 failure).
-- [ ] Phase 3 — studio shell + schema backfill: CharacterStudioScene with a
-      module rail (Identity/Look/Sprites/Moves/Audio/FX/Ship) mounting the
-      existing Sprite Editor + Move Tuner panels over one CharacterProject;
+- [ ] Phase 3 — studio shell + schema backfill: studio as a FightScene mode
+      (collapsible module rail Identity/Look/Sprites/Moves/Audio/FX/Test/
+      Ship over the live scene; creator panels re-hosted, standalone
+      creator scene retires) mounting the existing Sprite Editor + Move
+      Tuner panels over one CharacterProject; TEST module (manual /
+      P1-vs-CPU / CPU-vs-CPU / loop drivers, all panels hideable); stage
+      assign/create-in-flow + registration-mismatch cleanup; projectile
+      editor (joint-anchored spawn, in-flight preview, ref-chained reroll);
       single character-write endpoint with module-scoped merges +
       provenance; `core/kit.mjs` full-grammar default kit (chains/variants/
       cancel — fixes the ben/earl regression) + themed fatality slots;
-      backfill ben/earl kits + vanessa quotes; Adopt flow v1 (legacy
-      upgrade checklist + diff view).
+      backfill ben/earl kits + fatalities + vanessa quotes; Adopt flow v1
+      (legacy upgrade checklist + diff view).
 - [ ] Phase 4 — auto-pilot + jobs + lore: `/__editor/jobs` runner (SSE
       progress, persistence, cost accounting, 429 backoff); auto-pilot DAG +
-      headless `npm run studio:run`; `core/lore.mjs` (lore-sheet fetch,
-      machine-enforced privacy opt-out, lore→always/fatality/VO
-      propagation); creator FX module closes pipeline step 8; context cache
-      §16 + seed/prompt manifest + estimated-cost UI (no auto-fire spends);
-      validated E2E in mock, then ONE budgeted real-API dogfood run.
+      headless `npm run studio:run`; skills refresh (new-character /
+      move-authoring / sprite-generation / sprite-qa rewritten against
+      tools/core → CLI and studio become one pipeline); `core/lore.mjs`
+      (lore-sheet fetch, machine-enforced privacy opt-out,
+      lore→always/fatality/VO propagation); creator FX module closes
+      pipeline step 8; context cache §16 + seed/prompt manifest +
+      estimated-cost UI (no auto-fire spends); QA minimal (local skeletons
+      + canonical/anchor vision gate only); validated E2E in mock, then ONE
+      full real-API dogfood run (one reroll max per asset).
 - [ ] Phase 5 — storage seam + publish: StorageDriver (LocalRepoStorage /
       R2Storage per CHARACTER_CREATOR.md §6, env-gated local no-op);
       PUBLISH in SHIP; custom-characters registry + resolveAssetBase roster
-      merge; `r2:push` / `r2:pull` canonize tools; docs + skills + CLAUDE.md
-      consolidation (roster count, creator status, studio pointers).
+      merge; `r2:push` / `r2:pull` canonize tools; roster/stage lifecycle
+      (`hidden` flag + guided delete); docs + CLAUDE.md consolidation
+      (roster count, creator status, studio pointers) + final skills sweep.
 
 ### Icebox (do not start)
 - **Attract-mode gag reels (3D)**: occasionally, instead of a demo fight, the
@@ -1302,6 +1323,17 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-08 · docs · Sprint 27 second-pass directives folded in** — The
+  Character Studio plan now locks: FightScene-hosted WYSIWYG shell (studio
+  is a fight-scene mode with collapsible panels + unified debug overlays +
+  a TEST module for manual/CPU matches as a pipeline step), CLI⇄studio⇄
+  skills parity as a core deliverable (skills rewritten against tools/core),
+  minimal sprite QA (human QA + vision gate on canonical/crouch/jump refs
+  only; pose-rule QA deferred; fal never local), and publishing-owned stage
+  management (assign/create/cleanup now; hide/delete lifecycle in Phase 5).
+  `docs/CHARACTER_STUDIO.md` §2.1/2.2/2.11/2.12 + Part 4 items 5–10.
+  — Claude (Fable)
 
 - **2026-07-08 · docs · Character Studio plan (Sprint 27)** — Full audit of
   the Character Creator / Sprite Editor / Move Tuner / tools+QA pipeline /

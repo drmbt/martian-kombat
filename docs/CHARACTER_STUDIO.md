@@ -146,26 +146,42 @@ coordinate contract. Local disk today, R2 tomorrow, via one storage seam.
 
 ### 2.1 The shape
 
-**Character Studio** replaces the three EditorMenu entries with a single
-scene: a persistent left rail of **modules** over one shared, live
-**CharacterProject**:
+**Character Studio is a FightScene mode** — like `tuner` and `spriteEditor`
+today, NOT a standalone scene. The character under construction lives inside
+a **valid fight scene** from the first generated cell onward: real stage,
+real floor line, real renderer, real engine ticking. That's the WYSIWYG
+guarantee — what you see while editing is byte-for-byte what exports and
+canonizes, because it *is* the game rendering it. (The current
+`CharacterCreatorScene`'s Phaser-grid backdrop retires; its DOM wizard
+panels move into the FightScene host.)
+
+A persistent, **collapsible/hideable** left rail of module panels sits over
+the fight, all driven by one shared, live **CharacterProject**:
 
 ```
 IDENTITY   name · refs · lore (typed / lore-sheet fetch) · design draft · privacy gate
-LOOK       canonical · portraits (icon/bust/ko) · color · stage
+LOOK       canonical · portraits (icon/bust/ko) · color · stage (assign existing / create new)
 SPRITES    the Sprite Editor grid, embedded: cells · regen · keypoints · normalize
 MOVES      kit table + the Move Tuner sandbox, embedded: frame data · hitboxes ·
-           specials (archetype catalog) · projectiles · chains/variants/cancel
+           specials (archetype catalog) · projectiles (§2.10) · chains/variants/cancel
 AUDIO      VO lines · voice clone · per-move call-outs · music · BYO
 FX         per-move VFX overlays · spark wiring · fatality (beats + panels)
-SHIP       readiness audit · normalize+pack · write/register · ZIP · publish (R2)
+TEST       drive the fighter in the live scene: manual P1 · P1 vs CPU ·
+           CPU vs CPU (difficulty per slot) · loop-a-move — the Move Tuner
+           driver controls, promoted to a first-class pipeline step
+SHIP       readiness audit · normalize+pack · write/register · ZIP · publish (R2) ·
+           stage assign/cleanup · (later) offline/hide characters & stages
 ```
 
 Move Tuner's fight sandbox and the Sprite Editor's grid don't get rewritten —
 they get *mounted* as the MOVES and SPRITES modules over the shared project
 (they are already panels over FightScene; the studio hosts the same panels).
-The standalone EditorMenu entries survive one release as thin aliases that
-open the studio at the right module, then retire.
+The unified debug overlays work throughout: **F1 hitboxes · F2 move log ·
+F3 skeleton · F5 stage guide**, identical to a normal fight, and every panel
+collapses out of the way so the scene is playable at any point in the
+pipeline — not just at the end. The standalone EditorMenu entries survive
+one release as thin aliases that open the studio at the right module, then
+retire.
 
 **Two drive modes over the same job graph:**
 - **Auto-pilot** ("simple mode"): name + 1–3 images (+ optional voice sample,
@@ -201,6 +217,20 @@ This is the model `infer_keypoints.py` already proves out. Contents:
 CLI scripts become thin wrappers over core (they keep their `npm run gen:*`
 interfaces — nothing about the CLI workflow changes); vite endpoints call the
 same functions. One implementation, two front doors.
+
+**CLI ⇄ Studio ⇄ skills parity is a first-class goal, not a docs cleanup.**
+The `.claude/skills/` files (`new-character`, `sprite-generation`,
+`sprite-qa`, `move-authoring`, `hit-spark-generator`) are partially stale
+and encode craft that `tools/core/` now owns. As each core module lands,
+the corresponding skill is **rewritten against it** — taking the best
+information from both the skill's accumulated lessons and the creator's
+implementation — so that generating a character with Claude Code via CLI
+and generating one in the studio are *the same methods*: same prompt
+builders, same reference-chaining policy (§2.9), same cell contract, same
+pack path, same (minimal) QA, same job runner (`npm run studio:run` is the
+CLI's auto-pilot). A skill should describe how to drive core/, never
+re-state prompt craft that core/ encodes — when the craft improves, it
+improves in one place and both front doors get it.
 
 ### 2.3 One data model: CharacterProject + meta v2
 
@@ -343,9 +373,16 @@ audits projectile art consistency (dimensions, key color, naming
 
 ### 2.11 QA, audits, and guardrails
 
-- **Advisory QA badges** (spec §11): pose_qa's edge-bleed/floor/extra-limb
-  rules exposed via a `/qa` job; per-cell warn badges in SPRITES; never
-  blocks. The montage trick stays for humans.
+**Sprite QA stays MINIMAL for now** (user directive, 2026-07-08): the main
+QA path going forward is **human review** inside the studio's live scene.
+What we keep in this build: local skeleton inference (needed for hitboxes —
+**always local Python; fal is exclusively a shipped-prod substitution and is
+never used in dev**), and a vision look at the *main reference images*
+(canonical + crouch/jump anchors — the §2.9 gate) before they seed
+everything downstream. Everything else in pose_qa (per-cell pose rules,
+edge-bleed sweeps, group checks, advisory badges) is **skipped for now** and
+dialed back in later once the studio is running end-to-end. No automated
+validate-regenerate loops anywhere (one reroll max, §2.9).
 - **`assets.audit.test.ts` grows**: bust check, orphan detection (extra files
   not owned by any roster char), meta-v2 shape check, and a **schema lint**
   (every playable fighter has chains/variants/cancel where its archetype
@@ -357,6 +394,23 @@ audits projectile art consistency (dimensions, key color, naming
   make the python resolver probe onnxruntime too, give `portrait_crop.py` an
   npm script, invalidate the characterScale base cache on character write,
   update CLAUDE.md (roster count, creator status, studio pointers).
+
+### 2.12 Stage management + roster lifecycle
+
+The SHIP module owns stages as part of publishing, not as a separate tool:
+- **Assign or create**: pick any existing stage as the home stage, or create
+  a new *named* stage in-flow (reference photo or prompt → `gen-stage` job →
+  register in `stages.ts` + pin placeholder). The stale-registration drift
+  (earl-home/vincent-home, 2026-07-08) can't recur because registration and
+  asset generation are one transaction.
+- **Cleanup**: SHIP surfaces stages whose registration and assets disagree
+  (registered-but-missing art, art-but-unregistered, orphaned inspo folders)
+  with one-click fixes.
+- **Offline / hide (later)**: characters and stages get a lifecycle beyond
+  `playable: true` — a `hidden` flag (kept on disk, out of select screens and
+  the audit's *required* set) and a guided **delete** (removes JSON,
+  registration, assets, manifest entries as one transaction). Scheduled as
+  Phase 5 scope; the flag shape lands earlier so nothing has to migrate.
 
 ---
 
@@ -395,6 +449,8 @@ fallout handled inside the same phase.
       creatorModel imports the shared cell contract + prompt builders
       (creator fighters start getting canon-quality prompts)
 - [ ] `tools/core/audio.mjs`; vite + gen-audio share TTS + voice tables
+- [ ] Skills refresh pass 1: `sprite-generation` + `sprite-qa` rewritten
+      against core/ (craft lives in core, skills describe how to drive it)
 - [ ] Verify: repack one normalized char (vincent) byte-diff-equal (or
       pixel-equal) against current sheet before touching the roster
 
@@ -412,10 +468,19 @@ fallout handled inside the same phase.
 - [ ] In-game verification across several pairings + canvas-render sheet QA
       (the montage workflow) — no browser-preview dependence
 
-### Phase 3 — Studio shell + schema backfill *(JSON-only; ~8 images optional)*
-- [ ] `CharacterStudioScene`: module rail, shared CharacterProject model,
-      Sprite Editor + Move Tuner panels mounted as SPRITES/MOVES modules;
-      EditorMenu entries become aliases
+### Phase 3 — Studio shell + schema backfill *(JSON-only; ~8 images approved)*
+- [ ] Studio as a **FightScene mode** (`studio: true`, like tuner/spriteEditor
+      today): collapsible module rail over the live fight scene, shared
+      CharacterProject model, Sprite Editor + Move Tuner panels mounted as
+      SPRITES/MOVES modules; the creator wizard panels re-hosted (the
+      standalone CharacterCreatorScene grid backdrop retires); unified debug
+      overlays (F1/F2/F3/F5) live throughout; EditorMenu entries become aliases
+- [ ] TEST module: manual / P1-vs-CPU / CPU-vs-CPU / loop-a-move driver
+      controls as a first-class pipeline step, all panels hideable so the
+      scene is fully playable
+- [ ] LOOK/SHIP stage flow: assign an existing stage or create a new named
+      one in-flow (gen + register as one transaction); stage registration/
+      asset mismatch cleanup surface (§2.12)
 - [ ] Single character-write endpoint with module-scoped merges + provenance;
       canon-reopen hydrates a project; ZIP import/export moves to the project
       layout
@@ -431,9 +496,13 @@ fallout handled inside the same phase.
 ### Phase 4 — Auto-pilot + jobs + lore *(mock-tested; one real dogfood run)*
 - [ ] `/__editor/jobs` runner: SSE progress, persistence, cost accounting,
       pooled concurrency + 429 backoff; manual mode migrates onto jobs
-- [ ] Auto-pilot DAG: seed → design → canonical → frames → pack → rig(QA) →
+- [ ] Auto-pilot DAG: seed → design → canonical(vision gate) → frames →
+      pack → rig (local skeletons + auto-hitboxes; no pose-rule QA) →
       audio → fatality → vfx → ship, gates pre-approved; headless CLI
       entry point (`npm run studio:run`)
+- [ ] Skills refresh pass 2: `new-character` + `move-authoring` rewritten to
+      drive the job runner/core — CLI character creation with Claude Code
+      and the studio become the same pipeline
 - [ ] `tools/core/lore.mjs`: lore-sheet fetch + fuzzy match + machine-enforced
       privacy opt-out; `alwaysFromLore` feeds frame prompts; lore-aware
       fatality beats + IMAGE_SAFETY soft-fallback (shared with gen-fatality)
@@ -453,9 +522,12 @@ fallout handled inside the same phase.
       no-op fallback path exercised in dev); PUBLISH in SHIP;
       `custom-characters.json` + `resolveAssetBase` roster merge;
       `npm run r2:push/pull` canonize tools
-- [ ] Docs: CLAUDE.md refresh, ASSET_CHECKLIST points at the studio, skills
-      (`new-character`, `sprite-qa`, `move-authoring`) updated to route
-      through core/ + studio; SPRINTBOARD consolidation
+- [ ] Roster/stage lifecycle: `hidden` flag honored by select screens +
+      audit; guided delete (JSON + registration + assets + manifest as one
+      transaction) for characters and stages (§2.12)
+- [ ] Docs: CLAUDE.md refresh, ASSET_CHECKLIST points at the studio, final
+      skills consistency sweep (passes 1–2 landed in Phases 1/4);
+      SPRINTBOARD consolidation
 
 ### Sequencing notes
 - Phases 0–2 are pure consolidation — they de-risk everything after and cost
@@ -486,6 +558,27 @@ fallout handled inside the same phase.
    design-draft + fatality craft library).
 4. **R2: seam + local mock only** this build; real bucket is a later env
    flip.
+
+Additional directives (user, 2026-07-08, second pass):
+
+5. **The studio is built inside the fight-scene engine** (a FightScene mode
+   like sprite editor / move tuner) so editing is WYSIWYG with export and
+   canonization — the character is always standing in a valid fight scene.
+6. **CLI ⇄ studio ⇄ skills parity is in scope**: skills are stale/
+   inconsistent; rewrite them against `tools/core/` so CLI character
+   creation with Claude Code and the studio use the same methods, wizards,
+   prompt assistance, and (re-assessed) QA (§2.2 parity paragraph).
+7. **Sprite QA minimal for now**: human QA is the main path; keep local
+   skeleton inference + a vision look at the main reference images
+   (canonical, crouch/jump anchors); skip the rest, dial in later (§2.11).
+8. **fal is never used locally** — all skeleton generation is local Python;
+   fal only enters with a shipped/prod version.
+9. **End-of-pipeline TEST step**: manual play, P1 vs CPU, CPU vs CPU, all
+   debug tools unified (skeletons/hitboxes/etc.), all menus collapsible/
+   hideable (§2.1 TEST module).
+10. **Publishing owns stages**: assign existing or create new named stages
+    in-flow; clean up old/missing registrations; eventually offline
+    characters and stages via hide or guided delete (§2.12).
 
 Defaults adopted for the remaining minor questions (flag if wrong):
 - EditorMenu entries become studio aliases for one release, then retire.
