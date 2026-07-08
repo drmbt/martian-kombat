@@ -1211,8 +1211,63 @@ profile → base batch → SHIP → reload → **playable MIRAGE vs VINCENT figh
       and 4 fatality panels. Kit in this checkpoint: Quesadilla (hcf+P),
       Hot Coffee (qcf+P), Kitchen Grandma (dp+P), Midnight Munchies (bf+P).
 - [ ] Context cache §16 + richer regeneration controls for design-only rerolls.
+      → SUPERSEDED by Sprint 27 (Character Studio), Phase 4.
 - [ ] Advisory edge-QA badges; R2 publish/pull seams (local-mock first).
+      → SUPERSEDED by Sprint 27, Phases 4–5.
 - [ ] Consolidate: audit/tests + skills + CLAUDE.md; fold Tuner/Editor in.
+      → SUPERSEDED by Sprint 27, Phases 0/3/5.
+
+### Sprint 27 — Character Studio (PLANNED 2026-07-08, branch `feat/character-studio`)
+Goal: unify Character Creator + Move Tuner + Sprite Editor into one modular
+Character Studio over a single shared data model, one pack path, one prompt
+library, and one coordinate contract — with an auto-pilot "images in →
+shippable fighter out" mode, a graceful Adopt/upgrade path for legacy
+characters, and a local-now/R2-later storage seam. **Full plan + audit
+findings in `docs/CHARACTER_STUDIO.md`** (read that first; this is the
+checkbox mirror). Awaiting user answers to the plan's Part-4 questions
+before build starts.
+- [ ] Phase 0 — guardrails + cruft sweep (no API calls): delete orphan assets
+      (haidai portraits, flo rm-rf panels, catherine legacy projectile.png);
+      gate ThreeFxSystem's legacy-projectile load (kills 15 404s per 3D
+      match); grow `assets.audit.test.ts` (bust, orphans, schema lint, meta
+      shape); `tools/core/constants.mjs` (+ generated `qa/constants.py`) and
+      `core/geometry.mjs` replace the FLOOR_FRAC / 1.32 / cellBoxToHitbox
+      copies; QA-dir hygiene (vfx-grid experiments out, RTMPose naming,
+      resolver probes onnxruntime, `gen:busts` script); characterScale
+      base-cache invalidation on character write.
+- [ ] Phase 1 — one pack path + one prompt library (no API calls):
+      `core/keying.mjs` fixes the vite FF_KEY_PAD missing-HEADROOM mismatch;
+      `core/packer.mjs` unifies pack-sheet.mjs + `/__editor/sheet` + the
+      creator write path (server-side pack, meta v2); Sprite Editor edits
+      write back to raw frames (kills the gen:pack-clobbers-edits hazard);
+      frames-manifest promoted to `core/cells.mjs` + `core/prompts.mjs`
+      (creator fighters get canon-quality prompts); shared audio helpers.
+      Gate: vincent repack is pixel-equal before touching the roster.
+- [ ] Phase 2 — atomic floor/skeleton migration (local compute only): all 16
+      re-packed normalized + skeletons + meta v2 from existing raw frames;
+      SPRITE_FOOT_OFFSET_Y and every per-char spriteOffsetY deleted; roster
+      hitbox pass from baked skeletons; Sprint-19 combo test updated →
+      suite fully green (clears the standing 314/315 failure).
+- [ ] Phase 3 — studio shell + schema backfill: CharacterStudioScene with a
+      module rail (Identity/Look/Sprites/Moves/Audio/FX/Ship) mounting the
+      existing Sprite Editor + Move Tuner panels over one CharacterProject;
+      single character-write endpoint with module-scoped merges +
+      provenance; `core/kit.mjs` full-grammar default kit (chains/variants/
+      cancel — fixes the ben/earl regression) + themed fatality slots;
+      backfill ben/earl kits + vanessa quotes; Adopt flow v1 (legacy
+      upgrade checklist + diff view).
+- [ ] Phase 4 — auto-pilot + jobs + lore: `/__editor/jobs` runner (SSE
+      progress, persistence, cost accounting, 429 backoff); auto-pilot DAG +
+      headless `npm run studio:run`; `core/lore.mjs` (lore-sheet fetch,
+      machine-enforced privacy opt-out, lore→always/fatality/VO
+      propagation); creator FX module closes pipeline step 8; context cache
+      §16 + seed/prompt manifest + estimated-cost UI (no auto-fire spends);
+      validated E2E in mock, then ONE budgeted real-API dogfood run.
+- [ ] Phase 5 — storage seam + publish: StorageDriver (LocalRepoStorage /
+      R2Storage per CHARACTER_CREATOR.md §6, env-gated local no-op);
+      PUBLISH in SHIP; custom-characters registry + resolveAssetBase roster
+      merge; `r2:push` / `r2:pull` canonize tools; docs + skills + CLAUDE.md
+      consolidation (roster count, creator status, studio pointers).
 
 ### Icebox (do not start)
 - **Attract-mode gag reels (3D)**: occasionally, instead of a demo fight, the
@@ -1242,6 +1297,18 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-08 · docs · Character Studio plan (Sprint 27)** — Full audit of
+  the Character Creator / Sprite Editor / Move Tuner / tools+QA pipeline /
+  character data tree, and the unification plan: `docs/CHARACTER_STUDIO.md`
+  (audit findings incl. the FF_KEY_PAD-vs-HEADROOM pack mismatch, the two
+  prompt libraries, the half-migrated floor model, the ben/earl schema
+  regression, orphan assets, audit-test blind spots; target architecture:
+  one `tools/core/` shared library, CharacterProject + meta v2, job runner,
+  auto-pilot + manual modes, Adopt/upgrade flow, StorageDriver R2 seam;
+  5-phase build plan + open questions). Sprint 27 section added; the three
+  open Sprint 26 consolidation items marked superseded. No code changes.
+  — Claude (Fable)
 
 - **2026-07-08 · ui · creator special archetype catalog expanded** — The
   Character Creator special dropdown and Gemini design-draft prompt now allow
