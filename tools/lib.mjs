@@ -104,6 +104,41 @@ export function saveVoices(voices) {
   writeFileSync(VOICES_PATH, JSON.stringify(voices, null, 2) + '\n');
 }
 
+/** ElevenLabs voice ids used across the project — one table for the CLI
+ *  (gen-audio) and the dev middleware (creator audio endpoints). */
+export const ELEVEN_VOICES = {
+  announcer: 'V33LkP9pVLdcjeB2y5Na', // Maverick — epic heroic legend (rounds, KO, fighter names)
+  stage: 'QMJTqaMXmGnG8TCm8WQG', // Clyde — vintage male radio announcer (stage call-outs)
+  m: 'SOYHLrjzK2X1ezoPC6cr', // Harry — fierce warrior
+  f: 'EXAVITQu4vr4xnSDxMaL', // Sarah — mature confident
+};
+
+/** ElevenLabs TTS. Returns an audio Buffer. One implementation for CLI + vite. */
+export async function elevenTts({ apiKey, voiceId, text, style = 0.7, stability = 0.4, similarityBoost = 0.75 }) {
+  const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+    method: 'POST',
+    headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      text,
+      model_id: 'eleven_multilingual_v2',
+      voice_settings: { stability, similarity_boost: similarityBoost, style },
+    }),
+  });
+  if (!res.ok) throw new Error(`elevenlabs tts ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  return Buffer.from(await res.arrayBuffer());
+}
+
+/** ElevenLabs sound-effect generation. Returns an audio Buffer. */
+export async function elevenSfx({ apiKey, text, seconds, promptInfluence = 0.6 }) {
+  const res = await fetch('https://api.elevenlabs.io/v1/sound-generation', {
+    method: 'POST',
+    headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, duration_seconds: seconds, prompt_influence: promptInfluence }),
+  });
+  if (!res.ok) throw new Error(`sfx ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  return Buffer.from(await res.arrayBuffer());
+}
+
 /** Fish Audio TTS with a cloned voice model. Returns an audio Buffer. */
 export async function fishTTS({ apiKey, referenceId, text, temperature = 0.7, topP = 0.7, model = 's1', format = 'mp3' }) {
   const res = await fetch('https://api.fish.audio/v1/tts', {

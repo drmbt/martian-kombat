@@ -3,7 +3,7 @@
 // Idempotent; --force regens.  node tools/gen-audio.mjs [--force]
 
 import { join } from 'node:path';
-import { ROOT, loadEnv, saveAsset, skip, pool, concurrencyArg, loadVoices, fishTTS } from './lib.mjs';
+import { ROOT, loadEnv, saveAsset, skip, pool, concurrencyArg, loadVoices, fishTTS, elevenTts, elevenSfx, ELEVEN_VOICES } from './lib.mjs';
 
 const env = loadEnv();
 const force = process.argv.includes('--force');
@@ -21,37 +21,19 @@ const CONCURRENCY = concurrencyArg(4);
 // through clones.
 const CLONED = loadVoices();
 
-const ANNOUNCER = 'V33LkP9pVLdcjeB2y5Na'; // Maverick — epic heroic legend (rounds, KO, fighter names)
-const STAGE_VOICE = 'QMJTqaMXmGnG8TCm8WQG'; // Clyde — vintage male radio announcer (stage name call-outs only)
-const VOICE_M = 'SOYHLrjzK2X1ezoPC6cr'; // Harry — fierce warrior (Vincent)
-const VOICE_F = 'EXAVITQu4vr4xnSDxMaL'; // Sarah — mature confident (Yulia)
+// shared voice table + TTS/SFX implementations live in tools/lib.mjs (one
+// copy for the CLI and the creator's dev-middleware endpoints)
+const ANNOUNCER = ELEVEN_VOICES.announcer;
+const STAGE_VOICE = ELEVEN_VOICES.stage;
+const VOICE_M = ELEVEN_VOICES.m; // (Vincent)
+const VOICE_F = ELEVEN_VOICES.f; // (Yulia)
 const VOICE_CATH = 'cgSgspJ2msm6clMCkdW9'; // Jessica — playful bright (Catherine)
 const VOICE_KIRBY = 'FGY2WhTYpPnrIDTdsKH5'; // Laura — sassy (Kirby)
 const VOICE_FLO = 'onwK4e9ZLuTAKqWW03F9'; // Daniel — deep gruff (Flo)
 
-async function tts(voiceId, text, style = 0.7, stability = 0.4) {
-  const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-    method: 'POST',
-    headers: { 'xi-api-key': KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      text,
-      model_id: 'eleven_multilingual_v2',
-      voice_settings: { stability, similarity_boost: 0.75, style },
-    }),
-  });
-  if (!res.ok) throw new Error(`tts ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  return Buffer.from(await res.arrayBuffer());
-}
-
-async function sfx(text, seconds) {
-  const res = await fetch('https://api.elevenlabs.io/v1/sound-generation', {
-    method: 'POST',
-    headers: { 'xi-api-key': KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, duration_seconds: seconds, prompt_influence: 0.6 }),
-  });
-  if (!res.ok) throw new Error(`sfx ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  return Buffer.from(await res.arrayBuffer());
-}
+const tts = (voiceId, text, style = 0.7, stability = 0.4) =>
+  elevenTts({ apiKey: KEY, voiceId, text, style, stability });
+const sfx = (text, seconds) => elevenSfx({ apiKey: KEY, text, seconds });
 
 const AUDIO = join(ROOT, 'public/assets/audio');
 

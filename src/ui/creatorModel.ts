@@ -82,61 +82,36 @@ export interface DesignDraft {
   musicPrompt: string;
 }
 
-// ── prompt templates (docs/CHARACTER_CREATOR.md §14) ────────────────────────
-const STYLE_ART = 'Art style: hand-painted cel-shaded 2D anime fighter, bold clean line art, painterly cel shading.';
-const STYLE_BG = 'Background: solid flat chroma-key green (#00B140), completely uniform, no shadow, no floor, no text, no border.';
-// full-body frame rules (canonical + sprite cells ONLY — never portraits)
-const STYLE =
-  `${STYLE_ART} Full body head to toe at the SAME scale and camera distance as the reference image — ` +
-  `the top of the head near the top edge and the soles of the feet on an invisible ground line just ` +
-  `above the bottom edge, the figure filling the frame vertically the same amount as the reference, ` +
-  `centered horizontally, facing right. ${STYLE_BG}`;
+// ── prompt templates ─────────────────────────────────────────────────────────
+// The prompt craft lives in tools/core/prompts.mjs + cells.mjs — ONE library
+// shared with the CLI pipeline (gen-frames/gen-canonical), so canon fighters
+// and creator fighters are prompted identically (docs/CHARACTER_STUDIO.md C2).
+import { CELLS } from '../../tools/core/cells.mjs';
+import {
+  spritePrompt, canonicalFromDescription, portraitPrompt, defeatPrompt,
+  fatalityBeats as coreFatalityBeats,
+} from '../../tools/core/prompts.mjs';
 
-export const CANONICAL_PROMPT = (d: string): string =>
-  `Full-body fighting-game character sheet of ${d}. Neutral confident standing pose, arms relaxed, ` +
-  `facing right. ${STYLE}`;
+export const CANONICAL_PROMPT = (d: string): string => canonicalFromDescription(d);
 
 // selection icon: a TIGHT bust — must NOT inherit the full-body frame rules.
-export const PORTRAIT_PROMPT = (name: string, desc: string): string =>
-  `Tight head-and-shoulders BUST portrait of ${name} (${desc}) for a fighting-game character-select ` +
-  `icon. ONLY the head and shoulders fill the frame — face straight-on toward the viewer, direct gaze, ` +
-  `neutral confident expression, top of the head near the top edge, shoulders cropped at the bottom edge. ` +
-  `This is a close-up: do NOT show a full body, do NOT show the torso below the chest, hands, legs or ` +
-  `feet, do NOT zoom out. ${STYLE_ART} ${STYLE_BG}`;
+export const PORTRAIT_PROMPT = (name: string, desc: string): string => portraitPrompt(name, desc);
 
-/** the 4 default fatality panel BEATS (the editable part of each cutscene panel's
- *  prompt — the endpoint wraps each in the shared cinematic frame). Mirrors the
- *  server default so the creator's per-panel editors seed correctly. */
-export function fatalityBeats(name: string, fatalityName: string): string[] {
-  const N = (name || 'the fighter').toUpperCase(), F = fatalityName || 'the finisher';
-  return [
-    `${N} seizes the dazed, beaten opponent and begins the finishing move "${F}" — the opponent recoiling in terror`,
-    `mid-execution of "${F}", ${N} unleashing the move at full force, the opponent's body contorting`,
-    `the brutal peak of "${F}", dramatic impact, the opponent breaking apart, stylized gore`,
-    `the aftermath — ${N} standing victorious over the destroyed opponent, a smouldering husk`,
-  ];
-}
+/** the 4 default fatality panel BEATS (one copy in core/prompts.mjs — the
+ *  /creator/fatality endpoint wraps each in the shared cinematic frame). */
+export const fatalityBeats = (name: string, fatalityName: string): string[] =>
+  coreFatalityBeats(name, fatalityName);
 
-export const KO_PROMPT = (name: string, desc: string): string =>
-  `Tight head-and-shoulders BUST portrait of ${name} (${desc}), beaten and exhausted, head bowed, ` +
-  `bruised, downcast. Close-up on the head and shoulders only — no full body, torso, hands or legs. ` +
-  `${STYLE_ART} ${STYLE_BG}`;
+/** beaten defeated bust — reference-based (the canonical rides along as an
+ *  image ref), same prompt the CLI KO pass uses */
+export const KO_PROMPT = (_name: string, _desc: string): string => defeatPrompt();
 
-/** the shared base cells the first batch covers (pipeline order: the same order
- *  the raw frames are numbered — idle/walk/crouch/jump/block/hit/fall/down). */
-export const BASE_CELLS: { id: string; ref: 'canonical'; pose: string }[] = [
-  { id: 'idle-a', ref: 'canonical', pose: 'relaxed fighting idle, weight settled, BOTH feet flat, guard loosely up. NOT an attack — no raised knee, kick or lunge.' },
-  { id: 'idle-b', ref: 'canonical', pose: 'relaxed fighting idle, chest risen on the breath, BOTH feet flat. NOT an attack.' },
-  { id: 'walk-a', ref: 'canonical', pose: 'walking forward, mid-stride: the LEFT leg lifted and striding FORWARD with a bent knee, the RIGHT leg trailing BEHIND and extended, weight shifting onto the front foot, arms swinging in opposition. A clear exaggerated walk-cycle step — NOT a neutral standing pose.' },
-  { id: 'walk-b', ref: 'canonical', pose: 'walking forward, the OPPOSITE step of the other walk frame: the RIGHT leg lifted and striding FORWARD with a bent knee, the LEFT leg trailing BEHIND and extended, opposite arm swing. Legs clearly in a DIFFERENT position from the first walk frame.' },
-  { id: 'crouch', ref: 'canonical', pose: 'squatting EXTREMELY low, knees folded, hips at heel height — the whole figure occupies ONLY the BOTTOM HALF of the frame.' },
-  { id: 'jump', ref: 'canonical', pose: 'airborne, knees tucked, the whole figure lifted off the ground.' },
-  { id: 'block', ref: 'canonical', pose: 'guard up, forearms shielding the face and body, braced.' },
-  { id: 'block-crouch', ref: 'canonical', pose: 'a CROUCHING BLOCK — squatting EXTREMELY low (hips at heel height, the whole figure occupying ONLY the BOTTOM HALF of the frame) with the guard up, forearms shielding the head and body, braced. A low defensive crouch, NOT standing, NOT an attack.' },
-  { id: 'hit', ref: 'canonical', pose: 'a HIT reaction — recoiling from a blow, head snapped back, torso twisted away, off balance, one arm flailing up. NOT an attack, NOT a block.' },
-  { id: 'fall', ref: 'canonical', pose: 'knocked backward off balance, mid-air, arms flailing.' },
-  { id: 'down', ref: 'canonical', pose: 'lying flat on the back on the ground — a HORIZONTAL shape along the BOTTOM QUARTER of the frame.' },
-];
+/** the shared base cells the first batch covers — THE pipeline cell library
+ *  (tools/core/cells.mjs), so creator fighters get the same battle-hardened
+ *  pose strings (idle-flicker pins, walk strides, LOW/LYING geometry) the
+ *  canon roster generates from. */
+export const BASE_CELLS: { id: string; ref: 'canonical'; pose: string }[] =
+  CELLS.map((c) => ({ id: c.id, ref: 'canonical' as const, pose: c.pose }));
 
 /** one sheet cell of an attack, with the base image to condition on and a
  *  DISTINCT per-phase pose (startup wind-up → active impact → recovery return),
@@ -182,11 +157,7 @@ export const specialCells = (id: string, name: string, desc: string): AttackCell
 ];
 
 export const SPRITE_PROMPT = (name: string, pose: string): string =>
-  `Same character as the reference — identical face, hair, outfit, colors and proportions, drawn at ` +
-  `EXACTLY the same size, height and framing as the reference image (do NOT zoom in or out, do NOT ` +
-  `resize the character between frames — the head and feet reach the same edges every frame). ` +
-  `Keep the ENTIRE figure — every limb, weapon and effect — fully INSIDE the frame with a small margin; ` +
-  `nothing may be cropped or bleed off any edge, even on wide dynamic poses. ${name}, ${pose} ${STYLE}`;
+  spritePrompt(`${name}, ${pose}`);
 
 // ── deterministic client-side draft (real Gemini text is a follow-up) ───────
 const hash = (s: string): number => {

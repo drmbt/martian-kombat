@@ -19,22 +19,12 @@ const MODEL = 'gemini-3-pro-image';
 const CANON = join(ROOT, 'assets/raw/canonical');
 const PORTRAITS = join(ROOT, 'public/assets/portraits');
 
-const CHAR_BASE = `Transform the person in the reference photo into a full-body 2D fighting game character.
-CRITICAL: preserve their real facial features, hairstyle, skin tone, body type and the outfit they are wearing in the photo — it must be recognizably the same person.
-Pose: dynamic side-on martial-arts fighting stance facing right, knees bent, hands up ready to fight, full body visible head to toe with a small margin, centered.
-Background: solid flat chroma-key green (#00B140), completely uniform, no shadows cast on the background, no floor, no text, no watermark, no border.`;
-
-const STYLE = `Art style: hand-painted cel-shaded 2D anime fighter (modern Capcom / Arc System Works aesthetic). Bold clean line art, painterly cel shading, confident silhouette, slightly heroic proportions while keeping the person recognizable.`;
-
-// Defeated bust for the post-match win-quote screen (SFII-style loser portrait).
-const DEFEAT = `Head-and-shoulders BUST portrait of the same person as the reference (preserve their real face, hairstyle, skin tone and outfit), but they have just LOST a brutal fight: face bruised and swollen, blackened puffy eye, split bleeding lip, a trickle of blood down the cheek, sweat-matted hair, dirt smudges, dazed and downcast defeated expression with the head tilted slightly down. Head and shoulders only, centered, filling the frame.
-Background: solid flat chroma-key green (#00B140), completely uniform, no shadows on the background, no floor, no text, no watermark, no border.`;
-
-// gemini's IMAGE_SAFETY filter sometimes rejects DEFEAT (first seen: cat,
-// 2026-07-04) — this softer variant is the automatic fallback so the batch
-// still gets a usable loser portrait instead of aborting.
-const DEFEAT_SOFT = `Head-and-shoulders BUST portrait of the same person as the reference (preserve their real face, hairstyle, skin tone and outfit), but they have just lost a cartoon martial-arts match: exhausted and dazed, comic swirl of dizziness, messy sweat-matted hair, a small bruise on the cheek, dirt smudges, defeated downcast expression with the head tilted slightly down. No blood. Head and shoulders only, centered, filling the frame.
-Background: solid flat chroma-key green (#00B140), completely uniform, no shadows on the background, no floor, no text, no watermark, no border.`;
+// prompt craft now lives in tools/core/prompts.mjs (shared with the Character
+// Creator). DEFEAT_SOFT is the automatic IMAGE_SAFETY fallback (first seen:
+// cat, 2026-07-04) so the batch still gets a usable loser portrait.
+import { canonicalFromPhoto, defeatPrompt, defeatPromptSoft } from './core/prompts.mjs';
+const DEFEAT = defeatPrompt();
+const DEFEAT_SOFT = defeatPromptSoft();
 
 const FLAVOR = {
   catherine: `Character flavor: "The Chef de Guerre" — a warrior chef. She holds a wooden bo staff in a ready grip and wears a chef's apron over her outfit with a bandolier of kitchen knives across the chest. Her small scruffy dog Jazzper stands alert at her feet, also facing right.`,
@@ -94,7 +84,7 @@ for (const [id, flavor] of Object.entries(FLAVOR)) {
   const out = join(CANON, `${id}.png`);
   if (skip(out, force)) continue;
   console.log(`canonical ${id} ...`);
-  const prompt = `${CHAR_BASE}\n${STYLE}\n${flavor}`;
+  const prompt = canonicalFromPhoto(flavor);
   const faceRef = FACE[id] && existsSync(join(ROOT, FACE[id])) ? [join(ROOT, FACE[id])] : [];
   const buf = await geminiImage({
     apiKey: env.GEMINI_API_KEY,

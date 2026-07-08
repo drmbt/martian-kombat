@@ -1,13 +1,10 @@
-// Node accessor for the shared sprite-coordinate contract. The values live in
-// src/render/coords.json (single source — the browser imports it directly and
-// tools/qa/coords.py reads it for Python). Import from here in gen scripts and
-// the vite middleware; never re-declare these constants.
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
-
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const c = JSON.parse(readFileSync(join(ROOT, 'src', 'render', 'coords.json'), 'utf8'));
+// Isomorphic accessor for the shared sprite-coordinate contract. The values
+// live in src/render/coords.json (single source — src/render/coords.ts and
+// tools/qa/coords.py read the same file). Import from here in gen scripts,
+// the vite middleware, AND browser code reached via tools/core (the JSON
+// import attribute works in Node 20.10+ and in Vite/Rollup bundles alike).
+// Never re-declare these constants.
+import c from '../../src/render/coords.json' with { type: 'json' };
 
 export const CELL_W = c.cellW;
 export const CELL_H = c.cellH;

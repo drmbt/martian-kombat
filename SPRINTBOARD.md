@@ -1299,10 +1299,25 @@ implementation, many doors; only the standalone scene implementations
       regen + prompt sidecar back to `assets/raw/frames/<id>/NN-<cell>.png`
       — the "gen:pack silently clobbers editor edits" hazard is CLOSED.
       Verified: /pack E2E on chebel via curl (62 frames, backup, meta v2).
-      STILL OPEN in Phase 1: frames-manifest → `core/cells.mjs` +
-      `core/prompts.mjs` (creator imports the canon prompt craft); shared
-      audio helpers in lib.mjs; skills refresh pass 1; creator SHIP packs
-      server-side via /__editor/pack (retire composeSheet).
+      ALSO DONE (2026-07-08, 1c/1d): the shared cell contract + generic pose
+      library moved to `tools/core/cells.mjs` (CELLS merged best-of-both —
+      frames-manifest craft + the creator's idle-flicker/walk-stride pins;
+      LOW/LYING, buildJobs, gridFor; frames-manifest re-exports so importers
+      are unchanged) and the prompt craft to `tools/core/prompts.mjs`
+      (STYLE_ART, FRAME_RULES incl. the creator's same-size clause,
+      canonicalFromPhoto/Description, portrait/defeat(+IMAGE_SAFETY-soft),
+      spritePrompt, fatalityBeats). gen-frames + gen-canonical now import
+      from core; `creatorModel.ts` imports the SAME library via `.d.mts`
+      declarations (BASE_CELLS derives from core CELLS; KO prompt is now the
+      reference-based defeat prompt) — creator fighters are prompted with
+      the canon craft (C2 closed). `core/coords.mjs` made isomorphic (JSON
+      import attribute) so browser bundles work. Audio: `elevenTts`/
+      `elevenSfx`/`ELEVEN_VOICES` in lib.mjs — gen-audio + both creator
+      audio endpoints share one implementation; the vite fatality endpoint
+      reads the ONE fatalityBeats copy. tsc + prod build + dev transform all
+      verified. STILL OPEN in Phase 1: skills refresh pass 1
+      (sprite-generation / sprite-qa point at core/); creator SHIP packs
+      server-side via /__editor/pack (retire client composeSheet).
 - [ ] Phase 2 — atomic floor/skeleton migration (local compute only): all 16
       re-packed normalized + skeletons + meta v2 from existing raw frames;
       SPRITE_FOOT_OFFSET_Y and every per-char spriteOffsetY deleted; roster
@@ -1371,6 +1386,16 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-08 · tools+ui · Sprint 27 Phase 1c/1d: one prompt library +
+  shared audio** — Cell contract + pose library → `tools/core/cells.mjs`
+  (merged best-of-both poses), prompt craft → `tools/core/prompts.mjs`;
+  gen-frames/gen-canonical AND creatorModel now compose from the same
+  library (creator fighters get canon-quality prompts — C2 closed);
+  `.d.mts` declarations bridge browser TS ↔ .mjs; coords.mjs isomorphic.
+  ElevenLabs TTS/SFX + voice table unified in lib.mjs (gen-audio + creator
+  endpoints); fatality default beats single-sourced. tsc + build + dev
+  transform verified; 357/361 (4 known pre-existing). — Claude (Fable)
 
 - **2026-07-08 · tools+ui · Sprint 27 Phase 1a/1b: one pack path** —
   `tools/core/keying.mjs` (one key/pad filter source — the vite copy's

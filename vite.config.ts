@@ -28,6 +28,7 @@ const okId = (id: unknown): id is string => typeof id === 'string' && /^[a-z0-9_
 // old inline copy here omitted it, so editor/creator cells misregistered
 // ~24px against pipeline-packed cells — docs/CHARACTER_STUDIO.md C1).
 import { KEY_PAD_CELL, keyPadSquare, STAGE_COVER } from './tools/core/keying.mjs';
+import { ELEVEN_VOICES } from './tools/lib.mjs';
 const FF_KEY_PAD = KEY_PAD_CELL;
 // portraits are SQUARE (character-select icon aspect) and centered, not floor-aligned
 const FF_KEY_PAD_SQUARE = keyPadSquare(512);
@@ -560,15 +561,11 @@ Cardinality requirements:
       // -> ElevenLabs TTS: announcer name + the character's kiai/hurt/victory VO
       //    lines. Returns { clips: { announcer, kiai-1..6, hurt-1..6, victory-1..4 } }
       //    as base64 mp3. Mocks when no ELEVENLABS_API_KEY / MK_CREATOR_MOCK=1.
-      const ELEVEN = { announcer: 'V33LkP9pVLdcjeB2y5Na', m: 'SOYHLrjzK2X1ezoPC6cr', f: 'EXAVITQu4vr4xnSDxMaL' };
+      // voice table + TTS implementation shared with gen-audio via tools/lib.mjs
+      const ELEVEN = ELEVEN_VOICES;
       const elevenTts = async (apiKey: string, voiceId: string, text: string): Promise<Buffer> => {
-        const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-          method: 'POST',
-          headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, model_id: 'eleven_multilingual_v2', voice_settings: { stability: 0.4, style: 0.7, similarity_boost: 0.8 } }),
-        });
-        if (!r.ok) throw new Error(`elevenlabs tts ${r.status}: ${await r.text()}`);
-        return Buffer.from(await r.arrayBuffer());
+        const lib = await import('./tools/lib.mjs');
+        return lib.elevenTts({ apiKey, voiceId, text });
       };
       server.middlewares.use('/__editor/creator/audio', (req, res, next) => {
         if (req.method !== 'POST') return next();
@@ -694,13 +691,10 @@ Cardinality requirements:
             const refs = Array.isArray(referenceBase64) ? (referenceBase64 as unknown[]) : [];
             const refPaths: string[] = [];
             refs.forEach((r, i) => { if (typeof r === 'string') { const p = join(scratch, `ref-${i}.png`); writeFileSync(p, Buffer.from(r, 'base64')); refPaths.push(p); } });
-            const N = (name ?? 'the fighter').toUpperCase(), F = fatalityName ?? 'the finisher';
-            const defaults = [
-              `${N} seizes the dazed, beaten opponent and begins the finishing move "${F}" — the opponent recoiling in terror`,
-              `mid-execution of "${F}", ${N} unleashing the move at full force, the opponent's body contorting`,
-              `the brutal peak of "${F}", dramatic impact, the opponent breaking apart, stylized gore`,
-              `the aftermath — ${N} standing victorious over the destroyed opponent, a smouldering husk`,
-            ];
+            // one copy of the default beats (tools/core/prompts.mjs) — the
+            // client seeds its editable per-panel beats from the same source
+            const { fatalityBeats } = await import('./tools/core/prompts.mjs');
+            const defaults = fatalityBeats(name ?? 'the fighter', fatalityName ?? 'the finisher');
             // client-edited beats win; a single `only` index rerolls just that panel
             const src = Array.isArray(panelPrompts) && panelPrompts.length === 4 ? (panelPrompts as unknown[]).map((p, i) => (typeof p === 'string' && p.trim() ? p : defaults[i])) : defaults;
             const idxs = typeof only === 'number' && only >= 0 && only < 4 ? [only] : [0, 1, 2, 3];
