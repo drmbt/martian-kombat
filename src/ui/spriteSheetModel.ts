@@ -263,12 +263,17 @@ export class SpriteSheetModel {
   }
 
   // ---- keypoints ----
+  /** skeletons the user re-inferred or dragged this session (persisted as an
+   *  edit overlay so a later re-pack keeps them) */
+  private touchedJoints = new Set<string>();
   setKeypoints(name: string, joints: Joints): void {
     this.skeletons[name] = joints;
+    this.touchedJoints.add(name);
   }
   setJoint(name: string, joint: string, x: number, y: number): void {
     const j = (this.skeletons[name] ??= {});
     j[joint] = [x, y, j[joint]?.[2] ?? 1];
+    this.touchedJoints.add(name);
   }
 
   /** the current pixels of a cell as a keyed 288×384 PNG (base64, no prefix) —
@@ -280,6 +285,27 @@ export class SpriteSheetModel {
   // ---- export / WRITE ----
   exportPngBase64(): string {
     return this.working.toDataURL('image/png').split(',')[1];
+  }
+  /** every cell whose PIXELS were edited this session (from the op manifest) —
+   *  the overlay set /__editor/sheet persists to assets/raw/edits/<id>/cells/
+   *  so tools/core/packer.mjs keeps the edits on a later re-pack */
+  exportEditedCells(): { name: string; pngBase64: string }[] {
+    const names = new Set(this.manifest.flatMap((m) => m.cells));
+    const out: { name: string; pngBase64: string }[] = [];
+    for (const name of names) {
+      const i = this.frames.indexOf(name);
+      if (i >= 0) out.push({ name, pngBase64: this.cellPngBase64(i) });
+    }
+    return out;
+  }
+  /** skeletons that must survive a re-pack: dragged/re-inferred joints PLUS
+   *  the (auto-shifted) joints of every pixel-edited cell — a re-pack would
+   *  otherwise re-bake the stale QA-report joints against the edited pixels */
+  exportEditedSkeletons(): Record<string, Joints> {
+    const names = new Set([...this.touchedJoints, ...this.manifest.flatMap((m) => m.cells)]);
+    const out: Record<string, Joints> = {};
+    for (const n of names) if (this.skeletons[n]) out[n] = this.skeletons[n];
+    return out;
   }
   exportMeta(): SheetMeta {
     return {

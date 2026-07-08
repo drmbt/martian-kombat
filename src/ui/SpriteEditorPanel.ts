@@ -661,6 +661,11 @@ export class SpriteEditorPanel {
         pngBase64: this.model.exportPngBase64(),
         meta: this.model.exportMeta(),
         manifest: this.model.manifest,
+        // edit overlays: persisted server-side so a later gen:pack (which
+        // rebuilds from assets/raw/frames) keeps these edits instead of
+        // silently clobbering them
+        editedCells: this.model.exportEditedCells(),
+        editedSkeletons: this.model.exportEditedSkeletons(),
       }),
     });
     const json = (await res.json()) as { ok?: boolean; backup?: string; error?: string };

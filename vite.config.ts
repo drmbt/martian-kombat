@@ -23,17 +23,16 @@ function readJsonBody(req: import('node:http').IncomingMessage): Promise<Record<
 }
 
 const okId = (id: unknown): id is string => typeof id === 'string' && /^[a-z0-9_-]+$/.test(id);
-// same chroma-key + scale/pad filter tools/pack-sheet.mjs uses, so a
-// regenerated frame lands in the exact 288x384 cell space the packer produces
-const FF_KEY_PAD =
-  'chromakey=0x00B140:0.15:0.06,scale=288:384:force_original_aspect_ratio=decrease,' +
-  'pad=288:384:(ow-iw)/2:oh-ih:color=0x00000000';
+// THE chroma-key + scale/pad filters, shared with tools/pack-sheet.mjs via
+// tools/core/keying.mjs. KEY_PAD_CELL includes the pack-time HEADROOM (the
+// old inline copy here omitted it, so editor/creator cells misregistered
+// ~24px against pipeline-packed cells — docs/CHARACTER_STUDIO.md C1).
+import { KEY_PAD_CELL, keyPadSquare, STAGE_COVER } from './tools/core/keying.mjs';
+const FF_KEY_PAD = KEY_PAD_CELL;
 // portraits are SQUARE (character-select icon aspect) and centered, not floor-aligned
-const FF_KEY_PAD_SQUARE =
-  'chromakey=0x00B140:0.15:0.06,scale=512:512:force_original_aspect_ratio=decrease,' +
-  'pad=512:512:(ow-iw)/2:(oh-ih)/2:color=0x00000000';
+const FF_KEY_PAD_SQUARE = keyPadSquare(512);
 // stages are full backgrounds — NO chroma key; cover-crop to the 21:9 fight aspect
-const FF_STAGE = 'scale=1680:720:force_original_aspect_ratio=increase,crop=1680:720';
+const FF_STAGE = STAGE_COVER;
 
 // Dev-only editor backend: a tiny middleware that lets the in-game front-end
 // editors write data files back to disk during `npm run dev`. `apply: 'serve'`
@@ -274,8 +273,10 @@ Cardinality requirements:
         if (req.method !== 'POST') return next();
         readJsonBody(req)
           .then((b) => {
-            const { id, pngBase64, meta, manifest } = b as {
+            const { id, pngBase64, meta, manifest, editedCells, editedSkeletons } = b as {
               id?: unknown; pngBase64?: unknown; meta?: unknown; manifest?: unknown;
+              editedCells?: { name?: unknown; pngBase64?: unknown }[];
+              editedSkeletons?: Record<string, unknown>;
             };
             if (!okId(id)) throw new Error('invalid character id');
             if (typeof pngBase64 !== 'string' || typeof meta !== 'object' || meta === null) {
@@ -294,7 +295,74 @@ Cardinality requirements:
             }
             writeFileSync(sheetPath, Buffer.from(pngBase64, 'base64'));
             writeFileSync(metaPath, JSON.stringify(meta, null, 2) + '\n');
-            sendJson(res, 200, { ok: true, backup: `assets/raw/sprite-edits/${id}/${stamp}` });
+            // Persist edit overlays so tools/core/packer.mjs keeps these edits
+            // when the sheet is later re-packed from assets/raw/frames.
+            const editsDir = join(root, 'assets/raw/edits', id);
+            let overlays = 0;
+            if (Array.isArray(editedCells) && editedCells.length) {
+              mkdirSync(join(editsDir, 'cells'), { recursive: true });
+              for (const c of editedCells) {
+                if (typeof c?.name !== 'string' || !/^[a-z0-9-]+$/.test(c.name) || typeof c.pngBase64 !== 'string') continue;
+                writeFileSync(join(editsDir, 'cells', `${c.name}.png`), Buffer.from(c.pngBase64, 'base64'));
+                overlays++;
+              }
+            }
+            if (editedSkeletons && typeof editedSkeletons === 'object' && Object.keys(editedSkeletons).length) {
+              mkdirSync(editsDir, { recursive: true });
+              const skelPath = join(editsDir, 'skeletons.json');
+              const prev = existsSync(skelPath) ? (JSON.parse(readFileSync(skelPath, 'utf-8')) as Record<string, unknown>) : {};
+              writeFileSync(skelPath, JSON.stringify({ ...prev, ...editedSkeletons }, null, 2) + '\n');
+            }
+            sendJson(res, 200, { ok: true, backup: `assets/raw/sprite-edits/${id}/${stamp}`, overlays });
+          })
+          .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
+      });
+
+      // POST /__editor/pack  { id, normalize? }
+      // -> re-pack a character's sheet from assets/raw/frames (+ the edit
+      //    overlays in assets/raw/edits) via tools/core/packer.mjs — the SAME
+      //    pack path as `npm run gen:pack`. Backs up the current sheet first.
+      server.middlewares.use('/__editor/pack', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        readJsonBody(req)
+          .then(async (b) => {
+            const { id, normalize } = b as { id?: unknown; normalize?: unknown };
+            if (!okId(id)) throw new Error('invalid character id');
+            if (!existsSync(join(root, 'assets/raw/frames', id))) throw new Error(`no raw frames for ${id}`);
+            const { CHARACTERS, buildJobs, gridFor } = await import('./tools/frames-manifest.mjs');
+            const { packCharacter } = await import('./tools/core/packer.mjs');
+            const spec = (CHARACTERS as Record<string, unknown>)[id];
+            // creator-made characters have no frames-manifest entry: derive the
+            // grid from the current meta (fallback 8 cols) and skip the count check
+            let grid: { cols: number; rows: number };
+            let expected: number | undefined;
+            if (spec) {
+              grid = gridFor(spec);
+              expected = buildJobs(spec).length;
+            } else {
+              const metaPath = join(root, 'public/assets/sprites', id, 'meta.json');
+              const cols = existsSync(metaPath) ? ((JSON.parse(readFileSync(metaPath, 'utf-8')) as { cols?: number }).cols ?? 8) : 8;
+              const n = readdirSync(join(root, 'assets/raw/frames', id)).filter((f) => /^\d\d-.*\.png$/.test(f)).length;
+              grid = { cols, rows: Math.ceil(n / cols) };
+            }
+            // backup like /__editor/sheet
+            const spriteDir = join(root, 'public/assets/sprites', id);
+            const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const backupDir = join(root, 'assets/raw/sprite-edits', id, stamp);
+            mkdirSync(backupDir, { recursive: true });
+            for (const f of ['sheet.png', 'meta.json']) {
+              if (existsSync(join(spriteDir, f))) copyFileSync(join(spriteDir, f), join(backupDir, f));
+            }
+            let python: string | undefined;
+            if (normalize) {
+              const { resolvePython } = await import('./tools/qa/resolve-python.mjs');
+              python = resolvePython('numpy');
+            }
+            const result = packCharacter(id, {
+              root, spec, grid, expected, normalize: !!normalize, python,
+              log: (m: string) => server.config.logger.info(m),
+            });
+            sendJson(res, 200, { ok: true, frames: result.frames, backup: `assets/raw/sprite-edits/${id}/${stamp}` });
           })
           .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
       });
@@ -334,8 +402,8 @@ Cardinality requirements:
         if (req.method !== 'POST') return next();
         readJsonBody(req)
           .then(async (b) => {
-            const { id, prompt, referenceBase64 } = b as {
-              id?: unknown; prompt?: unknown; referenceBase64?: unknown;
+            const { id, prompt, referenceBase64, cellName } = b as {
+              id?: unknown; prompt?: unknown; referenceBase64?: unknown; cellName?: unknown;
             };
             if (!okId(id)) throw new Error('invalid character id');
             if (typeof prompt !== 'string' || !prompt.trim()) throw new Error('empty prompt');
@@ -364,7 +432,24 @@ Cardinality requirements:
             writeFileSync(rawPath, raw);
             const cellPath = join(scratch, 'cell.png');
             execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', rawPath, '-vf', FF_KEY_PAD, '-frames:v', '1', cellPath]);
-            sendJson(res, 200, { ok: true, pngBase64: readFileSync(cellPath).toString('base64') });
+            // Write the UN-keyed gen back to assets/raw/frames/<id>/NN-<cell>.png
+            // (+ prompt sidecar) so re-packs build from the new art instead of
+            // silently reverting the regen; a superseded pixel-edit overlay for
+            // the cell is dropped. Only replaces an existing frame file.
+            let rawSaved: string | undefined;
+            if (typeof cellName === 'string' && /^[a-z0-9-]+$/.test(cellName)) {
+              const framesDir = join(root, 'assets/raw/frames', id);
+              if (existsSync(framesDir)) {
+                const hit = readdirSync(framesDir).find((f) => new RegExp(`^\\d\\d-${cellName}\\.png$`).test(f));
+                if (hit) {
+                  writeFileSync(join(framesDir, hit), raw);
+                  writeFileSync(join(framesDir, `${hit.replace(/\.png$/, '')}.prompt.txt`), prompt);
+                  rawSaved = hit;
+                  rmSync(join(root, 'assets/raw/edits', id, 'cells', `${cellName}.png`), { force: true });
+                }
+              }
+            }
+            sendJson(res, 200, { ok: true, pngBase64: readFileSync(cellPath).toString('base64'), rawSaved });
           })
           .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
       });

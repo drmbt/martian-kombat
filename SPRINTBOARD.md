@@ -1278,14 +1278,31 @@ implementation, many doors; only the standalone scene implementations
       qcb remaps + the cbf sonic-boom test — Phase 2/3 rewrites those tests
       against synthetic defs). Boot verified in-browser: 541 assets, 0 load
       failures, 0 failed network requests, no console errors.
-- [ ] Phase 1 — one pack path + one prompt library (no API calls):
-      `core/keying.mjs` fixes the vite FF_KEY_PAD missing-HEADROOM mismatch;
-      `core/packer.mjs` unifies pack-sheet.mjs + `/__editor/sheet` + the
-      creator write path (server-side pack, meta v2); Sprite Editor edits
-      write back to raw frames (kills the gen:pack-clobbers-edits hazard);
-      frames-manifest promoted to `core/cells.mjs` + `core/prompts.mjs`
-      (creator fighters get canon-quality prompts); shared audio helpers.
-      Gate: vincent repack is pixel-equal before touching the roster.
+- [~] Phase 1 — one pack path + one prompt library (no API calls). DONE so
+      far (2026-07-08): `core/keying.mjs` — one chromaKey/SCALE_PAD/
+      keyPadSquare/STAGE_COVER source; the vite FF_KEY_PAD missing-HEADROOM
+      mismatch is FIXED (editor/creator cells now land in the exact packed
+      cell space; creator preview re-anchored to the ORIGIN_FEET line to
+      match). `core/packer.mjs` — packCharacter() extracted from
+      pack-sheet.mjs (now a thin CLI with a usage guard) and served by a new
+      `POST /__editor/pack` (same path, timestamped backup, works for
+      creator chars with no manifest entry by deriving the grid from meta);
+      writes meta v2 (version/floorFrac/headroom/normalized). GATE PASSED:
+      chebel packed by the extracted packer is pixel-identical (0/7M px) to
+      the pre-extraction HEAD code; NOTE the committed sheets of the 14
+      non-vincent/gene fighters are PRE-headroom era (6.1M px differ from a
+      fresh pack) — confirmed Phase 2 scope, committed sheets restored
+      untouched. Editor-edit survival: SpriteSheetModel exports edited
+      cells + touched skeletons; `/__editor/sheet` persists them to
+      `assets/raw/edits/<id>/{cells/,skeletons.json}`; packer applies those
+      overlays on any re-pack; `/__editor/gen-frame` now writes the UN-keyed
+      regen + prompt sidecar back to `assets/raw/frames/<id>/NN-<cell>.png`
+      — the "gen:pack silently clobbers editor edits" hazard is CLOSED.
+      Verified: /pack E2E on chebel via curl (62 frames, backup, meta v2).
+      STILL OPEN in Phase 1: frames-manifest → `core/cells.mjs` +
+      `core/prompts.mjs` (creator imports the canon prompt craft); shared
+      audio helpers in lib.mjs; skills refresh pass 1; creator SHIP packs
+      server-side via /__editor/pack (retire composeSheet).
 - [ ] Phase 2 — atomic floor/skeleton migration (local compute only): all 16
       re-packed normalized + skeletons + meta v2 from existing raw frames;
       SPRITE_FOOT_OFFSET_Y and every per-char spriteOffsetY deleted; roster
@@ -1354,6 +1371,20 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-08 · tools+ui · Sprint 27 Phase 1a/1b: one pack path** —
+  `tools/core/keying.mjs` (one key/pad filter source — the vite copy's
+  missing HEADROOM is fixed, so editor/creator cells finally match packed
+  cells; creator preview re-anchored to ORIGIN_FEET) + `tools/core/packer.mjs`
+  (packCharacter extracted from pack-sheet.mjs, proven pixel-identical on
+  chebel; meta v2; new `POST /__editor/pack` with backup). Editor edits now
+  SURVIVE re-packs: edited cells + touched skeletons persist to
+  `assets/raw/edits/<id>/` (packer applies them as overlays) and gen-frame
+  regens write the un-keyed art + prompt sidecar back to raw frames.
+  pack-sheet CLI gained a usage guard (bare run used to mkdir a junk tree
+  from argv[0] — the new orphan audit caught it). Discovery: the 14
+  non-vincent/gene committed sheets are pre-HEADROOM era → Phase 2 scope.
+  tsc clean; audit 54/54. — Claude (Fable)
 
 - **2026-07-08 · data+tools+ui · Sprint 27 Phase 0: guardrails + cruft sweep** —
   One coordinate source (`src/render/coords.json` → TS/Node/Python accessors)

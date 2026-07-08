@@ -2408,9 +2408,11 @@ export class CharacterCreatorPanel {
     const drawH = H * 0.82 * scale;
     const ox = main?.offX ?? 0, oy = (main?.offY ?? 0) + pf.offY; // cell realign + sequence arc
     if (main?.dataUrl) {
-      const rise = Math.max(0, -pf.offY) * (drawH / 384); // shrink shadow as it rises
-      this.drawShadow(ctx, W / 2 + ox * (drawH / 384), floorY, 96 * scale * Math.max(0.25, 1 - rise / (H * 0.3)));
-      this.drawCharacter(ctx, main.dataUrl, W / 2, floorY, drawH, ox, oy);
+      const rise = Math.max(0, -pf.offY) * (drawH / CELL_H); // shrink shadow as it rises
+      this.drawShadow(ctx, W / 2 + ox * (drawH / CELL_H), floorY, 96 * scale * Math.max(0.25, 1 - rise / (H * 0.3)));
+      // anchor the ORIGIN_FEET line (not the cell bottom) on the floor — cells
+      // now carry the pack-time HEADROOM below the feet, like packed sheets
+      this.drawCharacter(ctx, main.dataUrl, W / 2, floorY + (CELL_H - ORIGIN_FEET) * (drawH / CELL_H), drawH, ox, oy);
     } else {
       this.drawShadow(ctx, W / 2, floorY, 80);
       this.drawSilhouette(ctx, W / 2, floorY, 150, this.m.draft?.color ?? '#31424f', canon?.status === 'running');
@@ -2465,10 +2467,11 @@ export class CharacterCreatorPanel {
   private static readonly SKEL_HAND_COLOR = '#33e0ff';
   private static readonly SKEL_FOOT_COLOR = '#3ad64a';
 
-  /** map a cell-space point (CELL_W×CELL_H) onto the drawn art in the preview. */
+  /** map a cell-space point (CELL_W×CELL_H) onto the drawn art in the preview.
+   *  The ORIGIN_FEET line anchors on the floor (matches drawCharacter). */
   private cellToPreview(jx: number, jy: number): [number, number] {
     const g = this.geom!; const s = g.drawH / CELL_H;
-    return [g.W / 2 + (jx - ORIGIN_CX + g.ox) * s, g.floorY + (jy - CELL_H + g.oy) * s];
+    return [g.W / 2 + (jx - ORIGIN_CX + g.ox) * s, g.floorY + (jy - ORIGIN_FEET + g.oy) * s];
   }
 
   /** DWPose skeleton over the current frame's art — a 1:1 port of
@@ -2526,7 +2529,7 @@ export class CharacterCreatorPanel {
     const e = drawH / (256 * ART_MARGIN);      // engine → preview px (256 = default hurtStand.h)
     const floorY = g?.floorY ?? Math.round(H * 0.94);
     const ox = (g?.ox ?? 0) * s, oy = (g?.oy ?? 0) * s; // current-frame art shift (jump/anti-air)
-    return { cx: W / 2 + ox, feetY: floorY + oy - (CELL_H - ORIGIN_FEET) * s, e };
+    return { cx: W / 2 + ox, feetY: floorY + oy, e }; // ORIGIN_FEET line == the floor anchor
   }
 
   /** the move currently being previewed as a group (normal or special), or null. */
