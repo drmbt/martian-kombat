@@ -78,10 +78,22 @@ export class CharacterCreatorPanel {
 
   constructor(mount: HTMLElement, onBack: () => void) {
     this.onBack = onBack;
+    // one-time CSS for the async "diffusion" shimmer (host-independent: the
+    // standalone creator scene and the studio CREATOR module both need it)
+    if (!document.getElementById('mk-cc-style')) {
+      const st = document.createElement('style');
+      st.id = 'mk-cc-style';
+      st.textContent = '@keyframes mkShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}';
+      document.head.appendChild(st);
+    }
     this.root = el('div',
       'position:absolute;inset:0;pointer-events:auto;display:flex;color:#eaf6fb;overflow:hidden;' + FONT +
       'background:#0a0d14;');
     mount.appendChild(this.root);
+    // typing in the wizard's fields must never drive the fight underneath
+    // when hosted in the studio (same isolation the Sprite Editor uses)
+    this.root.addEventListener('keydown', this.stopFormKeys, true);
+    this.root.addEventListener('keyup', this.stopFormKeys, true);
 
     // full-bleed scene backdrop (the generated stage) + a dim layer for legibility
     this.backdrop = el('div', 'position:absolute;inset:0;z-index:0;background-position:center bottom;background-size:cover;');
@@ -149,7 +161,24 @@ export class CharacterCreatorPanel {
     cancelAnimationFrame(this.anim);
     clearTimeout(this.saveTimer);
     void this.save(); // flush a final save on unmount (HMR reload, scene exit)
+    this.root.removeEventListener('keydown', this.stopFormKeys, true);
+    this.root.removeEventListener('keyup', this.stopFormKeys, true);
     this.root.remove();
+  }
+
+  private stopFormKeys = (e: KeyboardEvent): void => {
+    const t = e.target as HTMLElement | null;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) {
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+    }
+  };
+
+  /** Character Studio rail: mount/unmount the whole wizard as the CREATOR
+   *  module (a draft save is flushed on unmount so nothing is lost). */
+  setMounted(v: boolean): void {
+    this.root.style.display = v ? 'flex' : 'none';
+    if (!v) void this.save();
   }
 
   private logMsg(msg: string): void {

@@ -27,6 +27,7 @@ import { CpuDriver } from '../ai/bot';
 import { DIFFICULTIES, DIFFICULTY_AGGRESSION, type Difficulty } from '../ai/difficulty';
 import { MoveTunerPanel } from '../ui/MoveTunerPanel';
 import { SpriteEditorPanel } from '../ui/SpriteEditorPanel';
+import { CharacterCreatorPanel } from '../ui/CharacterCreatorPanel';
 import { StudioRail } from '../ui/StudioRail';
 import { SpriteSheetModel, type SheetMeta } from '../ui/spriteSheetModel';
 import { play, playVoice, runCues } from './BootScene';
@@ -1630,9 +1631,18 @@ export class FightScene extends Phaser.Scene {
       this.tunerFrozen = false;
       this.tunerPanel?.setMounted(false);
     };
+    // the full creator wizard, re-hosted over the live fight (the standalone
+    // CharacterCreatorScene grid backdrop is retired from the menu routes)
+    let creatorPanel: CharacterCreatorPanel | null = null;
+    const creatorOn = (): void => {
+      if (!creatorPanel) creatorPanel = new CharacterCreatorPanel(this.uiLayer.root, () => this.studioRail?.setActive(null));
+      else creatorPanel.setMounted(true);
+    };
+    const creatorOff = (): void => creatorPanel?.setMounted(false);
     this.studioRail = new StudioRail(
       this.uiLayer.root,
       [
+        { key: 'creator', label: 'CREATOR', hint: 'zero → hero wizard: seed · profile · moves · rig · polish · ship', activate: creatorOn, deactivate: creatorOff },
         { key: 'sprites', label: 'SPRITES', hint: 'sheet cells · regen · keypoints · auto-hitbox', activate: spritesOn, deactivate: spritesOff },
         { key: 'moves', label: 'MOVES', hint: 'frame data · hitboxes · CPU/loop drivers · write to JSON', activate: movesOn, deactivate: movesOff },
         { key: 'test', label: 'TEST', hint: 'play it — all panels hidden · F1 boxes · F2 log · F3 skeleton', activate: () => this.setHudVisible(true), deactivate: () => undefined },
@@ -1640,6 +1650,8 @@ export class FightScene extends Phaser.Scene {
       this.studioModule ?? 'moves',
     );
     this.events.once('shutdown', () => {
+      creatorPanel?.dispose();
+      creatorPanel = null;
       this.studioRail?.dispose();
       this.studioRail = null;
     });

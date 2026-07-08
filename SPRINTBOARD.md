@@ -1447,6 +1447,18 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-08 · ui · Sprint 27 Phase 3d: the creator wizard is a studio
+  module** — CharacterCreatorPanel re-hosted as the rail's CREATOR module
+  (lazily mounted over the live fight; drafts flush-save on unmount; the
+  shimmer CSS + form-key isolation moved INTO the panel so any host works
+  — typing in wizard fields can't drive the fight underneath). EditorMenu's
+  CHARACTER CREATOR now launches the studio directly at the CREATOR module
+  (no fighter pick needed to create one); the standalone
+  CharacterCreatorScene stays registered but unrouted (retires in the
+  Phase 5 cleanup). Verified live: rail CREATOR/SPRITES/MOVES/TEST with
+  the wizard stepper + resume chips rendering, module swaps clean.
+  361/361, tsc clean. — Claude (Fable)
+
 - **2026-07-08 · tools+ui · Sprint 27 Phase 3c/3e: kit grammar + projectile
   spawn anchors** — `tools/core/kit.mjs`: THE roster-standard grammar
   (light chains, medium cancels, per-archetype L/H variant generation —
