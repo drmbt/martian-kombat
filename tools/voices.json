@@ -22,5 +22,11 @@
     "modelId": "a32c9c451f1444d9945a764666047da1",
     "title": "Martian Kombat — Earl",
     "createdAt": "2026-07-07T09:33:43.664Z"
+  },
+  "vincent": {
+    "provider": "fish",
+    "modelId": "347f6794069d4932919d7f15a8e7ac49",
+    "title": "Martian Kombat — VINCENT",
+    "createdAt": "2026-07-08T01:27:52.186Z"
   }
 }

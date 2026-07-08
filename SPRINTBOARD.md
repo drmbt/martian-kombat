@@ -1186,6 +1186,11 @@ profile → base batch → SHIP → reload → **playable MIRAGE vs VINCENT figh
       fields, selected cells can flip X/Y with skeletons mirrored, write actions
       are batched behind checkboxes, and loop/showcase input can execute charge
       motions plus button-chord specials (`PPP`/`KKK`/`LPLK`).
+- [x] **Vincent creator/edit checkpoint** — current dogfood edits committed:
+      re-packed/renumbered Vincent source frames with throw inserted before
+      specials, updated packed sheet/meta/projectile, tuned `vincent.json`,
+      Vincent home stage, cloned/generated Vincent voice assets, and stage/voice
+      registry updates.
 - [ ] Real Gemini design-draft (server `/__editor/creator/design` + context cache §16).
 - [ ] Advisory edge-QA badges; R2 publish/pull seams (local-mock first).
 - [ ] Consolidate: audit/tests + skills + CLAUDE.md; fold Tuner/Editor in.
@@ -1218,6 +1223,15 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-08 · assets+data · Vincent creator/edit checkpoint** — Committed
+  the current Vincent dogfood state before the next code pass: raw frames were
+  re-packed/renumbered with throw cells inserted before specials, packed
+  `sheet.png`/`meta.json` and `projectile-sigil-bolt.png` updated, legacy
+  `projectile.png` removed, `vincent.json` tuning/scale bake/home-stage changes
+  captured, Earl's home stage changed to `star-beach`, `vincent-home` registered,
+  and Vincent voice clone/generated VO assets plus `tools/voices.json` updated.
+  — Codex
 
 - **2026-07-07 · ui · creator canon edit path + sprite-editor write/control fixes** —
   Character Creator now includes throw startup/active/recovery frames in the

@@ -2,16 +2,14 @@
   "id": "vincent",
   "name": "VINCENT",
   "color": "#58e6d9",
-  "stage": "van",
+  "stage": "vincent-home",
   "winQuotes": [
-    "The cursor blinks. Your session has ended.",
-    "I took everything you had. It was never much.",
+    "Well well well, look what we have here",
+    "I took everything you had. It wasn't much.",
     "Offense can't be given, only taken. You took plenty.",
-    "I am the signal. You were noise.",
+    "I am the signal. You are just noise.",
     "The mirror reflects the truth, and the truth reflects your weakness."
   ],
-  "scale": 1.18,
-  "spriteOffsetY": -16,
   "health": 1000,
   "walkSpeed": 5,
   "backSpeed": 3.7,
@@ -19,22 +17,22 @@
   "gravity": 0.9,
   "prejumpFrames": 3,
   "bodyBox": {
-    "x": -40,
-    "y": -210,
-    "w": 80,
-    "h": 210
+    "x": -51,
+    "y": -267,
+    "w": 102,
+    "h": 267
   },
   "hurtStand": {
-    "x": -50,
-    "y": -224,
-    "w": 100,
-    "h": 224
+    "x": -63,
+    "y": -284,
+    "w": 127,
+    "h": 284
   },
   "hurtCrouch": {
-    "x": -50,
-    "y": -144,
-    "w": 100,
-    "h": 144
+    "x": -63,
+    "y": -183,
+    "w": 127,
+    "h": 183
   },
   "moves": {
     "lp": {
@@ -46,10 +44,10 @@
       "blockstun": 9,
       "knockback": 7,
       "hitbox": {
-        "x": 44,
-        "y": -169,
-        "w": 61,
-        "h": 46
+        "x": 56,
+        "y": -215,
+        "w": 77,
+        "h": 58
       },
       "height": "mid",
       "chains": [
@@ -69,10 +67,10 @@
       "blockstun": 11,
       "knockback": 9,
       "hitbox": {
-        "x": 46,
-        "y": -173,
-        "w": 53,
-        "h": 54
+        "x": 58,
+        "y": -220,
+        "w": 67,
+        "h": 69
       },
       "height": "mid",
       "cancel": true
@@ -86,10 +84,10 @@
       "blockstun": 14,
       "knockback": 11,
       "hitbox": {
-        "x": 47,
-        "y": -178,
-        "w": 48,
-        "h": 54
+        "x": 60,
+        "y": -226,
+        "w": 66,
+        "h": 85
       },
       "height": "mid",
       "cancel": true
@@ -103,10 +101,10 @@
       "blockstun": 9,
       "knockback": 6,
       "hitbox": {
-        "x": 45,
-        "y": -141,
-        "w": 57,
-        "h": 57
+        "x": 57,
+        "y": -192,
+        "w": 75,
+        "h": 85
       },
       "height": "mid",
       "chains": [
@@ -125,10 +123,10 @@
       "blockstun": 12,
       "knockback": 10,
       "hitbox": {
-        "x": 31,
-        "y": -180,
-        "w": 62,
-        "h": 58
+        "x": 39,
+        "y": -229,
+        "w": 78,
+        "h": 125
       },
       "height": "mid",
       "cancel": true
@@ -142,27 +140,27 @@
       "blockstun": 15,
       "knockback": 12,
       "hitbox": {
-        "x": 53,
-        "y": -174,
-        "w": 45,
-        "h": 105
+        "x": 52,
+        "y": -244,
+        "w": 107,
+        "h": 185
       },
       "height": "mid",
       "knockdown": true
     },
     "clp": {
-      "startup": 4,
-      "active": 3,
-      "recovery": 9,
+      "startup": 1,
+      "active": 9,
+      "recovery": 7,
       "damage": 40,
       "hitstun": 13,
       "blockstun": 9,
       "knockback": 6,
       "hitbox": {
-        "x": 73,
-        "y": -202,
-        "w": 78,
-        "h": 72
+        "x": 54,
+        "y": -197,
+        "w": 89,
+        "h": 81
       },
       "height": "mid",
       "chains": [
@@ -181,10 +179,10 @@
       "blockstun": 11,
       "knockback": 8,
       "hitbox": {
-        "x": 69,
-        "y": -257,
-        "w": 72,
-        "h": 80
+        "x": 60,
+        "y": -222,
+        "w": 61,
+        "h": 153
       },
       "height": "mid",
       "cancel": true
@@ -198,27 +196,27 @@
       "blockstun": 14,
       "knockback": 10,
       "hitbox": {
-        "x": 28,
-        "y": -240,
-        "w": 62,
-        "h": 81
+        "x": -2,
+        "y": -254,
+        "w": 107,
+        "h": 140
       },
       "height": "mid",
       "knockdown": true
     },
     "clk": {
-      "startup": 5,
-      "active": 3,
-      "recovery": 11,
+      "startup": 2,
+      "active": 10,
+      "recovery": 8,
       "damage": 40,
       "hitstun": 13,
       "blockstun": 9,
       "knockback": 6,
       "hitbox": {
-        "x": 88,
-        "y": -127,
-        "w": 60,
-        "h": 62
+        "x": 76,
+        "y": -129,
+        "w": 76,
+        "h": 79
       },
       "height": "low",
       "chains": [
@@ -229,18 +227,18 @@
       ]
     },
     "cmk": {
-      "startup": 8,
-      "active": 4,
-      "recovery": 16,
+      "startup": 1,
+      "active": 12,
+      "recovery": 9,
       "damage": 65,
       "hitstun": 18,
       "blockstun": 11,
       "knockback": 8,
       "hitbox": {
-        "x": 71,
-        "y": -73,
-        "w": 80,
-        "h": 88
+        "x": 44,
+        "y": -81,
+        "w": 112,
+        "h": 87
       },
       "height": "low",
       "cancel": true
@@ -254,10 +252,10 @@
       "blockstun": 12,
       "knockback": 8,
       "hitbox": {
-        "x": 78,
-        "y": -175,
-        "w": 83,
-        "h": 85
+        "x": 56,
+        "y": -164,
+        "w": 105,
+        "h": 108
       },
       "height": "low",
       "knockdown": true
@@ -271,10 +269,10 @@
       "blockstun": 10,
       "knockback": 6,
       "hitbox": {
-        "x": 74,
-        "y": -260,
-        "w": 72,
-        "h": 84
+        "x": 63,
+        "y": -221,
+        "w": 94,
+        "h": 89
       },
       "height": "high"
     },
@@ -287,10 +285,10 @@
       "blockstun": 11,
       "knockback": 8,
       "hitbox": {
-        "x": 69,
-        "y": -259,
-        "w": 74,
-        "h": 84
+        "x": 14,
+        "y": -233,
+        "w": 120,
+        "h": 82
       },
       "height": "high"
     },
@@ -303,10 +301,10 @@
       "blockstun": 13,
       "knockback": 10,
       "hitbox": {
-        "x": 2,
-        "y": -317,
-        "w": 75,
-        "h": 68
+        "x": -14,
+        "y": -279,
+        "w": 142,
+        "h": 138
       },
       "height": "high"
     },
@@ -319,10 +317,10 @@
       "blockstun": 9,
       "knockback": 6,
       "hitbox": {
-        "x": 23,
-        "y": -136,
-        "w": 89,
-        "h": 84
+        "x": 29,
+        "y": -183,
+        "w": 88,
+        "h": 124
       },
       "height": "high"
     },
@@ -335,10 +333,10 @@
       "blockstun": 11,
       "knockback": 9,
       "hitbox": {
-        "x": 65,
-        "y": -199,
-        "w": 93,
-        "h": 77
+        "x": 59,
+        "y": -155,
+        "w": 102,
+        "h": 85
       },
       "height": "high"
     },
@@ -352,10 +350,10 @@
       "knockback": 11,
       "comment": "hitbox is authored, NOT pose-measured: the drawn crescent-kick leg sits high (measured y=-218) but jhk's role is an air overhead that must reach a grounded/crouching defender on descent — an art-vs-intent divergence, so the box is intentionally lower/bigger than the limb. Do not --calibrate-force this cell.",
       "hitbox": {
-        "x": 30,
-        "y": -140,
-        "w": 110,
-        "h": 60
+        "x": 20,
+        "y": -195,
+        "w": 125,
+        "h": 190
       },
       "height": "high"
     },
@@ -376,18 +374,19 @@
       "height": "mid",
       "projectile": {
         "vx": 10,
-        "spawnX": 96,
-        "spawnY": -176,
+        "spawnX": 122,
+        "spawnY": -200,
         "box": {
-          "x": -28,
-          "y": -28,
+          "x": 16,
+          "y": -16,
           "w": 56,
           "h": 56
         },
         "damage": 70,
         "hitstun": 18,
         "blockstun": 12,
-        "knockback": 9
+        "knockback": 9,
+        "renderSize": 176
       },
       "variants": {
         "l": {
@@ -406,7 +405,7 @@
       "name": "Cloud Hands",
       "input": {
         "motion": "qcb",
-        "button": "kick"
+        "button": "punch"
       },
       "startup": 9,
       "active": 10,
@@ -416,10 +415,10 @@
       "blockstun": 14,
       "knockback": 9,
       "hitbox": {
-        "x": 64,
-        "y": -250,
-        "w": 70,
-        "h": 77
+        "x": 58,
+        "y": -219,
+        "w": 57,
+        "h": 90
       },
       "height": "mid",
       "forwardVel": 12,
@@ -451,10 +450,10 @@
       "blockstun": 14,
       "knockback": 9,
       "hitbox": {
-        "x": 10,
-        "y": -181,
-        "w": 70,
-        "h": 66
+        "x": -36,
+        "y": -321,
+        "w": 161,
+        "h": 158
       },
       "height": "mid",
       "knockdown": true,
@@ -465,10 +464,10 @@
           "invuln": 6,
           "recovery": 18,
           "hitbox": {
-            "x": 8,
-            "y": -240,
-            "w": 88,
-            "h": 180
+            "x": 10,
+            "y": -305,
+            "w": 112,
+            "h": 229
           },
           "leap": {
             "vx": 1.5,
@@ -486,18 +485,19 @@
         }
       },
       "leap": {
-        "vx": 2.5,
-        "vy": 14
+        "vx": 4.5,
+        "vy": 18
       },
       "vfx": {
         "size": 180,
         "anchor": "impact"
-      }
+      },
+      "voice": true
     },
     "redirect": {
       "name": "Redirect",
       "input": {
-        "motion": "qcb",
+        "motion": "bf",
         "button": "punch"
       },
       "startup": 4,
@@ -508,10 +508,10 @@
       "blockstun": 0,
       "knockback": 0,
       "hitbox": {
-        "x": 69,
-        "y": -257,
-        "w": 68,
-        "h": 79
+        "x": 31,
+        "y": -252,
+        "w": 85,
+        "h": 150
       },
       "height": "mid",
       "reflect": true,
@@ -524,7 +524,8 @@
           "active": 22,
           "recovery": 16
         }
-      }
+      },
+      "voice": true
     },
     "matrix-teleport": {
       "name": "Matrix Teleport",
@@ -546,7 +547,8 @@
         "mirror": true
       },
       "invulnFrom": 14,
-      "invuln": 24
+      "invuln": 24,
+      "voice": true
     },
     "throw": {
       "name": "Throw",
@@ -554,7 +556,7 @@
         "button": "LPLK"
       },
       "startup": 4,
-      "active": 2,
+      "active": 8,
       "recovery": 20,
       "damage": 85,
       "hitstun": 0,
@@ -564,13 +566,14 @@
       "height": "mid",
       "knockdown": true,
       "grab": {
-        "range": 130
+        "range": 165
       },
       "tossArc": {
         "vy": -10.5,
         "knockbackMult": 1.5
       },
-      "techable": true
+      "techable": true,
+      "voice": true
     }
   },
   "fatality": {
