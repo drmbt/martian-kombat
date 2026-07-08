@@ -1447,6 +1447,31 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-08 · ui · Sprint 27 Phase 3h: the creator is WYSIWYG — the fight
+  scene IS the preview** (user-directed). CharacterCreatorPanel gained a
+  scene-hosted mode: right-docked translucent wizard column, no opaque
+  backdrop, its own preview column retired (kept detached so internals
+  stay valid). FightScene gained `setStudioSubject(def, meta, canvas)`:
+  slot 0 becomes a LIVE DRAFT — def into the live registry, cells on a
+  dynamic canvas texture the wizard blits into as generations land
+  (fireGen fast-path updates a single cell + refresh; a debounced full
+  remount rides render()); placeholder ghost silhouettes stand in from the
+  first frame of a fresh SEED and are supplanted cell-by-cell; canon
+  reopen inherits the fighter's real sheet/def through the same mount.
+  NEW: the `wireframe` dev stage template (programmatic sparse grid —
+  horizon, perspective floor, accented FLOOR_Y feet line, scale posts,
+  caption; the !hasBg purple fallback no longer paints over it) — NEW
+  CHARACTER flows start there; editing an existing fighter opens on their
+  home stage. NEW: the completeness GAP BAR under the stepper — ✓/⚠ chips
+  for canonical/portrait/KO/cells n/N/throw/skeletons/lore/quotes/VO n per
+  17/voice sample/music/fatality n per 4/stage — missing pieces are visible
+  at a glance for drafts AND canon-reopened fighters (schema migration
+  continues via applyKitGrammar on reopen). Verified live: ghost on the
+  wireframe stage with the docked wizard, gap chips, resume + canon-edit
+  chips. tsc clean. STILL OPEN (3h polish): preview-control buttons should
+  drive the LIVE fighter (loop a move via the host), and a canon-reopen
+  live-inherit spot-check. — Claude (Fable)
+
 - **2026-07-08 · ui+tools · Sprint 27 Phase 3g: StudioSelect — the studio's
   roster-manager front door** (user-directed). DEV EDITOR → CHARACTER
   STUDIO now lands on `StudioSelectScene`: every fighter (online AND

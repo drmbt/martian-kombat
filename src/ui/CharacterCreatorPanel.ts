@@ -43,6 +43,17 @@ const BTN_HOT = FONT + 'cursor:pointer;border:1px solid #7fe3ff;background:#1d34
 const INPUT = FONT + 'background:#0c1520;color:#eaf6fb;border:1px solid #2b4457;border-radius:4px;' +
   'padding:6px 8px;font-size:13px;width:100%;box-sizing:border-box;';
 
+/** The Character Studio's live-subject seam: the panel builds the draft's
+ *  def + dynamic sheet canvas and the FightScene mounts it as the slot-0
+ *  fighter — placeholder cells are supplanted live as generations land. */
+export interface StudioSubject {
+  mount(
+    def: Record<string, unknown>,
+    meta: { cellW: number; cellH: number; cols: number; rows: number; frames: string[]; skeletons?: Record<string, Record<string, [number, number, number]>> },
+    canvas: HTMLCanvasElement,
+  ): { refresh: () => void };
+}
+
 export class CharacterCreatorPanel {
   private m = new CreatorModel();
   private root: HTMLDivElement;
@@ -50,6 +61,13 @@ export class CharacterCreatorPanel {
   private bodyEl: HTMLDivElement;
   private stepperEl: HTMLDivElement;
   private trayEl: HTMLDivElement;
+  private sceneHosted = false;
+  private subject: StudioSubject | null = null;
+  private gapBarEl!: HTMLDivElement;
+  private studioHandle: { refresh: () => void } | null = null;
+  private studioCanvas: HTMLCanvasElement | null = null;
+  private studioPlan: { name: string; jobKey: string }[] = [];
+  private studioTimer?: number;
   private previewControls!: HTMLDivElement;
   private previewToggles!: HTMLDivElement; // skeleton / hitbox overlay checkboxes
   private previewCaption!: HTMLDivElement;
@@ -76,8 +94,10 @@ export class CharacterCreatorPanel {
   private logLines: string[] = [];
   private onBack: () => void;
 
-  constructor(mount: HTMLElement, onBack: () => void) {
+  constructor(mount: HTMLElement, onBack: () => void, opts: { sceneHosted?: boolean; subject?: StudioSubject } = {}) {
     this.onBack = onBack;
+    this.sceneHosted = !!opts.sceneHosted;
+    this.subject = opts.subject ?? null;
     // one-time CSS for the async "diffusion" shimmer (host-independent: the
     // standalone creator scene and the studio CREATOR module both need it)
     if (!document.getElementById('mk-cc-style')) {
@@ -86,9 +106,14 @@ export class CharacterCreatorPanel {
       st.textContent = '@keyframes mkShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}';
       document.head.appendChild(st);
     }
-    this.root = el('div',
-      'position:absolute;inset:0;pointer-events:auto;display:flex;color:#eaf6fb;overflow:hidden;' + FONT +
-      'background:#0a0d14;');
+    // scene-hosted (Character Studio): a right-docked wizard column over the
+    // LIVE fight — the scene itself is the preview, so no opaque backdrop and
+    // no built-in preview column. Standalone keeps the classic full-bleed.
+    this.root = el('div', this.sceneHosted
+      ? 'position:absolute;right:0;top:48px;bottom:10%;width:46%;min-width:430px;max-width:700px;' +
+        'pointer-events:auto;display:flex;color:#eaf6fb;overflow:hidden;' + FONT
+      : 'position:absolute;inset:0;pointer-events:auto;display:flex;color:#eaf6fb;overflow:hidden;' + FONT +
+        'background:#0a0d14;');
     mount.appendChild(this.root);
     // typing in the wizard's fields must never drive the fight underneath
     // when hosted in the studio (same isolation the Sprite Editor uses)
@@ -96,11 +121,12 @@ export class CharacterCreatorPanel {
     this.root.addEventListener('keyup', this.stopFormKeys, true);
 
     // full-bleed scene backdrop (the generated stage) + a dim layer for legibility
+    // — standalone only; in the studio the REAL scene is behind the panel
     this.backdrop = el('div', 'position:absolute;inset:0;z-index:0;background-position:center bottom;background-size:cover;');
     this.backdrop.style.background = this.gridBg();
     const dim = el('div', 'position:absolute;inset:0;z-index:0;pointer-events:none;' +
       'background:linear-gradient(180deg,rgba(8,11,17,.5),rgba(8,11,17,.28) 55%,rgba(8,11,17,.78));');
-    this.root.append(this.backdrop, dim);
+    if (!this.sceneHosted) this.root.append(this.backdrop, dim);
 
     // left: the fighter standing IN the scene — transparent canvas over the backdrop,
     // feet on the ground line; controls float top, inspect floats bottom.
@@ -116,16 +142,19 @@ export class CharacterCreatorPanel {
     this.previewCanvas.onmouseup = () => this.endHbDrag();
     this.previewCanvas.onmouseleave = () => this.endHbDrag();
     left.append(this.previewToggles, this.previewControls, this.previewCaption, this.previewCanvas);
-    this.root.appendChild(left);
+    // scene-hosted: the left preview column stays DETACHED — the live fight
+    // scene renders the fighter (setStudioSubject); the column's canvas keeps
+    // the internal draw loop valid without being visible
+    if (!this.sceneHosted) this.root.appendChild(left);
 
-    // draggable divider between preview and dialog
+    // draggable divider between preview and dialog (standalone only)
     const divider = el('div', 'position:relative;z-index:1;flex:0 0 auto;width:8px;cursor:col-resize;background:rgba(18,26,36,.7);' +
       'display:flex;align-items:center;justify-content:center;');
     divider.appendChild(el('div', 'width:3px;height:46px;border-radius:2px;background:#33465a;'));
     divider.onmousedown = (e) => this.startResize(e);
     divider.ondblclick = () => this.toggleCollapse();
     divider.title = 'drag to resize · double-click to collapse';
-    this.root.appendChild(divider);
+    if (!this.sceneHosted) this.root.appendChild(divider);
 
     // right: stepper + body + tray (translucent so the scene shows behind it)
     const right = el('div', 'position:relative;z-index:1;flex:1;display:flex;flex-direction:column;min-width:0;background:rgba(9,13,20,.82);backdrop-filter:blur(2px);');
@@ -145,6 +174,9 @@ export class CharacterCreatorPanel {
     this.trayEl = el('div', 'border-top:1px solid #22303e;padding:8px 12px;display:flex;gap:6px;' +
       'overflow-x:auto;min-height:64px;align-items:center;background:#0b1119;');
     right.appendChild(this.stepperEl);
+    // completeness gaps at a glance: what's missing before this fighter ships
+    this.gapBarEl = el('div', 'display:flex;flex-wrap:wrap;gap:4px;padding:6px 16px;border-bottom:1px solid #22303e;background:#0b1119;');
+    right.appendChild(this.gapBarEl);
     right.appendChild(bodyWrap);
     right.appendChild(this.logEl);
     right.appendChild(this.trayEl);
@@ -467,6 +499,8 @@ export class CharacterCreatorPanel {
   // ── body router ──────────────────────────────────────────────────────────
   private render(): void {
     this.scheduleSave(); // debounced live-save on every state-changing render
+    this.scheduleStudioMount(); // scene-hosted: keep the live fighter in sync
+    this.renderGapBar();
     this.bodyEl.replaceChildren();
     switch (CREATOR_STEPS[this.m.step]) {
       case 'SEED': return this.renderSeed();
@@ -1535,6 +1569,126 @@ export class CharacterCreatorPanel {
     return { sheetBase64: c.toDataURL('image/png').split(',')[1], meta };
   }
 
+  // ── studio live subject (scene-hosted) ────────────────────────────────────
+  /** debounce a full remount — render() calls this on every state change */
+  private scheduleStudioMount(): void {
+    if (!this.subject) return;
+    clearTimeout(this.studioTimer);
+    this.studioTimer = window.setTimeout(() => void this.mountStudioSubject(), 350);
+  }
+
+  /** (re)build the draft's dynamic sheet (job art where it exists, placeholder
+   *  silhouettes where it doesn't) + engine def, and mount as the live fighter */
+  private async mountStudioSubject(): Promise<void> {
+    if (!this.subject) return;
+    // before any cells exist (a fresh SEED), stand a placeholder ghost in the
+    // scene so there's always a subject to look at — it's supplanted cell by
+    // cell as art comes online
+    const real = this.m.sheetPlan();
+    const plan = real.length ? real : BASE_CELLS.map((c) => ({ name: c.id, jobKey: 'sprite:' + c.id }));
+    const cols = 6;
+    const rows = Math.ceil(plan.length / cols);
+    const c = document.createElement('canvas');
+    c.width = cols * CELL_W;
+    c.height = rows * CELL_H;
+    const ctx = c.getContext('2d')!;
+    for (let i = 0; i < plan.length; i++) {
+      await this.drawStudioCell(ctx, (i % cols) * CELL_W, Math.floor(i / cols) * CELL_H, plan[i]);
+    }
+    const skeletons: Record<string, Record<string, [number, number, number]>> = {};
+    for (const p of plan) {
+      const j = this.m.skeletons[p.name];
+      if (j) skeletons[p.name] = this.studioJoints(p, j);
+    }
+    this.studioCanvas = c;
+    this.studioPlan = plan;
+    const def = this.m.buildFullCharacter();
+    if (!def.id) { def.id = '__draft'; def.name = def.name || 'NEW FIGHTER'; }
+    this.studioHandle = this.subject.mount(
+      def,
+      { cellW: CELL_W, cellH: CELL_H, cols, rows, frames: plan.map((p) => p.name), ...(Object.keys(skeletons).length ? { skeletons } : {}) },
+      c,
+    );
+  }
+
+  /** one cell of the studio sheet: the job's art (with its per-cell
+   *  scale/offset baked, same math as composeSheet) or a placeholder */
+  private async drawStudioCell(ctx: CanvasRenderingContext2D, x: number, y: number, p: { name: string; jobKey: string }): Promise<void> {
+    const job = this.m.job(p.jobKey);
+    const url = job?.dataUrl ?? this.placeholder('sprite', p.name, this.m.draft?.color ?? '#31424f');
+    const img = await this.loadImg(url);
+    const s = job?.scale ?? 1, ox = job?.offX ?? 0, oy = job?.offY ?? 0;
+    const dw = CELL_W * s, dh = CELL_H * s;
+    ctx.clearRect(x, y, CELL_W, CELL_H);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x, y, CELL_W, CELL_H);
+    ctx.clip();
+    ctx.drawImage(img, x + (CELL_W - dw) / 2 + ox, y + (CELL_H - dh) + oy, dw, dh);
+    ctx.restore();
+  }
+
+  /** joints transformed by the cell's scale/offset (composeSheet's inverse-draw math) */
+  private studioJoints(p: { jobKey: string }, j: Record<string, [number, number, number]>): Record<string, [number, number, number]> {
+    const job = this.m.job(p.jobKey);
+    const s = job?.scale ?? 1, ox = job?.offX ?? 0, oy = job?.offY ?? 0;
+    if (s === 1 && !ox && !oy) return j;
+    const t: Record<string, [number, number, number]> = {};
+    for (const k in j) t[k] = [ORIGIN_CX * (1 - s) + ox + j[k][0] * s, CELL_H * (1 - s) + oy + j[k][1] * s, j[k][2]];
+    return t;
+  }
+
+  /** fast path: one finished sprite lands in its cell without a full remount */
+  private studioCellDone(key: string): void {
+    if (!this.subject) return;
+    if (!key.startsWith('sprite:') || !this.studioCanvas || !this.studioPlan.length) return this.scheduleStudioMount();
+    const name = key.slice('sprite:'.length);
+    const i = this.studioPlan.findIndex((p) => p.name === name);
+    if (i < 0) return this.scheduleStudioMount(); // plan grew (new special) — rebuild
+    const ctx = this.studioCanvas.getContext('2d')!;
+    void this.drawStudioCell(ctx, (i % 6) * CELL_W, Math.floor(i / 6) * CELL_H, this.studioPlan[i]).then(() => this.studioHandle?.refresh());
+  }
+
+  // ── completeness gaps (the "what's missing before this ships" strip) ─────
+  private gapReport(): { label: string; ok: boolean; soft?: boolean }[] {
+    const m = this.m;
+    const done = (k: string): boolean => m.job(k)?.status === 'done';
+    const plan = m.sheetPlan();
+    const cellsDone = plan.filter((p) => done(p.jobKey)).length;
+    const throwDone = ['throw-startup', 'throw-active', 'throw-recovery'].every((n) => done('sprite:' + n));
+    const vo = m.finalVoClips() ?? {};
+    const voCount = Object.keys(vo).length;
+    const d = m.draft;
+    const skel = Object.keys(m.skeletons).length;
+    return [
+      { label: 'canonical', ok: done('canonical') },
+      { label: 'portrait', ok: done('portrait') },
+      { label: 'KO', ok: done('ko') },
+      { label: `cells ${cellsDone}/${plan.length || '—'}`, ok: plan.length > 0 && cellsDone === plan.length },
+      { label: 'throw', ok: throwDone },
+      { label: `skeletons ${skel}/${plan.length || '—'}`, ok: plan.length > 0 && skel >= plan.length, soft: true },
+      { label: 'lore', ok: !!(m.inputs.lore?.trim() || d?.lore.backstory) },
+      { label: `quotes ${d?.winQuotes.length ?? 0}/3`, ok: (d?.winQuotes.length ?? 0) >= 3 },
+      { label: `VO ${voCount}/17`, ok: voCount >= 17, soft: voCount > 0 },
+      { label: 'voice sample', ok: !!m.voiceModelId || !!m.inputs.voiceSamples?.length, soft: true },
+      { label: 'music', ok: !!m.finalMusic(), soft: true },
+      { label: `fatality ${m.generatedFatality.length}/4`, ok: m.generatedFatality.length === 4 },
+      { label: 'stage', ok: m.inputs.stageMode !== 'none' && !!m.inputs.stageId, soft: true },
+    ];
+  }
+
+  private renderGapBar(): void {
+    if (!this.gapBarEl) return;
+    this.gapBarEl.replaceChildren();
+    for (const g of this.gapReport()) {
+      const color = g.ok ? '#3d5a48' : g.soft ? '#8a6a3a' : '#8a4a3a';
+      const fg = g.ok ? '#8fd6a8' : g.soft ? '#ffcf8a' : '#ffab8a';
+      this.gapBarEl.appendChild(el('span',
+        `border:1px solid ${color};color:${fg};border-radius:3px;padding:1px 7px;font-size:10px;`,
+        `${g.ok ? '✓' : '⚠'} ${g.label}`));
+    }
+  }
+
   // ── generation ─────────────────────────────────────────────────────────
   private async runBaseBatch(): Promise<void> {
     // resize baked in once: every base cell is conditioned on the same (scaled) canonical
@@ -1874,6 +2028,8 @@ export class CharacterCreatorPanel {
     }
     this.m.upsertJob(job);
     this.renderTray(); this.renderPreviewControls(); this.redrawPreview();
+    this.renderGapBar();
+    if (job.status === 'done') this.studioCellDone(key); // live fighter picks up the new art
     if (CREATOR_STEPS[this.m.step] === 'SEED' && (key === 'canonical' || key === 'portrait')) this.render();
   }
 

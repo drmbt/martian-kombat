@@ -436,12 +436,21 @@ export class FightScene extends Phaser.Scene {
     // per-stage fight music; a rematch on the same stage keeps the track going
     playMusic([`stages/${this.stageId}`, 'stages/default']);
 
+    // 'wireframe' is the studio's dev stage TEMPLATE: no art, a sparse
+    // programmatic grid (horizon / floor plane / posts) so a character under
+    // construction stands in a neutral, honest space. Never in the registry.
+    if (this.stageId === 'wireframe') this.drawWireframeStage();
+
     // Stage art keeps its native aspect at full screen height; anything wider
     // than the screen (ultra-wide 21:9 stages) becomes parallax travel.
-    const bgKey = this.textures.exists(`bg-stage-${this.stageId}`)
+    const bgKey = this.stageId === 'wireframe'
+      ? null
+      : this.textures.exists(`bg-stage-${this.stageId}`)
       ? `bg-stage-${this.stageId}`
       : this.textures.exists('bg-salton') ? 'bg-salton' : null;
-    this.hasBg = bgKey !== null;
+    // the wireframe template IS a background — without this the !hasBg
+    // fallback paints its opaque purple field over the grid every frame
+    this.hasBg = bgKey !== null || this.stageId === 'wireframe';
     this.bg = null;
     this.bgLayers = [];
     this.bgOverhang = 0;
@@ -1596,6 +1605,75 @@ export class FightScene extends Phaser.Scene {
     for (const o of els) (o as unknown as { setVisible(v: boolean): void }).setVisible(v);
   }
 
+  /** the studio's dev stage template: a sparse wireframe space — dark field,
+   *  horizon, perspective floor grid, an accented feet line and scale posts —
+   *  so a character under construction reads against a neutral background. */
+  private drawWireframeStage(): void {
+    const g = this.add.graphics().setDepth(0);
+    const horizonY = Math.round((260 / 720) * STAGE_H);
+    const floorTop = Math.round((500 / 720) * STAGE_H);
+    g.fillStyle(0x0b0f16, 1).fillRect(0, 0, STAGE_W, STAGE_H);
+    // sky band grid (sparse)
+    g.lineStyle(1, 0x22333f, 0.8);
+    for (let x = 0; x <= STAGE_W; x += 96) g.lineBetween(x, 0, x, horizonY);
+    for (let y = 0; y <= horizonY; y += 96) g.lineBetween(0, y, STAGE_W, y);
+    // horizon
+    g.lineStyle(2, 0x3f6b7e, 1).lineBetween(0, horizonY, STAGE_W, horizonY);
+    // floor plane: converging verticals + widening horizontals (fake depth)
+    g.lineStyle(1, 0x2c4757, 1);
+    const cx = STAGE_W / 2;
+    for (let i = -8; i <= 8; i++) {
+      g.lineBetween(cx + i * 40, floorTop, cx + i * 130, STAGE_H);
+    }
+    for (let t = 0; t <= 1; t += 0.2) {
+      const y = floorTop + (STAGE_H - floorTop) * t * t;
+      g.lineStyle(1, 0x2c4757, 1).lineBetween(0, y, STAGE_W, y);
+    }
+    // the feet line (FLOOR_Y) accented + scale posts every 200px
+    g.lineStyle(2, 0x4a8a9e, 1).lineBetween(0, FLOOR_Y, STAGE_W, FLOOR_Y);
+    g.lineStyle(2, 0x4a8a9e, 0.8);
+    for (let x = 100; x < STAGE_W; x += 200) g.lineBetween(x, FLOOR_Y - 10, x, FLOOR_Y + 10);
+    this.add
+      .text(12, FLOOR_Y + 14, 'WIREFRAME DEV STAGE — assign a real stage in STAGES before shipping', {
+        fontFamily: 'monospace', fontSize: '12px', color: '#56788a', stroke: '#000', strokeThickness: 2,
+      })
+      .setDepth(0.5);
+  }
+
+  /** Character Studio CREATOR: swap slot 0 to a LIVE DRAFT — the def goes
+   *  into the live registry, the (placeholder→real) cells live on a canvas
+   *  texture the wizard blits into as generations land, and the fighter
+   *  simply renders it: the fight scene IS the creator preview. Also the
+   *  canon-edit path: reopening a fighter re-mounts it here with its real
+   *  assets inherited. Returns a refresh handle for cell updates. */
+  setStudioSubject(def: (typeof characters)[string], meta: SheetMeta, canvas: HTMLCanvasElement): { refresh: () => void } {
+    const id = def.id;
+    characters[id] = def; // live registry (dev-only mutation, same as the tuner)
+    const key = `sheet-${id}`;
+    if (this.textures.exists(key)) this.textures.remove(key);
+    const tex = this.textures.addCanvas(key, canvas)!;
+    meta.frames.forEach((_, i) =>
+      tex.add(i, 0, (i % meta.cols) * meta.cellW, Math.floor(i / meta.cols) * meta.cellH, meta.cellW, meta.cellH),
+    );
+    tex.refresh();
+    this.chars[0] = id;
+    this.cellMaps[0] = new Map(meta.frames.map((n, i) => [n, i]));
+    this.cellNames[0] = meta.frames;
+    this.skeletons[0] = meta.skeletons;
+    const f = this.state.fighters[0];
+    f.charId = id;
+    f.health = def.health;
+    f.action = { kind: 'idle', frame: 0 }; // never carry an action into a new kit
+    this.fighterSprites[0]?.setTexture(key, 0);
+    this.hitFlashSprites[0]?.setTexture(key, 0);
+    // stale cached silhouettes would shadow the OLD art — drop them so
+    // ensureShadowTexture re-bakes from the new canvas
+    for (const tkey of this.textures.getTextureKeys()) {
+      if (tkey.startsWith(`shadow-${id}-`)) this.textures.remove(tkey);
+    }
+    return { refresh: () => tex.refresh() };
+  }
+
   /** Character Studio: the collapsible module rail over the live fight. Each
    *  module lazily mounts one of the existing dev panels over THIS scene (the
    *  WYSIWYG guarantee); TEST hides them all so the scene is pure play. The
@@ -1636,8 +1714,14 @@ export class FightScene extends Phaser.Scene {
     // CharacterCreatorScene grid backdrop is retired from the menu routes)
     let creatorPanel: CharacterCreatorPanel | null = null;
     const creatorOn = (): void => {
-      if (!creatorPanel) creatorPanel = new CharacterCreatorPanel(this.uiLayer.root, () => this.studioRail?.setActive(null));
-      else creatorPanel.setMounted(true);
+      if (!creatorPanel) {
+        creatorPanel = new CharacterCreatorPanel(this.uiLayer.root, () => this.studioRail?.setActive(null), {
+          sceneHosted: true,
+          subject: { mount: (def, meta, canvas) => this.setStudioSubject(def as unknown as (typeof characters)[string], meta, canvas) },
+        });
+      } else {
+        creatorPanel.setMounted(true);
+      }
     };
     const creatorOff = (): void => creatorPanel?.setMounted(false);
     // stage registry / home-stage assignment / world-map pin round-trip

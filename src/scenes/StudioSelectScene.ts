@@ -77,7 +77,11 @@ export class StudioSelectScene extends Phaser.Scene {
     play(this, 's-blip');
     const id = p1 ?? 'vincent';
     const partner = id === 'yulia' ? 'vincent' : 'yulia';
-    const stage = (characters[id] as { stage?: string } | undefined)?.stage ?? 'chiba';
+    // NEW characters build on the wireframe dev stage template; editing an
+    // existing fighter opens on their home stage
+    const stage = module === 'creator' && !p1
+      ? 'wireframe'
+      : (characters[id] as { stage?: string } | undefined)?.stage ?? 'chiba';
     this.scene.start('Fight', { p1: id, p2: partner, cpu: false, training: true, studio: true, module, stage, render3d: false });
   }
 

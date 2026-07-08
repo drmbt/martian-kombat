@@ -26,7 +26,7 @@ const TOOLS: Tool[] = [
     label: 'CHARACTER CREATOR',
     desc: 'zero → hero wizard, hosted in the studio over a live fight',
     // straight into the studio (no fighter pick needed to CREATE one)
-    act: (s) => s.go('Fight', { p1: 'vincent', p2: 'yulia', cpu: false, training: true, studio: true, module: 'creator', stage: 'chiba', render3d: false }),
+    act: (s) => s.go('Fight', { p1: 'vincent', p2: 'yulia', cpu: false, training: true, studio: true, module: 'creator', stage: 'wireframe', render3d: false }),
   },
   {
     label: 'STAGE PINS',
