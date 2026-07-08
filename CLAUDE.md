@@ -237,14 +237,15 @@ content. Re-check that column before starting any new character.
 
 ## The roster
 
-All eight fighters are fully built and playable, each with a six-button kit,
-named motion-input specials, and a fatality (photos in `assets/character-inspo/`,
-full move-set design in `docs/CHARACTERS.md`): Catherine (bo staff + chef, dog
-Jazzper assist), Flo (angry German hacker, spliff smoke), Freeman
-(yogi/meditator), Gene (AI-startup hacker, genAI glitch moves), Kirby (acrobatic
-fire-breathing contortionist), Marzipan (dreadlocked vegan biologist), Vincent
-(tai chi + digital wizardry, black cloak), Yulia (tall Russian yogi). More
-characters come later — which is why characters are data files, not code.
+**Sixteen fighters are fully built and playable** (the launch eight — Catherine,
+Flo, Freeman, Gene, Kirby, Marzipan, Vincent, Yulia — plus Bodhi, Cat, Chebel,
+Ygor, Rapha, Vanessa, Earl, Ben), each with a six-button kit, chains/cancels/
+L-M-H variants, named motion-input specials + a techable throw (the locked 5th
+default special), a themed fatality, and a persisted `vo` block (kiai/hurt/
+victory line TEXTS + per-move `voiceText` — the schema-lint in
+`src/data/assets.audit.test.ts` enforces the full standard roster-wide).
+Photos in `assets/character-inspo/`, move-set design in `docs/CHARACTERS.md`.
+Characters are data files, not code.
 
 Each character JSON carries an optional `stage: "<id>"` **home-stage** field
 (the stage-select dialog badges it; arcade mode will end there). A home stage
@@ -284,17 +285,37 @@ collision `scale` vs the render scale `hurtStand.h*1.32/CELL_H`. Anything drawn
 over the ART (skeleton, auto-hitbox, soft box) uses the RENDER scale; collision
 boxes use `scale`. Do not conflate them.
 
-**Coordinate contract** (bit us repeatedly, see Sprint 25): `pack-sheet.mjs`'s
-`SCALE_PAD` MUST equal `pose_qa.py`'s `load_raw_cells` scale/pad (`HEADROOM=24`),
-or baked keypoints/hitboxes silently misregister with the packed art. `FLOOR_FRAC`
-(0.88) MUST match across `normalize_floor.py`, `pose_qa.py`, `FightScene.ts`,
-`SelectScene.ts`. Normalize to `FLOOR_FRAC` OR hand-tune `spriteOffsetY` — never
-both (the roster is mid-migration: only vincent & gene are normalized).
+**Coordinate contract (SOLVED — Sprint 27):** every constant lives ONCE in
+`src/render/coords.json` (accessors: `src/render/coords.ts` for the browser,
+`tools/core/coords.mjs` for Node, `tools/qa/coords.py` for Python) and the
+cell↔world transform lives ONCE in `src/render/geometry.ts` — never re-declare
+FLOOR_FRAC/CELL dims/HEADROOM/the 1.32 art margin. The whole roster is
+floor-normalized (feet on the 338 line, meta v2 with per-cell RTMPose
+skeletons); `SPRITE_FOOT_OFFSET_Y` is 0 and `spriteOffsetY` is gone. There is
+exactly ONE packer: `tools/core/packer.mjs` (CLI `gen:pack`, dev
+`/__editor/pack`, and creator SHIP all run it); Sprite-Editor edits persist as
+overlays in `assets/raw/edits/<id>/` and survive re-packs; frame dirs with a
+`.cellspace` marker (vincent/earl/ben) hold KEYED cell-space art the packer
+copies through.
 
-Still pending (SPRINTBOARD): the **character-creator skeleton** (name,
-bring-or-generate art, voice cloning, bio+move-list prompt, sprite gen with
-per-frame re-rolls) that wraps the 7-step pipeline. Do not expose any dev-editor
-UI in the shipped build.
+## Character Studio (Sprint 27 — the unified dev tool; dev-only)
+
+`DEV EDITOR → CHARACTER STUDIO` opens `StudioSelectScene` (the roster
+manager: every fighter as a card — edit / online⇄offline / export .zip /
+guided delete, plus ＋NEW CHARACTER, IMPORT ZIP, and the WIP-drafts shelf).
+Editing opens FightScene's `studio` mode: a top module rail
+(CREATOR · SPRITES · MOVES · STAGES · TEST) over the LIVE fight — the old
+Move Tuner / Sprite Editor menu entries are deep links into it. The creator
+wizard is WYSIWYG: the fight scene IS the preview (`setStudioSubject` mounts
+the draft as the slot-0 fighter — placeholder ghost → real cells as
+generations land; canon fighters inherit their assets on reopen); new
+characters start on the programmatic `wireframe` dev stage; a GAP BAR shows
+per-fighter completeness (cells/throw/skeletons/lore/quotes/VO/voice/music/
+fatality/stage). Kit grammar comes from `tools/core/kit.mjs` (chains/cancels/
+variants — no fighter ships thin). Full plan: `docs/CHARACTER_STUDIO.md`;
+state: SPRINTBOARD Sprint 27 + Agent handoff notes. Do not expose any
+dev-editor UI in the shipped build (everything is `apply:'serve'` +
+`import.meta.env.DEV`).
 
 ## Conventions
 

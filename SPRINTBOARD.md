@@ -1447,6 +1447,20 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-08 · data+tools · VO ground-truthing via whisper** — the recovered
+  vo texts were spot-checked against the ACTUAL clips (Apple `afconvert`
+  decode → whisper-small in the miniconda python — zero ffmpeg dependency;
+  NOTE the homebrew ffmpeg broke mid-session on a brew upgrade
+  (leptonica→libtiff.5) and the user has since fixed it). vincent/ben/earl
+  rewritten from user-reviewed transcriptions ('Ihck!', 'Scheiße!', 'YEET!',
+  matrix-teleport + rising-glyph marked '(SFX)'); vanessa verified CORRECT
+  (whisper mangles her Portuguese — JSON is ground truth); gene/catherine/
+  rapha found TEMPLATE-SHADOWED (stale draft states outranked the real
+  voiceLines table) and restored from the table, which gene's clips match
+  verbatim; migrate-vo now refuses template drafts. The other 9 fighters'
+  texts are correct by construction (clips were generated from those same
+  tables). 361/361. — Claude (Fable)
+
 - **2026-07-08 · data+tools+ui · Sprint 27 Phase 3i: dogfood feedback batch —
   VO texts recovered + persisted** (user-directed). THE data-loss fix: the
   kiai/hurt/victory line TEXTS (and per-move call-outs) were never stored in
@@ -3139,222 +3153,71 @@ fixed-screen SF2 framing is intentional).
   8 inspo photos committed; pushed to GitHub. *(Claude)*
 
 ---
-
 ## Agent handoff notes
 
-*(overwrite this section each handoff — what's mid-flight, gotchas, next action)*
+*(rewritten 2026-07-08 end-of-session — the previous notes were Sprint-20 era)*
 
-**Wave 2 roster expansion (2026-07-04, IN FLIGHT — separate session from the
-Sprint 20 note below, do not collide):** user-directed multi-phase job to add
-8 new fighters. Eligible pool = inspo photos with BOTH a full-body
-`assets/character-inspo/<name>.jpg` and a `face/` shot (12 qualified). Chosen
-8: **bodhi, cat, chebel, earl, haidai, rapha, vanessa, ygor** (user swapped
-katana + xiao-chen out for rapha + vanessa 2026-07-04; benched: katana,
-xiao-chen, lyosha, seva — reasons in docs/CHARACTERS.md). Phase plan with
-approval gates: (1) character-sheet designs → appended to `docs/CHARACTERS.md`
-as "Wave 2 roster — PROPOSED v2, lore-informed", **awaiting user audit**.
-v2 redesigned all 8 around the Martian Lore sheet (Mars People tab — now
-cited in CLAUDE.md "Lore source" with a HARD privacy rule: never build
-anyone marked NO AI PLEASE). Biggest lore swings: Bodhi = Thai-bodywork
-grappler (not surfer), Chebel = animal-spirit-card summoner, Haidai =
-Balinese vibration priest (sash = saput poleng), Earl = "The Madd Wikkid"
-audio-engineer zoner, Ygor = VJ Suave projection zoner (not photographer).
-Xiao-Chen has no lore row — flagged lore-light. (2) canonical
-painted-cel images into `assets/raw/canonical/` → approve; (3) character
-JSONs + winQuotes + VO soundbite samples → approve; (4) parallel full asset
-gen (frames/pack/audio/portraits/fatalities/vfx); (5) wire up + make the
-select screen grid scale past 8. (Benched-char gotchas for Wave 3:
-xiao-chen's inspo is `xiao-chen.jpg` but the face shot is
-`face/xiaochen.jpg`; seva's full-body is only 240px.) Next action: user
-edited `docs/WAVE2-VO-CHECKLIST.md` 2026-07-04 (NOTE: edits left some
-categories short of the 6/6/4 VOICE_COUNTS contract — cat 2 victory, chebel
-5/5/2, earl 5 kiai, rapha 5 kiai + 3 victory, ygor 5 kiai + 3 victory;
-draft fill-ins for re-approval before running gen-audio). CANONICALS +
-PORTRAITS DONE 2026-07-04: all 8 in `assets/raw/canonical/` + 160px crops
-and KO busts in `public/assets/portraits/` via gen-canonical.mjs (FLAVOR +
-FACE entries added for the 8). Gen gotchas learned: (a) color words in
-CAPS in a flavor prompt can get rendered as literal text (bodhi's first
-canonical spelled "AMBER" — reworded + regened); (b) gemini IMAGE_SAFETY
-sometimes rejects the gory DEFEAT bust prompt (cat) — script now
-log-and-skips + falls back to a bloodless DEFEAT_SOFT variant
-automatically; (c) chebel's fixed portrait crop is tight on the forehead
-(knee-up pose) — acceptable, per-char crop offset is the fix if wanted;
-(d) ygor's canonical cap has garbled "MARS"-ish lettering — user to judge;
-(e) rapha's canonical regened WITHOUT Tubs (user call — companion entities
-stay out of canonicals; Tubs gets his own assist cell, Jazzper pattern).
-Canonicals approved (Rapha regened Tubs-free). NOW BUILDING FIGHTERS ONE AT
-A TIME (vertical slice first, then parallelize). **BODHI scaffolded
-2026-07-04** — grappler, pure data, tsc clean + 130/130 tests:
-`src/data/characters/bodhi.json` (2 command grabs Deep Tissue 360+P /
-Table Work qcb+K, Ascendant dp+P anti-air, Retrograde qcf+K low slide, LPLK
-throw; NOTE Table Work's lore "side-switch" dropped to cosmetic — engine
-teleport+grab combo untested, stayed on proven grab plumbing), registered in
-index.ts, roster.ts (playable:FALSE until sheet packs), frames-manifest.mjs
-(`always` line pins wardrobe + suppresses zodiac glyphs to Ascendant only,
-GOLD never green — 62 cells, no projectile/companion cells since he has
-neither), gen-audio.mjs (announcer BODHI! + voiceLines 6/6/4, Harry voice
-freeman-style calm settings). **SPRITE SHEET DONE 2026-07-04** — 62 frames
-generated + packed to public/assets/sprites/bodhi/{sheet.png,meta.json},
-playable:true, tsc clean. QA re-rolls done (targeted `--cells`): 37/38/39
-(cmk/chk crouch cells) had parka-hem phantom-legs + a headless torso —
-fixed by rewriting those poses (deep-squat framing, "hem is NOT a leg",
-"one head with beanie") AND deleting the poisoned chk-active anchor so it
-regened clean before the cells that anchor to it; 48 (deep-tissue-active)
-had a SECOND BODY (clone) from "hoisting an unseen opponent" — fixed by
-rewriting to mime the grab through empty air ("COMPLETELY ALONE, no
-clone"). LESSON for remaining chars: grab/throw actives must say "empty
-air / no second person", and low crouch cells need explicit "parka/skirt
-hem is not a leg" + head-visible guards. NOTE hit Gemini monthly spend cap
-mid-QA (429 RESOURCE_EXHAUSTED); user raised it. **BODHI 100% COMPLETE
-2026-07-04** — all 7 pipeline steps done: sheet+meta, portrait+ko, 4
-fatality panels (`full-realignment`, added to gen-fatality.mjs FATALITIES;
-QA: panel-4 "GOLD star-chart disc" rendered the literal word GOLD on a coin
-→ reworded to "amber zodiac ephemeris wheel, NO text/letters/coin" + re-ran
-just that panel), announcer BODHI! + 16 voice clips (6/6/4). tsc clean. He
-is the finished reference implementation — the first Wave 2 fighter fully
-shipped. LESSON banked: fatality/effect prompts must avoid ALL-CAPS color
-words next to nouns (renders as text) — same class of bug as bodhi's
-canonical "AMBER". Next: repeat for cat(parallel session)/chebel/earl/
-haidai/rapha/vanessa/ygor (Tubs +
-Little-Martians + Suave-creatures + jaguar = separate assist/projectile
-cells, Jazzper pattern). Select-screen already auto-sizes to ROSTER length
-(SelectScene.ts:22) so >8 grid is handled; BootScene loads sheets for all
-ROSTER ids (missing sheet = Phaser loaderror, non-fatal, capsule fallback).
-VO checklist gaps still to backfill before gen-audio for cat/chebel/earl/
-rapha/ygor (short of 6/6/4).
+**Current work: Sprint 27 — Character Studio, branch `feat/character-studio`
+(24 commits ahead of main, not merged).** The full plan + audit is
+`docs/CHARACTER_STUDIO.md` (read it first); the Sprint 27 section above is
+the checkbox mirror. Phases 0–2 are COMPLETE (one coords source
+`src/render/coords.json` + accessors; one packer `tools/core/packer.mjs`
+serving gen:pack + /__editor/pack + creator SHIP with edit-overlay
+survival; one prompt library `tools/core/{cells,prompts,kit}.mjs`; the
+ATOMIC floor migration — all 16 fighters normalized to the 338 feet line
+with fresh per-cell RTMPose skeletons in meta v2, SPRITE_FOOT_OFFSET_Y and
+every spriteOffsetY deleted, roster hitboxes re-derived from skeletons
+(catherine's staff reach exempt), 361/361 vitest fully green). Phase 3 is
+~90% done: the studio is LIVE — `StudioSelectScene` roster manager (DEV
+EDITOR → CHARACTER STUDIO: cards for every fighter, EDIT/ONLINE-OFFLINE/
+EXPORT-ZIP/DELETE, ＋NEW, IMPORT ZIP, WIP-draft shelf with ✕), FightScene
+`studio` mode with the top rail (CREATOR/SPRITES/MOVES/STAGES/TEST), the
+creator re-hosted WYSIWYG (right-docked wizard, the FIGHT SCENE is the
+preview: `setStudioSubject` mounts the draft as the live slot-0 fighter on
+a dynamic canvas — placeholder ghost → real cells as gens land; canon
+reopen inherits assets + auto-opens from a roster EDIT), the `wireframe`
+dev stage template, the completeness GAP BAR, projectile joint-anchored
+spawns in the tuner, and the VO-text persistence layer
+(CharacterDef.vo + MoveDef.voiceText, recovered roster-wide by
+tools/migrate-vo.mjs and whisper-verified for the dogfooded fighters).
 
-**State (2026-07-04, Sprint 20 SHIPPED — uncommitted, awaiting the user's
-go-ahead; next sprint not yet cut):** 8/8
-fighters playable with fatalities, 20 stages, full music loop, settings +
-controls pages, CPU + training + attract modes, VS screen, win-quote screen.
-Sprint 19 committed + pushed in `a27fa90`. **Sprint 20 (personality
-specials + Burn One) is fully implemented in the working tree** — 130/130
-vitest, tsc clean, all four new primitives verified live in the browser.
-Touched: `src/engine/{types,step}.ts`, `src/engine/engine.test.ts`, all 7
-new-move `src/data/characters/*.json`, `tools/{frames-manifest,
-gen-fatality}.mjs`, `docs/{CHARACTERS,MOVES}.md`, regenerated sheets under
-`public/assets/sprites/<char>/` + `public/assets/fatalities/flo/burn-one-*`.
-- **Next action:** user reviews + commits Sprint 20, then cut the next
-  sprint from the near-term roadmap (top candidates per the feel review:
-  proximity guard/blocking feel, per-move hurtbox overrides, CPU difficulty
-  levels, round intros/victory poses).
-- **Where the Sprint 20 code landed:** (1) mash input — `SpecialInput.mash:
-  N`, `mashedStrength()` counts press edges across the whole input buffer,
-  final press must be this tick; CpuDriver ignores mash specials (filters
-  on `input.motion`). (2) melee rehit — `MoveDef.rehit` + `Action.
-  lastHitFrame`; the hasHit skip in resolveAttacks becomes conditional.
-  Rehit hits land while the victim is still reeling → they scale as one
-  combo and re-chip through block. (3) pull projectile — after applyHit in
-  updateProjectiles: if `p.pull` and the victim ISN'T in blockstun, snap
-  their x to owner ± 85 (stage-clamped), zero vx; the knockdown launch then
-  drops them at the owner's feet. (4) float — `f.floatGravity` replaces
-  def.gravity in the 'air'/'airAttack' physics only (never airHit), cleared
-  at every FLOOR_Y touchdown and in applyHit. If a future move wants float
-  VARIANTS, note VariantPatch has no `float` field yet. (5) Vincent's
-  teleport cells are CRIMSON (green FX would chroma-key away — same lesson
-  as the old teal sigil-bolt). (6) New specials were APPENDED after `throw`
-  in frames-manifest specials dicts — cells resolve by name, order is
-  cosmetic, but keep appending.
-- **Where the Sprint 19 code landed:**
-  (1) Cancels live at the TOP of updateFighter's attack case: a buffered
-  press (Sprint 18 `f.buffered`, pick resolved at press time) cancels the
-  current move once it has contacted (`a.hasHit` — set on hit AND block,
-  never whiff) inside contact→active-end+`CANCEL_WINDOW_TICKS`(8). Chain
-  legality is `chains: string[]` on the move (data, engine has zero
-  per-character cases); special-cancel legality is `cancel: true` + target
-  has `input` + target has no `grab`. One-fireball rule re-checked at cancel
-  time. The canceled-into move advances to frame 1 the same tick (matches
-  the chord-upgrade path just below it — keep them consistent).
-  (2) `FighterState.comboHits` is VICTIM-side: applyHit increments it when
-  the victim was already in hitstun/airHit, else sets 1; step()'s stun-decay
-  loop zeroes it whenever the fighter isn't reeling (frozen reels keep it).
-  Scaling: hits 1-2 full, −10%/hit, floor 30% (`scaleForCombo`, integer
-  math, min 1 dmg); stun gains use the SCALED damage. Links that connect on
-  the exact tick hitstun expires count as a NEW combo (victim passed through
-  idle) — accepted simplification. Mash-jab strings drop midscreen after ~5
-  hits from pushback; corner strings run longer. If S20 adds a renderer
-  combo counter off engine state, `comboHits` is already there.
-- **Where the Sprint 18 code landed:**
-  (1) `FighterState.buffered` (`BufferedAction`): pick resolved at PRESS
-  time (motion windows stay honest for reversals), executed in
-  updateFighter's default branch before live pickAttack, TTL 8, cleared on
-  execution. Capture happens in step()'s per-slot input loop, gated on
-  `BUFFERABLE` set ∪ frozen, fight phase only. (2) hitstop is per-fighter
-  now (`f.hitstop`): melee → both, projectiles → victim only, counter → +3
-  victim side; frozen fighters skip updateFighter/facing/stun-decay/attack
-  resolution entirely (a frozen attacker's active hitbox is inert);
-  body-push, timer, and the pendingThrow tech countdown pause while EITHER
-  side is frozen; projectiles keep flying. Non-fight phases still hard-
-  freeze the whole world so the KO thunk carries into roundEnd. (3) `landing`
-  is a new ActionKind — anything that switches on action kinds (bot, future
-  UI) should treat it like getup; it's in the renderer's crouch-cell bucket.
-  (4) `airHit` bounce: `bounced` flag on the Action; bounced airHit is
-  invulnerable (isInvulnerable) or juggle loops would eat the sweep-invuln
-  test; applyHit resets it on fresh launches (juggles re-arm the bounce).
-  (5) Counterhit = defender in attack startup OR recovery, NOT active
-  (active-frame same-tick contact stays a plain trade); flag rides the
-  victim's action so the renderer state-diff sees it with zero extra
-  plumbing.
-- **Feel numbers now live:** HITSTOP 4/6/9/10 (was 3/5/7/8),
-  COUNTER_HITSTUN_MULT 1.5, COUNTER_HITSTOP_BONUS 3, ACTION_BUFFER_TICKS 8,
-  LANDING_TICKS 3, LANDING_WHIFF_TICKS 6, BOUNCE_VY 3.2. All in
-  `src/engine/constants.ts` — the user's subjective feel pass may want to
-  nudge these; every one is covered by a test that reads the constant, so
-  retuning won't break the suite.
-- **Known non-issues:** console shows pre-existing `proj-<char>` 404
-  process errors for characters with no legacy projectile art — BootScene
-  loads those speculatively by design, not a Sprint 18 regression. Trades
-  are still slot-0-first (resolveAttacks reads live actions, so P1's hit
-  interrupts P2's same-tick attack before it resolves) — pre-existing
-  behavior, left alone; true simultaneous trades would need the snapshot
-  the comment already claims.
-NOTE: a parallel session may work this repo simultaneously — commit with
-explicit paths only if that's still true when you pick this up.
-**After Sprint 17:** a parallel session ran a full game-feel review (industry-
-conventions audit + user fix list) and re-planned the pipeline — see the
-Sprint 18/19/20 sections above and the 2026-07-03 "Sprints 18–20 planned"
-changelog entry for the full reasoning. Order is now **Sprint 18 (input
-buffering + hit feedback) → Sprint 19 (cancels & chains) → Sprint 20
-(personality specials + Flo fatality rework)**; combo chains/cancels and
-damage scaling moved OFF the generic near-term roadmap and into Sprint 19.
-Near-term roadmap (now Sprint-18/19/20 leftovers): per-move hurtbox
-overrides, post-stun throw protection, CPU difficulty levels, round intros/
-victory poses, height normalization, post-fatality flow, attract-mode blink
-cleanup, sound priority/cooldowns, clash/tech feedback, CRT toggle. Long-term
-RFEs unchanged: character designer dialog, online multiplayer, arcade story
-mode, Veo motion smoothing. docs/MOVES.md is the living move spec
-(checkboxes = implementation state); edit it and re-run the buildout.
-**DEPLOY RECIPE:** just push to main —
-the `deploy` workflow builds and publishes (do NOT force-push gh-pages
-anymore; that pipeline is retired and was the wedge source). If a deploy run
-fails with `deployment_queued` timeouts, check for a phantom via
-`gh api repos/drmbt/martian-kombat/pages/deployments/<sha>` (empty status =
-limbo) and POST `<sha>/cancel`; the queue self-heals ~2h after the last
-mid-deploy cancellation. Never deploy twice in quick succession. **NEW GOTCHAS:** (1) crouch /
-low poses: the model copies the standing canonical's height no matter what the
-text says — pass a SECOND reference image with the desired low pose (e.g. the
-character's own chk-active frame) and say "copy the body height of the second
-reference"; scratchpad one-off did this for Yulia's 04/07 (bake into
-gen-frames when doing the next character). (2) Projectile art must not sit
-near the key color — Vincent's teal rune died on green screen; use
-`extra.projectileKey` + a magenta screen for cool-colored projectiles.
-(3) Renderer resolves cells BY NAME from meta.json with fallback chains
-(FightScene.attackCells) — new sheets can add cells freely; never rename old
-ones. Legacy-art fallback means new buttons LOOK samey on vincent/catherine/
-kirby until their v2 sheets are generated (frames-manifest `layout:'v2'` +
-`moves6` is the pattern — Yulia is the template).
+**Still open in Phase 3** (all user-requested, see the 3h/3i changelog
+entries): add/remove field controls for quotes + kiai/hurt/victory VO +
+specials slots (defaults 3/6/6/4 + throw as the locked 5th special);
+per-frame skeleton badges + a "regen missing keypoints only" button;
+wire the wizard preview-control buttons to drive the LIVE fighter
+(host.loopMove); transcribe/mark vincent's 2 SFX call-outs properly if
+desired; stage-music coverage for all stages; repro any remaining
+older-character load error (a null-sourceSize clamp guard is in); the
+Adopt flow v1 (upgrade checklist + diff view). Then Phase 4 (the
+/__editor/jobs runner, auto-pilot DAG + `studio:run`, core/lore.mjs with
+machine-enforced privacy opt-out, FX module, context cache, ONE full
+real-API dogfood run — reference-chaining policy is locked in
+docs/CHARACTER_STUDIO.md §2.9 and the sprite-generation skill) and Phase 5
+(StorageDriver/R2 seam, publish, docs consolidation, retire the standalone
+CharacterCreatorScene).
 
-Live at https://drmbt.github.io/martian-kombat/
-(repo public per user; NOTE: `assets/character-inspo/` photos of real
-people are therefore public too — flag to the user if that ever needs
-revisiting).
-**Gotchas:** `.env` in repo root (gitignored), all
-four keys live. Frame-gen: ALWAYS `gemini-3-pro-image`; keying: `chromakey`
-~0.15, never despill (bleaches Yulia's bandana/hair); transparent sheet PNGs
-look navy in previews — composite over grey before judging keying. Cell order
-in `tools/frames-manifest.mjs` is a contract with `FightScene.actionToCell` —
-append only. Character JSONs cast through `unknown` (no runtime validation).
-Stun `Action.frame` counts DOWN; attack/knockdown/getup count UP (and `dazed`
-now counts UP to DIZZY_TICKS). Universal throws exist (LP+LK, `techable`
-grab); command grabs untouched. Preview-browser tabs throttle
-rAF — step the loop via `window.__game.loop.step(t)` when verifying headless.
+**Landmines / lessons this sprint:**
+- Every fight flag must pass through VersusScene AND fightShell's
+  restart/select routes — they re-enumerate payloads (the studio flag
+  silently vanished there once).
+- The UiLayer root is pointer-events:none; any new DOM panel must opt back
+  in or its buttons are dead to real mice (JS .click() masks it).
+- assets/raw/frames dirs with a `.cellspace` marker are KEYED CELL-SPACE
+  (creator-written: vincent/earl/ben) — the packer copies them through;
+  re-keying/re-padding them double-pads. The other 13 are true raw gens.
+- Stale creator draft states can hold TEMPLATE VO/quotes — never let a
+  draft outrank the character JSON / voiceLines table without checking
+  (migrate-vo now refuses template drafts).
+- gen-audio.mjs and pack-sheet.mjs are import-safe now (main guarded) —
+  keep it that way for any tools/*.mjs that both export and execute.
+- The homebrew ffmpeg broke mid-session (brew upgrade: leptonica →
+  libtiff.5 gone); user fixed it. A no-ffmpeg transcription path exists:
+  Apple `afconvert` → whisper in /opt/miniconda3/bin/python3.
+- Dev-server restarts are REQUIRED after vite.config.ts edits (the editor
+  endpoints live there); scene-code edits need a full browser reload.
+
+**Deploy recipe (unchanged):** push to main → the `deploy` GitHub Actions
+workflow builds + publishes to https://drmbt.github.io/martian-kombat/.
+Do NOT force-push gh-pages. Never deploy twice in quick succession.
+

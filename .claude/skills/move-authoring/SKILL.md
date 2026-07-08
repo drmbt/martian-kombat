@@ -5,6 +5,15 @@ description: How to design a balanced Martian Kombat fighter's move set and writ
 
 # Move authoring — design a kit on real plumbing
 
+**Sprint 27 note:** the roster-standard grammar (light chains, medium
+cancels, per-archetype L/H variants, throw as the 5th default special) lives
+in `tools/core/kit.mjs` — apply `applyKitGrammar()` instead of hand-writing
+it, and the schema lint in `assets.audit.test.ts` enforces it roster-wide.
+Per-move VO call-outs persist as `voice: true` + `voiceText: "…"` on the
+move (the TEXT is the durable source; the mp3 is the artifact). Kits are
+live-tunable in the Character Studio's MOVES module (frame data, hitboxes,
+projectile spawnX/spawnY/renderSize + joint-anchored spawn points).
+
 Characters are pure data (`src/data/characters/<id>.json`); adding one never
 touches engine code — **as long as every move maps to plumbing that already
 exists.** The cardinal error is designing a move whose mechanic isn't built

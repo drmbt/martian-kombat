@@ -5,9 +5,21 @@ description: End-to-end orchestrator for adding a complete playable fighter to M
 
 # New character — end-to-end build
 
+**Sprint 27 note: the Character Studio is the primary front door now**
+(`DEV EDITOR → CHARACTER STUDIO` → ＋NEW CHARACTER — the WYSIWYG wizard runs
+the same pipeline in-browser with a live fighter preview and a completeness
+gap bar). This skill remains the CLI path; both share `tools/core/`
+(cells/prompts/kit/packer/coords), so the craft is identical either way.
+
 A fighter isn't "done" until all seven asset classes exist and `assets.audit`
-passes. The steps have hard ordering dependencies and a few easy-to-forget gates.
-Follow this order; delegate the deep work to the paired skills.
+passes — INCLUDING the schema lint: chains/cancels/L-H variants (apply
+`tools/core/kit.mjs` grammar), a techable throw (the locked 5th default
+special), ≥3 winQuotes, a themed (non-placeholder) fatality, AND the
+persisted `vo` block (kiai/hurt/victory line TEXTS in the character JSON) +
+per-move `voiceText` for any `voice: true` move — the mp3s are runtime
+artifacts, the JSON texts are the durable source (the Sprint 27 recovery
+lesson). Steps have hard ordering dependencies and a few easy-to-forget
+gates. Follow this order; delegate the deep work to the paired skills.
 
 ## Gate 0 — privacy opt-out (HARD RULE, check FIRST)
 
