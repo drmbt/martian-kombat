@@ -93,6 +93,9 @@ export class SelectScene extends Phaser.Scene {
   private tuner = false;
   /** dev-only sprite editor (see FightScene) */
   private spriteEditor = false;
+  /** dev-only Character Studio (module rail; see FightScene) */
+  private studio = false;
+  private studioModule: string | undefined;
   private render3d = false;
   /** live 3D idle previews on the side slots (3D mode; loaded dynamically) */
   private preview3d: SelectPreview3D | null = null;
@@ -118,7 +121,7 @@ export class SelectScene extends Phaser.Scene {
     super('Select');
   }
 
-  init(data: { cpu?: boolean; training?: boolean; showcase?: boolean; tuner?: boolean; spriteEditor?: boolean; render3d?: boolean; online?: OnlineSelectData }): void {
+  init(data: { cpu?: boolean; training?: boolean; showcase?: boolean; tuner?: boolean; spriteEditor?: boolean; studio?: boolean; module?: string; render3d?: boolean; online?: OnlineSelectData }): void {
     this.online = data.online ?? null;
     // showcase = a chosen CPU-vs-CPU demo; one controller picks BOTH fighters,
     // exactly like VS CPU, so it rides the same single-controller select flow
@@ -128,6 +131,8 @@ export class SelectScene extends Phaser.Scene {
     this.training = !this.online && !!data.training;
     this.tuner = !this.online && !!data.tuner;
     this.spriteEditor = !this.online && !!data.spriteEditor;
+    this.studio = !this.online && !!data.studio;
+    this.studioModule = data.module;
     this.render3d = this.online ? this.online.render3d : !!data.render3d;
     this.preview3d = null; // rebuilt per create(); disposed on shutdown
   }
@@ -356,7 +361,7 @@ export class SelectScene extends Phaser.Scene {
       if (this.starting) return;
       play(this, 's-blip', 0.5);
       if (this.online) return this.leaveOnline(); // leaving disconnects the match
-      if (this.stageMode) this.scene.restart({ cpu: this.cpu, training: this.training, showcase: this.showcase, tuner: this.tuner, spriteEditor: this.spriteEditor, render3d: this.render3d });
+      if (this.stageMode) this.scene.restart({ cpu: this.cpu, training: this.training, showcase: this.showcase, tuner: this.tuner, spriteEditor: this.spriteEditor, studio: this.studio, module: this.studioModule, render3d: this.render3d });
       else this.scene.start('Menu');
     });
 
@@ -727,7 +732,8 @@ export class SelectScene extends Phaser.Scene {
         p1: ROSTER[this.idx[0]].id, p2: ROSTER[this.idx[1]].id,
         // showcase launches as a CPU-vs-CPU demo, not a human-vs-CPU match
         cpu: this.showcase ? false : this.cpu, training: this.training,
-        showcase: this.showcase, tuner: this.tuner, spriteEditor: this.spriteEditor, stage, render3d: this.render3d,
+        showcase: this.showcase, tuner: this.tuner, spriteEditor: this.spriteEditor,
+        studio: this.studio, module: this.studioModule, stage, render3d: this.render3d,
       });
     });
   }

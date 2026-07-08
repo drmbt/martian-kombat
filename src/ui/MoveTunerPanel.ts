@@ -102,6 +102,15 @@ export class MoveTunerPanel {
     this.toggleBtn.textContent = v ? 'TUNER ▶' : 'TUNER ◀';
   }
 
+  /** Character Studio rail: mount/unmount the whole tuner (panel, resize
+   *  handle AND collapse button) as the MOVES module. Distinct from the
+   *  in-panel collapse, which must keep its button visible to re-open. */
+  setMounted(v: boolean): void {
+    this.el.style.display = v && this.visible ? 'block' : 'none';
+    this.resizeHandle.style.display = v && this.visible ? 'block' : 'none';
+    this.toggleBtn.style.display = v ? 'block' : 'none';
+  }
+
   dispose(): void {
     this.el.remove();
     this.resizeHandle.remove();

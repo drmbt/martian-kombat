@@ -1447,6 +1447,19 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-08 · ui · Sprint 27 Phase 3b: the Character Studio shell exists**
+  — FightScene gained a `studio` mode: `src/ui/StudioRail.ts` (collapsible
+  module rail) hosts the existing Sprite Editor + Move Tuner as lazily-
+  mounted SPRITES / MOVES modules over the LIVE fight (panels gained
+  setMounted; HUD show/hide extracted to setHudVisible); TEST deactivates
+  everything for pure play with the F1/F2/F3 overlays. EditorMenu now leads
+  with CHARACTER STUDIO, and MOVE TUNER / SPRITE EDITOR are deep links into
+  the studio at their module (one implementation, many doors); Select
+  forwards studio/module flags. Verified live: rail renders, modules mount/
+  unmount + swap cleanly, TEST restores P2 + HUD, kirby loops with
+  registered skeleton/boxes. 361/361, tsc clean. Legacy tuner/spriteEditor
+  entry flags still work (unchanged paths). — Claude (Fable)
+
 - **2026-07-08 · data+assets · Sprint 27 Phase 3a: schema backfill — the
   roster standard is universal** — ben + earl gained chains/cancel/L-H
   variants (gene idioms) and themed hand-authored fatalities generated from

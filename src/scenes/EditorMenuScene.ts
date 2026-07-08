@@ -13,7 +13,15 @@ interface Tool {
   act: (scene: EditorMenuScene) => void;
 }
 
+// The individual tools are separately-addressable MODULES of the Character
+// Studio (one implementation, many doors — docs/CHARACTER_STUDIO.md §2.1):
+// Move Tuner / Sprite Editor deep-link into the studio at their module.
 const TOOLS: Tool[] = [
+  {
+    label: 'CHARACTER STUDIO',
+    desc: 'module rail over a live fight: sprites · moves · test',
+    act: (s) => s.go('Select', { cpu: false, training: true, studio: true, render3d: false }),
+  },
   {
     label: 'CHARACTER CREATOR',
     desc: 'zero → hero wizard: photo + name → full playable fighter',
@@ -26,13 +34,13 @@ const TOOLS: Tool[] = [
   },
   {
     label: 'MOVE TUNER',
-    desc: 'pick two fighters, tune moves live, CPU/loop drivers',
-    act: (s) => s.go('Select', { cpu: false, training: true, tuner: true, render3d: false }),
+    desc: 'studio, opened at the MOVES module (frame data · drivers)',
+    act: (s) => s.go('Select', { cpu: false, training: true, studio: true, module: 'moves', render3d: false }),
   },
   {
     label: 'SPRITE EDITOR',
-    desc: 'edit a fighter’s sheet: cells, hitboxes, skeleton, regen frames',
-    act: (s) => s.go('Select', { cpu: false, training: true, spriteEditor: true, render3d: false }),
+    desc: 'studio, opened at the SPRITES module (cells · skeleton · regen)',
+    act: (s) => s.go('Select', { cpu: false, training: true, studio: true, module: 'sprites', render3d: false }),
   },
 ];
 

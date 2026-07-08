@@ -145,6 +145,12 @@ export class SpriteEditorPanel {
     this.el.remove();
   }
 
+  /** Character Studio rail: mount/unmount the whole editor as the SPRITES
+   *  module (everything lives under the one root el). */
+  setMounted(v: boolean): void {
+    this.el.style.display = v ? 'flex' : 'none';
+  }
+
   // ---------- resize / collapse ----------
   private resizeHandle(orient: 'ns' | 'ew', onDelta: (d: number) => void): HTMLDivElement {
     const ns = orient === 'ns';

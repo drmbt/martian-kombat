@@ -27,6 +27,7 @@ import { CpuDriver } from '../ai/bot';
 import { DIFFICULTIES, DIFFICULTY_AGGRESSION, type Difficulty } from '../ai/difficulty';
 import { MoveTunerPanel } from '../ui/MoveTunerPanel';
 import { SpriteEditorPanel } from '../ui/SpriteEditorPanel';
+import { StudioRail } from '../ui/StudioRail';
 import { SpriteSheetModel, type SheetMeta } from '../ui/spriteSheetModel';
 import { play, playVoice, runCues } from './BootScene';
 import { playMusic } from '../audio/music';
@@ -226,6 +227,10 @@ export class FightScene extends Phaser.Scene {
   private showcase = false;
   private tuner = false;
   private spriteEditor = false;
+  /** dev-only Character Studio: module rail over the live fight (WYSIWYG) */
+  private studio = false;
+  private studioModule: string | undefined;
+  private studioRail: StudioRail | null = null;
   /** sprite-editor working sheet model (edits mirror onto the fighter live) */
   private sheetModel: SpriteSheetModel | null = null;
   private spritePanel: SpriteEditorPanel | null = null;
@@ -280,7 +285,15 @@ export class FightScene extends Phaser.Scene {
     tuner?: boolean;
     /** dev-only sprite editor: single-character sheet/hitbox/skeleton editor */
     spriteEditor?: boolean;
+    /** dev-only Character Studio: the collapsible module rail hosting the
+     *  Sprite Editor + Move Tuner (and later the creator modules) over the
+     *  live fight scene — the WYSIWYG shell (docs/CHARACTER_STUDIO.md §2.1) */
+    studio?: boolean;
+    /** studio deep link: which module opens active ('sprites' | 'moves') */
+    module?: string;
   }): void {
+    this.studio = !this.online && !!data.studio;
+    this.studioModule = data.module;
     this.spriteEditor = !this.online && !!data.spriteEditor;
     // sprite editor edits ONE fighter; mirror it into both slots so the loop
     // driver has a valid (hidden) opponent to face
@@ -290,8 +303,8 @@ export class FightScene extends Phaser.Scene {
     this.online = data.online ?? null;
     // online is strictly 2-human: no CPU, no demo, no training upkeep
     this.cpu = !this.online && !!data.cpu;
-    // sprite editor rides the training sandbox (health regen, no round end)
-    this.training = !this.online && (!!data.training || this.spriteEditor);
+    // sprite editor + studio ride the training sandbox (health regen, no round end)
+    this.training = !this.online && (!!data.training || this.spriteEditor || this.studio);
     // showcase is a chosen CPU-vs-CPU demo — both sides are (showcase) bots
     this.showcase = !this.online && !!data.showcase;
     this.demo = !this.online && (!!data.demo || this.showcase);
@@ -501,6 +514,7 @@ export class FightScene extends Phaser.Scene {
 
     this.sheetModel = null;
     this.spritePanel = null;
+    this.studioRail = null;
     if (this.spriteEditor) this.setupSpriteEditor();
 
     const font = { fontFamily: 'monospace', color: '#f5ead9' };
@@ -535,10 +549,8 @@ export class FightScene extends Phaser.Scene {
         .setDepth(6),
     );
     // sprite editor wants a clean canvas — no health bars/timer/portraits/names
-    if (this.spriteEditor) {
-      const hide = [...this.hudEls, ...this.hudPortraitShadows, this.msgText, this.timerText, this.comboText];
-      for (const o of hide) (o as unknown as { setVisible(v: boolean): void }).setVisible(false);
-    }
+    if (this.spriteEditor) this.setHudVisible(false);
+    if (this.studio) this.setupStudio();
 
     this.stageGuideTexts = [
       this.add.text(10, (260 / 720) * STAGE_H - 16, 'horizon y=260', {
@@ -569,7 +581,7 @@ export class FightScene extends Phaser.Scene {
 
     if (this.training) {
       this.add
-        .text(STAGE_W / 2, 84, this.spriteEditor ? 'SPRITE EDITOR' : this.tuner ? 'MOVE TUNER' : 'TRAINING · ENTER to leave', {
+        .text(STAGE_W / 2, 84, this.studio ? 'CHARACTER STUDIO' : this.spriteEditor ? 'SPRITE EDITOR' : this.tuner ? 'MOVE TUNER' : 'TRAINING · ENTER to leave', {
           fontFamily: 'monospace', fontSize: '13px', color: '#ffd24a', stroke: '#000', strokeThickness: 3,
         })
         .setOrigin(0.5)
@@ -1535,6 +1547,64 @@ export class FightScene extends Phaser.Scene {
     this.events.once('shutdown', () => {
       this.spritePanel?.dispose();
       this.sheetModel?.dispose();
+    });
+  }
+
+  /** show/hide the fight chrome (health bars, portraits, timer, messages) —
+   *  the sprite-editor "clean canvas" and the studio's SPRITES module use it */
+  private setHudVisible(v: boolean): void {
+    const els = [...this.hudEls, ...this.hudPortraitShadows, this.msgText, this.timerText, this.comboText];
+    for (const o of els) (o as unknown as { setVisible(v: boolean): void }).setVisible(v);
+  }
+
+  /** Character Studio: the collapsible module rail over the live fight. Each
+   *  module lazily mounts one of the existing dev panels over THIS scene (the
+   *  WYSIWYG guarantee); TEST hides them all so the scene is pure play. The
+   *  full creator modules (Identity/Look/Audio/FX/Stages/Ship) re-host here
+   *  next (docs/CHARACTER_STUDIO.md §2.1). */
+  private setupStudio(): void {
+    const spritesOn = (): void => {
+      if (!this.spritePanel) this.setupSpriteEditor();
+      else this.spritePanel.setMounted(true);
+      // (re-)park the subject for the editor's fighter column
+      this.fighterSprites[1]?.setVisible(false);
+      this.state.fighters[0].x = 168;
+      this.state.fighters[0].facing = 1;
+      this.spriteEditor = true;
+      this.setHudVisible(false);
+    };
+    const spritesOff = (): void => {
+      this.spriteEditor = false;
+      this.spritePanel?.setMounted(false);
+      this.fighterSprites[1]?.setVisible(true);
+      this.setHudVisible(true);
+    };
+    const movesOn = (): void => {
+      if (!this.tunerPanel) {
+        this.debugBoxes = true; // hitbox edits should be visible immediately
+        this.tunerPanel = new MoveTunerPanel(this.uiLayer.root, characters, this.chars, this);
+      } else {
+        this.tunerPanel.setMounted(true);
+      }
+      this.tuner = true;
+    };
+    const movesOff = (): void => {
+      this.tuner = false;
+      this.tunerFrozen = false;
+      this.tunerPanel?.setMounted(false);
+    };
+    this.studioRail = new StudioRail(
+      this.uiLayer.root,
+      [
+        { key: 'sprites', label: 'SPRITES', hint: 'sheet cells · regen · keypoints · auto-hitbox', activate: spritesOn, deactivate: spritesOff },
+        { key: 'moves', label: 'MOVES', hint: 'frame data · hitboxes · CPU/loop drivers · write to JSON', activate: movesOn, deactivate: movesOff },
+        { key: 'test', label: 'TEST', hint: 'play it — all panels hidden · F1 boxes · F2 log · F3 skeleton', activate: () => this.setHudVisible(true), deactivate: () => undefined },
+      ],
+      this.studioModule ?? 'moves',
+    );
+    this.events.once('shutdown', () => {
+      this.studioRail?.dispose();
+      this.studioRail = null;
     });
   }
 
