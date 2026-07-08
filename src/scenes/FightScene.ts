@@ -38,7 +38,7 @@ import { HudModel } from '../presentation/hudModel';
 import { UiLayer } from '../ui/layer';
 import { WinOverlay } from '../ui/WinOverlay';
 import { FightShell } from './fightShell';
-import { ART_MARGIN, CELL_H, CELL_W, FLOOR_FRAC, SPRITE_FOOT_OFFSET_Y } from '../render/coords';
+import { ART_MARGIN, CELL_H, CELL_W, FLOOR_FRAC, ORIGIN_CX, ORIGIN_FEET, SPRITE_FOOT_OFFSET_Y } from '../render/coords';
 import * as geom from '../render/geometry';
 
 // Cells are looked up BY NAME from each sheet's meta.json (written by
@@ -873,6 +873,37 @@ export class FightScene extends Phaser.Scene {
    *  the move is actually firing (see drawDebug) */
   setPreviewBox(slot: 0 | 1, box: Box | null): void {
     this.previewBox = box ? { slot, box } : null;
+  }
+
+  /** the move's ACTIVE-cell baked skeleton (editor working model wins over
+   *  the meta bake, so fresh regens/joint drags are what you anchor to) */
+  private moveActiveJoints(slot: 0 | 1, moveId: string): Record<string, [number, number, number]> | undefined {
+    for (const cell of [`${moveId}-active`, moveId]) {
+      const j = this.editorJoints(cell) ?? this.skeletons[slot]?.[cell];
+      if (j) return j;
+    }
+    return undefined;
+  }
+
+  /** TunerHost: joint names available on a move's active cell */
+  jointNamesFor(slot: 0 | 1, moveId: string): string[] {
+    const j = this.moveActiveJoints(slot, moveId);
+    // body joints only — the per-finger/face points are noise in a dropdown
+    return j ? Object.keys(j).filter((n) => !/^(face|lhand|rhand)_/.test(n)) : [];
+  }
+
+  /** TunerHost: a joint's engine-space offset from the fighter origin — the
+   *  projectile spawn anchor ("spawn from the wrist", not a guessed number).
+   *  Cell space → engine via the RENDER scale (src/render/geometry). */
+  spawnFromJoint(slot: 0 | 1, moveId: string, joint: string): { x: number; y: number } | null {
+    const j = this.moveActiveJoints(slot, moveId)?.[joint];
+    if (!j) return null;
+    const def = characters[this.chars[slot]];
+    const rs = geom.renderScale(def);
+    return {
+      x: Math.round((j[0] - ORIGIN_CX) * rs),
+      y: Math.round((j[1] - ORIGIN_FEET) * rs + geom.footOffset(def)),
+    };
   }
 
   /** First cell name present in this fighter's sheet meta wins. */

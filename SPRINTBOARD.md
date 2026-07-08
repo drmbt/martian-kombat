@@ -1447,6 +1447,24 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-08 · tools+ui · Sprint 27 Phase 3c/3e: kit grammar + projectile
+  spawn anchors** — `tools/core/kit.mjs`: THE roster-standard grammar
+  (light chains, medium cancels, per-archetype L/H variant generation —
+  projectile vx/ttl/damage axes, dp/rush damage+startup+forwardVel, grab
+  damage; teleports/reversals/reflectors correctly get none) applied
+  non-destructively by `buildFullCharacter` AND `buildFromBase` — a
+  creator fighter can never ship mechanically thinner than the roster
+  again (unit-verified incl. hand-tuned preservation). Projectile editor
+  v1 in the Move Tuner (the MOVES module): spawnX/spawnY/renderSize now
+  editable, plus a **spawn ⚓ joint** row — pick any of the ~23 body
+  joints from the move's active-cell baked skeleton and SET writes its
+  engine-space offset into the spawn (FightScene grew
+  jointNamesFor/spawnFromJoint on the shared geometry transform; editor
+  working-model joints win over the meta bake). Verified live: vincent's
+  sigil-bolt spawn ← Rwri (20, −168). 361/361, tsc clean. Sprint 25's
+  "projectiles spawn from a named joint" Phase-2 item: CLOSED. — Claude
+  (Fable)
+
 - **2026-07-08 · ui · studio route fix: VersusScene was dropping the flag** —
   User-reported: DEV EDITOR → CHARACTER STUDIO landed in plain training.
   Root cause: the VS-card VersusScene sits between Select and Fight and

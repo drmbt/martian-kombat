@@ -87,6 +87,7 @@ export interface DesignDraft {
 // shared with the CLI pipeline (gen-frames/gen-canonical), so canon fighters
 // and creator fighters are prompted identically (docs/CHARACTER_STUDIO.md C2).
 import { CELLS } from '../../tools/core/cells.mjs';
+import { applyKitGrammar } from '../../tools/core/kit.mjs';
 import {
   spritePrompt, canonicalFromDescription, portraitPrompt, defeatPrompt,
   fatalityBeats as coreFatalityBeats,
@@ -449,6 +450,9 @@ export class CreatorModel {
       const mv = moves[moveId] as { hitbox?: unknown } | undefined;
       if (mv && mv.hitbox !== null) mv.hitbox = box; // keep null for pure-projectile specials
     }
+    // the roster-standard grammar: light chains, medium cancels, L/H variants
+    // (tools/core/kit.mjs — the ben/earl thin-kit regression can't recur)
+    applyKitGrammar(moves as Record<string, Record<string, unknown>>, d.specials);
     return {
       id: this.id,
       name: this.inputs.name.toUpperCase(),
@@ -504,6 +508,9 @@ export class CreatorModel {
       const mv = moves[moveId] as { hitbox?: unknown } | undefined;
       if (mv && mv.hitbox !== null) mv.hitbox = box;
     }
+    // non-destructive grammar fill (existing hand-tuned chains/cancel/variants
+    // on a canon-reopened kit are never touched)
+    applyKitGrammar(moves, d.specials);
     out.moves = moves;
     if (this.inputs.stageMode === 'none') delete out.stage;
     else if (this.inputs.stageId) out.stage = this.inputs.stageId;

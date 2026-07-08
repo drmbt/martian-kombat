@@ -21,6 +21,11 @@ export interface TunerHost {
   setLoopPaused(slot: 0 | 1, paused: boolean): void;
   setHoldActive(slot: 0 | 1, on: boolean): void;
   setPreviewBox(slot: 0 | 1, box: Box | null): void;
+  /** joint names on a move's ACTIVE cell (baked meta skeleton; [] if none) */
+  jointNamesFor(slot: 0 | 1, moveId: string): string[];
+  /** engine-space projectile spawn offset of a named joint on the move's
+   *  active cell — the "projectiles spawn from a named joint" seam */
+  spawnFromJoint(slot: 0 | 1, moveId: string, joint: string): { x: number; y: number } | null;
 }
 
 const NUM_FIELDS: (keyof MoveDef)[] = ['startup', 'active', 'recovery', 'damage', 'hitstun', 'blockstun', 'knockback'];
@@ -160,6 +165,11 @@ export class MoveTunerPanel {
     this.el.appendChild(this.statusEl);
   }
 
+  private status(msg: string, color = '#8fa6b2'): void {
+    this.statusEl.textContent = msg;
+    this.statusEl.style.color = color;
+  }
+
   private renderMoves(): void {
     this.movesEl.innerHTML = '';
     // rows always start collapsed on a rebuild — drop any stale marker
@@ -202,6 +212,45 @@ export class MoveTunerPanel {
       body.appendChild(this.h('projectile', 11, '#8fa6b2'));
       for (const field of ['vx', 'damage', 'hitstun', 'blockstun', 'knockback'] as const) {
         body.appendChild(this.numField(field, move.projectile[field], (n) => (move.projectile![field] = n)));
+      }
+      body.appendChild(this.numField('spawnX', move.projectile.spawnX, (n) => (move.projectile!.spawnX = n)));
+      body.appendChild(this.numField('spawnY', move.projectile.spawnY, (n) => (move.projectile!.spawnY = n)));
+      body.appendChild(this.numField('renderSize', move.projectile.renderSize ?? 72, (n) => (move.projectile!.renderSize = n)));
+      // spawn ⚓ from a skeleton joint on the active cell: pick a joint, APPLY
+      // writes the joint's engine-space offset into spawnX/spawnY (the fix for
+      // "no frontend way to set where a projectile comes from")
+      const joints = this.scene.jointNamesFor(this.inspectSlot, id);
+      if (joints.length) {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;gap:4px;align-items:center;margin:4px 0;';
+        const lab = this.h('spawn ⚓ joint', 11, '#8fa6b2');
+        lab.style.margin = '0';
+        const sel = document.createElement('select');
+        sel.style.cssText = 'flex:1;background:#0c1218;color:#eaf6fb;border:1px solid #3f6070;border-radius:3px;font:11px monospace;padding:2px;';
+        for (const j of joints) {
+          const o = document.createElement('option');
+          o.value = j;
+          o.textContent = j;
+          sel.appendChild(o);
+        }
+        // sensible default: the forward wrist/hand if present
+        const preferred = ['Rwri', 'Lwri', 'Rank', 'Lank'].find((j) => joints.includes(j));
+        if (preferred) sel.value = preferred;
+        const apply = document.createElement('button');
+        apply.textContent = 'SET';
+        apply.style.cssText = 'background:#24384a;color:#bff0ff;border:1px solid #7fe3ff;border-radius:3px;font:11px monospace;padding:2px 8px;cursor:pointer;';
+        apply.onclick = () => {
+          const s = this.scene.spawnFromJoint(this.inspectSlot, id, sel.value);
+          if (!s || !move.projectile) return this.status('no skeleton for this cell', '#ff7a6a');
+          move.projectile.spawnX = s.x;
+          move.projectile.spawnY = s.y;
+          this.renderMoves(); // refresh the number fields
+          this.status(`spawn ← ${sel.value} (${s.x}, ${s.y}) — fire the move to check, WRITE to keep`, '#6fe36f');
+        };
+        row.appendChild(lab);
+        row.appendChild(sel);
+        row.appendChild(apply);
+        body.appendChild(row);
       }
       body.appendChild(this.h('projectile box', 11, '#8fa6b2'));
       for (const f of BOX_FIELDS) {
