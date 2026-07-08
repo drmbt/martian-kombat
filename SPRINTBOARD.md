@@ -1366,7 +1366,24 @@ implementation, many doors; only the standalone scene implementations
       be a stage-art composition constant (documented, unrelated to sprite
       coords). **361/361 vitest — the suite is FULLY GREEN for the first
       time since Sprint 25.** tsc + prod build clean.
-- [ ] Phase 3 — studio shell + schema backfill: studio as a FightScene mode
+- [~] Phase 3 — schema backfill DONE 2026-07-08 (8 images — the approved
+      budget): ben + earl gained the full roster kit grammar
+      (lights-chain ['lp','lk','clp','clk'], cancel on all four mediums,
+      L/H variants on 7 specials following the gene idioms) and THEMED
+      hand-authored fatalities generated from their creator canonicals via
+      /creator/fatality — ben **"Dinner's Ready"** (`dinners-ready`: husk
+      slapped on the comal → tortilla-pressed → flaming quesadilla flip →
+      plated with grandmotherly disappointment) and earl **"The Final Mix"**
+      (`final-mix`: dragged before the speaker wall → fader slam / bass
+      warp → shatters into vinyl at the drop → "a perfect take"); generic
+      finish-* panels deleted. Vanessa gained 2 on-voice win quotes.
+      KNOWN_KIT_GAPS emptied — the schema lint now holds the WHOLE roster
+      to the full standard. Panels vision-checked (montage) + serve 200.
+      361/361, tsc clean. STILL OPEN in Phase 3 (the studio shell itself):
+      FightScene studio mode + module rail + TEST/STAGES modules +
+      EditorMenu deep links + projectile editor + module-scoped write
+      endpoint + core/kit.mjs + Adopt flow v1.
+- [ ] Phase 3 (shell) — studio as a FightScene mode
       (collapsible module rail Identity/Look/Sprites/Moves/Audio/FX/Test/
       Ship over the live scene; creator panels re-hosted, standalone
       creator scene retires) mounting the existing Sprite Editor + Move
@@ -1429,6 +1446,15 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-08 · data+assets · Sprint 27 Phase 3a: schema backfill — the
+  roster standard is universal** — ben + earl gained chains/cancel/L-H
+  variants (gene idioms) and themed hand-authored fatalities generated from
+  their creator canonicals (ben "Dinner's Ready", earl "The Final Mix" — 8
+  images, the approved budget; generic finish-* panels deleted); vanessa
+  gained her win quotes. KNOWN_KIT_GAPS emptied — the schema lint now
+  enforces the full kit grammar for every playable fighter. 361/361, tsc
+  clean, panels vision-checked + serving. — Claude (Fable)
 
 - **2026-07-08 · assets+data+tools · Sprint 27 Phase 2: THE atomic floor/
   skeleton migration** — all 16 fighters re-packed normalized (feet verified

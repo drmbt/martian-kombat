@@ -51,7 +51,13 @@
         "w": 54,
         "h": 48
       },
-      "height": "mid"
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
     },
     "mp": {
       "startup": 7,
@@ -67,7 +73,8 @@
         "w": 59,
         "h": 48
       },
-      "height": "mid"
+      "height": "mid",
+      "cancel": true
     },
     "hp": {
       "startup": 10,
@@ -99,7 +106,13 @@
         "w": 50,
         "h": 61
       },
-      "height": "mid"
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
     },
     "mk": {
       "startup": 5,
@@ -115,7 +128,8 @@
         "w": 55,
         "h": 48
       },
-      "height": "mid"
+      "height": "mid",
+      "cancel": true
     },
     "hk": {
       "startup": 11,
@@ -147,7 +161,13 @@
         "w": 63,
         "h": 49
       },
-      "height": "mid"
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
     },
     "cmp": {
       "startup": 7,
@@ -163,7 +183,8 @@
         "w": 62,
         "h": 50
       },
-      "height": "mid"
+      "height": "mid",
+      "cancel": true
     },
     "chp": {
       "startup": 9,
@@ -195,7 +216,13 @@
         "w": 62,
         "h": 73
       },
-      "height": "low"
+      "height": "low",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
     },
     "cmk": {
       "startup": 8,
@@ -211,7 +238,8 @@
         "w": 55,
         "h": 62
       },
-      "height": "low"
+      "height": "low",
+      "cancel": true
     },
     "chk": {
       "startup": 11,
@@ -371,7 +399,23 @@
         "blockstun": 12,
         "knockback": 9
       },
-      "voice": true
+      "voice": true,
+      "variants": {
+        "l": {
+          "startup": 11,
+          "projectile": {
+            "vx": 7,
+            "damage": 52
+          }
+        },
+        "h": {
+          "startup": 15,
+          "projectile": {
+            "vx": 11,
+            "damage": 70
+          }
+        }
+      }
     },
     "hot-coffee": {
       "name": "Hot Coffee",
@@ -406,7 +450,23 @@
         "ttl": 18,
         "rehit": 4
       },
-      "voice": true
+      "voice": true,
+      "variants": {
+        "l": {
+          "startup": 8,
+          "projectile": {
+            "ttl": 14,
+            "damage": 14
+          }
+        },
+        "h": {
+          "startup": 11,
+          "projectile": {
+            "ttl": 24,
+            "damage": 22
+          }
+        }
+      }
     },
     "kitchen-grandma": {
       "name": "Kitchen Grandma",
@@ -433,7 +493,17 @@
         "vx": 4,
         "vy": 16
       },
-      "invuln": 8
+      "invuln": 8,
+      "variants": {
+        "l": {
+          "startup": 4,
+          "damage": 66
+        },
+        "h": {
+          "startup": 7,
+          "damage": 92
+        }
+      }
     },
     "midnight-munchies": {
       "name": "Midnight Munchies",
@@ -456,13 +526,24 @@
         "w": 101,
         "h": 86
       },
-      "forwardVel": 14
+      "forwardVel": 14,
+      "variants": {
+        "l": {
+          "damage": 62,
+          "forwardVel": 10.5
+        },
+        "h": {
+          "damage": 90,
+          "startup": 12,
+          "forwardVel": 16.8
+        }
+      }
     }
   },
   "stage": "last-resort",
   "fatality": {
-    "id": "finish",
-    "name": "BEN Finish",
+    "id": "dinners-ready",
+    "name": "Dinner's Ready",
     "input": {
       "motion": "hcb",
       "button": "punch"

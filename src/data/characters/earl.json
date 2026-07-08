@@ -51,7 +51,13 @@
         "w": 56,
         "h": 47
       },
-      "height": "mid"
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
     },
     "mp": {
       "startup": 7,
@@ -67,7 +73,8 @@
         "w": 56,
         "h": 45
       },
-      "height": "mid"
+      "height": "mid",
+      "cancel": true
     },
     "hp": {
       "startup": 10,
@@ -99,7 +106,13 @@
         "w": 57,
         "h": 77
       },
-      "height": "mid"
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
     },
     "mk": {
       "startup": 8,
@@ -115,7 +128,8 @@
         "w": 65,
         "h": 61
       },
-      "height": "mid"
+      "height": "mid",
+      "cancel": true
     },
     "hk": {
       "startup": 11,
@@ -147,7 +161,13 @@
         "w": 59,
         "h": 50
       },
-      "height": "mid"
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
     },
     "cmp": {
       "startup": 7,
@@ -163,7 +183,8 @@
         "w": 55,
         "h": 52
       },
-      "height": "mid"
+      "height": "mid",
+      "cancel": true
     },
     "chp": {
       "startup": 9,
@@ -195,7 +216,13 @@
         "w": 61,
         "h": 68
       },
-      "height": "low"
+      "height": "low",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
     },
     "cmk": {
       "startup": 8,
@@ -211,7 +238,8 @@
         "w": 57,
         "h": 70
       },
-      "height": "low"
+      "height": "low",
+      "cancel": true
     },
     "chk": {
       "startup": 11,
@@ -370,6 +398,22 @@
         "hitstun": 18,
         "blockstun": 12,
         "knockback": 9
+      },
+      "variants": {
+        "l": {
+          "startup": 11,
+          "projectile": {
+            "vx": 7,
+            "damage": 52
+          }
+        },
+        "h": {
+          "startup": 15,
+          "projectile": {
+            "vx": 11,
+            "damage": 70
+          }
+        }
       }
     },
     "step": {
@@ -418,7 +462,17 @@
         "vx": 4,
         "vy": 16
       },
-      "invuln": 8
+      "invuln": 8,
+      "variants": {
+        "l": {
+          "startup": 4,
+          "damage": 66
+        },
+        "h": {
+          "startup": 7,
+          "damage": 92
+        }
+      }
     },
     "double": {
       "name": "Double",
@@ -440,12 +494,23 @@
         "w": 65,
         "h": 238
       },
-      "forwardVel": 10
+      "forwardVel": 10,
+      "variants": {
+        "l": {
+          "damage": 58,
+          "forwardVel": 7.5
+        },
+        "h": {
+          "damage": 84,
+          "startup": 11,
+          "forwardVel": 12.0
+        }
+      }
     }
   },
   "fatality": {
-    "id": "finish",
-    "name": "EARL Finish",
+    "id": "final-mix",
+    "name": "The Final Mix",
     "input": {
       "motion": "hcb",
       "button": "punch"

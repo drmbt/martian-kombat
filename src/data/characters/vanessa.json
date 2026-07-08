@@ -4,7 +4,9 @@
   "color": "#a98cff",
   "stage": "saturn",
   "winQuotes": [
-    "Dear Human: you are forgettable."
+    "Dear Human: you are forgettable.",
+    "Deleting our chat history now.",
+    "You were trained on bad data."
   ],
   "fatality": {
     "id": "fired-and-glazed",

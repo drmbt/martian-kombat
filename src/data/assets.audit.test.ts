@@ -148,9 +148,10 @@ describe('sheet meta shape', () => {
 // Phase 3 backfill list: shrink it, never grow it.
 // ---------------------------------------------------------------------------
 const KNOWN_KIT_GAPS: Record<string, string[]> = {
-  ben: ['chains', 'variants', 'cancel', 'placeholder fatality'],
-  earl: ['chains', 'variants', 'cancel', 'placeholder fatality'],
-  vanessa: ['win quotes'],
+  // emptied 2026-07-08 (Sprint 27 Phase 3 backfill): ben + earl gained
+  // chains/cancel/variants + themed fatalities (dinners-ready / final-mix),
+  // vanessa her win quotes. Keep this list EMPTY — a new entry means a new
+  // fighter shipped below the roster standard.
 };
 
 describe('character schema lint', () => {
