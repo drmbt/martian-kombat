@@ -4,7 +4,7 @@
   "floorFrac": 0.88,
   "headroom": 24,
   "artMargin": 1.32,
-  "spriteFootOffsetY": 16,
+  "spriteFootOffsetY": 0,
   "chromaGreen": "00B140",
   "chromaMagenta": "FF00FF"
 }

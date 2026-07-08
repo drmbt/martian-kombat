@@ -45,7 +45,7 @@
       "knockback": 7,
       "hitbox": {
         "x": 56,
-        "y": -215,
+        "y": -214,
         "w": 77,
         "h": 58
       },
@@ -70,7 +70,7 @@
         "x": 58,
         "y": -220,
         "w": 67,
-        "h": 69
+        "h": 70
       },
       "height": "mid",
       "cancel": true
@@ -84,10 +84,10 @@
       "blockstun": 14,
       "knockback": 11,
       "hitbox": {
-        "x": 60,
-        "y": -226,
-        "w": 66,
-        "h": 85
+        "x": 49,
+        "y": -220,
+        "w": 63,
+        "h": 68
       },
       "height": "mid",
       "cancel": true
@@ -102,9 +102,9 @@
       "knockback": 6,
       "hitbox": {
         "x": 57,
-        "y": -192,
-        "w": 75,
-        "h": 85
+        "y": -180,
+        "w": 72,
+        "h": 74
       },
       "height": "mid",
       "chains": [
@@ -123,10 +123,10 @@
       "blockstun": 12,
       "knockback": 10,
       "hitbox": {
-        "x": 39,
-        "y": -229,
-        "w": 78,
-        "h": 125
+        "x": 41,
+        "y": -223,
+        "w": 77,
+        "h": 67
       },
       "height": "mid",
       "cancel": true
@@ -140,10 +140,10 @@
       "blockstun": 15,
       "knockback": 12,
       "hitbox": {
-        "x": 52,
-        "y": -244,
-        "w": 107,
-        "h": 185
+        "x": 71,
+        "y": -241,
+        "w": 79,
+        "h": 66
       },
       "height": "mid",
       "knockdown": true
@@ -157,10 +157,10 @@
       "blockstun": 9,
       "knockback": 6,
       "hitbox": {
-        "x": 54,
-        "y": -197,
-        "w": 89,
-        "h": 81
+        "x": 63,
+        "y": -171,
+        "w": 65,
+        "h": 59
       },
       "height": "mid",
       "chains": [
@@ -179,10 +179,10 @@
       "blockstun": 11,
       "knockback": 8,
       "hitbox": {
-        "x": 60,
-        "y": -222,
+        "x": 59,
+        "y": -219,
         "w": 61,
-        "h": 153
+        "h": 69
       },
       "height": "mid",
       "cancel": true
@@ -196,10 +196,10 @@
       "blockstun": 14,
       "knockback": 10,
       "hitbox": {
-        "x": -2,
-        "y": -254,
-        "w": 107,
-        "h": 140
+        "x": 45,
+        "y": -237,
+        "w": 54,
+        "h": 74
       },
       "height": "mid",
       "knockdown": true
@@ -213,10 +213,10 @@
       "blockstun": 9,
       "knockback": 6,
       "hitbox": {
-        "x": 76,
-        "y": -129,
-        "w": 76,
-        "h": 79
+        "x": -33,
+        "y": -95,
+        "w": 55,
+        "h": 50
       },
       "height": "low",
       "chains": [
@@ -235,10 +235,10 @@
       "blockstun": 11,
       "knockback": 8,
       "hitbox": {
-        "x": 44,
-        "y": -81,
-        "w": 112,
-        "h": 87
+        "x": 90,
+        "y": -56,
+        "w": 63,
+        "h": 67
       },
       "height": "low",
       "cancel": true
@@ -252,10 +252,10 @@
       "blockstun": 12,
       "knockback": 8,
       "hitbox": {
-        "x": 56,
-        "y": -164,
-        "w": 105,
-        "h": 108
+        "x": 71,
+        "y": -148,
+        "w": 66,
+        "h": 72
       },
       "height": "low",
       "knockdown": true
@@ -270,9 +270,9 @@
       "knockback": 6,
       "hitbox": {
         "x": 63,
-        "y": -221,
-        "w": 94,
-        "h": 89
+        "y": -222,
+        "w": 61,
+        "h": 71
       },
       "height": "high"
     },
@@ -285,10 +285,10 @@
       "blockstun": 11,
       "knockback": 8,
       "hitbox": {
-        "x": 14,
-        "y": -233,
-        "w": 120,
-        "h": 82
+        "x": 59,
+        "y": -220,
+        "w": 62,
+        "h": 68
       },
       "height": "high"
     },
@@ -301,10 +301,10 @@
       "blockstun": 13,
       "knockback": 10,
       "hitbox": {
-        "x": -14,
-        "y": -279,
-        "w": 142,
-        "h": 138
+        "x": 4,
+        "y": -268,
+        "w": 62,
+        "h": 57
       },
       "height": "high"
     },
@@ -317,10 +317,10 @@
       "blockstun": 9,
       "knockback": 6,
       "hitbox": {
-        "x": 29,
-        "y": -183,
-        "w": 88,
-        "h": 124
+        "x": 21,
+        "y": -116,
+        "w": 73,
+        "h": 71
       },
       "height": "high"
     },
@@ -334,9 +334,9 @@
       "knockback": 9,
       "hitbox": {
         "x": 59,
-        "y": -118,
-        "w": 102,
-        "h": 85
+        "y": -169,
+        "w": 74,
+        "h": 65
       },
       "height": "high"
     },
@@ -350,10 +350,10 @@
       "knockback": 11,
       "comment": "hitbox is authored, NOT pose-measured: the drawn crescent-kick leg sits high (measured y=-218) but jhk's role is an air overhead that must reach a grounded/crouching defender on descent — an art-vs-intent divergence, so the box is intentionally lower/bigger than the limb. Do not --calibrate-force this cell.",
       "hitbox": {
-        "x": 20,
-        "y": -195,
-        "w": 125,
-        "h": 190
+        "x": 47,
+        "y": -185,
+        "w": 54,
+        "h": 57
       },
       "height": "high"
     },
@@ -386,7 +386,7 @@
         "hitstun": 18,
         "blockstun": 12,
         "knockback": 9,
-        "renderSize": 176
+        "renderSize": 116
       },
       "variants": {
         "l": {

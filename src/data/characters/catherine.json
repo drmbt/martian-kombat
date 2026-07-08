@@ -9,7 +9,6 @@
     "Jazzper had you. I just watched.",
     "I'm done with you. Jazzper gets the scraps."
   ],
-  "spriteOffsetY": -8,
   "health": 1000,
   "walkSpeed": 4.7,
   "backSpeed": 3.5,
@@ -408,7 +407,7 @@
       }
     },
     "order-up": {
-      "name": "Order Up! \u2014 Jazzper hits LOW",
+      "name": "Order Up! — Jazzper hits LOW",
       "input": {
         "motion": "qcb",
         "button": "punch"

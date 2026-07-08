@@ -231,7 +231,10 @@ export class ThreeStageView {
   private buildLayeredStage(g: THREE.Group, load: (f: string) => THREE.Texture, layers: Stage2DLayer[]): void {
     const D0 = 16.5; // reference camera distance to the combat lane
     const VFOV = (20 * Math.PI) / 180;
-    const FLOOR_FRACTION = 0.1486; // fighters' floor line, 14.86% up the art
+    // fighters' floor line within the STAGE background art (14.86% up the 21:9
+    // image) — a stage-art composition constant, NOT the sprite-cell
+    // FLOOR_FRAC from src/render/coords.json
+    const FLOOR_FRACTION = 0.1486;
     for (const layer of layers) {
       const f = Math.min(Math.max(layer.factor, 0.05), 1);
       const isFloor = f >= 0.999;

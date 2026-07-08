@@ -32,7 +32,10 @@ function ff(args) {
  * @param {number} opts.expected   expected frame count (buildJobs length)
  * @param {'ffmpeg'|'corridor'} [opts.keyer]
  * @param {boolean} [opts.normalize]  floor-normalize (feet → FLOOR_FRAC line)
- * @param {string}  [opts.python]     interpreter for normalize (resolve-python)
+ * @param {boolean} [opts.inferSkeletons]  fresh RTMPose inference on the exact
+ *   packed cells (post-normalize) instead of the QA-report bake — always
+ *   registered with the shipped art; needs a rtmlib-capable `python`
+ * @param {string}  [opts.python]     interpreter for normalize/inference (resolve-python)
  * @param {(msg:string)=>void} [opts.log]
  * @returns {{frames:number, sheet:string, meta:object}}
  */
@@ -75,13 +78,6 @@ export function packCharacter(charId, opts) {
   const cellName = (f) => f.replace(/^\d\d-/, '').replace(/\.png$/, '');
   frames.forEach((f, i) => {
     const out = join(tmp, `cell-${String(i).padStart(2, '0')}.png`);
-    // Sprite-Editor pixel-edit overlay wins over the raw frame (already keyed
-    // + in cell space) — this is what makes editor edits survive a re-pack.
-    const overlay = join(editsDir, 'cells', `${cellName(f)}.png`);
-    if (existsSync(overlay)) {
-      copyFileSync(overlay, out);
-      return;
-    }
     if (prekeyed) {
       copyFileSync(join(inDir, f), out);
       return;
@@ -103,6 +99,15 @@ export function packCharacter(charId, opts) {
       '--frames', names.join(','),
     ], { stdio: 'inherit' });
   }
+
+  // Sprite-Editor pixel-edit overlays win over the (keyed, normalized) raw
+  // frame — applied AFTER normalize because overlays are captured in FINAL
+  // cell space (what the editor showed); shifting them again would
+  // misregister them. This is what makes editor edits survive a re-pack.
+  frames.forEach((f, i) => {
+    const overlay = join(editsDir, 'cells', `${cellName(f)}.png`);
+    if (existsSync(overlay)) copyFileSync(overlay, join(tmp, `cell-${String(i).padStart(2, '0')}.png`));
+  });
 
   // pad the grid with blank cells so tile always gets COLS*ROWS inputs
   for (let i = frames.length; i < COLS * ROWS; i++) {
@@ -131,26 +136,43 @@ export function packCharacter(charId, opts) {
     frames: frames.map(cellName),
   };
 
-  // Bake the RTMPose keypoints tools/qa/pose_qa.py already measured
-  // (assets/raw/qa/<char>/report.json, cells.<name>.kp) into meta.json as a
-  // 2D skeleton overlay source — see src/scenes/FightScene.ts drawSkeleton().
-  // Editor joint drags (assets/raw/edits/<char>/skeletons.json) merge on top.
-  const qaReportPath = join(root, 'assets/raw/qa', charId, 'report.json');
   const skeletons = {};
-  if (existsSync(qaReportPath)) {
-    const report = JSON.parse(readFileSync(qaReportPath, 'utf-8'));
-    if (report.cells) {
-      const dyPath = join(tmp, 'dy.json');
-      const dy = existsSync(dyPath) ? JSON.parse(readFileSync(dyPath, 'utf-8')).dy : 0;
-      for (const name of meta.frames) {
-        const kp = report.cells[name]?.kp;
-        if (!kp) continue;
-        skeletons[name] = Object.fromEntries(
-          Object.entries(kp).map(([joint, [x, y, conf]]) => [joint, [x, y + dy, conf]]),
-        );
+  if (opts.inferSkeletons) {
+    // Fresh RTMPose inference on the EXACT packed cells (post-key, post-
+    // normalize, post-overlay) — registered with the shipped art by
+    // construction. This is the Sprint 27 migration path; slower than the
+    // report bake below but always correct.
+    const out = execFileSync(python ?? 'python3', [
+      join(root, 'tools/qa/infer_keypoints.py'), '--dir', tmp,
+    ], { encoding: 'utf-8', maxBuffer: 64 * 1024 * 1024 });
+    const byFile = JSON.parse(out); // keyed by cell-NN
+    for (const [file, kp] of Object.entries(byFile)) {
+      const m = /^cell-(\d+)$/.exec(file);
+      if (!m) continue;
+      const name = meta.frames[Number(m[1])];
+      if (name && kp && Object.keys(kp).length) skeletons[name] = kp;
+    }
+  } else {
+    // Bake the RTMPose keypoints tools/qa/pose_qa.py already measured
+    // (assets/raw/qa/<char>/report.json, cells.<name>.kp) into meta.json as a
+    // 2D skeleton overlay source — see src/scenes/FightScene.ts drawSkeleton().
+    const qaReportPath = join(root, 'assets/raw/qa', charId, 'report.json');
+    if (existsSync(qaReportPath)) {
+      const report = JSON.parse(readFileSync(qaReportPath, 'utf-8'));
+      if (report.cells) {
+        const dyPath = join(tmp, 'dy.json');
+        const dy = existsSync(dyPath) ? JSON.parse(readFileSync(dyPath, 'utf-8')).dy : 0;
+        for (const name of meta.frames) {
+          const kp = report.cells[name]?.kp;
+          if (!kp) continue;
+          skeletons[name] = Object.fromEntries(
+            Object.entries(kp).map(([joint, [x, y, conf]]) => [joint, [x, y + dy, conf]]),
+          );
+        }
       }
     }
   }
+  // Editor joint drags (assets/raw/edits/<char>/skeletons.json) merge on top.
   const editedSkelPath = join(editsDir, 'skeletons.json');
   if (existsSync(editedSkelPath)) {
     const edited = JSON.parse(readFileSync(editedSkelPath, 'utf-8'));
@@ -162,8 +184,11 @@ export function packCharacter(charId, opts) {
 
   writeFileSync(join(outDir, 'meta.json'), JSON.stringify(meta, null, 2));
 
-  // per-move projectile art
-  for (const [pid, projSpec] of Object.entries(spec?.extra?.projectiles ?? {})) {
+  // per-move projectile art. Prekeyed (creator/editor-managed) dirs skip this:
+  // their projectile raws are cell-space with big transparent padding, and a
+  // forced scale=96:96 would aspect-distort them — the shipped 96×96
+  // content-cropped art is managed by the creator/projectile editor instead.
+  for (const [pid, projSpec] of Object.entries(prekeyed ? {} : (spec?.extra?.projectiles ?? {}))) {
     const proj = join(inDir, `projectile-${pid}.png`);
     if (!existsSync(proj)) continue;
     const projKey = projSpec.key ?? '0x00B140';

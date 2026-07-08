@@ -18,7 +18,6 @@
   "jumpVel": 18,
   "gravity": 0.9,
   "prejumpFrames": 4,
-  "spriteOffsetY": -12,
   "bodyBox": {
     "x": -42,
     "y": -240,
@@ -48,9 +47,9 @@
       "knockback": 3,
       "hitbox": {
         "x": 57,
-        "y": -206,
-        "w": 55,
-        "h": 47
+        "y": -218,
+        "w": 54,
+        "h": 48
       },
       "height": "mid"
     },
@@ -63,10 +62,10 @@
       "blockstun": 9,
       "knockback": 5,
       "hitbox": {
-        "x": 46,
-        "y": -211,
-        "w": 61,
-        "h": 50
+        "x": 56,
+        "y": -234,
+        "w": 59,
+        "h": 48
       },
       "height": "mid"
     },
@@ -79,10 +78,10 @@
       "blockstun": 14,
       "knockback": 8,
       "hitbox": {
-        "x": 54,
-        "y": -208,
-        "w": 69,
-        "h": 67
+        "x": 59,
+        "y": -212,
+        "w": 55,
+        "h": 49
       },
       "height": "mid"
     },
@@ -95,10 +94,10 @@
       "blockstun": 9,
       "knockback": 3,
       "hitbox": {
-        "x": 77,
-        "y": -181,
-        "w": 59,
-        "h": 86
+        "x": 76,
+        "y": -190,
+        "w": 50,
+        "h": 61
       },
       "height": "mid"
     },
@@ -111,10 +110,10 @@
       "blockstun": 9,
       "knockback": 5,
       "hitbox": {
-        "x": 72,
-        "y": -213,
-        "w": 74,
-        "h": 68
+        "x": 74,
+        "y": -224,
+        "w": 55,
+        "h": 48
       },
       "height": "mid"
     },
@@ -127,10 +126,10 @@
       "blockstun": 14,
       "knockback": 8,
       "hitbox": {
-        "x": 61,
-        "y": -256,
-        "w": 67,
-        "h": 176
+        "x": 63,
+        "y": -296,
+        "w": 51,
+        "h": 67
       },
       "height": "mid"
     },
@@ -144,9 +143,9 @@
       "knockback": 3,
       "hitbox": {
         "x": 60,
-        "y": -164,
-        "w": 61,
-        "h": 67
+        "y": -174,
+        "w": 63,
+        "h": 49
       },
       "height": "mid"
     },
@@ -159,10 +158,10 @@
       "blockstun": 9,
       "knockback": 5,
       "hitbox": {
-        "x": 42,
-        "y": -183,
-        "w": 87,
-        "h": 80
+        "x": 64,
+        "y": -184,
+        "w": 62,
+        "h": 50
       },
       "height": "mid"
     },
@@ -175,10 +174,10 @@
       "blockstun": 14,
       "knockback": 8,
       "hitbox": {
-        "x": 15,
-        "y": -272,
-        "w": 80,
-        "h": 81
+        "x": -4,
+        "y": -290,
+        "w": 57,
+        "h": 60
       },
       "height": "mid"
     },
@@ -191,10 +190,10 @@
       "blockstun": 9,
       "knockback": 3,
       "hitbox": {
-        "x": 50,
-        "y": -77,
-        "w": 72,
-        "h": 88
+        "x": 59,
+        "y": -68,
+        "w": 62,
+        "h": 73
       },
       "height": "low"
     },
@@ -207,10 +206,10 @@
       "blockstun": 9,
       "knockback": 5,
       "hitbox": {
-        "x": 72,
-        "y": -64,
-        "w": 113,
-        "h": 88
+        "x": 75,
+        "y": -50,
+        "w": 55,
+        "h": 62
       },
       "height": "low"
     },
@@ -223,10 +222,10 @@
       "blockstun": 14,
       "knockback": 8,
       "hitbox": {
-        "x": 18,
-        "y": -58,
-        "w": 123,
-        "h": 81
+        "x": 71,
+        "y": -60,
+        "w": 65,
+        "h": 64
       },
       "height": "low"
     },
@@ -240,8 +239,8 @@
       "knockback": 3,
       "hitbox": {
         "x": 48,
-        "y": -104,
-        "w": 52,
+        "y": -136,
+        "w": 51,
         "h": 58
       },
       "height": "high"
@@ -256,9 +255,9 @@
       "knockback": 5,
       "hitbox": {
         "x": 70,
-        "y": -187,
+        "y": -217,
         "w": 60,
-        "h": 51
+        "h": 52
       },
       "height": "high"
     },
@@ -271,8 +270,8 @@
       "blockstun": 14,
       "knockback": 8,
       "hitbox": {
-        "x": 41,
-        "y": -79,
+        "x": 42,
+        "y": -109,
         "w": 55,
         "h": 70
       },
@@ -288,9 +287,9 @@
       "knockback": 3,
       "hitbox": {
         "x": 40,
-        "y": -54,
-        "w": 74,
-        "h": 67
+        "y": -85,
+        "w": 77,
+        "h": 68
       },
       "height": "high"
     },
@@ -303,10 +302,10 @@
       "blockstun": 9,
       "knockback": 5,
       "hitbox": {
-        "x": 50,
-        "y": -133,
-        "w": 79,
-        "h": 107
+        "x": 66,
+        "y": -203,
+        "w": 62,
+        "h": 77
       },
       "height": "high"
     },
@@ -319,9 +318,9 @@
       "blockstun": 14,
       "knockback": 8,
       "hitbox": {
-        "x": 42,
-        "y": -55,
-        "w": 79,
+        "x": 43,
+        "y": -85,
+        "w": 77,
         "h": 67
       },
       "height": "high"
@@ -366,7 +365,7 @@
           "w": 56,
           "h": 56
         },
-        "renderSize": 165,
+        "renderSize": 88,
         "damage": 60,
         "hitstun": 18,
         "blockstun": 12,
@@ -399,7 +398,7 @@
           "w": 72,
           "h": 68
         },
-        "renderSize": 88,
+        "renderSize": 52,
         "damage": 18,
         "hitstun": 8,
         "blockstun": 6,

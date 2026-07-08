@@ -1333,11 +1333,39 @@ implementation, many doors; only the standalone scene implementations
       skeletons only, no validate→regenerate loops, fal never local) + the
       packer/overlay/meta-v2 map. **Phase 1 COMPLETE** — tsc + prod build +
       357/361 (4 known pre-existing).
-- [ ] Phase 2 — atomic floor/skeleton migration (local compute only): all 16
-      re-packed normalized + skeletons + meta v2 from existing raw frames;
-      SPRITE_FOOT_OFFSET_Y and every per-char spriteOffsetY deleted; roster
-      hitbox pass from baked skeletons; Sprint-19 combo test updated →
-      suite fully green (clears the standing 314/315 failure).
+- [x] Phase 2 — atomic floor/skeleton migration — DONE 2026-07-08 (zero API
+      cost, all local compute). `tools/migrate-floor.mjs` re-packed all 16
+      fighters `--normalize` with FRESH RTMPose skeletons inferred from the
+      exact packed cells (new packer `inferSkeletons` mode — registered with
+      the shipped art by construction; overlays now apply AFTER normalize so
+      final-space edits can't double-shift). Every fighter's grounded sole
+      verified ON the 338 (FLOOR_FRAC) line — ben needed a follow-up
+      per-cell floor-align (his creator cells were generated independently,
+      so the roster's single-shift normalize left per-cell variance; 50
+      grounded cells aligned, skeletons shifted in lockstep). meta v2 +
+      62-65 skeletons per fighter, all 16. `spriteFootOffsetY` → 0 in
+      coords.json; every per-char `spriteOffsetY` stripped; the creator's
+      -12 default removed — the half-migrated floor model is GONE.
+      Inventory sweep: every fighter has ALL expected cells, special phases,
+      and projectile art (zero generation gaps). Projectile consistency:
+      ben/earl/vincent's creator-written projectile art was 288×384 cells of
+      mostly transparent padding vs the pipeline's content-filling 96×96 —
+      all four normalized (content-cropped, squared, 96×96) with renderSize
+      rescaled to preserve the user-dialed apparent size; the packer now
+      skips projectile rewrites for prekeyed dirs (a forced scale=96:96 was
+      aspect-distorting them). Roster hitbox pass:
+      `tools/migrate-hitboxes.mjs` (a Node port of the exact Sprite-Editor
+      hitboxFromSkeleton + cellBoxToHitbox math) rewrote the 18 button
+      normals for 15 fighters from their active-cell skeletons —
+      **catherine skipped**: her bo-staff reach is a PROP the skeleton
+      can't see; a fist-only box on a staff poke is wrong, not tighter
+      (specials/throws/variants keep hand-tuned values everywhere). The 4
+      drifted engine tests rewritten against SYNTHETIC defs (qcb button
+      routing, reflect, cbf charge, freeze asymmetry) so user kit-dialing
+      can never break them again. The 3D FLOOR_FRACTION 0.1486 confirmed to
+      be a stage-art composition constant (documented, unrelated to sprite
+      coords). **361/361 vitest — the suite is FULLY GREEN for the first
+      time since Sprint 25.** tsc + prod build clean.
 - [ ] Phase 3 — studio shell + schema backfill: studio as a FightScene mode
       (collapsible module rail Identity/Look/Sprites/Moves/Audio/FX/Test/
       Ship over the live scene; creator panels re-hosted, standalone
@@ -1401,6 +1429,17 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-08 · assets+data+tools · Sprint 27 Phase 2: THE atomic floor/
+  skeleton migration** — all 16 fighters re-packed normalized (feet verified
+  on the 338 line) with fresh per-cell RTMPose skeletons in meta v2;
+  SPRITE_FOOT_OFFSET_Y and every spriteOffsetY deleted (half-migrated floor
+  model gone); ben per-cell floor-aligned; creator-written projectile art
+  normalized to the 96×96 content-filled convention with apparent size
+  preserved; roster hitbox pass from skeletons (15 fighters × 18 normals;
+  catherine's staff reach exempt); 4 drifted engine tests rewritten against
+  synthetic defs. **361/361 vitest — fully green for the first time since
+  Sprint 25.** Zero API calls. — Claude (Fable)
 
 - **2026-07-08 · tools+ui · Sprint 27 Phase 1e: creator SHIP through the
   shared packer — Phase 1 COMPLETE** — /creator/write now writes transform-

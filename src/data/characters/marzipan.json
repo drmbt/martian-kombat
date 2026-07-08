@@ -19,10 +19,9 @@
     },
     "panels": 4
   },
-  "spriteOffsetY": 8,
   "health": 1050,
   "walkSpeed": 3.4,
-  "backSpeed": 3.0,
+  "backSpeed": 3,
   "jumpVel": 16,
   "gravity": 0.62,
   "prejumpFrames": 5,
@@ -54,10 +53,10 @@
       "blockstun": 10,
       "knockback": 7,
       "hitbox": {
-        "x": 40,
-        "y": -222,
-        "w": 106,
-        "h": 40
+        "x": 47,
+        "y": -207,
+        "w": 69,
+        "h": 59
       },
       "height": "mid",
       "chains": [
@@ -76,10 +75,10 @@
       "blockstun": 12,
       "knockback": 10,
       "hitbox": {
-        "x": 42,
-        "y": -226,
-        "w": 118,
-        "h": 44
+        "x": 47,
+        "y": -204,
+        "w": 54,
+        "h": 58
       },
       "height": "mid",
       "cancel": true
@@ -93,10 +92,10 @@
       "blockstun": 15,
       "knockback": 12,
       "hitbox": {
-        "x": 42,
-        "y": -236,
-        "w": 126,
-        "h": 60
+        "x": 46,
+        "y": -202,
+        "w": 54,
+        "h": 56
       },
       "height": "mid",
       "knockdown": true
@@ -110,10 +109,10 @@
       "blockstun": 9,
       "knockback": 6,
       "hitbox": {
-        "x": 38,
-        "y": -80,
-        "w": 108,
-        "h": 36
+        "x": 51,
+        "y": -100,
+        "w": 63,
+        "h": 70
       },
       "height": "mid",
       "chains": [
@@ -132,10 +131,10 @@
       "blockstun": 13,
       "knockback": 10,
       "hitbox": {
-        "x": 42,
-        "y": -182,
-        "w": 124,
-        "h": 48
+        "x": 58,
+        "y": -209,
+        "w": 56,
+        "h": 72
       },
       "height": "mid",
       "cancel": true
@@ -149,10 +148,10 @@
       "blockstun": 15,
       "knockback": 13,
       "hitbox": {
-        "x": 44,
-        "y": -244,
-        "w": 130,
-        "h": 74
+        "x": 55,
+        "y": -217,
+        "w": 52,
+        "h": 65
       },
       "height": "mid",
       "knockdown": true
@@ -166,10 +165,10 @@
       "blockstun": 9,
       "knockback": 6,
       "hitbox": {
-        "x": 36,
-        "y": -130,
-        "w": 98,
-        "h": 36
+        "x": 50,
+        "y": -140,
+        "w": 66,
+        "h": 51
       },
       "height": "mid",
       "chains": [
@@ -188,10 +187,10 @@
       "blockstun": 11,
       "knockback": 8,
       "hitbox": {
-        "x": 30,
-        "y": -192,
-        "w": 86,
-        "h": 102
+        "x": 41,
+        "y": -184,
+        "w": 57,
+        "h": 64
       },
       "height": "mid",
       "cancel": true
@@ -205,10 +204,10 @@
       "blockstun": 14,
       "knockback": 10,
       "hitbox": {
-        "x": 22,
-        "y": -254,
-        "w": 86,
-        "h": 152
+        "x": 35,
+        "y": -196,
+        "w": 58,
+        "h": 61
       },
       "height": "mid",
       "knockdown": true
@@ -222,10 +221,10 @@
       "blockstun": 9,
       "knockback": 6,
       "hitbox": {
-        "x": 36,
-        "y": -32,
-        "w": 106,
-        "h": 32
+        "x": 52,
+        "y": -94,
+        "w": 58,
+        "h": 69
       },
       "height": "low",
       "chains": [
@@ -244,10 +243,10 @@
       "blockstun": 12,
       "knockback": 9,
       "hitbox": {
-        "x": 40,
-        "y": -34,
-        "w": 134,
-        "h": 34
+        "x": 50,
+        "y": -59,
+        "w": 65,
+        "h": 71
       },
       "height": "low",
       "cancel": true
@@ -261,10 +260,10 @@
       "blockstun": 12,
       "knockback": 8,
       "hitbox": {
-        "x": 26,
-        "y": -36,
-        "w": 140,
-        "h": 36
+        "x": 52,
+        "y": -46,
+        "w": 64,
+        "h": 54
       },
       "height": "low",
       "knockdown": true,
@@ -279,10 +278,10 @@
       "blockstun": 10,
       "knockback": 6,
       "hitbox": {
-        "x": 26,
-        "y": -150,
-        "w": 86,
-        "h": 48
+        "x": 50,
+        "y": -158,
+        "w": 52,
+        "h": 56
       },
       "height": "high"
     },
@@ -295,10 +294,10 @@
       "blockstun": 12,
       "knockback": 8,
       "hitbox": {
-        "x": 28,
-        "y": -140,
-        "w": 94,
-        "h": 56
+        "x": 44,
+        "y": -203,
+        "w": 59,
+        "h": 57
       },
       "height": "high"
     },
@@ -311,10 +310,10 @@
       "blockstun": 14,
       "knockback": 10,
       "hitbox": {
-        "x": 26,
-        "y": -150,
-        "w": 102,
-        "h": 66
+        "x": 46,
+        "y": -171,
+        "w": 57,
+        "h": 48
       },
       "height": "high"
     },
@@ -327,10 +326,10 @@
       "blockstun": 10,
       "knockback": 6,
       "hitbox": {
-        "x": 28,
-        "y": -120,
-        "w": 86,
-        "h": 50
+        "x": -17,
+        "y": -84,
+        "w": 61,
+        "h": 69
       },
       "height": "high"
     },
@@ -343,10 +342,10 @@
       "blockstun": 12,
       "knockback": 9,
       "hitbox": {
-        "x": 30,
-        "y": -130,
-        "w": 98,
-        "h": 58
+        "x": 65,
+        "y": -145,
+        "w": 55,
+        "h": 72
       },
       "height": "high"
     },
@@ -359,10 +358,10 @@
       "blockstun": 14,
       "knockback": 12,
       "hitbox": {
-        "x": 32,
-        "y": -140,
-        "w": 110,
-        "h": 62
+        "x": 56,
+        "y": -175,
+        "w": 57,
+        "h": 73
       },
       "height": "high"
     },

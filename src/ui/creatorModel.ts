@@ -462,7 +462,8 @@ export class CreatorModel {
       gravity: d.physics.gravity,
       prejumpFrames: d.physics.prejumpFrames,
       scale: 1.0,
-      spriteOffsetY: -12,
+      // no spriteOffsetY: shipped sheets are floor-normalized by the packer
+      // (feet on the ORIGIN_FEET line), so no render nudge is needed
       bodyBox: { x: -42, y: -240, w: 84, h: 240 },
       hurtStand: { x: -52, y: -256, w: 104, h: 256 },
       hurtCrouch: { x: -52, y: -150, w: 104, h: 150 },

@@ -32,19 +32,22 @@ describe('projectile lifetime', () => {
 });
 
 describe('charge motions', () => {
-  // inject a sonic-boom (cbf) projectile onto a copy of vincent
+  // inject a sonic-boom (cbf) projectile onto a copy of vincent — declared
+  // FIRST so live-kit specials whose motions are subsets of cbf (e.g. a bf+P)
+  // can't steal the release (declaration order is the engine's tiebreaker,
+  // and the live kit is user-tuned data that must not break this test)
   const boomChars: Defs = {
     ...characters,
     vincent: {
       ...(characters.vincent as CharacterDef),
       moves: {
-        ...characters.vincent.moves,
         boom: {
           name: 'Boom', input: { motion: 'cbf', button: 'punch' },
           startup: 10, active: 2, recovery: 20, damage: 0, hitstun: 0, blockstun: 0, knockback: 0,
           hitbox: null, height: 'mid',
           projectile: { vx: 8, spawnX: 80, spawnY: -150, box: { x: -20, y: -20, w: 40, h: 40 }, damage: 50, hitstun: 16, blockstun: 10, knockback: 8 },
         },
+        ...characters.vincent.moves,
       },
     } as CharacterDef,
   };

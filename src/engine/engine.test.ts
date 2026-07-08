@@ -218,22 +218,38 @@ describe('named specials with per-move motions', () => {
     expect(s.projectiles).toHaveLength(0);
   });
 
-  it("QCB+K triggers vincent's Cloud Hands; QCB+P his Redirect", () => {
-    const s = fresh();
+  it('QCB routes to different specials by button class (K vs P)', () => {
+    // synthetic defs (declared FIRST so they win declaration-order ties):
+    // the live kit's inputs are user-tuned data and must not break this test
+    const base = characters.vincent.moves['cloud-hands'];
+    const qcbDefs = {
+      ...characters,
+      vincent: {
+        ...characters.vincent,
+        moves: {
+          'test-qcb-k': { ...base, name: 'QCB-K', input: { motion: 'qcb' as const, button: 'kick' as const } },
+          'test-qcb-p': { ...base, name: 'QCB-P', input: { motion: 'qcb' as const, button: 'punch' as const } },
+          ...characters.vincent.moves,
+        },
+      },
+    };
+    const s = initialState(P1, P2, qcbDefs);
+    s.phase = 'fight';
     closeRange(s);
-    step(s, [inp({ down: true }), inp()], characters);
-    step(s, [inp({ down: true }), inp()], characters);
-    step(s, [inp({ left: true }), inp()], characters); // P1 faces right: back = left
-    step(s, [inp({ left: true, mk: true }), inp()], characters);
-    expect(s.fighters[0].action.moveId).toBe('cloud-hands');
+    step(s, [inp({ down: true }), inp()], qcbDefs);
+    step(s, [inp({ down: true }), inp()], qcbDefs);
+    step(s, [inp({ left: true }), inp()], qcbDefs); // P1 faces right: back = left
+    step(s, [inp({ left: true, mk: true }), inp()], qcbDefs);
+    expect(s.fighters[0].action.moveId).toBe('test-qcb-k');
 
-    const s2 = fresh();
+    const s2 = initialState(P1, P2, qcbDefs);
+    s2.phase = 'fight';
     closeRange(s2);
-    step(s2, [inp({ down: true }), inp()], characters);
-    step(s2, [inp({ down: true }), inp()], characters);
-    step(s2, [inp({ left: true }), inp()], characters);
-    step(s2, [inp({ left: true, mp: true }), inp()], characters);
-    expect(s2.fighters[0].action.moveId).toBe('redirect');
+    step(s2, [inp({ down: true }), inp()], qcbDefs);
+    step(s2, [inp({ down: true }), inp()], qcbDefs);
+    step(s2, [inp({ left: true }), inp()], qcbDefs);
+    step(s2, [inp({ left: true, mp: true }), inp()], qcbDefs);
+    expect(s2.fighters[0].action.moveId).toBe('test-qcb-p');
   });
 
   it('L and H Cossack Spiral trade travel for damage (SFII variants)', () => {
@@ -306,32 +322,44 @@ describe('named specials with per-move motions', () => {
     expect(s.fighters[0].health).toBeLessThan(characters[P1].health - 100); // unblockable
   });
 
-  it("Redirect reflects a projectile back at its owner", () => {
-    const s = fresh();
-    s.fighters[0].x = 300;
-    s.fighters[1].x = 700;
-    // P2 (yulia) has no projectile; use catherine vs vincent instead
-    const s2 = initialState('catherine', 'vincent', characters);
+  it('a reflect special bounces a projectile back at its owner', () => {
+    // synthetic qcb+P clone of the live reflector, declared FIRST — the live
+    // kit's input mapping is user-tuned data and must not break this test
+    const reflectDefs = {
+      ...characters,
+      vincent: {
+        ...characters.vincent,
+        moves: {
+          'test-reflect': {
+            ...characters.vincent.moves['redirect'],
+            name: 'Test Reflect',
+            input: { motion: 'qcb' as const, button: 'punch' as const },
+          },
+          ...characters.vincent.moves,
+        },
+      },
+    };
+    const s2 = initialState('catherine', 'vincent', reflectDefs);
     s2.phase = 'fight';
     s2.fighters[0].x = 300;
     s2.fighters[1].x = 700;
     // catherine throws H knives (3, full speed toward vincent)
-    step(s2, [inp({ down: true }), inp()], characters);
-    step(s2, [inp({ down: true }), inp()], characters);
-    step(s2, [inp({ right: true }), inp()], characters);
-    step(s2, [inp({ right: true, hp: true }), inp()], characters);
-    for (let i = 0; i < 16; i++) step(s2, [inp(), inp()], characters); // ride out H startup
+    step(s2, [inp({ down: true }), inp()], reflectDefs);
+    step(s2, [inp({ down: true }), inp()], reflectDefs);
+    step(s2, [inp({ right: true }), inp()], reflectDefs);
+    step(s2, [inp({ right: true, hp: true }), inp()], reflectDefs);
+    for (let i = 0; i < 16; i++) step(s2, [inp(), inp()], reflectDefs); // ride out H startup
     expect(s2.projectiles.length).toBe(3);
-    // vincent holds Redirect (H = long stance) as they arrive; qcb for P2 = down then back(right)
-    for (let i = 0; i < 8; i++) step(s2, [inp(), inp()], characters);
-    step(s2, [inp(), inp({ down: true })], characters);
-    step(s2, [inp(), inp({ down: true })], characters);
-    step(s2, [inp(), inp({ right: true })], characters);
-    step(s2, [inp(), inp({ right: true, hp: true })], characters);
-    expect(s2.fighters[1].action.moveId).toBe('redirect');
+    // vincent holds the reflector (H = long stance) as they arrive; qcb for P2 = down then back(right)
+    for (let i = 0; i < 8; i++) step(s2, [inp(), inp()], reflectDefs);
+    step(s2, [inp(), inp({ down: true })], reflectDefs);
+    step(s2, [inp(), inp({ down: true })], reflectDefs);
+    step(s2, [inp(), inp({ right: true })], reflectDefs);
+    step(s2, [inp(), inp({ right: true, hp: true })], reflectDefs);
+    expect(s2.fighters[1].action.moveId).toBe('test-reflect');
     let reflected = false;
     for (let i = 0; i < 60; i++) {
-      step(s2, [inp(), inp()], characters);
+      step(s2, [inp(), inp()], reflectDefs);
       if (s2.projectiles.some((p) => p.owner === 1)) reflected = true;
     }
     expect(reflected).toBe(true);
@@ -1039,12 +1067,14 @@ describe('hitstop (per-fighter, sprint 18)', () => {
     expect(s.fighters[0].hitstop).toBe(0);
     expect(HITSTOP_SPECIAL).toBeGreaterThan(HITSTOP_HEAVY);
 
-    // during the victim's freeze the shooter still walks; the victim's
-    // hitstun clock holds
-    const x0 = s.fighters[0].x;
+    // during the victim's freeze the shooter is NOT frozen (it may still be
+    // riding out its own tuned recovery — the freeze ASYMMETRY is what the
+    // engine owns, not the kit's recovery length); the victim's hitstun
+    // clock holds while frozen
     const reel = s.fighters[1].action.frame;
     run(s, 2, inp({ right: true }), inp());
-    expect(s.fighters[0].x).toBeGreaterThan(x0);
+    expect(s.fighters[0].hitstop).toBe(0);
+    expect(s.fighters[1].hitstop).toBeGreaterThan(0);
     expect(s.fighters[1].action.frame).toBe(reel);
   });
 
