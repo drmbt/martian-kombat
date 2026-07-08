@@ -1058,16 +1058,19 @@ export class FightScene extends Phaser.Scene {
     return key;
   }
 
+  // Shadow anchor: with the roster floor-normalized (feet exactly on FLOOR_Y,
+  // Sprint 27 Phase 2) shadows hug the soles — the old +8/+10 offsets were
+  // tuned for art that drew below the line and read too low afterwards.
   private drawFighterShadow(slot: 0 | 1, f: FighterState, def: typeof characters[string], frame: number): void {
     const shadow = this.fighterShadows[slot];
     if (!shadow) {
-      this.gfxUnder.fillStyle(0x000000, 0.35).fillEllipse(f.x, FLOOR_Y + 8, def.bodyBox.w * 1.6, 18);
+      this.gfxUnder.fillStyle(0x000000, 0.35).fillEllipse(f.x, FLOOR_Y + 2, def.bodyBox.w * 1.6, 18);
       return;
     }
     const key = this.ensureShadowTexture(f.charId, frame);
     if (!key) {
       shadow.setVisible(false);
-      this.gfxUnder.fillStyle(0x000000, 0.35).fillEllipse(f.x, FLOOR_Y + 8, def.bodyBox.w * 1.6, 18);
+      this.gfxUnder.fillStyle(0x000000, 0.35).fillEllipse(f.x, FLOOR_Y + 2, def.bodyBox.w * 1.6, 18);
       return;
     }
 
@@ -1083,7 +1086,7 @@ export class FightScene extends Phaser.Scene {
     shadow
       .setTexture(key)
       .setVisible(alpha > 0.04)
-      .setPosition(f.x, FLOOR_Y + 10)
+      .setPosition(f.x, FLOOR_Y + 4)
       .setDisplaySize(width, height)
       .setAlpha(alpha)
       .setFlipX(f.facing === -1);
@@ -1242,7 +1245,7 @@ export class FightScene extends Phaser.Scene {
       } else {
         this.currentCellName[slot] = null;
         this.fighterShadows[slot]?.setVisible(false);
-        gU.fillStyle(0x000000, 0.35).fillEllipse(f.x, FLOOR_Y + 8, def.bodyBox.w * 1.6, 18);
+        gU.fillStyle(0x000000, 0.35).fillEllipse(f.x, FLOOR_Y + 2, def.bodyBox.w * 1.6, 18);
         this.drawCapsule(slot);
       }
     }

@@ -1447,6 +1447,19 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-08 · ui · post-migration polish: shadows up + corner volume** —
+  With feet floor-normalized, the fighter shadows read low: every shadow
+  anchor raised 6px (sprite shadows FLOOR_Y+10→+4, fallback ellipses
+  +8→+2) so they hug the soles. VolumeOverlayScene reworked per user spec:
+  a speaker BUTTON pinned to the far upper-right (click = mute on/off
+  only), with a VERTICAL fader flying out beneath on rollover (top=100%,
+  drag to set, auto-closes; unmutes on touch). Move Tuner + Sprite Editor
+  panels now start at top:48px so they never cover the speaker (DOM always
+  sits over the canvas overlay). Verified live on the van stage. Also
+  verified the EditorMenu → CHARACTER STUDIO path end-to-end (rows render,
+  Select carries studio:true, Fight mounts the rail + tuner). 361/361,
+  build clean. — Claude (Fable)
+
 - **2026-07-08 · ui · Sprint 27 Phase 3b: the Character Studio shell exists**
   — FightScene gained a `studio` mode: `src/ui/StudioRail.ts` (collapsible
   module rail) hosts the existing Sprite Editor + Move Tuner as lazily-

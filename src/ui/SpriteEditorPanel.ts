@@ -81,7 +81,8 @@ export class SpriteEditorPanel {
     // bottom:10% leaves the lower-right corner clear so the (canvas-rendered,
     // always-behind-DOM) volume/mute overlay stays visible + clickable
     this.el.style.cssText =
-      'position:absolute;left:34%;right:0;top:0;bottom:10%;display:flex;gap:8px;pointer-events:none;' +
+      // top:48px keeps the upper-right corner clear for the volume speaker
+      'position:absolute;left:34%;right:0;top:48px;bottom:10%;display:flex;gap:8px;pointer-events:none;' +
       'font:12px monospace;color:#eaf6fb;z-index:8;padding:8px;box-sizing:border-box;';
     host.appendChild(this.el);
 

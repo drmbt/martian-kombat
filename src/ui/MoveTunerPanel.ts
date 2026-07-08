@@ -51,7 +51,9 @@ export class MoveTunerPanel {
     this.el = document.createElement('div');
     this.el.style.cssText =
       // bottom:10% leaves the lower-right clear for the canvas volume/mute overlay
-      `position:absolute;right:0;top:0;bottom:10%;width:${this.width}px;overflow-y:auto;box-sizing:border-box;` +
+      // top:48px keeps the upper-right corner clear for the volume speaker
+      // (canvas-rendered, always behind the DOM); bottom:10% likewise
+      `position:absolute;right:0;top:48px;bottom:10%;width:${this.width}px;overflow-y:auto;box-sizing:border-box;` +
       'background:rgba(10,14,18,.62);border-left:2px solid #3f6070;padding:10px;pointer-events:auto;' +
       'font:12px monospace;color:#eaf6fb;z-index:8;';
     host.appendChild(this.el);
