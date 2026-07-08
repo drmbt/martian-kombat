@@ -169,6 +169,7 @@ export const ATTACK_CELLS: AttackCell[] = [
   ...phases('jlk', 'jump', 'a quick downward air kick'),
   ...phases('jmk', 'jump', 'a strong jumping kick, leg out'),
   ...phases('jhk', 'jump', 'a heavy diving kick, leg extended downward'),
+  ...phases('throw', 'canonical', 'a close-range fighting-game throw: reaching forward to grab and hurl an unseen opponent through empty air. COMPLETELY ALONE, no second person, no clone'),
 ];
 /** special phase cells for the 4 draft specials (built at runtime from the draft). */
 export const specialCells = (id: string, name: string, desc: string): AttackCell[] => [
@@ -262,6 +263,7 @@ export function controlsForArchetype(key: string): string {
 
 /** the 18 button-normal move ids (for the per-move animation player). */
 export const NORMAL_MOVE_IDS = ['lp', 'mp', 'hp', 'lk', 'mk', 'hk', 'clp', 'cmp', 'chp', 'clk', 'cmk', 'chk', 'jlp', 'jmp', 'jhp', 'jlk', 'jmk', 'jhk'];
+export const BASE_MOVE_IDS = [...NORMAL_MOVE_IDS, 'throw'];
 
 /** the phase sheet-cells for a move, in play order (matches ATTACK_CELLS naming). */
 export function moveCellNames(moveId: string, special: boolean): string[] {
@@ -339,6 +341,10 @@ export function slugify(name: string): string {
 export class CreatorModel {
   inputs: CreatorInputs = { name: '', description: '' };
   draft: DesignDraft | null = null;
+  /** set when editing an already-canonized fighter; preserves the current id */
+  existingId?: string;
+  /** raw character JSON to preserve when a canon fighter is opened for editing */
+  baseDef?: Record<string, unknown>;
   step = 0;
   jobs = new Map<string, CreatorJob>();
   /** clip name (announcer, kiai-1..6, hurt-1..6, victory-1..4) -> base64 mp3 */
@@ -408,7 +414,7 @@ export class CreatorModel {
   }
 
   get id(): string {
-    return slugify(this.inputs.name);
+    return this.existingId ?? slugify(this.inputs.name);
   }
 
   job(key: string): CreatorJob | undefined {
@@ -428,6 +434,7 @@ export class CreatorModel {
   buildFullCharacter(): Record<string, unknown> {
     this.draft ??= makeDraft(this.inputs.name, this.inputs.description);
     const d = this.draft;
+    if (this.baseDef) return this.buildFromBase(d);
     const moves: Record<string, unknown> = {};
     for (const [key, m] of Object.entries(NORMAL_MOVES)) moves[key] = { ...m };
     moves.throw = { startup: 3, active: 2, recovery: 20, damage: 0, hitstun: 0, blockstun: 0, knockback: 6, hitbox: null, height: 'mid', grab: { range: 64 }, techable: true };
@@ -462,10 +469,50 @@ export class CreatorModel {
     };
   }
 
+  private buildFromBase(d: DesignDraft): Record<string, unknown> {
+    const out = cloneJson(this.baseDef ?? {});
+    out.id = this.id;
+    out.name = (this.inputs.name || this.id).toUpperCase();
+    if (!out.color) out.color = hslToHex(d.color);
+    if (this.inputs.lore?.trim()) {
+      out.lore = { ...(typeof out.lore === 'object' && out.lore ? out.lore : d.lore), backstory: this.inputs.lore.trim() };
+    }
+    if (d.winQuotes.length) out.winQuotes = d.winQuotes;
+    const moves: Record<string, Record<string, unknown>> = cloneJson(
+      (out.moves && typeof out.moves === 'object') ? out.moves as Record<string, Record<string, unknown>> : {},
+    );
+    for (const s of d.specials) {
+      const existing = (moves[s.id] && typeof moves[s.id] === 'object') ? moves[s.id] as Record<string, unknown> : buildSpecial(s);
+      existing.name = s.name;
+      existing.input = parseControls(s.controls);
+      if (s.archetype === 'projectile' || s.archetype === 'sonic-boom') {
+        const projectile = (existing.projectile && typeof existing.projectile === 'object') ? existing.projectile as Record<string, unknown> : {};
+        if (s.projScale) projectile.renderSize = Math.round(72 * s.projScale);
+        if (typeof s.projSpawnX === 'number') projectile.spawnX = s.projSpawnX;
+        if (typeof s.projSpawnY === 'number') projectile.spawnY = s.projSpawnY;
+        if (s.projBox) projectile.box = s.projBox;
+        if (Object.keys(projectile).length) existing.projectile = projectile;
+      }
+      if (this.moveAudio[s.id]) existing.voice = true;
+      moves[s.id] = existing;
+    }
+    for (const [moveId, box] of Object.entries(this.autoHitboxes)) {
+      const mv = moves[moveId] as { hitbox?: unknown } | undefined;
+      if (mv && mv.hitbox !== null) mv.hitbox = box;
+    }
+    out.moves = moves;
+    if (this.generatedFatality.length) out.fatality = { id: d.fatality.id, name: d.fatality.name, input: parseControls(d.fatality.input), panels: this.generatedFatality.length };
+    return out;
+  }
+
   /** meta.json frame list for the sheet the SHIP step composites (base cells only). */
   baseCellNames(): string[] {
     return BASE_CELLS.map((c) => c.id).filter((id) => this.job('sprite:' + id)?.status === 'done');
   }
+}
+
+function cloneJson<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
 }
 
 // ── engine-valid default kit ────────────────────────────────────────────────
@@ -485,11 +532,18 @@ const NORMAL_MOVES: Record<string, MoveTpl> = {
 
 const BUTTON: Record<string, 'punch' | 'kick'> = { p: 'punch', k: 'kick' };
 export function parseControls(controls: string): { motion?: string; button: string; mash?: number } {
-  const [rawMotion, rawBtn] = controls.toLowerCase().split('+');
-  const button = BUTTON[(rawBtn ?? 'p').trim()[0]] ?? 'punch';
+  const raw = controls.trim();
+  const [rawMotion0, rawBtn0] = raw.toLowerCase().split('+');
+  const rawMotion = rawBtn0 ? rawMotion0 : '';
+  const rawBtn = rawBtn0 ?? rawMotion0;
+  const btn = rawBtn.trim().toUpperCase();
+  const button = btn === 'PPP' || btn === 'KKK' || btn === 'LPLK'
+    ? btn
+    : BUTTON[rawBtn.trim()[0]] ?? 'punch';
   const motions = new Set(['qcf', 'qcb', 'bf', 'cbf', 'dp', 'hcb', 'hcf', '360', 'du']);
   const m = rawMotion.trim();
   if (m === 'mash') return { button, mash: 5 };
+  if (!m) return { button };
   return { motion: motions.has(m) ? m : 'qcf', button };
 }
 

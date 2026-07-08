@@ -6,7 +6,7 @@
 // The looping fighter on the left is FightScene rendering the same model +
 // def, so every edit shows live. Skeleton/hitbox drag happen on that canvas
 // (FightScene); this panel drives selection, sliders, batch ops, and gen.
-import type { Box, CharacterDef, MoveDef } from '../engine';
+import type { Box, CharacterDef, MoveDef, SpecialInput } from '../engine';
 import type { SpriteSheetModel } from './spriteSheetModel';
 import { hitboxFromSkeleton, strikeKind } from './hitboxFromSkeleton';
 import { writeCharacterMoves, writeFlattenedCharacter } from './moveWriteback';
@@ -65,6 +65,9 @@ export class SpriteEditorPanel {
   private sideCollapsed = false;
   /** the grid slot a range-select (shift+click) extends FROM */
   private anchor = 0;
+  private writeMovesWanted = true;
+  private writeSheetWanted = true;
+  private flattenWanted = false;
 
   constructor(
     host: HTMLElement,
@@ -123,6 +126,8 @@ export class SpriteEditorPanel {
     this.sideWrap = sideWrap;
 
     document.addEventListener('keydown', this.onKey);
+    this.el.addEventListener('keydown', this.stopFormKeys, true);
+    this.el.addEventListener('keyup', this.stopFormKeys, true);
     this.scene.setShowHitbox(this.showHitbox);
     this.scene.setShowSkeleton(this.showSkeleton);
     this.scene.setEditorMove(this.moveId);
@@ -134,6 +139,8 @@ export class SpriteEditorPanel {
 
   dispose(): void {
     document.removeEventListener('keydown', this.onKey);
+    this.el.removeEventListener('keydown', this.stopFormKeys, true);
+    this.el.removeEventListener('keyup', this.stopFormKeys, true);
     this.el.remove();
   }
 
@@ -414,6 +421,37 @@ export class SpriteEditorPanel {
       }));
     }
 
+    if (move.input) {
+      this.sideEl.appendChild(this.h('special input', 11, '#8fa6b2'));
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:6px;margin:2px 0 6px;';
+      const motion = document.createElement('select');
+      motion.style.cssText = 'flex:1;background:#172230;color:#eaf6fb;border:1px solid #3f6070;padding:3px;';
+      for (const m of ['', 'qcf', 'qcb', 'bf', 'cbf', 'dp', 'hcb', 'hcf', '360', 'du']) {
+        const o = document.createElement('option');
+        o.value = m;
+        o.textContent = m || 'no motion';
+        motion.appendChild(o);
+      }
+      motion.value = move.input.motion ?? '';
+      motion.addEventListener('change', () => {
+        if (motion.value) move.input!.motion = motion.value as SpecialInput['motion'];
+        else delete move.input!.motion;
+      });
+      const btn = document.createElement('select');
+      btn.style.cssText = 'flex:1;background:#172230;color:#eaf6fb;border:1px solid #3f6070;padding:3px;';
+      for (const b of ['punch', 'kick', 'PPP', 'KKK', 'LPLK'] as const) {
+        const o = document.createElement('option');
+        o.value = b;
+        o.textContent = b;
+        btn.appendChild(o);
+      }
+      btn.value = move.input.button;
+      btn.addEventListener('change', () => (move.input!.button = btn.value as SpecialInput['button']));
+      row.append(motion, btn);
+      this.sideEl.appendChild(row);
+    }
+
     this.sideEl.appendChild(this.h('timing', 11, '#8fa6b2'));
     for (const f of ['startup', 'active', 'recovery'] as const) {
       this.sideEl.appendChild(this.slider(f, 1, 60, 1, move[f], (n) => ((move as unknown as Record<string, number>)[f] = n)));
@@ -438,9 +476,7 @@ export class SpriteEditorPanel {
     autoRow.appendChild(this.button('auto ALL', '#ffd24a', () => this.autoHitbox(Object.keys(this.def.moves))));
     this.sideEl.appendChild(autoRow);
 
-    this.sideEl.appendChild(this.wideButton('WRITE MOVES → character.json', '#6fe36f', () => this.writeMoves()));
-    this.sideEl.appendChild(this.wideButton('WRITE SHEET → sheet.png/meta', '#6fe36f', () => this.writeSheet()));
-    this.sideEl.appendChild(this.wideButton('COMMIT — bake scale+offset → identity', '#ffb347', () => this.flatten()));
+    this.renderWriteBatch();
   }
 
   private renderSpriteTab(): void {
@@ -456,6 +492,8 @@ export class SpriteEditorPanel {
     scaleRow.appendChild(this.button('scale −', '#eaf6fb', () => { this.model.scaleCells(sel(), 0.95); this.afterEdit(); }));
     scaleRow.appendChild(this.button('scale +', '#eaf6fb', () => { this.model.scaleCells(sel(), 1.0526); this.afterEdit(); }));
     scaleRow.appendChild(this.button('normalize', '#eaf6fb', () => { this.model.normalizeCells(sel()); this.afterEdit(); }));
+    scaleRow.appendChild(this.button('flip X', '#eaf6fb', () => { this.model.flipCells(sel(), 'x'); this.afterEdit(); }));
+    scaleRow.appendChild(this.button('flip Y', '#eaf6fb', () => { this.model.flipCells(sel(), 'y'); this.afterEdit(); }));
     this.sideEl.appendChild(scaleRow);
     const offRow = document.createElement('div');
     offRow.style.cssText = 'display:flex;gap:6px;margin:2px 0;flex-wrap:wrap;';
@@ -489,8 +527,29 @@ export class SpriteEditorPanel {
     this.sideEl.appendChild(this.checkbox('use original as reference', this.genUseOriginal, (on) => (this.genUseOriginal = on)));
     this.sideEl.appendChild(this.wideButton('GENERATE → replace selected', '#ff8adf', () => this.regenFrame()));
 
-    this.sideEl.appendChild(this.wideButton('WRITE SHEET → sheet.png/meta', '#6fe36f', () => this.writeSheet()));
-    this.sideEl.appendChild(this.wideButton('COMMIT — bake scale+offset → identity', '#ffb347', () => this.flatten()));
+    this.renderWriteBatch();
+  }
+
+  private renderWriteBatch(): void {
+    this.sideEl.appendChild(this.h('write changes', 11, '#8fa6b2'));
+    const box = document.createElement('div');
+    box.style.cssText = 'border:1px solid #2a3a44;border-radius:4px;padding:6px;margin-top:4px;background:rgba(11,14,18,.55);';
+    box.appendChild(this.checkbox('moves → character.json', this.writeMovesWanted, (on) => (this.writeMovesWanted = on)));
+    box.appendChild(this.checkbox('sheet → sheet.png/meta', this.writeSheetWanted, (on) => (this.writeSheetWanted = on)));
+    box.appendChild(this.checkbox('commit scale/offset identity', this.flattenWanted, (on) => {
+      this.flattenWanted = on;
+      if (on) {
+        this.writeMovesWanted = false;
+        this.writeSheetWanted = false;
+        this.renderSide();
+      }
+    }));
+    const note = document.createElement('div');
+    note.textContent = 'One submit writes selected changes before Vite refreshes the page.';
+    note.style.cssText = 'font-size:10px;color:#6f818c;margin:4px 0;';
+    box.appendChild(note);
+    box.appendChild(this.wideButton('APPLY SELECTED WRITES', '#6fe36f', () => this.applyWrites()));
+    this.sideEl.appendChild(box);
   }
 
   private afterEdit(): void {
@@ -618,6 +677,33 @@ export class SpriteEditorPanel {
     }
   }
 
+  private async applyWrites(): Promise<void> {
+    if (!this.writeMovesWanted && !this.writeSheetWanted && !this.flattenWanted) {
+      this.status('choose at least one write action', '#ff7a6a');
+      return;
+    }
+    if (this.flattenWanted) {
+      await this.flatten();
+      return;
+    }
+    this.status('applying selected writes…', '#7fe3ff');
+    try {
+      let msg = '';
+      // Sheet first: src/data writes tend to trigger Vite reload fastest.
+      if (this.writeSheetWanted) {
+        const backup = await this.postSheet();
+        msg += `sheet ok (${backup})`;
+      }
+      if (this.writeMovesWanted) {
+        const n = await writeCharacterMoves(this.def);
+        msg += `${msg ? ' · ' : ''}${n} moves ok`;
+      }
+      this.status(msg || 'nothing written', '#6fe36f');
+    } catch (err) {
+      this.status(`write failed (${String(err)})`, '#ff7a6a');
+    }
+  }
+
   /** Bake-down / flatten: commit the tuned character `scale` + `spriteOffsetY`
    *  into the committed data with an IDENTITY transform — the fighter looks the
    *  same, but scale=1 and spriteOffsetY=0. Scale is folded into the persisted
@@ -667,6 +753,14 @@ export class SpriteEditorPanel {
     }
   };
 
+  private stopFormKeys = (e: KeyboardEvent): void => {
+    const t = e.target as HTMLElement | null;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) {
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+    }
+  };
+
   private status(msg: string, color: string): void {
     if (!this.statusEl) return;
     this.statusEl.textContent = msg;
@@ -682,6 +776,7 @@ export class SpriteEditorPanel {
   }
   private button(label: string, color: string, onClick: () => void): HTMLButtonElement {
     const b = document.createElement('button');
+    b.type = 'button';
     b.textContent = label;
     b.style.cssText = `background:#172230;color:${color};border:1px solid #3f6070;border-radius:3px;padding:5px 7px;font:12px monospace;cursor:pointer;`;
     b.addEventListener('click', onClick);

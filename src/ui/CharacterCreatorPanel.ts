@@ -7,7 +7,7 @@
 import {
   CreatorModel, CREATOR_STEPS, makeDraft, BASE_CELLS, ATTACK_CELLS,
   ARCHETYPE_INFO, specialsForArchetype, SPECIAL_ARCHETYPES, controlsForArchetype,
-  NORMAL_MOVE_IDS, moveCellNames, slugify,
+  BASE_MOVE_IDS, NORMAL_MOVE_IDS, moveCellNames, slugify,
   CANONICAL_PROMPT, PORTRAIT_PROMPT, KO_PROMPT, SPRITE_PROMPT, fatalityBeats,
   type CreatorJob, type AttackCell, type SpecialDraft,
 } from './creatorModel';
@@ -208,7 +208,7 @@ export class CharacterCreatorPanel {
   /** everything needed to rebuild the run, minus image bytes (those are files). */
   private serializeState(): Record<string, unknown> {
     return {
-      version: 1, step: this.m.step, inputs: this.m.inputs, draft: this.m.draft,
+      version: 1, step: this.m.step, inputs: this.m.inputs, draft: this.m.draft, existingId: this.m.existingId, baseDef: this.m.baseDef,
       generatedVo: this.m.generatedVo, generatedMusic: this.m.generatedMusic, generatedFatality: this.m.generatedFatality, fatalityBeats: this.m.fatalityBeats,
       skeletons: this.m.skeletons, autoHitboxes: this.m.autoHitboxes, voiceModelId: this.m.voiceModelId,
       jobs: [...this.m.jobs.values()].map((j) => ({
@@ -243,13 +243,15 @@ export class CharacterCreatorPanel {
       const j = (await r.json()) as { ok?: boolean; state?: Record<string, unknown>; images?: Record<string, string>; error?: string };
       if (!j.ok || !j.state) throw new Error(j.error ?? 'load failed');
       const s = j.state as {
-        step?: number; inputs?: CreatorModel['inputs']; draft?: CreatorModel['draft'];
+        step?: number; inputs?: CreatorModel['inputs']; draft?: CreatorModel['draft']; existingId?: string; baseDef?: Record<string, unknown>;
         generatedVo?: Record<string, string>; generatedMusic?: string; generatedFatality?: string[]; fatalityBeats?: string[];
         skeletons?: CreatorModel['skeletons']; autoHitboxes?: CreatorModel['autoHitboxes']; voiceModelId?: string;
         jobs?: { key: string; kind: string; label: string; status: CreatorJob['status']; prompt?: string; mock?: boolean; approved?: boolean; scale?: number; offX?: number; offY?: number; mime?: string; savedAs?: string }[];
       };
       this.m.inputs = (s.inputs ?? { name: '', description: '' });
       this.m.draft = (s.draft ?? null);
+      this.m.existingId = s.existingId;
+      this.m.baseDef = s.baseDef;
       this.m.step = s.step ?? 0;
       this.m.generatedVo = (s.generatedVo ?? {});
       this.m.generatedMusic = s.generatedMusic;
@@ -269,6 +271,123 @@ export class CharacterCreatorPanel {
       void this.syncRawFrames();
       this.renderStepper(); this.render(); this.renderPreviewControls(); this.renderTray(); this.redrawPreview();
     } catch (e) { console.error(e); alert('Could not load draft: ' + String(e)); }
+  }
+
+  private async loadCanon(id: string): Promise<void> {
+    try {
+      this.logMsg(`opening canon fighter ${id}…`);
+      const r = await fetch('/__editor/creator/canon', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }),
+      });
+      const j = (await r.json()) as {
+        ok?: boolean; error?: string; def?: Record<string, unknown>; meta?: { cellW?: number; cellH?: number; cols?: number; frames?: string[] };
+        sheetBase64?: string; portraitBase64?: string; koBase64?: string; stageBase64?: string;
+        projectiles?: Record<string, string>; fatalityPanels?: string[];
+      };
+      if (!j.ok || !j.def || !j.meta || !j.sheetBase64) throw new Error(j.error ?? 'load failed');
+      const def = j.def as Record<string, unknown> & {
+        id?: string; name?: string; color?: string; lore?: { personality?: string; backstory?: string; tagline?: string };
+        winQuotes?: string[]; moves?: Record<string, Record<string, unknown>>;
+        fatality?: { id?: string; name?: string; input?: Record<string, unknown> };
+      };
+      const m = new CreatorModel();
+      m.existingId = typeof def.id === 'string' ? def.id : id;
+      m.baseDef = def;
+      const lore = typeof def.lore === 'object' && def.lore ? def.lore : {};
+      m.inputs = {
+        name: typeof def.name === 'string' ? def.name : id.toUpperCase(),
+        description: lore.personality ?? lore.tagline ?? String(def.name ?? id),
+        lore: lore.backstory ?? '',
+      };
+      const draft = makeDraft(m.inputs.name, m.inputs.description);
+      if (typeof def.color === 'string') draft.color = def.color;
+      if (typeof def.lore === 'object' && def.lore) draft.lore = { ...draft.lore, ...def.lore };
+      if (Array.isArray(def.winQuotes)) draft.winQuotes = def.winQuotes;
+      draft.specials = this.specialDraftsFromDef(def.moves ?? {});
+      draft.specialPool = [];
+      if (def.fatality?.id) {
+        draft.fatality = {
+          id: def.fatality.id,
+          name: def.fatality.name ?? draft.fatality.name,
+          input: this.controlsFromInput(def.fatality.input),
+        };
+      }
+      m.draft = draft;
+      m.generatedFatality = j.fatalityPanels ?? [];
+      m.fatalityBeats = fatalityBeats(m.inputs.name, draft.fatality.name);
+      m.step = 2;
+      const frames = await this.sliceSheet(j.sheetBase64, j.meta);
+      for (const [name, dataUrl] of Object.entries(frames)) {
+        m.jobs.set('sprite:' + name, {
+          key: 'sprite:' + name, kind: 'sprite', label: name, status: 'done',
+          dataUrl, approved: true, savedAs: m.frameNameFor('sprite:' + name) + '.png',
+        });
+      }
+      const metaSkeletons = (j.meta as { skeletons?: unknown }).skeletons;
+      if (metaSkeletons && typeof metaSkeletons === 'object') m.skeletons = metaSkeletons as CreatorModel['skeletons'];
+      if (j.portraitBase64) m.jobs.set('portrait', { key: 'portrait', kind: 'portrait', label: 'Portrait', status: 'done', approved: true, dataUrl: 'data:image/png;base64,' + j.portraitBase64, savedAs: 'portrait.png' });
+      if (j.koBase64) m.jobs.set('ko', { key: 'ko', kind: 'ko', label: 'KO portrait', status: 'done', approved: true, dataUrl: 'data:image/png;base64,' + j.koBase64, savedAs: 'ko.png' });
+      if (j.stageBase64) m.jobs.set('stage', { key: 'stage', kind: 'stage', label: 'Stage', status: 'done', approved: true, dataUrl: 'data:image/jpeg;base64,' + j.stageBase64, savedAs: 'stage.jpg' });
+      for (const [moveId, b64] of Object.entries(j.projectiles ?? {})) {
+        m.jobs.set('proj:' + moveId, { key: 'proj:' + moveId, kind: 'projectile', label: `${moveId} projectile`, status: 'done', approved: true, dataUrl: 'data:image/png;base64,' + b64, savedAs: `projectile-${moveId}.png` });
+      }
+      this.m = m;
+      void this.syncRawFrames();
+      this.logMsg(`✓ opened ${id} from canon assets`);
+      this.renderStepper(); this.render(); this.renderPreviewControls(); this.renderTray(); this.redrawPreview();
+    } catch (e) { console.error(e); alert('Could not open canon fighter: ' + String(e)); }
+  }
+
+  private async sliceSheet(sheetBase64: string, meta: { cellW?: number; cellH?: number; cols?: number; frames?: string[] }): Promise<Record<string, string>> {
+    const img = await this.loadImg('data:image/png;base64,' + sheetBase64);
+    const cw = meta.cellW ?? 288, ch = meta.cellH ?? 384, cols = meta.cols ?? 6;
+    const out: Record<string, string> = {};
+    (meta.frames ?? []).forEach((name, i) => {
+      const c = document.createElement('canvas'); c.width = cw; c.height = ch;
+      c.getContext('2d')!.drawImage(img, (i % cols) * cw, Math.floor(i / cols) * ch, cw, ch, 0, 0, cw, ch);
+      out[name] = c.toDataURL('image/png');
+    });
+    return out;
+  }
+
+  private specialDraftsFromDef(moves: Record<string, Record<string, unknown>>): SpecialDraft[] {
+    return Object.entries(moves)
+      .filter(([, m]) => m.input && typeof m.input === 'object')
+      .map(([id, move]) => {
+        const p = (move.projectile && typeof move.projectile === 'object') ? move.projectile as Record<string, unknown> : {};
+        return {
+          id,
+          name: typeof move.name === 'string' ? move.name : id.replace(/-/g, ' '),
+          controls: this.controlsFromInput(move.input as Record<string, unknown>),
+          archetype: this.archetypeFromMove(move),
+          description: typeof move.name === 'string' ? move.name : id.replace(/-/g, ' '),
+          approved: true,
+          projScale: typeof p.renderSize === 'number' ? p.renderSize / 72 : undefined,
+          projSpawnX: typeof p.spawnX === 'number' ? p.spawnX : undefined,
+          projSpawnY: typeof p.spawnY === 'number' ? p.spawnY : undefined,
+          projBox: (p.box && typeof p.box === 'object') ? p.box as SpecialDraft['projBox'] : undefined,
+        };
+      });
+  }
+
+  private controlsFromInput(input?: Record<string, unknown>): string {
+    if (!input) return 'qcf+P';
+    const btn = input.button === 'kick' ? 'K' : input.button === 'PPP' ? 'PPP' : input.button === 'KKK' ? 'KKK' : input.button === 'LPLK' ? 'LPLK' : 'P';
+    if (input.mash) return `mash+${btn === 'K' ? 'K' : 'P'}`;
+    return typeof input.motion === 'string' ? `${input.motion}+${btn}` : btn;
+  }
+
+  private archetypeFromMove(move: Record<string, unknown>): string {
+    const input = (move.input && typeof move.input === 'object') ? move.input as Record<string, unknown> : {};
+    if (move.projectile) return input.motion === 'cbf' ? 'sonic-boom' : 'projectile';
+    if (move.teleport) return 'teleport';
+    if (move.grab) return 'command-grab';
+    if (input.mash || move.rehit) return 'mash';
+    if (input.motion === 'du') return 'flash-kick';
+    if (move.leap) return 'anti-air-dp';
+    if (move.forwardVel) return 'advancing-rush';
+    if (move.invuln) return 'reversal';
+    return 'advancing-rush';
   }
 
   private startResize(e: MouseEvent): void {
@@ -437,6 +556,24 @@ export class CharacterCreatorPanel {
         row.appendChild(b);
       }
     }).catch(() => { status.textContent = 'could not list drafts'; });
+
+    const canonTitle = el('div', 'font-size:11px;color:#9fb4be;margin:12px 0 6px;', 'EDIT A CANON FIGHTER (loads current JSON + packed sheet)');
+    const canonRow = el('div', 'display:flex;gap:8px;align-items:center;flex-wrap:wrap;');
+    const canonStatus = el('span', 'font-size:11px;color:#7d94a0;', 'loading…');
+    canonRow.appendChild(canonStatus);
+    bar.append(canonTitle, canonRow);
+    void fetch('/__editor/creator/canon', { method: 'POST' }).then(async (r) => {
+      const j = (await r.json()) as { fighters?: { id: string; name: string }[] };
+      canonRow.replaceChildren();
+      const fighters = j.fighters ?? [];
+      if (!fighters.length) { canonRow.appendChild(el('span', 'font-size:11px;color:#5c6b78;', 'no playable fighters found')); return; }
+      for (const f of fighters) {
+        const b = el('button', BTN + 'padding:3px 9px;font-size:11px;', `✎ ${f.name}`);
+        b.title = `open ${f.id} in the Character Creator`;
+        b.onclick = () => void this.loadCanon(f.id);
+        canonRow.appendChild(b);
+      }
+    }).catch(() => { canonStatus.textContent = 'could not list canon fighters'; });
   }
 
   private approvalRow(key: string, label: string): HTMLDivElement {
@@ -707,7 +844,8 @@ export class CharacterCreatorPanel {
       const ctrl = el('select', INPUT + 'flex:1;cursor:pointer;font-size:12px;') as HTMLSelectElement;
       const fillCtrl = (): void => {
         ctrl.replaceChildren();
-        const opts = SPECIAL_ARCHETYPES.find((a) => a.key === s.archetype)?.controls ?? ['qcf+P'];
+        const opts = [...(SPECIAL_ARCHETYPES.find((a) => a.key === s.archetype)?.controls ?? ['qcf+P'])];
+        if (s.controls && !opts.includes(s.controls)) opts.unshift(s.controls);
         for (const c of opts) { const o = el('option', '', c) as HTMLOptionElement; o.value = c; if (c === s.controls) o.selected = true; ctrl.appendChild(o); }
       };
       fillCtrl();
@@ -808,7 +946,7 @@ export class CharacterCreatorPanel {
     const oldId = s.id;
     let newId = slugify(newName);
     if (!newId || newId === oldId) { this.render(); this.renderPreviewControls(); return; }
-    const taken = new Set([...NORMAL_MOVE_IDS, ...this.m.draft!.specials.filter((x) => x !== s).map((x) => x.id)]);
+    const taken = new Set([...BASE_MOVE_IDS, ...this.m.draft!.specials.filter((x) => x !== s).map((x) => x.id)]);
     if (taken.has(newId)) { let n = 2; while (taken.has(`${newId}-${n}`)) n++; newId = `${newId}-${n}`; }
     const rekey = (oldKey: string, newKey: string, cellLabel?: string): void => {
       const j = this.m.jobs.get(oldKey); if (!j) return;
@@ -1518,7 +1656,7 @@ export class CharacterCreatorPanel {
     // per-move player buttons (grey until generated, lit when done) on the moves/rig steps
     const step = CREATOR_STEPS[this.m.step];
     if (step === 'MOVES' || step === 'RIG' || step === 'SHIP') {
-      const moves = [...NORMAL_MOVE_IDS, ...(this.m.draft?.specials ?? []).map((s) => s.id)];
+      const moves = [...BASE_MOVE_IDS, ...(this.m.draft?.specials ?? []).map((s) => s.id)];
       for (const mv of moves) {
         const special = !!this.m.draft?.specials.some((s) => s.id === mv);
         const cells = moveCellNames(mv, special);
@@ -1824,13 +1962,13 @@ export class CharacterCreatorPanel {
     // per-move animation: sequence its startup/active/recovery cells
     const sp = this.m.draft?.specials.find((s) => s.id === g);
     // air normals: idle → jump → execute the move, riding a full jump arc
-    if (!sp && NORMAL_MOVE_IDS.includes(g) && g.startsWith('j')) {
+    if (!sp && BASE_MOVE_IDS.includes(g) && g.startsWith('j')) {
       const seq: [string, number][] = [['idle-a', 160], ['jump', 220], [g, 440]];
       const total = 820, ph = t % total;
       const offY = ph > 160 ? -Math.sin(((ph - 160) / (total - 160)) * Math.PI) * 150 : 0;
       return { job: this.cellJob(this.seqPick(seq, t)) ?? this.cellJob(g) ?? this.cellJob('jump') ?? this.cellJob('idle-a'), offY };
     }
-    if (sp || NORMAL_MOVE_IDS.includes(g)) {
+    if (sp || BASE_MOVE_IDS.includes(g)) {
       const cells = moveCellNames(g, !!sp);
       const seq: [string, number][] = cells.length === 1 ? [[cells[0], 500]]
         : cells.length === 2 ? [[cells[0], 300], [cells[1], 340]]
@@ -2193,7 +2331,7 @@ export class CharacterCreatorPanel {
   private previewMoveId(): string | null {
     if (this.preview.kind !== 'group') return null;
     const k = this.preview.key;
-    return (NORMAL_MOVE_IDS.includes(k) || this.m.draft?.specials.some((s) => s.id === k)) ? k : null;
+    return (BASE_MOVE_IDS.includes(k) || this.m.draft?.specials.some((s) => s.id === k)) ? k : null;
   }
 
   /** throttled build of the full character (default hitboxes + spriteOffsetY). */

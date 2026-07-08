@@ -165,6 +165,34 @@ export class SpriteSheetModel {
     this.refresh(indices);
   }
 
+  /** mirror selected cells in place; keypoints mirror with the pixels. */
+  flipCells(indices: number[], axis: 'x' | 'y'): void {
+    for (const i of indices) {
+      const src = this.slots[i];
+      const out = blankCell(this.cellW, this.cellH);
+      const ctx = out.getContext('2d')!;
+      if (axis === 'x') {
+        ctx.translate(this.cellW, 0);
+        ctx.scale(-1, 1);
+      } else {
+        ctx.translate(0, this.cellH);
+        ctx.scale(1, -1);
+      }
+      ctx.drawImage(src, 0, 0);
+      this.slots[i] = out;
+      const j = this.skeletons[this.frames[i]];
+      if (j) {
+        for (const k in j) {
+          j[k] = axis === 'x'
+            ? [this.cellW - j[k][0], j[k][1], j[k][2]]
+            : [j[k][0], this.cellH - j[k][1], j[k][2]];
+        }
+      }
+    }
+    this.manifest.push({ op: 'flip', cells: indices.map((i) => this.frames[i]), axis });
+    this.refresh(indices);
+  }
+
   /** floor-align each selected cell: shift so its lowest opaque row lands on
    *  FLOOR_FRAC*cellH (the in-browser twin of tools/qa/normalize_floor.py) */
   normalizeCells(indices: number[]): void {

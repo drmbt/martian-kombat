@@ -161,6 +161,14 @@ function editorApi(): Plugin {
         const p = join(root, 'public/assets', ...parts);
         return existsSync(p) ? readFileSync(p).toString('base64') : undefined;
       };
+      const playableRoster = (): { id: string; name: string }[] => {
+        const src = readFileSync(join(root, 'src/data/roster.ts'), 'utf-8');
+        const out: { id: string; name: string }[] = [];
+        const re = /\{\s*id:\s*'([^']+)'\s*,\s*name:\s*'([^']+)'\s*,\s*playable:\s*true/g;
+        let m: RegExpExecArray | null;
+        while ((m = re.exec(src))) out.push({ id: m[1], name: m[2] });
+        return out;
+      };
 
       // POST /__editor/sheet  { id, pngBase64, meta, manifest }
       // -> backs up the current sheet.png + meta.json to a gitignored
@@ -615,6 +623,54 @@ function editorApi(): Plugin {
           }
           sendJson(res, 200, { ok: true, drafts });
         } catch (err) { sendJson(res, 400, { ok: false, error: String(err) }); }
+      });
+
+      // POST /__editor/creator/canon  { id? }
+      // With no id, lists playable canon fighters. With id, returns the raw
+      // character JSON plus packed sheet/meta and optional assets so the
+      // Character Creator can reopen a canonized fighter as an editable draft.
+      server.middlewares.use('/__editor/creator/canon', (req, res, next) => {
+        if (req.method !== 'POST' && req.method !== 'GET') return next();
+        readJsonBody(req)
+          .then((b) => {
+            const { id } = b as { id?: string };
+            if (!id) { sendJson(res, 200, { ok: true, fighters: playableRoster() }); return; }
+            if (!okId(id)) throw new Error('invalid id');
+            const defPath = join(root, 'src/data/characters', `${id}.json`);
+            const sheetPath = join(root, 'public/assets/sprites', id, 'sheet.png');
+            const metaPath = join(root, 'public/assets/sprites', id, 'meta.json');
+            if (!existsSync(defPath)) throw new Error(`missing ${id}.json`);
+            if (!existsSync(sheetPath) || !existsSync(metaPath)) throw new Error(`missing packed sprites for ${id}`);
+            const def = JSON.parse(readFileSync(defPath, 'utf-8')) as { moves?: Record<string, { projectile?: unknown }>; stage?: unknown; fatality?: { id?: string; panels?: number } };
+            const projectiles: Record<string, string> = {};
+            for (const [moveId, move] of Object.entries(def.moves ?? {})) {
+              if (!move?.projectile) continue;
+              const p = existingAssetBase64('sprites', id, `projectile-${moveId}.png`);
+              if (p) projectiles[moveId] = p;
+            }
+            const fatalityPanels: string[] = [];
+            if (def.fatality?.id) {
+              const count = Math.max(0, def.fatality.panels ?? 4);
+              for (let i = 1; i <= count; i++) {
+                const p = existingAssetBase64('fatalities', id, `${def.fatality.id}-${i}.jpg`);
+                if (p) fatalityPanels.push(p);
+              }
+            }
+            sendJson(res, 200, {
+              ok: true,
+              fighters: playableRoster(),
+              def,
+              meta: JSON.parse(readFileSync(metaPath, 'utf-8')),
+              sheetBase64: readFileSync(sheetPath).toString('base64'),
+              portraitBase64: existingAssetBase64('portraits', `${id}.png`),
+              bustBase64: existingAssetBase64('portraits', `${id}-bust.png`),
+              koBase64: existingAssetBase64('portraits', `${id}-ko.png`),
+              stageBase64: typeof def.stage === 'string' ? existingAssetBase64('backgrounds/stages', `${def.stage}.jpg`) : undefined,
+              projectiles,
+              fatalityPanels,
+            });
+          })
+          .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
       });
 
       // POST /__editor/creator/export  (same payload as write)

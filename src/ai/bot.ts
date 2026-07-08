@@ -2,7 +2,7 @@
 // sees the InputFrames this driver produces, so determinism of the core is
 // untouched. Decisions hash the game tick instead of Math.random so a given
 // match plays out reproducibly.
-import { CHARGE_TICKS, EMPTY_INPUT, FLOOR_Y, GameState, InputFrame, Motion } from '../engine';
+import { CHARGE_TICKS, EMPTY_INPUT, FLOOR_Y, GameState, InputFrame, Motion, SpecialInput } from '../engine';
 import { characters } from '../data/characters';
 
 type Dir = 'left' | 'right';
@@ -10,8 +10,9 @@ type Dir = 'left' | 'right';
 /** motions enqueueMotion can perform — every motion the engine matches
  *  (motionDone in step.ts), so the loop/showcase can execute ANY special:
  *  quarter/half circles, back-forward, dragon-punch, charge down-up, 360. */
-type QueueableMotion = 'qcf' | 'qcb' | 'bf' | 'hcb' | 'hcf' | 'dp' | 'du' | '360';
-const QUEUEABLE: Set<string> = new Set(['qcf', 'qcb', 'bf', 'hcb', 'hcf', 'dp', 'du', '360']);
+type QueueableMotion = Motion;
+type QueueableButton = SpecialInput['button'];
+const QUEUEABLE: Set<string> = new Set(['qcf', 'qcb', 'bf', 'cbf', 'hcb', 'hcf', 'dp', 'du', '360']);
 /** sprite-editor pseudo-poses (not real moves) — see loopDecide */
 const POSE_IDLE = '__idle__';
 const POSE_WALK = '__walk__';
@@ -19,7 +20,7 @@ const POSE_WALK = '__walk__';
 interface ReelEntry {
   /** a special: run this motion+button when roughly in range */
   motion?: QueueableMotion;
-  button?: 'punch' | 'kick';
+  button?: QueueableButton;
   /** a jump-in */
   jump?: boolean;
   /** a normal: the button(s) to press once in close range */
@@ -75,6 +76,16 @@ export class CpuDriver {
     return crouch ? { down: true, [base]: true } : { [base]: true };
   }
 
+  private pressForSpecialButton(button: QueueableButton): Partial<InputFrame> {
+    switch (button) {
+      case 'punch': return { mp: true };
+      case 'kick': return { mk: true };
+      case 'PPP': return { lp: true, mp: true, hp: true };
+      case 'KKK': return { lk: true, mk: true, hk: true };
+      case 'LPLK': return { lp: true, lk: true };
+    }
+  }
+
   /** move-tuner loop state machine: (jump, for air moves ->) approach into
    *  range, do the move, back off, wait out the configured pause, repeat. */
   private loopDecide(f: GameState['fighters'][number], def: typeof characters[string], toward: Dir, away: Dir, dist: number): Partial<InputFrame> {
@@ -104,8 +115,10 @@ export class CpuDriver {
         this.loopState = 'act';
         return {};
       case 'act':
-        if (isSpecial && move.input && QUEUEABLE.has(move.input.motion ?? '')) {
-          this.enqueueMotion(move.input.motion as QueueableMotion, move.input.button as 'punch' | 'kick', f.facing);
+        if (isSpecial && move.input?.motion && QUEUEABLE.has(move.input.motion)) {
+          this.enqueueMotion(move.input.motion, move.input.button, f.facing);
+        } else if (isSpecial && move.input) {
+          this.queue.push(this.pressForSpecialButton(move.input.button));
         } else {
           this.queue.push(this.pressForMove(moveId));
         }
@@ -134,53 +147,56 @@ export class CpuDriver {
   /** queue a motion+button as a per-tick input sequence, facing-aware. Handles
    *  every motion a special or fatality uses — including hcb/hcf, which the
    *  old driver silently mangled (so half the fatalities never fired in demos). */
-  private enqueueMotion(motion: QueueableMotion, button: 'punch' | 'kick', facing: 1 | -1): void {
+  private enqueueMotion(motion: QueueableMotion, button: QueueableButton, facing: 1 | -1): void {
     const fwd: Dir = facing === 1 ? 'right' : 'left';
     const back: Dir = facing === 1 ? 'left' : 'right';
-    const btn = button === 'punch' ? 'mp' : 'mk';
+    const btn = this.pressForSpecialButton(button);
     if (motion === 'qcf') {
-      this.queue.push({ down: true }, { down: true }, { [fwd]: true }, { [fwd]: true, [btn]: true });
+      this.queue.push({ down: true }, { down: true }, { [fwd]: true }, { [fwd]: true, ...btn });
     } else if (motion === 'qcb') {
-      this.queue.push({ down: true }, { down: true }, { [back]: true }, { [back]: true, [btn]: true });
+      this.queue.push({ down: true }, { down: true }, { [back]: true }, { [back]: true, ...btn });
     } else if (motion === 'hcb') {
       // half-circle back: fwd -> down -> back (engine wants those three in order)
       this.queue.push(
         { [fwd]: true }, { [fwd]: true, down: true }, { down: true },
-        { down: true, [back]: true }, { [back]: true }, { [back]: true, [btn]: true },
+        { down: true, [back]: true }, { [back]: true }, { [back]: true, ...btn },
       );
     } else if (motion === 'hcf') {
       this.queue.push(
         { [back]: true }, { [back]: true, down: true }, { down: true },
-        { down: true, [fwd]: true }, { [fwd]: true }, { [fwd]: true, [btn]: true },
+        { down: true, [fwd]: true }, { [fwd]: true }, { [fwd]: true, ...btn },
       );
     } else if (motion === 'dp') {
       // dragon punch →↓↘: fwd(not down) -> down -> down+fwd. The closing tap
       // MUST be the ↘ diagonal, not a clean forward: a clean forward would
       // also complete the qcf tail (↓→) and the engine would fire the
       // quarter-circle special instead (down+fwd fails qcf's `not: down`).
-      this.queue.push({ [fwd]: true }, { down: true }, { down: true, [fwd]: true, [btn]: true });
+      this.queue.push({ [fwd]: true }, { down: true }, { down: true, [fwd]: true, ...btn });
     } else if (motion === '360') {
       // down, back, then down+forward — all three seen, and the down+forward
       // close avoids also completing a qcf on the same button
-      this.queue.push({ down: true }, { [back]: true }, { down: true, [fwd]: true, [btn]: true });
+      this.queue.push({ down: true }, { [back]: true }, { down: true, [fwd]: true, ...btn });
     } else if (motion === 'du') {
       // charge down-up: bank the charge by holding down, then release up +
       // button. The engine bleeds charge by 8 the instant down releases (grace
       // window), and that bleed happens BEFORE the motion is read, so hold
       // CHARGE_TICKS + >8 to still clear the threshold on the release tick.
       for (let i = 0; i < CHARGE_TICKS + 12; i++) this.queue.push({ down: true });
-      this.queue.push({ up: true, [btn]: true });
+      this.queue.push({ up: true, ...btn });
+    } else if (motion === 'cbf') {
+      for (let i = 0; i < CHARGE_TICKS + 12; i++) this.queue.push({ [back]: true });
+      this.queue.push({ [fwd]: true, ...btn });
     } else {
       // bf (back-forward)
-      this.queue.push({ [back]: true }, { [back]: true }, {}, { [fwd]: true }, { [fwd]: true, [btn]: true });
+      this.queue.push({ [back]: true }, { [back]: true }, {}, { [fwd]: true }, { [fwd]: true, ...btn });
     }
   }
 
-  /** specials this driver can actually input (motion + punch/kick button) */
-  private specialsOf(def: typeof characters[string]): [string, QueueableMotion, 'punch' | 'kick'][] {
+  /** specials this driver can actually input */
+  private specialsOf(def: typeof characters[string]): [string, QueueableMotion | undefined, QueueableButton][] {
     return Object.entries(def.moves)
-      .filter(([, m]) => m.input && QUEUEABLE.has(m.input.motion ?? '') && (m.input.button === 'punch' || m.input.button === 'kick'))
-      .map(([id, m]) => [id, m.input!.motion as QueueableMotion, m.input!.button as 'punch' | 'kick']);
+      .filter(([, m]) => m.input && (!m.input.motion || QUEUEABLE.has(m.input.motion)))
+      .map(([id, m]) => [id, m.input!.motion, m.input!.button]);
   }
 
   /** showcase reel: every basic + special move, in order, so a demo match
@@ -194,7 +210,7 @@ export class CpuDriver {
     if (def.moves.cmk) normals.push({ press: { down: true, mk: true } });
     if (def.moves.chk) normals.push({ press: { down: true, hk: true } });
     const aerials: ReelEntry[] = [{ jump: true }];
-    const specials: ReelEntry[] = this.specialsOf(def).map(([, motion, button]) => ({ motion, button }));
+    const specials: ReelEntry[] = this.specialsOf(def).map(([, motion, button]) => ({ motion, button, press: motion ? undefined : this.pressForSpecialButton(button) }));
     return [...normals, ...aerials, ...specials];
   }
 
@@ -218,7 +234,7 @@ export class CpuDriver {
         const motion = def.fatality.input.motion;
         const range = (def.fatality.range ?? 280) - 70;
         if (dist > range) return { [toward]: true };
-        if (s.phaseFrame > 24 && motion && QUEUEABLE.has(motion) && (fb === 'punch' || fb === 'kick')) {
+        if (s.phaseFrame > 24 && motion && QUEUEABLE.has(motion)) {
           this.enqueueMotion(motion as QueueableMotion, fb, f.facing);
         }
       }
@@ -233,7 +249,8 @@ export class CpuDriver {
     const specials = this.specialsOf(def);
     const pickSpecial = () => {
       const [, motion, button] = specials[(s.tick >> 4) % specials.length];
-      this.enqueueMotion(motion, button, f.facing);
+      if (motion) this.enqueueMotion(motion, button, f.facing);
+      else this.queue.push(this.pressForSpecialButton(button));
     };
 
     if ((o.action.kind === 'attack' || o.action.kind === 'airAttack') && r < 0.45) {

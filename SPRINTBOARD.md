@@ -1028,6 +1028,11 @@ middleware, no-op in the prod build).
       auto-hitbox from the skeleton hand/foot cluster, soft silhouette box, floor line.
 - [x] Non-destructive; WRITE composites the sheet → `/__editor/sheet` (timestamped
       backup to gitignored `assets/raw/sprite-edits/` before overwrite).
+- [x] Follow-up UX pass: prompt textareas/input fields now receive fight-key
+      keystrokes normally while focused; sprite cells can be flipped X/Y; Write
+      Moves + Write Sheet + Commit became one checkbox-driven submit; special
+      inputs are editable in-place (including no-motion/chord controls like
+      Yulia's `PPP` Braid Lariat).
 
 **Character Scale** (`src/data/characterScale.ts`, renamed from `spriteScale`):
 - [x] `scale` is a uniform multiplier — art + hurt/hit boxes + joints +
@@ -1136,6 +1141,12 @@ profile → base batch → SHIP → reload → **playable MIRAGE vs VINCENT figh
 - [x] **Persistence** — live-save every frame to gitignored `assets/raw/creator/<id>/`
       + debounced `state.json`; **RESUME** bar; **⤓ ZIP export** (playable bundle +
       raw progress, `/creator/export`).
+- [x] **Canon edit path + throw frames** — creator attack generation now includes
+      throw startup/active/recovery cells; Seed can reopen any playable roster
+      fighter from raw JSON + packed sheet/meta/projectiles/portraits/fatalities,
+      slice the sheet back into editable jobs, and preserve the original JSON as
+      the write-back base instead of rebuilding tuned canon characters from a
+      generic template.
 
 **Editor UX + specials pass — DONE 2026-07-07 (all verified live in mock):**
 - [x] **Specials editor** (the D5 table) — combined into a single **MOVES** step
@@ -1171,6 +1182,10 @@ profile → base batch → SHIP → reload → **playable MIRAGE vs VINCENT figh
       ZIP export, ZIP import/register, KO portrait regeneration, and preserved
       existing bust/KO assets for older drafts. Earl is the live dogfood bundle
       with corrected `assets/raw/frames/earl/` numbering and projectile source art.
+- [x] **Sprite Editor follow-up fixes** — fight-key text entry works in prompt
+      fields, selected cells can flip X/Y with skeletons mirrored, write actions
+      are batched behind checkboxes, and loop/showcase input can execute charge
+      motions plus button-chord specials (`PPP`/`KKK`/`LPLK`).
 - [ ] Real Gemini design-draft (server `/__editor/creator/design` + context cache §16).
 - [ ] Advisory edge-QA badges; R2 publish/pull seams (local-mock first).
 - [ ] Consolidate: audit/tests + skills + CLAUDE.md; fold Tuner/Editor in.
@@ -1203,6 +1218,18 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-07 · ui · creator canon edit path + sprite-editor write/control fixes** —
+  Character Creator now includes throw startup/active/recovery frames in the
+  generated attack set, and can reopen a playable canon fighter from raw JSON +
+  packed sheet/meta/projectiles/portraits/fatalities into editable creator jobs
+  while preserving the existing JSON as the write-back base. Sprite Editor prompt
+  fields now accept fight-key keystrokes while focused; selected cells can flip
+  X/Y with skeletons mirrored; Write Moves / Write Sheet / Commit are batched
+  behind checkboxes; special inputs can be reassigned in the move inspector.
+  `CpuDriver` can now execute `cbf`, charge motions, pure button specials, and
+  `PPP`/`KKK`/`LPLK` chords, fixing Yulia's Braid Lariat loop in the editor.
+  `tsc --noEmit` and `vite build` passed. — Codex
 
 - **2026-07-07 · ui+assets · creator ZIP/write hardening + Earl dogfood
   canonization** — Fixed the Character Creator's `WRITE + REGISTER` regression
