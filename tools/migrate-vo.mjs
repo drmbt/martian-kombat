@@ -52,7 +52,12 @@ for (const id of ids) {
     return out.length ? out : null;
   };
 
-  const pick = (cat, n) => draftVo?.[cat]?.length ? draftVo[cat] : table?.[cat] ?? fromSidecars(cat, n);
+  // a stale draft can hold the makeDraft TEMPLATE lines — never let those
+  // outrank the real pipeline table (the gene/catherine/rapha lesson)
+  const TEMPLATE_KIAI = ['Hah!', 'Rrragh!', 'Take this!', 'Come on!', 'Hyah!', 'Now!'];
+  const draftIsTemplate = JSON.stringify(draftVo?.kiai) === JSON.stringify(TEMPLATE_KIAI);
+  const pick = (cat, n) =>
+    draftVo?.[cat]?.length && !draftIsTemplate ? draftVo[cat] : table?.[cat] ?? fromSidecars(cat, n);
   const kiai = pick('kiai', 6);
   const hurt = pick('hurt', 6);
   const victory = pick('victory', 4);

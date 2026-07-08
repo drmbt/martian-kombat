@@ -585,26 +585,26 @@
   },
   "vo": {
     "kiai": [
-      "Hah!",
-      "Rrragh!",
-      "Take this!",
-      "Come on!",
-      "Hyah!",
-      "Now!"
+      "Ship it!",
+      "Force push!",
+      "Straight to prod!",
+      "Deploy!",
+      "Zero-shot!",
+      "Mana Blast!"
     ],
     "hurt": [
-      "Ugh!",
-      "Gah!",
-      "Nngh!",
-      "No!",
-      "Aagh!",
-      "Tch!"
+      "Ow!",
+      "Ah, fuck.",
+      "Eden's down!",
+      "Segfault!",
+      "Bad output!",
+      "Nope!"
     ],
     "victory": [
-      "Too easy.",
-      "Next.",
-      "Predictable.",
-      "Done."
+      "Yeah! Shipped it.",
+      "Oh yeah — that's a merge.",
+      "Mana Blast secured.",
+      "Your context window just closed."
     ]
   }
 }

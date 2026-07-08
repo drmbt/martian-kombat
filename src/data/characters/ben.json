@@ -415,7 +415,8 @@
             "damage": 70
           }
         }
-      }
+      },
+      "voiceText": "Feast on this."
     },
     "hot-coffee": {
       "name": "Hot Coffee",
@@ -466,7 +467,8 @@
             "damage": 22
           }
         }
-      }
+      },
+      "voiceText": "Too hot!"
     },
     "kitchen-grandma": {
       "name": "Kitchen Grandma",
@@ -553,26 +555,26 @@
   "scale": 1.09,
   "vo": {
     "kiai": [
-      "Hah!",
-      "Rrragh!",
-      "Take this!",
-      "Come on!",
+      "Huh.",
+      "Braaah!",
+      "Take this.",
+      "Come on.",
       "Hyah!",
-      "Now!"
+      "Boom."
     ],
     "hurt": [
-      "Ugh!",
-      "Gah!",
-      "Nngh!",
-      "No!",
-      "Aagh!",
-      "Tch!"
+      "Ugh.",
+      "uh",
+      "Goddamn.",
+      "rude",
+      "Erd.",
+      "Oh, shit."
     ],
     "victory": [
-      "Too easy.",
-      "Next.",
-      "Predictable.",
-      "Done."
+      "That's fucking right.",
+      "Unbelievable.",
+      "So very predictable.",
+      "Maybe next time."
     ]
   }
 }

@@ -520,26 +520,26 @@
   "stage": "star-beach",
   "vo": {
     "kiai": [
-      "Hah!",
-      "Rrragh!",
+      "Ha!",
+      "Ow!",
       "Take this!",
       "Come on!",
       "Hyah!",
-      "Now!"
+      "NOW!"
     ],
     "hurt": [
       "Ugh!",
       "Gah!",
-      "Nngh!",
-      "No!",
-      "Aagh!",
-      "Tch!"
+      "Ow!",
+      "Not the face.",
+      "Fuck.",
+      "Oof."
     ],
     "victory": [
-      "Too easy.",
-      "Next.",
+      "Too easy!",
+      "Next...",
       "Predictable.",
-      "Done."
+      "Not my band."
     ]
   }
 }

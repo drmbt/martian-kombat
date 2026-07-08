@@ -581,26 +581,26 @@
   },
   "vo": {
     "kiai": [
-      "Hah!",
-      "Rrragh!",
-      "Take this!",
-      "Come on!",
-      "Hyah!",
-      "Now!"
+      "Tubs.",
+      "Ha!",
+      "Clamp!",
+      "Go, buddy!",
+      "Hup!",
+      "Fetch!"
     ],
     "hurt": [
-      "Ugh!",
-      "Gah!",
-      "Nngh!",
-      "No!",
-      "Aagh!",
-      "Tch!"
+      "Agh!",
+      "Ow!",
+      "Tubs—!",
+      "Hey!",
+      "Hnh!",
+      "My tabs!"
     ],
     "victory": [
-      "Too easy.",
-      "Next.",
-      "Predictable.",
-      "Done."
+      "The TabBastard has spoken.",
+      "Tubs, we're done here.",
+      "Built to last.",
+      "Add it to the chain."
     ]
   }
 }

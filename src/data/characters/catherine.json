@@ -551,26 +551,26 @@
   },
   "vo": {
     "kiai": [
-      "Hah!",
-      "Rrragh!",
-      "Take this!",
-      "Come on!",
+      "Order up!",
       "Hyah!",
-      "Now!"
+      "Coming through!",
+      "Special of the day!",
+      "Jazzper, go!",
+      "Yes, chef!"
     ],
     "hurt": [
-      "Ugh!",
-      "Gah!",
-      "Nngh!",
-      "No!",
-      "Aagh!",
-      "Tch!"
+      "Agh!",
+      "Ow!",
+      "Ouch!",
+      "Hey!",
+      "My apron!",
+      "Watch it!"
     ],
     "victory": [
-      "Too easy.",
-      "Next.",
-      "Predictable.",
-      "Done."
+      "Table for one — the loser's!",
+      "Check, please!",
+      "That's how we plate it!",
+      "Compliments to the chef!"
     ]
   }
 }

@@ -348,7 +348,7 @@
       "hitstun": 22,
       "blockstun": 13,
       "knockback": 11,
-      "comment": "hitbox is authored, NOT pose-measured: the drawn crescent-kick leg sits high (measured y=-218) but jhk's role is an air overhead that must reach a grounded/crouching defender on descent — an art-vs-intent divergence, so the box is intentionally lower/bigger than the limb. Do not --calibrate-force this cell.",
+      "comment": "hitbox is authored, NOT pose-measured: the drawn crescent-kick leg sits high (measured y=-218) but jhk's role is an air overhead that must reach a grounded/crouching defender on descent \u2014 an art-vs-intent divergence, so the box is intentionally lower/bigger than the limb. Do not --calibrate-force this cell.",
       "hitbox": {
         "x": 47,
         "y": -185,
@@ -492,7 +492,8 @@
         "size": 180,
         "anchor": "impact"
       },
-      "voice": true
+      "voice": true,
+      "voiceText": "(SFX)"
     },
     "redirect": {
       "name": "Redirect",
@@ -525,7 +526,8 @@
           "recovery": 16
         }
       },
-      "voice": true
+      "voice": true,
+      "voiceText": "Back at ya!"
     },
     "matrix-teleport": {
       "name": "Matrix Teleport",
@@ -548,7 +550,8 @@
       },
       "invulnFrom": 14,
       "invuln": 24,
-      "voice": true
+      "voice": true,
+      "voiceText": "(SFX)"
     },
     "throw": {
       "name": "Throw",
@@ -573,7 +576,8 @@
         "knockbackMult": 1.5
       },
       "techable": true,
-      "voice": true
+      "voice": true,
+      "voiceText": "YEET!"
     }
   },
   "fatality": {
@@ -587,26 +591,26 @@
   },
   "vo": {
     "kiai": [
-      "Hah!",
-      "Rrragh!",
-      "Take this!",
-      "Come on!",
-      "Hyah!",
-      "Now!"
+      "Huh!",
+      "Raw!",
+      "Chop.",
+      "Fuck you.",
+      "Ha!",
+      "Pow!"
     ],
     "hurt": [
-      "Ugh!",
-      "Gah!",
-      "Nngh!",
-      "No!",
-      "Aagh!",
-      "Tch!"
+      "Fuck.",
+      "Oof.",
+      "Ihck!",
+      "Awweee",
+      "Schei\u00dfe!",
+      "God damn it!"
     ],
     "victory": [
-      "Too easy.",
-      "Next.",
-      "Predictable.",
-      "Done."
+      "Balance restored.",
+      "The circuit is complete.",
+      "As it was written.",
+      "You were only noise?"
     ]
   }
 }
