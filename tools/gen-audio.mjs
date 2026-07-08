@@ -107,7 +107,7 @@ const VOICE_MARZ = VOICE_M; // male voice (Harry) — Marzipan is a man; tuned m
 // Slot counts are a contract with VOICE_COUNTS in src/scenes/BootScene.ts:
 // 6 kiai / 6 hurt / 4 victory per character. Keep the arrays exactly that
 // long — the loader requests that many numbered files.
-const voiceLines = {
+export const voiceLines = {
   vincent: {
     voice: VOICE_M,
     kiai: ['Hyah!', 'Ha!', 'Feel the flow!', 'Witness!', 'Redirect!', 'Sha!'],
@@ -288,13 +288,19 @@ const soundTasks = only
     }));
 const tasks = [...announcerTasks, ...gruntTasks, ...soundTasks];
 
-const pending = tasks.filter((t) => !skip(t.out, force));
-await pool(pending, CONCURRENCY, async (t) => {
-  console.log(`${t.label} ...`);
-  try {
-    saveAsset(t.out, await t.run(), t.prompt);
-  } catch (e) {
-    console.error(`  FAILED ${t.label}: ${e.message}`);
-  }
-});
-console.log('done.');
+// Only generate when run AS the CLI — importing this module for its tables
+// (voiceLines is the recovery source for migrate-vo.mjs and the studio) must
+// never fire an ElevenLabs batch.
+const isMain = (process.argv[1] ?? '').endsWith('gen-audio.mjs');
+if (isMain) {
+  const pending = tasks.filter((t) => !skip(t.out, force));
+  await pool(pending, CONCURRENCY, async (t) => {
+    console.log(`${t.label} ...`);
+    try {
+      saveAsset(t.out, await t.run(), t.prompt);
+    } catch (e) {
+      console.error(`  FAILED ${t.label}: ${e.message}`);
+    }
+  });
+  console.log('done.');
+}

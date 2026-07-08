@@ -575,5 +575,29 @@
       },
       "techable": true
     }
+  },
+  "vo": {
+    "kiai": [
+      "Sai da frente!",
+      "Ha!",
+      "Opa!",
+      "Voilà!",
+      "Toma!",
+      "Hup!"
+    ],
+    "hurt": [
+      "Ai!",
+      "Ui!",
+      "Ah!",
+      "Nossa!",
+      "Ai, não!",
+      "Ei!"
+    ],
+    "victory": [
+      "I painted you better than you fought.",
+      "Obrigada, querido.",
+      "You blinked first.",
+      "Que tempo horrível…"
+    ]
   }
 }

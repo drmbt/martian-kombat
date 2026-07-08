@@ -550,5 +550,29 @@
     },
     "panels": 4
   },
-  "scale": 1.09
+  "scale": 1.09,
+  "vo": {
+    "kiai": [
+      "Hah!",
+      "Rrragh!",
+      "Take this!",
+      "Come on!",
+      "Hyah!",
+      "Now!"
+    ],
+    "hurt": [
+      "Ugh!",
+      "Gah!",
+      "Nngh!",
+      "No!",
+      "Aagh!",
+      "Tch!"
+    ],
+    "victory": [
+      "Too easy.",
+      "Next.",
+      "Predictable.",
+      "Done."
+    ]
+  }
 }

@@ -230,6 +230,9 @@ export interface MoveDef {
   /** presentation only: this move has a per-move voice call-out
    *  (v-<char>-move-<moveId>, e.g. Gene's "Line goes up!") played on start */
   voice?: boolean;
+  /** authoring metadata only: the call-out's TEXT, persisted so the studio
+   *  editor repopulates (the clip is the runtime artifact; engine ignores) */
+  voiceText?: string;
   /** render hint only — per-move impact overlay art
    *  (assets/sprites/<char>/vfx-<moveId>.png, tools/gen-vfx.mjs) played by the
    *  scene when this move connects; engine never reads it */
@@ -256,6 +259,10 @@ export interface CharacterDef {
   /** SFII-style victory taunts; the win screen picks one at random. Presentation
    *  only, engine never reads it. */
   winQuotes?: string[];
+  /** authoring metadata only: the kiai/hurt/victory VO line TEXTS — the mp3s
+   *  are the runtime artifacts; these persist so the studio editor and future
+   *  regenerations repopulate instead of losing the writing (engine ignores) */
+  vo?: { kiai?: string[]; hurt?: string[]; victory?: string[] };
   fatality?: FatalityDef;
   /** whole-character size multiplier (default 1) — resizes EVERYTHING about the
    *  fighter's size + reach (bodyBox, hurtboxes, hitboxes, projectiles, grab

@@ -570,5 +570,29 @@
       },
       "techable": true
     }
+  },
+  "vo": {
+    "kiai": [
+      "Hyah!",
+      "Vai!",
+      "Draw!",
+      "Ha!",
+      "Voa!",
+      "Toma!"
+    ],
+    "hurt": [
+      "Ai!",
+      "Agh!",
+      "Ui!",
+      "Não!",
+      "Tss!",
+      "Ei!"
+    ],
+    "victory": [
+      "The deck never lies.",
+      "This outcome was foretold.",
+      "Sit. Have tea. Reflect.",
+      "You. Reversed."
+    ]
   }
 }

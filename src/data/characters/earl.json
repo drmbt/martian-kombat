@@ -503,7 +503,7 @@
         "h": {
           "damage": 84,
           "startup": 11,
-          "forwardVel": 12.0
+          "forwardVel": 12
         }
       }
     }
@@ -517,5 +517,29 @@
     },
     "panels": 4
   },
-  "stage": "star-beach"
+  "stage": "star-beach",
+  "vo": {
+    "kiai": [
+      "Hah!",
+      "Rrragh!",
+      "Take this!",
+      "Come on!",
+      "Hyah!",
+      "Now!"
+    ],
+    "hurt": [
+      "Ugh!",
+      "Gah!",
+      "Nngh!",
+      "No!",
+      "Aagh!",
+      "Tch!"
+    ],
+    "victory": [
+      "Too easy.",
+      "Next.",
+      "Predictable.",
+      "Done."
+    ]
+  }
 }

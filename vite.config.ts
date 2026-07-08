@@ -242,10 +242,10 @@ Return STRICT JSON with exactly this shape:
     "victory": ["exactly 4 voice victory barks"]
   },
   "specials": [
-    { "id": "slug", "name": "Move Name", "controls": "qcf+P", "archetype": "projectile", "description": "visual/gameplay prompt" }
+    { "id": "slug", "name": "Move Name", "controls": "qcf+P", "archetype": "projectile", "description": "visual/gameplay prompt", "voiceLine": "1-4 word call-out shouted when the move fires (lore-specific, not the move name)" }
   ],
   "specialPool": [
-    { "id": "slug", "name": "Move Name", "controls": "qcb+K", "archetype": "teleport", "description": "visual/gameplay prompt" }
+    { "id": "slug", "name": "Move Name", "controls": "qcb+K", "archetype": "teleport", "description": "visual/gameplay prompt", "voiceLine": "1-4 word call-out" }
   ],
   "physics": { "health": 1000, "walkSpeed": 3.3, "backSpeed": 3.4, "jumpVel": 18, "gravity": 0.9, "prejumpFrames": 4 },
   "fatality": { "id": "slug", "name": "Fatality Name", "input": "hcb+P" },
@@ -874,9 +874,21 @@ Cardinality requirements:
                 if (p) fatalityPanels.push(p);
               }
             }
+            // inherited status the def can't tell us: an existing Fish voice
+            // clone (tools/voices.json) and whether the home stage has music —
+            // the gap bar reports these honestly instead of "missing"
+            const voicesPath = join(root, 'tools/voices.json');
+            const voices = existsSync(voicesPath) ? (JSON.parse(readFileSync(voicesPath, 'utf-8')) as Record<string, { modelId?: string }>) : {};
+            const musicDir = typeof def.stage === 'string' ? join(root, 'public/assets/audio/music/stages', def.stage) : null;
+            const defaultMusic = join(root, 'public/assets/audio/music/stages/default');
+            const hasStageMusic =
+              (musicDir && existsSync(musicDir) && readdirSync(musicDir).some((f) => f.endsWith('.mp3'))) ||
+              (existsSync(defaultMusic) && readdirSync(defaultMusic).some((f) => f.endsWith('.mp3')));
             sendJson(res, 200, {
               ok: true,
               fighters: playableRoster(),
+              voiceModelId: voices[id]?.modelId,
+              hasStageMusic,
               def,
               meta: JSON.parse(readFileSync(metaPath, 'utf-8')),
               sheetBase64: readFileSync(sheetPath).toString('base64'),
@@ -887,6 +899,23 @@ Cardinality requirements:
               projectiles,
               fatalityPanels,
             });
+          })
+          .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
+      });
+
+      // POST /__editor/creator/delete-draft  { id }
+      // -> removes a WIP creator draft (assets/raw/creator/<id>) — canon
+      //    assets are untouched; use delete-character for those.
+      server.middlewares.use('/__editor/creator/delete-draft', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        readJsonBody(req)
+          .then((b) => {
+            const { id } = b as { id?: unknown };
+            if (!okId(id)) throw new Error('invalid draft id');
+            const dir = join(root, 'assets/raw/creator', id);
+            if (!existsSync(dir)) throw new Error(`no draft for ${id}`);
+            rmSync(dir, { recursive: true, force: true });
+            sendJson(res, 200, { ok: true, id });
           })
           .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
       });

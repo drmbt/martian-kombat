@@ -84,7 +84,8 @@ export class CharacterCreatorPanel {
   private lastLeftW = 40;
   private regenPromptEl?: HTMLTextAreaElement; // editable copy of the selected cell's prompt
   private regenUseSelf = false; // img2img: feed the current cell image as the reference
-  private moveAudioText: Record<string, string> = {}; // per-special call-out text (transient)
+  // per-special call-out text lives on the MODEL (m.moveAudioText) so it
+  // serializes with drafts and persists into the character JSON as voiceText
   /** what the big preview shows: an animated group (idle/walk/…) or one cell/asset */
   private preview: { kind: 'group' | 'cell'; key: string } = { kind: 'group', key: 'idle' };
   private anim = 0;
@@ -275,6 +276,7 @@ export class CharacterCreatorPanel {
       version: 1, step: this.m.step, inputs: this.m.inputs, draft: this.m.draft, existingId: this.m.existingId, baseDef: this.m.baseDef,
       generatedVo: this.m.generatedVo, generatedMusic: this.m.generatedMusic, generatedFatality: this.m.generatedFatality, fatalityBeats: this.m.fatalityBeats,
       skeletons: this.m.skeletons, autoHitboxes: this.m.autoHitboxes, voiceModelId: this.m.voiceModelId,
+      moveAudioText: this.m.moveAudioText,
       jobs: [...this.m.jobs.values()].map((j) => ({
         key: j.key, kind: j.kind, label: j.label, status: j.status, prompt: j.prompt,
         mock: j.mock, approved: j.approved, scale: j.scale, offX: j.offX, offY: j.offY, mime: j.dataUrl?.startsWith('data:image/jpeg') ? 'image/jpeg' : 'image/png', savedAs: j.savedAs,
@@ -324,6 +326,7 @@ export class CharacterCreatorPanel {
       this.m.skeletons = (s.skeletons ?? {});
       this.m.autoHitboxes = (s.autoHitboxes ?? {});
       this.m.voiceModelId = s.voiceModelId;
+      this.m.moveAudioText = ((s as { moveAudioText?: Record<string, string> }).moveAudioText ?? {});
       this.m.jobs = new Map();
       for (const jb of s.jobs ?? []) {
         const img = j.images?.[jb.key];
@@ -337,6 +340,14 @@ export class CharacterCreatorPanel {
     } catch (e) { console.error(e); alert('Could not load draft: ' + String(e)); }
   }
 
+  /** studio: auto-open the fight's current subject as a canon edit when the
+   *  wizard is fresh — the roster screen already picked the fighter, so
+   *  entering CREATOR shouldn't ask again. No-op once a draft is in flight. */
+  openCanonIfFresh(id: string): void {
+    if (this.m.inputs.name.trim() || this.m.existingId) return;
+    void this.loadCanon(id);
+  }
+
   private async loadCanon(id: string): Promise<void> {
     try {
       this.logMsg(`opening canon fighter ${id}…`);
@@ -347,6 +358,7 @@ export class CharacterCreatorPanel {
         ok?: boolean; error?: string; def?: Record<string, unknown>; meta?: { cellW?: number; cellH?: number; cols?: number; frames?: string[] };
         sheetBase64?: string; portraitBase64?: string; koBase64?: string; stageBase64?: string;
         projectiles?: Record<string, string>; fatalityPanels?: string[];
+        voiceModelId?: string; hasStageMusic?: boolean;
       };
       if (!j.ok || !j.def || !j.meta || !j.sheetBase64) throw new Error(j.error ?? 'load failed');
       const def = j.def as Record<string, unknown> & {
@@ -370,6 +382,17 @@ export class CharacterCreatorPanel {
       if (typeof def.color === 'string') draft.color = def.color;
       if (typeof def.lore === 'object' && def.lore) draft.lore = { ...draft.lore, ...def.lore };
       if (Array.isArray(def.winQuotes)) draft.winQuotes = def.winQuotes;
+      // the persisted VO line texts (character JSON `vo` block, recovered by
+      // tools/migrate-vo.mjs) repopulate the editor instead of template lines
+      const vo = (def as { vo?: { kiai?: string[]; hurt?: string[]; victory?: string[] } }).vo;
+      if (vo?.kiai?.length) draft.vo.kiai = vo.kiai;
+      if (vo?.hurt?.length) draft.vo.hurt = vo.hurt;
+      if (vo?.victory?.length) draft.vo.victory = vo.victory;
+      // per-move call-out texts persist on the move (voiceText)
+      for (const [moveId, mv] of Object.entries(def.moves ?? {})) {
+        const t = (mv as { voiceText?: string }).voiceText;
+        if (t) this.m.moveAudioText[moveId] = t;
+      }
       draft.specials = this.specialDraftsFromDef(def.moves ?? {});
       draft.specialPool = [];
       if (def.fatality?.id) {
@@ -382,6 +405,10 @@ export class CharacterCreatorPanel {
       m.draft = draft;
       m.generatedFatality = j.fatalityPanels ?? [];
       m.fatalityBeats = fatalityBeats(m.inputs.name, draft.fatality.name);
+      // inherited status the def can't carry: an existing voice clone + stage
+      // music on disk (so the gap bar doesn't cry wolf on canon fighters)
+      m.voiceModelId = j.voiceModelId;
+      m.inheritedMusic = !!j.hasStageMusic;
       m.step = 2;
       const frames = await this.sliceSheet(j.sheetBase64, j.meta);
       for (const [name, dataUrl] of Object.entries(frames)) {
@@ -740,8 +767,13 @@ export class CharacterCreatorPanel {
         const archetypeInfo = SPECIAL_ARCHETYPES.find((a) => a.key === archetype);
         if (!name || !archetypeInfo || !description) continue;
         const controls = String(s.controls ?? '').trim();
+        const id = slugify(String(s.id ?? name));
+        // the design pass now writes a lore-specific call-out per special —
+        // seed the (persisted) per-move VO text so it survives to voiceText
+        const voiceLine = String((raw as { voiceLine?: unknown }).voiceLine ?? '').trim();
+        if (voiceLine && !this.m.moveAudioText[id]) this.m.moveAudioText[id] = voiceLine;
         out.push({
-          id: slugify(String(s.id ?? name)),
+          id,
           name,
           controls: archetypeInfo.controls.includes(controls) ? controls : controlsForArchetype(archetype),
           archetype,
@@ -1175,8 +1207,8 @@ export class CharacterCreatorPanel {
       arow.appendChild(el('span', 'font-size:11px;color:#9fb4be;', 'call-out:'));
       const atext = el('input', INPUT + 'flex:1;min-width:120px;font-size:11px;') as HTMLInputElement;
       atext.placeholder = 'VO line (e.g. "Sand storm!") or an SFX description';
-      atext.value = this.moveAudioText[s.id] ?? s.name;
-      atext.oninput = () => (this.moveAudioText[s.id] = atext.value);
+      atext.value = this.m.moveAudioText[s.id] ?? s.name;
+      atext.oninput = () => (this.m.moveAudioText[s.id] = atext.value);
       const vbtn = el('button', BTN + 'font-size:11px;', '▸ voice');
       vbtn.onclick = () => this.genMoveAudio(s.id, atext.value, 'voice');
       const sbtn = el('button', BTN + 'font-size:11px;', '▸ sfx');
@@ -1222,7 +1254,7 @@ export class CharacterCreatorPanel {
     void this.persistFrame(`proj:${newId}`);
     // migrate the per-move call-out audio + text
     if (this.m.moveAudio[oldId]) { this.m.moveAudio[newId] = this.m.moveAudio[oldId]; delete this.m.moveAudio[oldId]; }
-    if (this.moveAudioText[oldId]) { this.moveAudioText[newId] = this.moveAudioText[oldId]; delete this.moveAudioText[oldId]; }
+    if (this.m.moveAudioText[oldId]) { this.m.moveAudioText[newId] = this.m.moveAudioText[oldId]; delete this.m.moveAudioText[oldId]; }
     // if this move was being previewed, follow it
     if (this.preview.kind === 'group' && this.preview.key === oldId) this.preview.key = newId;
     this.logMsg(`renamed special ${oldId} → ${newId} (cells + frames migrated)`);
@@ -1671,7 +1703,7 @@ export class CharacterCreatorPanel {
       { label: `quotes ${d?.winQuotes.length ?? 0}/3`, ok: (d?.winQuotes.length ?? 0) >= 3 },
       { label: `VO ${voCount}/17`, ok: voCount >= 17, soft: voCount > 0 },
       { label: 'voice sample', ok: !!m.voiceModelId || !!m.inputs.voiceSamples?.length, soft: true },
-      { label: 'music', ok: !!m.finalMusic(), soft: true },
+      { label: 'music', ok: !!m.finalMusic() || m.inheritedMusic, soft: true },
       { label: `fatality ${m.generatedFatality.length}/4`, ok: m.generatedFatality.length === 4 },
       { label: 'stage', ok: m.inputs.stageMode !== 'none' && !!m.inputs.stageId, soft: true },
     ];

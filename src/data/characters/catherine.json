@@ -548,5 +548,29 @@
       "button": "punch"
     },
     "panels": 4
+  },
+  "vo": {
+    "kiai": [
+      "Hah!",
+      "Rrragh!",
+      "Take this!",
+      "Come on!",
+      "Hyah!",
+      "Now!"
+    ],
+    "hurt": [
+      "Ugh!",
+      "Gah!",
+      "Nngh!",
+      "No!",
+      "Aagh!",
+      "Tch!"
+    ],
+    "victory": [
+      "Too easy.",
+      "Next.",
+      "Predictable.",
+      "Done."
+    ]
   }
 }

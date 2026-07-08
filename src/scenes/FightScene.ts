@@ -1258,7 +1258,11 @@ export class FightScene extends Phaser.Scene {
         sprite.setPosition(f.x, f.y + geom.footOffset(def));
         sprite.setFlipX(f.facing === -1);
         sprite.setRotation(0);
-        const frame = burnt ? this.cellFor(slot, ['down', 'fall', 'hit']) : this.actionToCell(slot, f);
+        let frame = burnt ? this.cellFor(slot, ['down', 'fall', 'hit']) : this.actionToCell(slot, f);
+        // a def can reference cells its (older/smaller) sheet lacks — an
+        // invalid frame index makes Phaser throw on a null sourceSize; clamp
+        // to the first cell instead of killing the render loop
+        if (!sprite.texture.has(frame as unknown as string)) frame = 0;
         this.currentCellName[slot] = this.cellNames[slot][frame] ?? null;
         this.drawFighterShadow(slot, f, def, frame);
         sprite.setFrame(frame);
@@ -1719,6 +1723,12 @@ export class FightScene extends Phaser.Scene {
           sceneHosted: true,
           subject: { mount: (def, meta, canvas) => this.setStudioSubject(def as unknown as (typeof characters)[string], meta, canvas) },
         });
+        // editing an existing fighter (opened from the roster screen on their
+        // home stage): auto-open them as a canon edit — the wireframe stage
+        // marks the NEW-character flow, which starts fresh at SEED
+        if (this.stageId !== 'wireframe' && characters[this.chars[0]]) {
+          creatorPanel.openCanonIfFresh(this.chars[0]);
+        }
       } else {
         creatorPanel.setMounted(true);
       }

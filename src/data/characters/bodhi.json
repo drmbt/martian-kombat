@@ -550,5 +550,29 @@
       },
       "techable": true
     }
+  },
+  "vo": {
+    "kiai": [
+      "Hyah!",
+      "Breathe.",
+      "Release!",
+      "Deep tissue!",
+      "Hold still.",
+      "Ha!"
+    ],
+    "hurt": [
+      "Oof!",
+      "Agh!",
+      "That's a knot—!",
+      "Hnh!",
+      "Okay—",
+      "Mercury retrograde!"
+    ],
+    "victory": [
+      "Realigned.",
+      "Session's over.",
+      "The stars are aligned.",
+      "Not today."
+    ]
   }
 }

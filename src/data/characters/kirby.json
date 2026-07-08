@@ -569,5 +569,29 @@
       },
       "techable": true
     }
+  },
+  "vo": {
+    "kiai": [
+      "Hyah!",
+      "Ha!",
+      "Watch this!",
+      "Whoo!",
+      "Flambé!",
+      "Ta-da!"
+    ],
+    "hurt": [
+      "Oof!",
+      "Ow!",
+      "Ugh!",
+      "Hey!",
+      "Rude!",
+      "My hair!"
+    ],
+    "victory": [
+      "Too flexible for you!",
+      "Stick the landing!",
+      "Encore?",
+      "Darling, please."
+    ]
   }
 }

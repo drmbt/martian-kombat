@@ -637,5 +637,29 @@
       },
       "techable": true
     }
+  },
+  "vo": {
+    "kiai": [
+      "Verdammt!",
+      "Genau!",
+      "Ha!",
+      "Root access!",
+      "Los!",
+      "Sudo!"
+    ],
+    "hurt": [
+      "Ah! Scheiße!",
+      "Ah, OK!",
+      "Argh!",
+      "Verdammt nochmal!",
+      "Mist!",
+      "Ey!"
+    ],
+    "victory": [
+      "Genau. Predictable.",
+      "Ah, OK — pwned.",
+      "Root access granted.",
+      "Works on my machine."
+    ]
   }
 }

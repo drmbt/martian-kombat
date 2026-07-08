@@ -1447,6 +1447,41 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-08 · data+tools+ui · Sprint 27 Phase 3i: dogfood feedback batch —
+  VO texts recovered + persisted** (user-directed). THE data-loss fix: the
+  kiai/hurt/victory line TEXTS (and per-move call-outs) were never stored in
+  character JSONs. New schema: `CharacterDef.vo {kiai,hurt,victory}` +
+  `MoveDef.voiceText` (authoring metadata, engine ignores).
+  `tools/migrate-vo.mjs` recovered ALL 16 fighters' vo blocks (priority:
+  creator draft state.json → the committed gen-audio voiceLines tables →
+  .prompt.txt sidecars) + per-move texts for gene/vanessa. STILL LOST (no
+  text source anywhere; mp3s exist): vincent's 4 call-outs
+  (matrix-teleport/redirect/rising-glyph/throw) + ben's 2
+  (hot-coffee/quesadilla) — need human transcription or STT. Going forward
+  the creator persists everything: moveAudioText moved onto the MODEL
+  (serializes with drafts — it was panel-transient, the root cause),
+  buildFullCharacter/buildFromBase write vo + voiceText, canon-reopen
+  repopulates the editors from them, and the Gemini design pass now emits a
+  lore-specific `voiceLine` per special (seeded into the per-move VO text).
+  gen-audio.mjs main guarded behind isMain (importing voiceLines can never
+  fire a TTS batch). MORE FIXES from the vincent dogfood: CREATOR
+  auto-opens the fight's subject as a canon edit when entered from a
+  roster-screen EDIT (wireframe stage = the NEW flow, starts fresh);
+  gap-bar honesty for canon fighters — /creator/canon now reports the Fish
+  voice clone (tools/voices.json: ben/earl/vincent/vanessa) + whether the
+  home stage has music on disk, so those chips stop crying wolf; WIP draft
+  DELETE (new /creator/delete-draft + ✕ chips on the roster screen's shelf,
+  which now also lists canon-edit drafts labeled); the Phaser
+  null-sourceSize crash on older fighters guarded (invalid frame index →
+  clamp to 0 instead of killing the render loop). DEFERRED to the next
+  passes (recorded from the same feedback): add/remove field controls for
+  quotes + kiai/hurt/victory + specials slots (defaults 3/6/6/4/4); throw
+  stays a SPECIAL (the 5th default — every fighter must carry one, lint
+  enforces); per-frame skeleton badges + a "regen missing keypoints only"
+  button (vincent reads 65/68 — likely no-pose cells like teleport
+  dissolves); transcribe the 6 lost call-outs; repro the older-char load
+  error beyond the guard. 361/361, tsc + build clean. — Claude (Fable)
+
 - **2026-07-08 · ui · Sprint 27 Phase 3h: the creator is WYSIWYG — the fight
   scene IS the preview** (user-directed). CharacterCreatorPanel gained a
   scene-hosted mode: right-docked translucent wizard column, no opaque

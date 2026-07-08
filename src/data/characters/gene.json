@@ -455,7 +455,8 @@
             "damage": 112
           }
         }
-      }
+      },
+      "voiceText": "Line goes up!"
     },
     "hallucination": {
       "name": "Hallucination",
@@ -581,5 +582,29 @@
       },
       "techable": true
     }
+  },
+  "vo": {
+    "kiai": [
+      "Hah!",
+      "Rrragh!",
+      "Take this!",
+      "Come on!",
+      "Hyah!",
+      "Now!"
+    ],
+    "hurt": [
+      "Ugh!",
+      "Gah!",
+      "Nngh!",
+      "No!",
+      "Aagh!",
+      "Tch!"
+    ],
+    "victory": [
+      "Too easy.",
+      "Next.",
+      "Predictable.",
+      "Done."
+    ]
   }
 }

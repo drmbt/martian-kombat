@@ -356,7 +356,12 @@ export class CreatorModel {
   generatedFatality: string[] = []; // 4 base64 jpg panels
   fatalityBeats: string[] = []; // 4 editable per-panel prompt beats (seeded from fatalityBeats())
   moveAudio: Record<string, string> = {}; // specialId -> base64 mp3 (per-move VO / SFX call-out)
+  /** specialId -> the call-out's TEXT — persisted (draft state + character
+   *  JSON `voiceText`) so the writing survives past initial creation */
+  moveAudioText: Record<string, string> = {};
   voiceModelId?: string; // Fish clone reference id (if the user cloned a voice)
+  /** canon-reopen: the home stage already has music on disk (gap-bar honesty) */
+  inheritedMusic = false;
   skeletons: Record<string, Record<string, [number, number, number]>> = {}; // cellName -> DWPose joints
   autoHitboxes: Record<string, { x: number; y: number; w: number; h: number }> = {}; // moveId -> engine hitbox
   voStatus: 'idle' | 'running' | 'done' | 'error' = 'idle';
@@ -444,6 +449,7 @@ export class CreatorModel {
     for (const s of d.specials) {
       moves[s.id] = buildSpecial(s);
       if (this.moveAudio[s.id]) (moves[s.id] as Record<string, unknown>).voice = true; // has a per-move VO/SFX call-out
+      if (this.moveAudioText[s.id]) (moves[s.id] as Record<string, unknown>).voiceText = this.moveAudioText[s.id];
     }
     // overlay skeleton-derived hitboxes (RIG step) over the heuristic defaults
     for (const [moveId, box] of Object.entries(this.autoHitboxes)) {
@@ -459,6 +465,7 @@ export class CreatorModel {
       color: hslToHex(d.color),
       lore: this.inputs.lore?.trim() ? { ...d.lore, backstory: this.inputs.lore.trim() } : d.lore,
       winQuotes: d.winQuotes,
+      vo: d.vo, // the line TEXTS persist alongside the clips (schema `vo`)
       health: d.physics.health,
       walkSpeed: d.physics.walkSpeed,
       backSpeed: d.physics.backSpeed,
@@ -486,6 +493,7 @@ export class CreatorModel {
       out.lore = { ...(typeof out.lore === 'object' && out.lore ? out.lore : d.lore), backstory: this.inputs.lore.trim() };
     }
     if (d.winQuotes.length) out.winQuotes = d.winQuotes;
+    if (d.vo && (d.vo.kiai?.length || d.vo.hurt?.length || d.vo.victory?.length)) out.vo = d.vo;
     const moves: Record<string, Record<string, unknown>> = cloneJson(
       (out.moves && typeof out.moves === 'object') ? out.moves as Record<string, Record<string, unknown>> : {},
     );
@@ -502,6 +510,7 @@ export class CreatorModel {
         if (Object.keys(projectile).length) existing.projectile = projectile;
       }
       if (this.moveAudio[s.id]) existing.voice = true;
+      if (this.moveAudioText[s.id]) existing.voiceText = this.moveAudioText[s.id];
       moves[s.id] = existing;
     }
     for (const [moveId, box] of Object.entries(this.autoHitboxes)) {

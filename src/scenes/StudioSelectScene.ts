@@ -156,17 +156,41 @@ export class StudioSelectScene extends Phaser.Scene {
       if (!shelf) return;
       shelf.innerHTML = '';
       const canonIds = new Set(ROSTER.map((x) => x.id));
-      const wip = (j.drafts ?? []).filter((d) => !canonIds.has(d.id));
+      const wip = j.drafts ?? [];
       if (!wip.length) {
         shelf.appendChild(this.el('span', 'color:#5c6b78;font-size:11px;', 'none — start one with ＋ NEW CHARACTER'));
         return;
       }
       const STEPS = ['SEED', 'PROFILE', 'MOVES', 'RIG', 'POLISH', 'SHIP'];
       for (const d of wip) {
-        shelf.appendChild(this.btn(`▸ ${d.name} · ${STEPS[d.step] ?? d.step}`, () => this.openStudio('creator')));
+        const row = this.el('div', 'display:flex;align-items:center;gap:2px;');
+        const canonEdit = canonIds.has(d.id);
+        row.appendChild(this.btn(`▸ ${d.name} · ${STEPS[d.step] ?? d.step}${canonEdit ? ' (canon edit)' : ''}`, () => this.openStudio('creator')));
+        const del = this.btn('✕', () => void this.deleteDraft(d.id));
+        del.title = `delete the ${d.id} draft (canon assets untouched)`;
+        del.style.padding = '5px 7px';
+        row.appendChild(del);
+        shelf.appendChild(row);
       }
     } catch {
       /* drafts shelf is best-effort (dev server only) */
+    }
+  }
+
+  private async deleteDraft(id: string): Promise<void> {
+    if (!window.confirm(`Delete the "${id}" WIP draft? Canon assets are untouched.`)) return;
+    try {
+      const res = await fetch('/__editor/creator/delete-draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      const json = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !json.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+      this.status(`draft ${id} deleted`, '#6fe36f');
+      void this.loadDrafts();
+    } catch (err) {
+      this.status(`draft delete failed (${String(err)})`, '#ff7a6a');
     }
   }
 

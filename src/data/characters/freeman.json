@@ -525,5 +525,29 @@
       },
       "techable": true
     }
+  },
+  "vo": {
+    "kiai": [
+      "Hmm... hah!",
+      "Ha.",
+      "Be still.",
+      "Hah!",
+      "Breathe.",
+      "Release."
+    ],
+    "hurt": [
+      "Hmph!",
+      "Mm.",
+      "Hnh.",
+      "...ah.",
+      "Unmoved.",
+      "Hm!"
+    ],
+    "victory": [
+      "Peace, achieved.",
+      "The mind bends steel.",
+      "Namaste... now leave.",
+      "Stillness prevails."
+    ]
   }
 }

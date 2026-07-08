@@ -571,5 +571,29 @@
       },
       "techable": true
     }
+  },
+  "vo": {
+    "kiai": [
+      "Grow!",
+      "Bloom!",
+      "Ha!",
+      "Symbiosis!",
+      "Photosynthesize!",
+      "Take root!"
+    ],
+    "hurt": [
+      "Oh!",
+      "Ow!",
+      "Ugh!",
+      "Hey now!",
+      "Aah!",
+      "My roots!"
+    ],
+    "victory": [
+      "Please, collaborate with me.",
+      "Nature always wins.",
+      "Grow with me, or don't.",
+      "Everything composts eventually."
+    ]
   }
 }

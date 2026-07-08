@@ -474,7 +474,8 @@
       "voice": true,
       "teleport": {
         "mode": "behind"
-      }
+      },
+      "voiceText": "Dream."
     },
     "euc-crash": {
       "name": "EUC Crash",
@@ -577,5 +578,29 @@
       "techable": true
     }
   },
-  "scale": 0.91
+  "scale": 0.91,
+  "vo": {
+    "kiai": [
+      "Verdelis!",
+      "Little Martians!",
+      "Cacao!",
+      "Awaken!",
+      "The ancestors!",
+      "Hah!"
+    ],
+    "hurt": [
+      "Ai!",
+      "Merda!",
+      "Caralho!",
+      "Porra!",
+      "Ai, não!",
+      "Puta que pariu!"
+    ],
+    "victory": [
+      "The Little Martians dreamed this.",
+      "Say thank you. The ceremony requires it.",
+      "The ancestors are pleased.",
+      "Dear human: you are forgettable."
+    ]
+  }
 }

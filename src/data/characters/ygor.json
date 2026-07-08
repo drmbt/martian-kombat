@@ -561,5 +561,29 @@
       },
       "techable": true
     }
+  },
+  "vo": {
+    "kiai": [
+      "Suave!",
+      "Ha!",
+      "Vai, Appa!",
+      "Projeta!",
+      "Whoa!",
+      "Toma!"
+    ],
+    "hurt": [
+      "Ai!",
+      "Whoa—",
+      "Agh!",
+      "Mano...",
+      "Ei!",
+      "Hnh!"
+    ],
+    "victory": [
+      "Não foi microdose!",
+      "Suave, mano. Suave.",
+      "Mais Amor Por Favor.",
+      "Nice render."
+    ]
   }
 }
