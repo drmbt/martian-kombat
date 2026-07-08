@@ -25,24 +25,28 @@ export class StudioRail {
     initial?: string,
   ) {
     this.el = document.createElement('div');
+    // a horizontal strip at the very top of the screen, ABOVE the health
+    // bars, clear of the F1/F2 debug overlays. The UiLayer root is
+    // pointer-events:none (gameplay clicks pass through), so the rail must
+    // opt back in or its buttons are dead to the mouse.
     this.el.style.cssText =
-      'position:absolute;left:8px;top:64px;z-index:30;display:flex;flex-direction:column;gap:4px;' +
-      'font-family:monospace;user-select:none;';
+      'position:absolute;left:8px;top:2px;z-index:30;display:flex;flex-direction:row;gap:4px;' +
+      'font-family:monospace;user-select:none;pointer-events:auto;';
     parent.appendChild(this.el);
 
     const head = document.createElement('button');
-    head.textContent = '◀ STUDIO';
-    head.title = 'collapse/expand the module rail';
+    head.textContent = '▾ STUDIO';
+    head.title = 'collapse/expand the module bar';
     head.style.cssText = this.btnCss(false) + 'font-weight:bold;color:#7fe3ff;';
     head.onclick = () => {
       this.collapsed = !this.collapsed;
       this.body.style.display = this.collapsed ? 'none' : 'flex';
-      head.textContent = this.collapsed ? '▶ STUDIO' : '◀ STUDIO';
+      head.textContent = this.collapsed ? '▸ STUDIO' : '▾ STUDIO';
     };
     this.el.appendChild(head);
 
     this.body = document.createElement('div');
-    this.body.style.cssText = 'display:flex;flex-direction:column;gap:4px;';
+    this.body.style.cssText = 'display:flex;flex-direction:row;gap:4px;';
     this.el.appendChild(this.body);
 
     for (const m of modules) {
@@ -61,7 +65,7 @@ export class StudioRail {
     return (
       `background:${on ? '#24384a' : '#141d26'};color:${on ? '#bff0ff' : '#c8d6dd'};` +
       'border:1px solid ' + (on ? '#7fe3ff' : '#3f6070') + ';border-radius:4px;' +
-      'padding:6px 10px;font-family:monospace;font-size:12px;text-align:left;cursor:pointer;min-width:104px;'
+      'padding:4px 12px;font-family:monospace;font-size:12px;cursor:pointer;'
     );
   }
 
