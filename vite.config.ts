@@ -1037,7 +1037,7 @@ Cardinality requirements:
       server.middlewares.use('/__editor/creator/write', (req, res, next) => {
         if (req.method !== 'POST') return next();
         readJsonBody(req)
-          .then((b) => {
+          .then(async (b) => {
             const {
               id, name, def, sheetBase64, meta, portraitBase64, koBase64, bustBase64,
               voClips, musicBase64, moveAudio, stageBase64, stageId, stageName,
@@ -1049,15 +1049,39 @@ Cardinality requirements:
               stageBase64?: string; stageId?: string; stageName?: string; fatalityPanels?: string[]; projectiles?: Record<string, string>; rawFrames?: Record<string, string>;
             };
             if (!okId(id)) throw new Error('invalid character id');
-            if (typeof sheetBase64 !== 'string' || typeof meta !== 'object' || meta === null) throw new Error('missing sheet/meta');
+            if (typeof meta !== 'object' || meta === null) throw new Error('missing meta');
             if (typeof def !== 'object' || def === null) throw new Error('missing def');
             const disp = typeof name === 'string' && name ? name : id.toUpperCase();
-            // sprites
+            // sprites: write the (transform-baked, keyed, cell-space) frames +
+            // the `.cellspace` marker, persist the client skeletons as an edit
+            // overlay, then run THE shared packer — the same path gen:pack and
+            // /__editor/pack use, so shipped sheets have exactly one producer.
             const spriteDir = join(root, 'public/assets/sprites', id);
             mkdirSync(spriteDir, { recursive: true });
-            writeFileSync(join(spriteDir, 'sheet.png'), Buffer.from(sheetBase64, 'base64'));
-            writeFileSync(join(spriteDir, 'meta.json'), JSON.stringify(meta, null, 2) + '\n');
-            writeRawFrames(id, rawFrames);
+            const m = meta as { cols?: number; rows?: number; frames?: string[]; skeletons?: Record<string, unknown> };
+            if (rawFrames && Object.keys(rawFrames).length) {
+              writeRawFrames(id, rawFrames);
+              writeFileSync(join(root, 'assets/raw/frames', id, '.cellspace'), 'creator cells: keyed + cell-space — packer must not re-key/re-pad\n');
+              if (m.skeletons && Object.keys(m.skeletons).length) {
+                const editsDir = join(root, 'assets/raw/edits', id);
+                mkdirSync(editsDir, { recursive: true });
+                writeFileSync(join(editsDir, 'skeletons.json'), JSON.stringify(m.skeletons, null, 2) + '\n');
+              }
+              const { packCharacter } = await import('./tools/core/packer.mjs');
+              const nCells = Object.keys(rawFrames).filter((f) => /^\d\d-.*\.png$/.test(f)).length;
+              const cols = m.cols ?? 6;
+              packCharacter(id, {
+                root, spec: undefined, grid: { cols, rows: Math.ceil(nCells / cols) }, expected: nCells,
+                log: (msg: string) => server.config.logger.info(msg),
+              });
+            } else if (typeof sheetBase64 === 'string') {
+              // legacy fallback (no raw frames in the payload): trust the
+              // client-composited sheet as before
+              writeFileSync(join(spriteDir, 'sheet.png'), Buffer.from(sheetBase64, 'base64'));
+              writeFileSync(join(spriteDir, 'meta.json'), JSON.stringify(meta, null, 2) + '\n');
+            } else {
+              throw new Error('missing rawFrames/sheet');
+            }
             // per-move projectile art → sprites/<id>/projectile-<moveId>.png
             let wroteProjectiles = false;
             if (projectiles && typeof projectiles === 'object') {

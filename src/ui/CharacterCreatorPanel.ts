@@ -1522,6 +1522,21 @@ export class CharacterCreatorPanel {
     this.fireGen(key, j.kind, j.label, (j.prompt ?? '') + ' (variation)', []);
   }
 
+  /** a job's cell pixels with its per-cell scale/offX/offY BAKED IN (the same
+   *  transform composeSheet applies) — shipped raw frames must carry the final
+   *  cell pixels so the server-side packer reproduces the tuned sheet. */
+  private async bakedCellB64(job: CreatorJob): Promise<string | null> {
+    if (!job.dataUrl) return null;
+    const s = job.scale ?? 1, ox = job.offX ?? 0, oy = job.offY ?? 0;
+    if (s === 1 && !ox && !oy) return dataUrlToB64(job.dataUrl) ?? null;
+    const img = await this.loadImg(job.dataUrl);
+    const c = document.createElement('canvas'); c.width = CELL_W; c.height = CELL_H;
+    const ctx = c.getContext('2d')!;
+    const dw = CELL_W * s, dh = CELL_H * s;
+    ctx.drawImage(img, (CELL_W - dw) / 2 + ox, (CELL_H - dh) + oy, dw, dh); // scale about feet + realign
+    return c.toDataURL('image/png').split(',')[1];
+  }
+
   /** the full build payload (shared by SHIP write + ZIP export). */
   private async buildPayload(): Promise<Record<string, unknown>> {
     this.ensureStageDefaults();
@@ -1535,7 +1550,8 @@ export class CharacterCreatorPanel {
     }
     for (const [key, job] of this.m.jobs) {
       if ((!key.startsWith('sprite:') && !key.startsWith('proj:')) || !job.dataUrl) continue;
-      const b = dataUrlToB64(job.dataUrl); if (b) rawFrames[this.savedAsFor(key, job)] = b;
+      const b = key.startsWith('sprite:') ? await this.bakedCellB64(job) : dataUrlToB64(job.dataUrl);
+      if (b) rawFrames[this.savedAsFor(key, job)] = b;
     }
     const generatedStage = this.m.inputs.stageMode === 'generated';
     return {

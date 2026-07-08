@@ -1278,7 +1278,7 @@ implementation, many doors; only the standalone scene implementations
       qcb remaps + the cbf sonic-boom test — Phase 2/3 rewrites those tests
       against synthetic defs). Boot verified in-browser: 541 assets, 0 load
       failures, 0 failed network requests, no console errors.
-- [~] Phase 1 — one pack path + one prompt library (no API calls). DONE so
+- [x] Phase 1 — one pack path + one prompt library (no API calls). DONE so
       far (2026-07-08): `core/keying.mjs` — one chromaKey/SCALE_PAD/
       keyPadSquare/STAGE_COVER source; the vite FF_KEY_PAD missing-HEADROOM
       mismatch is FIXED (editor/creator cells now land in the exact packed
@@ -1315,9 +1315,24 @@ implementation, many doors; only the standalone scene implementations
       `elevenSfx`/`ELEVEN_VOICES` in lib.mjs — gen-audio + both creator
       audio endpoints share one implementation; the vite fatality endpoint
       reads the ONE fatalityBeats copy. tsc + prod build + dev transform all
-      verified. STILL OPEN in Phase 1: skills refresh pass 1
-      (sprite-generation / sprite-qa point at core/); creator SHIP packs
-      server-side via /__editor/pack (retire client composeSheet).
+      verified. FINAL 1e (2026-07-08): creator SHIP now packs SERVER-SIDE
+      through packCharacter — the client bakes per-cell scale/offset into the
+      shipped raw frames (`bakedCellB64`), the server writes them + a
+      `.cellspace` marker (keyed, cell-space — the packer copies them
+      through instead of re-keying/re-padding, which would have shrunk them)
+      + the client skeletons as an edit overlay, then packs. Shipped sheets
+      now have exactly ONE producer (composeSheet remains for ZIP export
+      only; legacy sheetBase64 fallback kept). Discovered + fixed in passing:
+      creator canon-reopens had ALREADY overwritten vincent/earl/ben's raw
+      frames with keyed cells (a gen:pack would have double-padded them) —
+      `.cellspace` markers written for all three; the other 13 dirs verified
+      true raw-gen (896×1200 green). Prekeyed pack path verified pixel-equal
+      in a sandbox. Skills refresh pass 1 done: sprite-generation points at
+      core/prompts+cells and carries the §2.9 reference-chaining policy;
+      sprite-qa carries the MINIMAL-QA posture (human QA primary, local
+      skeletons only, no validate→regenerate loops, fal never local) + the
+      packer/overlay/meta-v2 map. **Phase 1 COMPLETE** — tsc + prod build +
+      357/361 (4 known pre-existing).
 - [ ] Phase 2 — atomic floor/skeleton migration (local compute only): all 16
       re-packed normalized + skeletons + meta v2 from existing raw frames;
       SPRITE_FOOT_OFFSET_Y and every per-char spriteOffsetY deleted; roster
@@ -1386,6 +1401,17 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-08 · tools+ui · Sprint 27 Phase 1e: creator SHIP through the
+  shared packer — Phase 1 COMPLETE** — /creator/write now writes transform-
+  baked cell frames + `.cellspace` marker + skeleton overlay, then runs
+  packCharacter (one producer for every shipped sheet; composeSheet is
+  ZIP-only). Packer gained a prekeyed mode (verified pixel-equal in a
+  sandbox). Wrote `.cellspace` markers for vincent/earl/ben whose raw
+  frames were already creator-overwritten keyed cells (double-pad hazard
+  closed); other 13 dirs verified raw-gen. Skills pass 1: sprite-generation
+  → core/prompts + §2.9 reference chaining; sprite-qa → minimal-QA posture
+  + packer/overlay/meta-v2 map. — Claude (Fable)
 
 - **2026-07-08 · tools+ui · Sprint 27 Phase 1c/1d: one prompt library +
   shared audio** — Cell contract + pose library → `tools/core/cells.mjs`

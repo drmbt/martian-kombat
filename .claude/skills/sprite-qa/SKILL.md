@@ -5,14 +5,32 @@ description: Canonical workflow for creating and validating a character's sprite
 
 # Character sprite creation & QA (canonical)
 
-The governing principle: **validate deterministically, never with vision unless
-forced.** Every check below is numpy/OpenCV or local RTMPose (ONNX) — zero LLM
-tokens. A vision call happens at most once per QA run, on a single labeled
-montage of the cells that already FAILED a deterministic check. If nothing
-failed, do not open an image at all.
+**QA POSTURE (Sprint 27, locked 2026-07-08): MINIMAL.** Human review in the
+studio/game is the primary QA path. What's load-bearing now: local skeleton
+inference (hitboxes need it — always local Python; fal is shipped-prod only,
+never dev) and a vision look at the MAIN reference images (canonical +
+crouch/jump anchors) before they seed everything downstream. The full
+pose-rule battery below is documented but OPTIONAL — run it only when asked;
+never automate validate→regenerate loops (one re-roll per asset, max).
+
+Shared machinery: coordinate constants come from `src/render/coords.json`
+via `tools/qa/coords.py` / `tools/core/coords.mjs` — never re-declare
+FLOOR_FRAC/HEADROOM/CELL dims. The pack path is `tools/core/packer.mjs`
+(CLI `gen:pack`, dev `/__editor/pack`, creator SHIP — all the same code);
+meta.json is v2 (`version/floorFrac/headroom/normalized`). Sprite-Editor
+edits persist as overlays in `assets/raw/edits/<id>/` and survive re-packs;
+creator-written frame dirs carry a `.cellspace` marker (already keyed +
+cell-space — the packer copies them through instead of re-keying).
+
+The deterministic principle still applies when QA does run: **validate
+deterministically, never with vision unless forced.** Every check below is
+numpy/OpenCV or local RTMPose (ONNX) — zero LLM tokens. A vision call happens
+at most once per QA run, on a single labeled montage of the cells that already
+FAILED a deterministic check.
 
 Tooling lives in `tools/qa/` (Python; `pip install -r tools/qa/requirements.txt`,
-rtmlib auto-downloads RTMPose weights). Run QA with `npm run gen:qa`.
+rtmlib auto-downloads RTMPose weights). Run QA with `npm run gen:qa`; bust
+crops with `npm run gen:busts`.
 
 ## Pipeline order (do NOT reorder)
 

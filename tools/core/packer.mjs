@@ -66,6 +66,12 @@ export function packCharacter(charId, opts) {
     }
   }
 
+  // Creator-written frame dirs carry a `.cellspace` marker: their frames are
+  // ALREADY keyed + in final cell space (the creator bakes per-cell transforms
+  // client-side), so keying/scale-padding them again would shrink and shift
+  // them — copy straight through instead.
+  const prekeyed = existsSync(join(inDir, '.cellspace'));
+
   const cellName = (f) => f.replace(/^\d\d-/, '').replace(/\.png$/, '');
   frames.forEach((f, i) => {
     const out = join(tmp, `cell-${String(i).padStart(2, '0')}.png`);
@@ -74,6 +80,10 @@ export function packCharacter(charId, opts) {
     const overlay = join(editsDir, 'cells', `${cellName(f)}.png`);
     if (existsSync(overlay)) {
       copyFileSync(overlay, out);
+      return;
+    }
+    if (prekeyed) {
+      copyFileSync(join(inDir, f), out);
       return;
     }
     ff([
