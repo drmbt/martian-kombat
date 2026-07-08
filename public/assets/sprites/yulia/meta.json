@@ -69,5 +69,14 @@
     "spinning-star-kick-startup",
     "spinning-star-kick-active",
     "spinning-star-kick-recovery"
-  ]
+  ],
+  "skeletons": {
+    "cmk-recovery": {},
+    "hk-recovery": {},
+    "clk-recovery": {},
+    "clp-recovery": {},
+    "chp-recovery": {},
+    "cmp-recovery": {},
+    "chk-recovery": {}
+  }
 }

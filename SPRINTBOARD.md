@@ -1165,6 +1165,12 @@ profile → base batch → SHIP → reload → **playable MIRAGE vs VINCENT figh
       only failed cells) + periodic autosave + **activity log** (timers, error cells).
 
 **Backlog (this sprint):**
+- [x] **Creator ZIP/write hardening + Earl dogfood canonization checkpoint** —
+      fixed `/creator/write` per-move `moveAudio`, deterministic raw-frame
+      renaming after `block-crouch` and special renames, source-frame/projectile
+      ZIP export, ZIP import/register, KO portrait regeneration, and preserved
+      existing bust/KO assets for older drafts. Earl is the live dogfood bundle
+      with corrected `assets/raw/frames/earl/` numbering and projectile source art.
 - [ ] Real Gemini design-draft (server `/__editor/creator/design` + context cache §16).
 - [ ] Advisory edge-QA badges; R2 publish/pull seams (local-mock first).
 - [ ] Consolidate: audit/tests + skills + CLAUDE.md; fold Tuner/Editor in.
@@ -1197,6 +1203,23 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-07 · ui+assets · creator ZIP/write hardening + Earl dogfood
+  canonization** — Fixed the Character Creator's `WRITE + REGISTER` regression
+  where `/creator/write` used `moveAudio` without reading it from the payload.
+  Creator saves/downloads now derive raw filenames from the current model order,
+  so newly inserted `block-crouch` shifts `hit/fall/down` and all later cells
+  deterministically, and special renames update frame filenames instead of only
+  remapping JSON keys. ZIP export now includes game-ready assets plus
+  `assets/raw/frames/<id>/` source frames (including `projectile-<move>.png`);
+  ZIP import copies assets, restores raw frames/progress, registers the fighter,
+  registers a generated home stage, and rescans manifests. Polish now exposes
+  Portrait/KO regeneration and write/export preserve existing bust/KO assets for
+  old drafts. Earl is canonized as the current dogfood character with corrected
+  raw-frame numbering, projectile art, home stage, fatality panels, VO/music, and
+  manifest registration. Also carries the current Yulia sprite-editor tuning
+  checkpoint. `tsc --noEmit`, `vite build`, and diff whitespace checks passed.
+  — Codex
 
 - **2026-07-07 · ui · block-crouch cell, Seed lore, fatality panel prompts/reroll,
   skeleton-follows-transform** — Added the missing **`block-crouch`** base cell

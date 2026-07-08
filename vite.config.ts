@@ -118,6 +118,49 @@ function editorApi(): Plugin {
         res.end(JSON.stringify(obj));
       };
       const root = fileURLToPath(new URL('.', import.meta.url));
+      const registerCharacter = (id: string, disp: string): void => {
+        const varName = id.replace(/-/g, '_');
+        const idxPath = join(root, 'src/data/characters/index.ts');
+        let idx = readFileSync(idxPath, 'utf-8');
+        if (!idx.includes(`'./${id}.json'`)) {
+          idx = idx.replace(/(import vanessa from '\.\/vanessa\.json';)/, `$1\nimport ${varName} from './${id}.json';`);
+          idx = idx.replace(/(\n\};\s*)$/, `\n  '${id}': load(${varName}),$1`);
+          writeFileSync(idxPath, idx);
+        }
+        const rosPath = join(root, 'src/data/roster.ts');
+        let ros = readFileSync(rosPath, 'utf-8');
+        if (!new RegExp(`id: '${id}'`).test(ros)) {
+          ros = ros.replace(/(\n\];)/, `\n  { id: '${id}', name: '${disp}', playable: true },$1`);
+          writeFileSync(rosPath, ros);
+        }
+      };
+      const registerStage = (stageId: string, stageName?: string): void => {
+        const stagesPath = join(root, 'src/data/stages.ts');
+        let st = readFileSync(stagesPath, 'utf-8');
+        if (!new RegExp(`'${stageId}'`).test(st)) {
+          const sName = (stageName && stageName.trim() ? stageName : stageId).toUpperCase();
+          st = st.replace(/(\n\];)/, `\n  stage('${stageId}', '${sName}'),$1`);
+          writeFileSync(stagesPath, st);
+        }
+      };
+      const writeRawFrames = (id: string, rawFrames?: Record<string, string>): void => {
+        if (!rawFrames || typeof rawFrames !== 'object' || !Object.keys(rawFrames).length) return;
+        const dir = join(root, 'assets/raw/frames', id);
+        rmSync(dir, { recursive: true, force: true });
+        mkdirSync(dir, { recursive: true });
+        for (const [name, b64] of Object.entries(rawFrames)) {
+          if (typeof b64 !== 'string' || !/^[a-z0-9._-]+$/i.test(name)) continue;
+          writeFileSync(join(dir, name), Buffer.from(b64, 'base64'));
+        }
+      };
+      const rescanGeneratedManifests = (): void => {
+        try { execFileSync('node', [join(root, 'tools/gen-asset-manifest.mjs')], { stdio: 'ignore' }); } catch { /* non-fatal */ }
+        try { execFileSync('node', [join(root, 'tools/gen-music-manifest.mjs')], { stdio: 'ignore' }); } catch { /* non-fatal */ }
+      };
+      const existingAssetBase64 = (...parts: string[]): string | undefined => {
+        const p = join(root, 'public/assets', ...parts);
+        return existsSync(p) ? readFileSync(p).toString('base64') : undefined;
+      };
 
       // POST /__editor/sheet  { id, pngBase64, meta, manifest }
       // -> backs up the current sheet.png + meta.json to a gitignored
@@ -493,6 +536,15 @@ function editorApi(): Plugin {
             const dir = join(root, 'assets/raw/creator', id);
             mkdirSync(dir, { recursive: true });
             writeFileSync(join(dir, 'state.json'), JSON.stringify(state ?? {}, null, 2));
+            const jobs = (state as { jobs?: { savedAs?: unknown }[] } | undefined)?.jobs ?? [];
+            const keep = new Set(jobs.map((j) => j.savedAs).filter((x): x is string => typeof x === 'string'));
+            const imgDir = join(dir, 'img');
+            if (existsSync(imgDir) && keep.size) {
+              for (const f of readdirSync(imgDir)) {
+                if (!/\.(png|jpe?g)$/i.test(f)) continue;
+                if (!keep.has(f)) rmSync(join(imgDir, f), { force: true });
+              }
+            }
             sendJson(res, 200, { ok: true });
           })
           .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
@@ -576,7 +628,7 @@ function editorApi(): Plugin {
             const p = b as {
               id?: string; name?: string; def?: Record<string, unknown>; sheetBase64?: string; meta?: unknown;
               portraitBase64?: string; koBase64?: string; bustBase64?: string; voClips?: Record<string, string>; musicBase64?: string; moveAudio?: Record<string, string>;
-              stageBase64?: string; stageId?: string; fatalityPanels?: string[]; projectiles?: Record<string, string>;
+              stageBase64?: string; stageId?: string; fatalityPanels?: string[]; projectiles?: Record<string, string>; rawFrames?: Record<string, string>;
             };
             if (!okId(p.id)) throw new Error('invalid id');
             const id = p.id;
@@ -597,8 +649,8 @@ function editorApi(): Plugin {
             if (p.portraitBase64) {
               const d = join(A, 'portraits'); mkdirSync(d, { recursive: true });
               writeFileSync(join(d, `${id}.png`), Buffer.from(p.portraitBase64, 'base64'));
-              writeFileSync(join(d, `${id}-bust.png`), Buffer.from(p.bustBase64 ?? p.portraitBase64, 'base64'));
-              writeFileSync(join(d, `${id}-ko.png`), Buffer.from(p.koBase64 ?? p.portraitBase64, 'base64'));
+              writeFileSync(join(d, `${id}-bust.png`), Buffer.from(p.bustBase64 ?? existingAssetBase64('portraits', `${id}-bust.png`) ?? p.portraitBase64, 'base64'));
+              writeFileSync(join(d, `${id}-ko.png`), Buffer.from(p.koBase64 ?? existingAssetBase64('portraits', `${id}-ko.png`) ?? p.portraitBase64, 'base64'));
             }
             // audio (only real clips — no silence padding in an export)
             const vo = p.voClips ?? {};
@@ -631,20 +683,75 @@ function editorApi(): Plugin {
               def.stage = p.stageId;
             }
             writeFileSync(join(stage, `${id}.json`), JSON.stringify(def, null, 2) + '\n');
+            // pipeline-compatible source frames for future re-pack/regeneration.
+            if (p.rawFrames && Object.keys(p.rawFrames).length) {
+              const rf = join(stage, 'assets/raw/frames', id);
+              mkdirSync(rf, { recursive: true });
+              for (const [name, b64] of Object.entries(p.rawFrames)) {
+                if (typeof b64 === 'string' && /^[a-z0-9._-]+$/i.test(name)) writeFileSync(join(rf, name), Buffer.from(b64, 'base64'));
+              }
+            }
             // raw progress (state.json + frames) so the recipient can resume/re-pack
             const rawSrc = join(root, 'assets/raw/creator', id);
             if (existsSync(rawSrc)) cpSync(rawSrc, join(stage, 'raw'), { recursive: true });
             writeFileSync(join(stage, 'README.txt'),
               `Martian Kombat character bundle: ${id}\n\n` +
-              `Drop the contents of assets/ into public/assets/ and ${id}.json into\n` +
-              `src/data/characters/ (then register it in roster.ts + characters/index.ts).\n` +
-              `raw/ holds the wizard's in-progress state for resuming/re-packing.\n`);
+              `In dev, open the Character Creator and use the ⤒ ZIP button to import this\n` +
+              `bundle; it copies assets, registers ${id}.json, rescans manifests, and makes\n` +
+              `the fighter playable. assets/raw/frames/${id}/ holds deterministic source\n` +
+              `frames (including projectile art); raw/ holds wizard progress for resume.\n`);
             // zip it
             const zipPath = join(tmpdir(), `mk-${id}-${Date.now()}.zip`);
             execFileSync('zip', ['-r', '-q', zipPath, '.'], { cwd: stage });
             const zipBase64 = readFileSync(zipPath).toString('base64');
             try { rmSync(stage, { recursive: true, force: true }); rmSync(zipPath, { force: true }); } catch { /* best-effort */ }
             sendJson(res, 200, { ok: true, zipBase64, filename: `${id}.zip` });
+          })
+          .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
+      });
+
+      // POST /__editor/creator/import  { zipBase64 }
+      // -> imports a creator bundle exported by /creator/export: copies assets,
+      //    installs <id>.json, restores raw progress/source frames when present,
+      //    registers the fighter, and rescans manifests so it is playable.
+      server.middlewares.use('/__editor/creator/import', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        readJsonBody(req)
+          .then((b) => {
+            const { zipBase64 } = b as { zipBase64?: string };
+            if (typeof zipBase64 !== 'string' || !zipBase64) throw new Error('missing zipBase64');
+            const stage = join(tmpdir(), `mk-import-${Date.now()}`);
+            mkdirSync(stage, { recursive: true });
+            const zipPath = join(stage, 'bundle.zip');
+            writeFileSync(zipPath, Buffer.from(zipBase64, 'base64'));
+            execFileSync('unzip', ['-q', zipPath, '-d', stage]);
+            const names = readdirSync(stage);
+            const jsonName = names.find((f) => /^[a-z0-9_-]+\.json$/i.test(f));
+            if (!jsonName) throw new Error('bundle has no root character json');
+            const jsonPath = join(stage, jsonName);
+            const def = JSON.parse(readFileSync(jsonPath, 'utf-8')) as { id?: unknown; name?: unknown; stage?: unknown };
+            if (!okId(def.id)) throw new Error('character json has invalid id');
+            const id = def.id;
+            const disp = typeof def.name === 'string' && def.name ? def.name : id.toUpperCase();
+
+            const assets = join(stage, 'assets');
+            for (const sub of ['sprites', 'portraits', 'audio', 'fatalities', 'backgrounds']) {
+              const src = join(assets, sub);
+              if (existsSync(src)) cpSync(src, join(root, 'public/assets', sub), { recursive: true });
+            }
+            const rawFrames = join(stage, 'assets/raw/frames', id);
+            if (existsSync(rawFrames)) cpSync(rawFrames, join(root, 'assets/raw/frames', id), { recursive: true, force: true });
+            const rawProgress = join(stage, 'raw');
+            if (existsSync(rawProgress)) cpSync(rawProgress, join(root, 'assets/raw/creator', id), { recursive: true, force: true });
+
+            writeFileSync(join(root, 'src/data/characters', `${id}.json`), JSON.stringify(def, null, 2) + '\n');
+            registerCharacter(id, String(disp).toUpperCase());
+            if (typeof def.stage === 'string' && okId(def.stage) && existsSync(join(root, 'public/assets/backgrounds/stages', `${def.stage}.jpg`))) {
+              registerStage(def.stage, `${String(disp).toUpperCase()} HOME`);
+            }
+            rescanGeneratedManifests();
+            rmSync(stage, { recursive: true, force: true });
+            sendJson(res, 200, { ok: true, id });
           })
           .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
       });
@@ -658,11 +765,15 @@ function editorApi(): Plugin {
         if (req.method !== 'POST') return next();
         readJsonBody(req)
           .then((b) => {
-            const { id, name, def, sheetBase64, meta, portraitBase64, koBase64, bustBase64, voClips, musicBase64, stageBase64, stageId, stageName, fatalityPanels, projectiles } = b as {
+            const {
+              id, name, def, sheetBase64, meta, portraitBase64, koBase64, bustBase64,
+              voClips, musicBase64, moveAudio, stageBase64, stageId, stageName,
+              fatalityPanels, projectiles, rawFrames,
+            } = b as {
               id?: unknown; name?: unknown; def?: unknown; sheetBase64?: unknown; meta?: unknown; portraitBase64?: unknown;
               koBase64?: string; bustBase64?: string;
               voClips?: Record<string, string>; musicBase64?: string; moveAudio?: Record<string, string>;
-              stageBase64?: string; stageId?: string; stageName?: string; fatalityPanels?: string[]; projectiles?: Record<string, string>;
+              stageBase64?: string; stageId?: string; stageName?: string; fatalityPanels?: string[]; projectiles?: Record<string, string>; rawFrames?: Record<string, string>;
             };
             if (!okId(id)) throw new Error('invalid character id');
             if (typeof sheetBase64 !== 'string' || typeof meta !== 'object' || meta === null) throw new Error('missing sheet/meta');
@@ -673,6 +784,7 @@ function editorApi(): Plugin {
             mkdirSync(spriteDir, { recursive: true });
             writeFileSync(join(spriteDir, 'sheet.png'), Buffer.from(sheetBase64, 'base64'));
             writeFileSync(join(spriteDir, 'meta.json'), JSON.stringify(meta, null, 2) + '\n');
+            writeRawFrames(id, rawFrames);
             // per-move projectile art → sprites/<id>/projectile-<moveId>.png
             let wroteProjectiles = false;
             if (projectiles && typeof projectiles === 'object') {
@@ -691,8 +803,12 @@ function editorApi(): Plugin {
               mkdirSync(portDir, { recursive: true });
               const portBuf = Buffer.from(portraitBase64, 'base64');
               writeFileSync(join(portDir, `${id}.png`), portBuf);
-              writeFileSync(join(portDir, `${id}-bust.png`), Buffer.from(typeof bustBase64 === 'string' ? bustBase64 : portraitBase64, 'base64'));
-              writeFileSync(join(portDir, `${id}-ko.png`), Buffer.from(typeof koBase64 === 'string' ? koBase64 : portraitBase64, 'base64'));
+              const bustPath = join(portDir, `${id}-bust.png`);
+              const koPath = join(portDir, `${id}-ko.png`);
+              if (typeof bustBase64 === 'string') writeFileSync(bustPath, Buffer.from(bustBase64, 'base64'));
+              else if (!existsSync(bustPath)) writeFileSync(bustPath, portBuf);
+              if (typeof koBase64 === 'string') writeFileSync(koPath, Buffer.from(koBase64, 'base64'));
+              else if (!existsSync(koPath)) writeFileSync(koPath, portBuf);
             }
             // silent placeholder VO so BootScene's unconditional per-fighter
             // audio loads resolve (a MISSING public asset is served as HTML by
@@ -727,8 +843,6 @@ function editorApi(): Plugin {
                 mkdirSync(mdir, { recursive: true });
                 writeFileSync(join(mdir, `${id}-theme.mp3`), Buffer.from(musicBase64, 'base64'));
               }
-              // rescan music folders → manifest.json so the new theme actually plays
-              try { execFileSync('node', [join(root, 'tools/gen-music-manifest.mjs')], { stdio: 'ignore' }); } catch { /* non-fatal */ }
             }
             const cleanDef = { ...(def as Record<string, unknown>) };
             // stage: write the generated bg + register it + claim it on the fighter
@@ -737,13 +851,7 @@ function editorApi(): Plugin {
               mkdirSync(bgDir, { recursive: true });
               writeFileSync(join(bgDir, `${stageId}.jpg`), Buffer.from(stageBase64, 'base64'));
               cleanDef.stage = stageId;
-              const stagesPath = join(root, 'src/data/stages.ts');
-              let st = readFileSync(stagesPath, 'utf-8');
-              if (!new RegExp(`'${stageId}'`).test(st)) {
-                const sName = (typeof stageName === 'string' && stageName ? stageName : stageId).toUpperCase();
-                st = st.replace(/(\n\];)/, `\n  stage('${stageId}', '${sName}'),$1`);
-                writeFileSync(stagesPath, st);
-              }
+              registerStage(stageId, stageName);
             }
             // fatality: write panels + KEEP the block (else drop it so BootScene won't 404)
             const fat = cleanDef.fatality as { id?: string; panels?: number } | undefined;
@@ -756,24 +864,10 @@ function editorApi(): Plugin {
               delete cleanDef.fatality;
             }
             writeFileSync(join(root, 'src/data/characters', `${id}.json`), JSON.stringify(cleanDef, null, 2) + '\n');
-            // register (idempotent) — characters/index.ts + roster.ts
-            const varName = id.replace(/-/g, '_');
-            const idxPath = join(root, 'src/data/characters/index.ts');
-            let idx = readFileSync(idxPath, 'utf-8');
-            if (!idx.includes(`'./${id}.json'`)) {
-              idx = idx.replace(/(import vanessa from '\.\/vanessa\.json';)/, `$1\nimport ${varName} from './${id}.json';`);
-              idx = idx.replace(/(\n\};\s*)$/, `\n  '${id}': load(${varName}),$1`);
-              writeFileSync(idxPath, idx);
-            }
-            const rosPath = join(root, 'src/data/roster.ts');
-            let ros = readFileSync(rosPath, 'utf-8');
-            if (!new RegExp(`id: '${id}'`).test(ros)) {
-              ros = ros.replace(/(\n\];)/, `\n  { id: '${id}', name: '${disp}', playable: true },$1`);
-              writeFileSync(rosPath, ros);
-            }
-            // rescan optional assets (projectiles/vfx) → assetManifest.json so the
-            // loader requests the new projectile art
-            if (wroteProjectiles) { try { execFileSync('node', [join(root, 'tools/gen-asset-manifest.mjs')], { stdio: 'ignore' }); } catch { /* non-fatal */ } }
+            registerCharacter(id, disp);
+            // rescan optional assets/music so the loader requests new projectile
+            // art and stage music immediately after registration.
+            if (wroteProjectiles || typeof musicBase64 === 'string') rescanGeneratedManifests();
             sendJson(res, 200, { ok: true, id, wrote: ['sheet.png', 'meta.json', `${id}.json`, 'portrait', 'roster', 'index'] });
           })
           .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));

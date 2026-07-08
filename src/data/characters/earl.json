@@ -1,0 +1,458 @@
+{
+  "id": "earl",
+  "name": "EARL",
+  "color": "#d3699e",
+  "lore": {
+    "tagline": "They call EARL.",
+    "personality": "Curator of soundly unsound sounds, and an off-the-wagon recovering musician.",
+    "backstory": "Known in a past life as The Madd WIkkid. Mars adjacent since 2020, first time Martian 2026. Teaching music theory. Has an excessive amount of field recording gear. Expert at most things audio. Plays piano, trumpet, and a little bass. Produced and engineered records for a couple of decades. Toured Japan playing piano with a Japanese gospel choir. Expert at technical sound design and was an audio director for AAA games for a while. Getting back to music after a long haitus. Creating a fictional band here on Mars with cartoon band members called The Unhung Zeros. Considers fetishization of proces to be antithetical to the creation of great art. Used to trade stock on Wall Street during the dotcom bubble. Was selected as a mentor to TED fellows. Does not abide charlatainism."
+  },
+  "winQuotes": [
+    "EARL wins. That's music to my ears...",
+    "This was the rehearsal. You should come to the gig.",
+    "You'll never be a star."
+  ],
+  "health": 1000,
+  "walkSpeed": 3.3,
+  "backSpeed": 3.4,
+  "jumpVel": 18,
+  "gravity": 0.9,
+  "prejumpFrames": 4,
+  "scale": 1,
+  "spriteOffsetY": -12,
+  "bodyBox": {
+    "x": -42,
+    "y": -240,
+    "w": 84,
+    "h": 240
+  },
+  "hurtStand": {
+    "x": -52,
+    "y": -256,
+    "w": 104,
+    "h": 256
+  },
+  "hurtCrouch": {
+    "x": -52,
+    "y": -150,
+    "w": 104,
+    "h": 150
+  },
+  "moves": {
+    "lp": {
+      "startup": 4,
+      "active": 3,
+      "recovery": 8,
+      "damage": 30,
+      "hitstun": 12,
+      "blockstun": 9,
+      "knockback": 3,
+      "hitbox": {
+        "x": 64,
+        "y": -185,
+        "w": 59,
+        "h": 49
+      },
+      "height": "mid"
+    },
+    "mp": {
+      "startup": 7,
+      "active": 4,
+      "recovery": 13,
+      "damage": 50,
+      "hitstun": 16,
+      "blockstun": 9,
+      "knockback": 5,
+      "hitbox": {
+        "x": 63,
+        "y": -188,
+        "w": 58,
+        "h": 50
+      },
+      "height": "mid"
+    },
+    "hp": {
+      "startup": 10,
+      "active": 4,
+      "recovery": 18,
+      "damage": 75,
+      "hitstun": 20,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": 62,
+        "y": -188,
+        "w": 61,
+        "h": 49
+      },
+      "height": "mid"
+    },
+    "lk": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 9,
+      "damage": 32,
+      "hitstun": 12,
+      "blockstun": 9,
+      "knockback": 3,
+      "hitbox": {
+        "x": 71,
+        "y": -196,
+        "w": 56,
+        "h": 76
+      },
+      "height": "mid"
+    },
+    "mk": {
+      "startup": 8,
+      "active": 4,
+      "recovery": 14,
+      "damage": 52,
+      "hitstun": 16,
+      "blockstun": 9,
+      "knockback": 5,
+      "hitbox": {
+        "x": 62,
+        "y": -175,
+        "w": 66,
+        "h": 61
+      },
+      "height": "mid"
+    },
+    "hk": {
+      "startup": 11,
+      "active": 4,
+      "recovery": 19,
+      "damage": 78,
+      "hitstun": 20,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": 35,
+        "y": -279,
+        "w": 85,
+        "h": 176
+      },
+      "height": "mid"
+    },
+    "clp": {
+      "startup": 4,
+      "active": 3,
+      "recovery": 8,
+      "damage": 28,
+      "hitstun": 12,
+      "blockstun": 9,
+      "knockback": 3,
+      "hitbox": {
+        "x": 67,
+        "y": -140,
+        "w": 59,
+        "h": 51
+      },
+      "height": "mid"
+    },
+    "cmp": {
+      "startup": 7,
+      "active": 4,
+      "recovery": 13,
+      "damage": 48,
+      "hitstun": 16,
+      "blockstun": 9,
+      "knockback": 5,
+      "hitbox": {
+        "x": 52,
+        "y": -195,
+        "w": 57,
+        "h": 52
+      },
+      "height": "mid"
+    },
+    "chp": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 17,
+      "damage": 70,
+      "hitstun": 20,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": 26,
+        "y": -234,
+        "w": 57,
+        "h": 55
+      },
+      "height": "mid"
+    },
+    "clk": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 9,
+      "damage": 30,
+      "hitstun": 12,
+      "blockstun": 9,
+      "knockback": 3,
+      "hitbox": {
+        "x": 46,
+        "y": -37,
+        "w": 96,
+        "h": 72
+      },
+      "height": "low"
+    },
+    "cmk": {
+      "startup": 8,
+      "active": 4,
+      "recovery": 14,
+      "damage": 50,
+      "hitstun": 16,
+      "blockstun": 9,
+      "knockback": 5,
+      "hitbox": {
+        "x": 29,
+        "y": -91,
+        "w": 104,
+        "h": 64
+      },
+      "height": "low"
+    },
+    "chk": {
+      "startup": 11,
+      "active": 5,
+      "recovery": 20,
+      "damage": 74,
+      "hitstun": 20,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": 67,
+        "y": -29,
+        "w": 67,
+        "h": 63
+      },
+      "height": "low"
+    },
+    "jlp": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 6,
+      "damage": 30,
+      "hitstun": 12,
+      "blockstun": 9,
+      "knockback": 3,
+      "hitbox": {
+        "x": 61,
+        "y": -138,
+        "w": 54,
+        "h": 56
+      },
+      "height": "high"
+    },
+    "jmp": {
+      "startup": 6,
+      "active": 6,
+      "recovery": 8,
+      "damage": 50,
+      "hitstun": 16,
+      "blockstun": 9,
+      "knockback": 5,
+      "hitbox": {
+        "x": 41,
+        "y": -121,
+        "w": 50,
+        "h": 55
+      },
+      "height": "high"
+    },
+    "jhp": {
+      "startup": 8,
+      "active": 6,
+      "recovery": 10,
+      "damage": 72,
+      "hitstun": 20,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": 72,
+        "y": -180,
+        "w": 62,
+        "h": 52
+      },
+      "height": "high"
+    },
+    "jlk": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 6,
+      "damage": 32,
+      "hitstun": 12,
+      "blockstun": 9,
+      "knockback": 3,
+      "hitbox": {
+        "x": 35,
+        "y": -76,
+        "w": 79,
+        "h": 77
+      },
+      "height": "high"
+    },
+    "jmk": {
+      "startup": 6,
+      "active": 6,
+      "recovery": 8,
+      "damage": 52,
+      "hitstun": 16,
+      "blockstun": 9,
+      "knockback": 5,
+      "hitbox": {
+        "x": 82,
+        "y": -158,
+        "w": 55,
+        "h": 74
+      },
+      "height": "high"
+    },
+    "jhk": {
+      "startup": 9,
+      "active": 6,
+      "recovery": 10,
+      "damage": 76,
+      "hitstun": 20,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": 43,
+        "y": -58,
+        "w": 73,
+        "h": 74
+      },
+      "height": "high"
+    },
+    "throw": {
+      "startup": 3,
+      "active": 2,
+      "recovery": 20,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 6,
+      "hitbox": null,
+      "height": "mid",
+      "grab": {
+        "range": 64
+      },
+      "techable": true
+    },
+    "bolt": {
+      "name": "Trumpet Blast",
+      "input": {
+        "motion": "cbf",
+        "button": "punch"
+      },
+      "height": "mid",
+      "startup": 13,
+      "active": 2,
+      "recovery": 24,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "projectile": {
+        "vx": 9,
+        "spawnX": 124,
+        "spawnY": -300,
+        "box": {
+          "x": -50,
+          "y": 14,
+          "w": 82,
+          "h": 82
+        },
+        "renderSize": 180,
+        "damage": 60,
+        "hitstun": 18,
+        "blockstun": 12,
+        "knockback": 9
+      }
+    },
+    "step": {
+      "name": "Step",
+      "input": {
+        "motion": "qcb",
+        "button": "kick"
+      },
+      "height": "mid",
+      "startup": 10,
+      "active": 1,
+      "recovery": 18,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "teleport": {
+        "mode": "behind"
+      },
+      "invulnFrom": 6,
+      "invuln": 12
+    },
+    "pillar": {
+      "name": "Pillar",
+      "input": {
+        "motion": "dp",
+        "button": "punch"
+      },
+      "height": "mid",
+      "startup": 5,
+      "active": 8,
+      "recovery": 22,
+      "damage": 80,
+      "hitstun": 20,
+      "blockstun": 12,
+      "knockback": 8,
+      "knockdown": true,
+      "hitbox": {
+        "x": -44,
+        "y": -279,
+        "w": 140,
+        "h": 93
+      },
+      "leap": {
+        "vx": 4,
+        "vy": 16
+      },
+      "invuln": 8
+    },
+    "double": {
+      "name": "Double",
+      "input": {
+        "motion": "qcf",
+        "button": "kick"
+      },
+      "height": "mid",
+      "startup": 9,
+      "active": 4,
+      "recovery": 20,
+      "damage": 70,
+      "hitstun": 18,
+      "blockstun": 12,
+      "knockback": 8,
+      "hitbox": {
+        "x": 40,
+        "y": -230,
+        "w": 65,
+        "h": 238
+      },
+      "forwardVel": 10
+    }
+  },
+  "fatality": {
+    "id": "finish",
+    "name": "EARL Finish",
+    "input": {
+      "motion": "hcb",
+      "button": "punch"
+    },
+    "panels": 4
+  },
+  "stage": "earl-home"
+}

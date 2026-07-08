@@ -18,7 +18,8 @@
     "chiba-roof-world.mp3"
   ],
   "stages/default": [
-    "dojo.mp3"
+    "dojo.mp3",
+    "earl-theme.mp3"
   ],
   "stages/dodecahedron": [
     "dodecahedron.mp3"

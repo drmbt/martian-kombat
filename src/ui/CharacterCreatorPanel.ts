@@ -175,6 +175,10 @@ export class CharacterCreatorPanel {
     zip.title = 'download a .zip of the current build + progress (playable out of the box)';
     zip.onclick = () => void this.exportZip();
     this.stepperEl.appendChild(zip);
+    const imp = el('button', BTN + 'padding:4px 8px;font-size:12px;', '⤒ ZIP');
+    imp.title = 'import a creator .zip and register it as a playable fighter';
+    imp.onclick = () => this.pickImportZip();
+    this.stepperEl.appendChild(imp);
     CREATOR_STEPS.forEach((s, i) => {
       const done = i < this.m.step;
       const on = i === this.m.step;
@@ -223,6 +227,7 @@ export class CharacterCreatorPanel {
   private async save(): Promise<void> {
     if (!this.m.inputs.name.trim()) return;
     try {
+      await this.syncRawFrames();
       await fetch('/__editor/creator/save', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: this.m.id, state: this.serializeState() }),
@@ -261,6 +266,7 @@ export class CharacterCreatorPanel {
         const status: CreatorJob['status'] = img ? 'done' : jb.status === 'running' ? 'error' : jb.status;
         this.m.jobs.set(jb.key, { key: jb.key, kind: jb.kind, label: jb.label, status, prompt: jb.prompt, mock: jb.mock, approved: jb.approved, scale: jb.scale, offX: jb.offX, offY: jb.offY, savedAs: jb.savedAs, error: status === 'error' ? 'interrupted — regenerate' : undefined, dataUrl: img ? `data:${jb.mime ?? 'image/png'};base64,${img}` : undefined });
       }
+      void this.syncRawFrames();
       this.renderStepper(); this.render(); this.renderPreviewControls(); this.renderTray(); this.redrawPreview();
     } catch (e) { console.error(e); alert('Could not load draft: ' + String(e)); }
   }
@@ -960,6 +966,31 @@ export class CharacterCreatorPanel {
   private renderPolish(): void {
     this.ensureDraft();
     this.h('Polish', 'Generate the fatality cutscene and review the finishing assets.');
+    const desc = this.m.inputs.description || this.m.inputs.name;
+    const photoRefs = (this.m.inputs.referencePhotos ?? []).map((p) => dataUrlToB64(p.dataUrl)).filter(Boolean) as string[];
+    const portraitRefs = photoRefs.length > 1 ? [photoRefs[1], ...photoRefs.filter((_, i) => i !== 1)] : photoRefs;
+    const portW = this.field('Portraits');
+    const row = el('div', 'display:flex;gap:10px;flex-wrap:wrap;align-items:center;');
+    const addAsset = (key: 'portrait' | 'ko', label: string, prompt: string): void => {
+      const j = this.m.job(key);
+      const b = el('button', (j?.status === 'done' ? BTN : BTN_HOT) + 'font-size:11px;',
+        j?.status === 'running' ? '◐ ' + label : j?.status === 'done' ? '↻ Regenerate ' + label : '▸ Generate ' + label);
+      b.onclick = () => this.fireGen(key, key, label, prompt, portraitRefs);
+      row.appendChild(b);
+      if (j?.dataUrl) {
+        const im = el('img', 'width:48px;height:48px;object-fit:contain;border:1px solid #22303e;border-radius:4px;cursor:pointer;background:#0b1119;') as HTMLImageElement;
+        im.src = j.dataUrl; im.title = 'inspect ' + label; im.onclick = () => this.selectCell(key);
+        row.appendChild(im);
+      }
+    };
+    addAsset('portrait', 'Portrait', PORTRAIT_PROMPT(this.m.inputs.name, desc));
+    addAsset('ko', 'KO portrait', KO_PROMPT(this.m.inputs.name, desc));
+    const bustBtn = el('button', BTN + 'font-size:11px;', '✓ Bust crops from canonical on ZIP/WRITE');
+    bustBtn.title = 'The neutral bust is generated locally from the canonical during export/write; regenerate or realign the canonical if the crop is wrong.';
+    row.appendChild(bustBtn);
+    portW.appendChild(row);
+    this.bodyEl.appendChild(portW);
+
     const fatW = this.field('Fatality — ' + this.m.draft!.fatality.name + ' (' + this.m.draft!.fatality.input + ')');
     const fatBtn = el('button', BTN_HOT + 'font-size:12px;',
       this.m.fatalityStatus === 'running' ? '◐ generating panels…' : this.m.fatalityStatus === 'done' ? '✓ 4 panels ready — regenerate' : '▸ Generate fatality (4 panels)');
@@ -987,7 +1018,7 @@ export class CharacterCreatorPanel {
     fatW.appendChild(panels);
     this.bodyEl.appendChild(fatW);
     this.bodyEl.appendChild(el('div', 'font-size:11px;color:#8fa6b2;margin-bottom:12px;',
-      'Portraits, VO and stage music were generated earlier (Seed/Profile) — review them there. Un-generated fatality = no FINISH THEM (degrades gracefully).'));
+      'VO and stage music were generated earlier (Seed/Profile). Un-generated fatality = no FINISH THEM (degrades gracefully).'));
     const nav = el('div', 'display:flex;gap:10px;');
     const bk = el('button', BTN, '‹ Back'); bk.onclick = () => this.goto(this.m.step - 1);
     const nx = el('button', BTN_HOT, 'Next ▸'); nx.onclick = () => this.goto(this.m.step + 1);
@@ -1151,14 +1182,21 @@ export class CharacterCreatorPanel {
 
   /** the full build payload (shared by SHIP write + ZIP export). */
   private async buildPayload(): Promise<Record<string, unknown>> {
+    await this.syncRawFrames();
     const sheet = await this.composeSheet();
     const projectiles: Record<string, string> = {};
+    const rawFrames: Record<string, string> = {};
     for (const [key, job] of this.m.jobs) {
       if (!key.startsWith('proj:') || !job.dataUrl) continue;
       const b = dataUrlToB64(job.dataUrl); if (b) projectiles[key.slice('proj:'.length)] = b;
     }
+    for (const [key, job] of this.m.jobs) {
+      if ((!key.startsWith('sprite:') && !key.startsWith('proj:')) || !job.dataUrl) continue;
+      const b = dataUrlToB64(job.dataUrl); if (b) rawFrames[this.savedAsFor(key, job)] = b;
+    }
     return {
       projectiles,
+      rawFrames,
       id: this.m.id, name: this.m.inputs.name.toUpperCase(), def: this.m.buildFullCharacter(),
       sheetBase64: sheet?.sheetBase64, meta: sheet?.meta,
       portraitBase64: dataUrlToB64(this.m.job('portrait')?.dataUrl),
@@ -1174,6 +1212,7 @@ export class CharacterCreatorPanel {
   /** download a .zip of the current build + raw progress (playable out of the box). */
   private async exportZip(): Promise<void> {
     if (!this.m.inputs.name.trim()) { alert('Name your fighter first.'); return; }
+    await this.syncRawFrames();
     await this.save(); // flush state so the raw/ progress in the zip is current
     this.logMsg('building export .zip…');
     try {
@@ -1189,6 +1228,32 @@ export class CharacterCreatorPanel {
       document.body.appendChild(a); a.click(); a.remove();
       this.logMsg('✓ export ready — downloaded ' + (j.filename ?? this.m.id + '.zip'));
     } catch (e) { this.logMsg('✕ export — ' + String(e)); alert('Export failed: ' + String(e)); }
+  }
+
+  private pickImportZip(): void {
+    const inp = el('input', 'display:none;') as HTMLInputElement;
+    inp.type = 'file'; inp.accept = '.zip,application/zip';
+    inp.onchange = () => void this.importZip(inp.files?.[0]);
+    document.body.appendChild(inp);
+    inp.click();
+    setTimeout(() => inp.remove(), 1000);
+  }
+
+  private async importZip(file?: File): Promise<void> {
+    if (!file) return;
+    this.logMsg('importing creator zip…');
+    try {
+      const d = await readFile(file);
+      const zipBase64 = d.includes(',') ? d.split(',')[1] : d;
+      const r = await fetch('/__editor/creator/import', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ zipBase64 }),
+      });
+      const j = (await r.json()) as { ok?: boolean; id?: string; error?: string };
+      if (!j.ok) throw new Error(j.error ?? 'import failed');
+      this.logMsg('✓ imported ' + (j.id ?? 'fighter') + ' — reloading');
+      window.location.reload();
+    } catch (e) { this.logMsg('✕ import — ' + String(e)); alert('Import failed: ' + String(e)); }
   }
 
   private async genVo(): Promise<void> {
@@ -1836,7 +1901,7 @@ export class CharacterCreatorPanel {
     if (j.dataUrl) {
       const dl = el('button', 'position:absolute;top:1px;left:1px;z-index:4;padding:0 3px;font-size:10px;line-height:1.4;border:none;border-radius:3px;background:rgba(9,13,20,.9);color:#bff0ff;cursor:pointer;display:none;', '⤓');
       dl.title = 'download this frame';
-      dl.onclick = (e) => { e.stopPropagation(); const a = document.createElement('a'); a.href = j.dataUrl!; a.download = (j.savedAs ?? j.label + (j.dataUrl!.startsWith('data:image/jpeg') ? '.jpg' : '.png')); document.body.appendChild(a); a.click(); a.remove(); };
+      dl.onclick = (e) => { e.stopPropagation(); const a = document.createElement('a'); a.href = j.dataUrl!; a.download = this.savedAsFor(j.key, j); document.body.appendChild(a); a.click(); a.remove(); };
       cell.appendChild(dl);
       cell.onmouseenter = () => { dl.style.display = 'block'; };
       cell.onmouseleave = () => { dl.style.display = 'none'; };
@@ -1927,13 +1992,38 @@ export class CharacterCreatorPanel {
   /** rewrite a cell's frame on disk (its own filename) after a copy/swap. */
   private async persistFrame(key: string): Promise<void> {
     const job = this.m.job(key); const b = dataUrlToB64(job?.dataUrl); if (!job || !b) return;
-    job.savedAs = job.savedAs ?? this.m.frameNameFor(key) + '.png';
+    job.savedAs = this.savedAsFor(key, job);
     try {
       await fetch('/__editor/creator/save-frame', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: this.m.id, savedAs: job.savedAs, pngBase64: b }),
       });
     } catch { /* non-fatal */ }
+  }
+
+  private savedAsFor(key: string, job?: CreatorJob): string {
+    if (key === 'stage') return 'stage.jpg';
+    if (key === 'canonical' || key === 'portrait' || key === 'ko') return `${key}.png`;
+    if (key.startsWith('proj:')) return this.m.frameNameFor(key) + '.png';
+    if (key.startsWith('sprite:')) return this.m.frameNameFor(key) + '.png';
+    const ext = job?.dataUrl?.startsWith('data:image/jpeg') ? '.jpg' : '.png';
+    return (job?.label ?? key).replace(/[^a-z0-9-]+/gi, '-') + ext;
+  }
+
+  /** Keep raw progress filenames deterministic after model/order changes
+   *  (e.g. adding block-crouch) and after special renames. */
+  private async syncRawFrames(): Promise<void> {
+    if (!this.m.inputs.name.trim()) return;
+    const writes: Promise<void>[] = [];
+    for (const [key, job] of this.m.jobs) {
+      if (!job.dataUrl || job.status !== 'done') continue;
+      const desired = this.savedAsFor(key, job);
+      if (job.savedAs !== desired) {
+        job.savedAs = desired;
+        writes.push(this.persistFrame(key));
+      }
+    }
+    if (writes.length) await Promise.all(writes);
   }
 
   private shimmer(): HTMLDivElement {

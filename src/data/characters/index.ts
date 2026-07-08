@@ -18,6 +18,7 @@ import chebel from './chebel.json';
 import ygor from './ygor.json';
 import rapha from './rapha.json';
 import vanessa from './vanessa.json';
+import earl from './earl.json';
 
 // Bake each character's optional `scale` into its geometry at load (see
 // src/data/characterScale.ts — the same math the dev editor re-applies live).
@@ -38,4 +39,5 @@ export const characters: Defs = {
   ygor: load(ygor),
   rapha: load(rapha),
   vanessa: load(vanessa),
+  'earl': load(earl),
 };
