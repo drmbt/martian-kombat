@@ -28,5 +28,11 @@
     "modelId": "347f6794069d4932919d7f15a8e7ac49",
     "title": "Martian Kombat — VINCENT",
     "createdAt": "2026-07-08T01:27:52.186Z"
+  },
+  "ben": {
+    "provider": "fish",
+    "modelId": "9c81ace6aa194af6974d523800d010ac",
+    "title": "Martian Kombat — Ben",
+    "createdAt": "2026-07-08T04:51:33.950Z"
   }
 }

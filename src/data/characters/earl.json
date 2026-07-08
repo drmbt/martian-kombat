@@ -18,8 +18,6 @@
   "jumpVel": 18,
   "gravity": 0.9,
   "prejumpFrames": 4,
-  "scale": 1,
-  "spriteOffsetY": -12,
   "bodyBox": {
     "x": -42,
     "y": -240,
@@ -98,7 +96,7 @@
       "hitbox": {
         "x": 71,
         "y": -196,
-        "w": 56,
+        "w": 57,
         "h": 76
       },
       "height": "mid"
@@ -243,7 +241,7 @@
         "x": 61,
         "y": -138,
         "w": 54,
-        "h": 56
+        "h": 57
       },
       "height": "high"
     },
@@ -411,7 +409,7 @@
       "knockback": 8,
       "knockdown": true,
       "hitbox": {
-        "x": -44,
+        "x": -43,
         "y": -279,
         "w": 140,
         "h": 93

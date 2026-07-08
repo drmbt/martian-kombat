@@ -161,6 +161,101 @@ function editorApi(): Plugin {
         const p = join(root, 'public/assets', ...parts);
         return existsSync(p) ? readFileSync(p).toString('base64') : undefined;
       };
+      const existingStageBase64 = (stageId: string): string | undefined =>
+        stageId === 'salton'
+          ? existingAssetBase64('backgrounds', 'salton-shoreline.jpg')
+          : existingAssetBase64('backgrounds/stages', `${stageId}.jpg`);
+      const extractJsonObject = (text: string): Record<string, unknown> => {
+        try { return JSON.parse(text) as Record<string, unknown>; } catch { /* fall through */ }
+        const start = text.indexOf('{');
+        const end = text.lastIndexOf('}');
+        if (start < 0 || end <= start) throw new Error('design response did not contain JSON');
+        return JSON.parse(text.slice(start, end + 1)) as Record<string, unknown>;
+      };
+      const creatorDesignPrompt = (name: string, description: string, lore: string): string => `
+You are the narrative designer and fighting-game kit designer for Martian Kombat, a weird, affectionate SF2/MK-style fighter about real Mars College / Bombay Beach people.
+
+Task: turn the user's seed material into a playable, on-theme character draft. Preserve the person's specific jokes, contradictions, skills, places, and verbal texture. Do not genericize them into a trope.
+
+INPUT
+Name: ${name}
+One-line description: ${description || '(none provided)'}
+Lore/backstory notes: ${lore || '(none provided)'}
+
+ENGINE-CONSTRAINTS
+Return only buildable special moves. Supported archetypes and sensible controls:
+- projectile: qcf+P, qcf+K, hcf+P
+- sonic-boom: cbf+P, cbf+K
+- short-range-flame: qcb+P, qcf+P
+- lob-projectile: qcb+P, qcb+K
+- lingering-cloud: qcf+K, qcb+K
+- fuse-detonate: qcb+P, hcf+P
+- stationary-trap: qcb+K, qcf+K
+- slow-field: qcf+P, qcb+P
+- pull-projectile: hcf+P, qcf+P
+- multi-projectile: hcf+P, qcf+P
+- anti-air-dp: dp+P, dp+K
+- flash-kick: du+K, du+P
+- advancing-rush: qcf+K, hcf+K
+- horizontal-rush: bf+P, bf+K
+- mash: mash+P, mash+K
+- melee-rehit: qcf+P, PPP, KKK
+- command-grab: hcb+P, 360+P
+- heal-grab: hcb+P, 360+P
+- grab-recoil: hcb+K, 360+K
+- techable-throw: LPLK
+- teleport: qcb+K, qcf+K
+- mirror-teleport: qcb+K, qcf+K
+- reversal: qcb+P, qcb+K
+- reflector: qcb+P, hcb+P
+- projectile-immune: PPP, qcf+P, qcf+K
+- vault: qcf+K, hcf+K
+- leaping-strike: dp+K, qcf+K
+- yoga-float: qcb+P, qcb+K
+Do NOT invent unbuilt mechanics like installs, stances, armor, rekka chains, air throws, or forward-forward specials.
+
+STYLE RULES
+- The kit should read as the actual person through concrete props, habits, phrases, and lore.
+- Keep move names short enough for UI buttons: 1-4 words.
+- Descriptions should be vivid pose/art prompts and gameplay flavor, not mechanical JSON.
+- VO barks should be short enough for fighting-game audio, punchy, character-specific, and not mean-spirited unless the lore supports dry humor.
+- Kiai lines are attack exertions. Hurt lines are clipped pain/annoyance. Victory lines are post-round one-liners.
+- Stage prompt must describe a 21:9 gritty 16-bit pixel-art fight stage with a clear bottom-quarter walkable floor.
+- Music prompt must describe a loopable instrumental stage battle theme.
+
+Return STRICT JSON with exactly this shape:
+{
+  "color": "hsl(H 55% 62%)",
+  "archetype": "zoner|grappler|rushdown|all-rounder|trickster",
+  "lore": {
+    "tagline": "one sentence character-select hook",
+    "personality": "one compact paragraph derived from the one-line description",
+    "backstory": "one arcade backstory paragraph derived from the lore"
+  },
+  "winQuotes": ["exactly 3 short victory quotes"],
+  "vo": {
+    "kiai": ["exactly 6 attack barks"],
+    "hurt": ["exactly 6 hurt barks"],
+    "victory": ["exactly 4 voice victory barks"]
+  },
+  "specials": [
+    { "id": "slug", "name": "Move Name", "controls": "qcf+P", "archetype": "projectile", "description": "visual/gameplay prompt" }
+  ],
+  "specialPool": [
+    { "id": "slug", "name": "Move Name", "controls": "qcb+K", "archetype": "teleport", "description": "visual/gameplay prompt" }
+  ],
+  "physics": { "health": 1000, "walkSpeed": 3.3, "backSpeed": 3.4, "jumpVel": 18, "gravity": 0.9, "prejumpFrames": 4 },
+  "fatality": { "id": "slug", "name": "Fatality Name", "input": "hcb+P" },
+  "stagePrompt": "stage art prompt",
+  "musicPrompt": "music prompt"
+}
+
+Cardinality requirements:
+- specials: exactly 4, each a different tactical role when possible.
+- specialPool: exactly 8 alternate buildable specials.
+- Use lowercase kebab-case ids.
+- Make controls match the archetype.
+- Return JSON only; no markdown, no commentary.`;
       const playableRoster = (): { id: string; name: string }[] => {
         const src = readFileSync(join(root, 'src/data/roster.ts'), 'utf-8');
         const out: { id: string; name: string }[] = [];
@@ -270,6 +365,47 @@ function editorApi(): Plugin {
             const cellPath = join(scratch, 'cell.png');
             execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', rawPath, '-vf', FF_KEY_PAD, '-frames:v', '1', cellPath]);
             sendJson(res, 200, { ok: true, pngBase64: readFileSync(cellPath).toString('base64') });
+          })
+          .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
+      });
+
+      // POST /__editor/creator/design  { name, description, lore }
+      // -> Gemini text pass that turns the D1 seed into the creator's DesignDraft:
+      //    lore, win quotes, VO barks, buildable specials, stage/music prompts.
+      //    Mocks when GEMINI_API_KEY is missing / MK_CREATOR_MOCK=1; the client
+      //    keeps its deterministic makeDraft() fallback in that case.
+      server.middlewares.use('/__editor/creator/design', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        readJsonBody(req)
+          .then(async (b) => {
+            const { name, description, lore } = b as { name?: unknown; description?: unknown; lore?: unknown };
+            if (typeof name !== 'string' || !name.trim()) throw new Error('missing name');
+            const prompt = creatorDesignPrompt(name.trim(), typeof description === 'string' ? description.trim() : '', typeof lore === 'string' ? lore.trim() : '');
+            const lib = await import('./tools/lib.mjs');
+            const env = lib.loadEnv();
+            const apiKey = env.GEMINI_API_KEY;
+            if (process.env.MK_CREATOR_MOCK === '1' || !apiKey) {
+              sendJson(res, 200, { ok: true, mock: true, prompt });
+              return;
+            }
+            const model = env.GEMINI_TEXT_MODEL || 'gemini-2.5-pro';
+            const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                  temperature: 0.85,
+                  topP: 0.9,
+                  responseMimeType: 'application/json',
+                },
+              }),
+            });
+            const json = await r.json();
+            if (!r.ok) throw new Error(`gemini ${model}: ${r.status} ${JSON.stringify(json).slice(0, 400)}`);
+            const text = json.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? '').join('\n') ?? '';
+            if (!text.trim()) throw new Error(`gemini ${model}: empty design response`);
+            sendJson(res, 200, { ok: true, draft: extractJsonObject(text), prompt });
           })
           .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
       });
@@ -733,10 +869,12 @@ function editorApi(): Plugin {
               p.fatalityPanels.forEach((pan, i) => writeFileSync(join(d, `${fat.id}-${i + 1}.jpg`), Buffer.from(pan, 'base64')));
             } else delete def.fatality;
             // stage
-            if (p.stageBase64 && okId(p.stageId)) {
+            const bundleStageId = okId(p.stageId) ? p.stageId : typeof def.stage === 'string' && okId(def.stage) ? def.stage : undefined;
+            const bundleStageBase64 = bundleStageId ? p.stageBase64 ?? existingStageBase64(bundleStageId) : undefined;
+            if (bundleStageBase64 && bundleStageId) {
               const d = join(A, 'backgrounds/stages'); mkdirSync(d, { recursive: true });
-              writeFileSync(join(d, `${p.stageId}.jpg`), Buffer.from(p.stageBase64, 'base64'));
-              def.stage = p.stageId;
+              writeFileSync(join(d, `${bundleStageId}.jpg`), Buffer.from(bundleStageBase64, 'base64'));
+              def.stage = bundleStageId;
             }
             writeFileSync(join(stage, `${id}.json`), JSON.stringify(def, null, 2) + '\n');
             // pipeline-compatible source frames for future re-pack/regeneration.

@@ -1195,7 +1195,22 @@ profile → base batch → SHIP → reload → **playable MIRAGE vs VINCENT figh
       keep F1/F2/F3 renderer debug controls live (hitboxes, move log, skeletons;
       plus renderer-specific debug keys) without making idle attract exit on
       those keys.
-- [ ] Real Gemini design-draft (server `/__editor/creator/design` + context cache §16).
+- [x] **Real Gemini design-draft** — D1 submit now posts name + one-line
+      description + lore/backstory to `/__editor/creator/design`, which returns
+      a strict creator `DesignDraft`: on-theme lore, win quotes, kiai/hurt/
+      victory barks, buildable special names/descriptions, fatality, stage
+      prompt, and music prompt. Missing key / mock mode keeps the local template.
+- [x] **Full special archetype catalog in creator** — the Gemini design prompt
+      and special-move dropdown now expose every buildable engine archetype
+      from the move-authoring catalog, with projectile-family moves sharing
+      projectile art generation, tuning, preview, ZIP/write export.
+- [x] **Ben creator dogfood checkpoint** — Ben is registered as a playable
+      fighter with JSON, roster/index entries, 62-frame packed sheet + skeleton
+      meta, raw frame sources, two per-move projectiles (`quesadilla`,
+      `hot-coffee`), portrait/bust/KO, announcer + 18 voice clips, voice-inspo,
+      and 4 fatality panels. Kit in this checkpoint: Quesadilla (hcf+P),
+      Hot Coffee (qcf+P), Kitchen Grandma (dp+P), Midnight Munchies (bf+P).
+- [ ] Context cache §16 + richer regeneration controls for design-only rerolls.
 - [ ] Advisory edge-QA badges; R2 publish/pull seams (local-mock first).
 - [ ] Consolidate: audit/tests + skills + CLAUDE.md; fold Tuner/Editor in.
 
@@ -1227,6 +1242,25 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-08 · ui · creator special archetype catalog expanded** — The
+  Character Creator special dropdown and Gemini design-draft prompt now allow
+  the full buildable engine catalog: fireballs/charge shots, flame cones,
+  lobs, clouds, fuse detonations, traps, slow fields, pull and multi-projectiles,
+  DP/flash-kick, rushes, mash/rehit, grab variants, teleports, reflectors,
+  projectile-immune lariats, vault/leap, and yoga float. Projectile-family
+  archetypes now all get projectile slots, tuning, preview flight, and export
+  treatment. — Codex
+
+- **2026-07-08 · assets+data · Ben playable creator checkpoint** — Added Ben
+  as a registered playable fighter with creator-generated sprite sheet/meta
+  (62 frames, skeletons baked for every frame), raw source frames, Quesadilla
+  and Hot Coffee projectile art, portrait/bust/KO assets, four fatality panels,
+  announcer line, kiai/hurt/victory VO, two per-move call-outs, voice-inspo, and
+  asset-manifest entries. Also carries the current Earl/Vanessa/Vincent sprite
+  sheet/meta/data edits from the working branch, removes stale `earl-home` /
+  `vincent-home` stage registrations after those generated stage assets were
+  dropped, and commits the local `.agents` skill mirror. — Codex
 
 - **2026-07-08 · ui+tools · CPU demo debug overlays stay live** — `FightShell`
   now registers F2 move log and renderer debug keys even in CPU demo/showcase

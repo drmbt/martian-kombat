@@ -2,7 +2,7 @@
   "id": "vincent",
   "name": "VINCENT",
   "color": "#58e6d9",
-  "stage": "vincent-home",
+  "stage": "van",
   "winQuotes": [
     "Well well well, look what we have here",
     "I took everything you had. It wasn't much.",
@@ -334,7 +334,7 @@
       "knockback": 9,
       "hitbox": {
         "x": 59,
-        "y": -155,
+        "y": -118,
         "w": 102,
         "h": 85
       },

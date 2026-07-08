@@ -50,10 +50,10 @@
       "blockstun": 10,
       "knockback": 7,
       "hitbox": {
-        "x": 61,
-        "y": -308,
-        "w": 65,
-        "h": 85
+        "x": 57,
+        "y": -245,
+        "w": 49,
+        "h": 66
       },
       "height": "mid",
       "chains": [
@@ -64,16 +64,16 @@
       ]
     },
     "mp": {
-      "startup": 9,
-      "active": 3,
+      "startup": 4,
+      "active": 7,
       "recovery": 15,
       "damage": 70,
       "hitstun": 19,
       "blockstun": 12,
       "knockback": 9,
       "hitbox": {
-        "x": 57,
-        "y": -293,
+        "x": 52,
+        "y": -248,
         "w": 62,
         "h": 89
       },
@@ -89,27 +89,27 @@
       "blockstun": 15,
       "knockback": 12,
       "hitbox": {
-        "x": 16,
-        "y": -346,
-        "w": 69,
-        "h": 77
+        "x": 34,
+        "y": -292,
+        "w": 95,
+        "h": 78
       },
       "height": "mid",
       "knockdown": true
     },
     "lk": {
       "startup": 5,
-      "active": 3,
+      "active": 8,
       "recovery": 10,
       "damage": 44,
       "hitstun": 14,
       "blockstun": 9,
       "knockback": 6,
       "hitbox": {
-        "x": 49,
-        "y": -109,
-        "w": 100,
-        "h": 102
+        "x": 107,
+        "y": -207,
+        "w": 66,
+        "h": 75
       },
       "height": "mid",
       "chains": [
@@ -121,17 +121,17 @@
     },
     "mk": {
       "startup": 9,
-      "active": 4,
+      "active": 7,
       "recovery": 16,
       "damage": 76,
       "hitstun": 20,
       "blockstun": 13,
       "knockback": 10,
       "hitbox": {
-        "x": 42,
-        "y": -170,
-        "w": 116,
-        "h": 48
+        "x": 51,
+        "y": -202,
+        "w": 115,
+        "h": 67
       },
       "height": "mid",
       "cancel": true
@@ -145,10 +145,10 @@
       "blockstun": 15,
       "knockback": 13,
       "hitbox": {
-        "x": 44,
-        "y": -244,
-        "w": 122,
-        "h": 70
+        "x": 43,
+        "y": -295,
+        "w": 88,
+        "h": 210
       },
       "height": "mid",
       "knockdown": true
@@ -163,9 +163,9 @@
       "knockback": 6,
       "hitbox": {
         "x": 23,
-        "y": -203,
-        "w": 73,
-        "h": 77
+        "y": -202,
+        "w": 87,
+        "h": 125
       },
       "height": "mid",
       "chains": [
@@ -184,10 +184,10 @@
       "blockstun": 11,
       "knockback": 8,
       "hitbox": {
-        "x": 41,
-        "y": -281,
-        "w": 65,
-        "h": 87
+        "x": 30,
+        "y": -232,
+        "w": 76,
+        "h": 102
       },
       "height": "mid",
       "cancel": true
@@ -201,10 +201,10 @@
       "blockstun": 14,
       "knockback": 10,
       "hitbox": {
-        "x": 23,
-        "y": -314,
-        "w": 73,
-        "h": 77
+        "x": -43,
+        "y": -290,
+        "w": 138,
+        "h": 142
       },
       "height": "mid",
       "knockdown": true
@@ -219,7 +219,7 @@
       "knockback": 6,
       "hitbox": {
         "x": 70,
-        "y": -146,
+        "y": -115,
         "w": 78,
         "h": 96
       },
@@ -242,8 +242,8 @@
       "hitbox": {
         "x": 57,
         "y": -57,
-        "w": 53,
-        "h": 68
+        "w": 95,
+        "h": 90
       },
       "height": "low",
       "cancel": true
@@ -257,8 +257,8 @@
       "blockstun": 12,
       "knockback": 8,
       "hitbox": {
-        "x": 70,
-        "y": -122,
+        "x": 76,
+        "y": -67,
         "w": 84,
         "h": 92
       },
@@ -275,7 +275,7 @@
       "knockback": 6,
       "hitbox": {
         "x": 26,
-        "y": -150,
+        "y": -149,
         "w": 84,
         "h": 48
       },
@@ -290,9 +290,9 @@
       "blockstun": 12,
       "knockback": 8,
       "hitbox": {
-        "x": 28,
+        "x": 27,
         "y": -140,
-        "w": 94,
+        "w": 95,
         "h": 56
       },
       "height": "high"
@@ -307,7 +307,7 @@
       "knockback": 10,
       "hitbox": {
         "x": 26,
-        "y": -150,
+        "y": -149,
         "w": 100,
         "h": 66
       },
@@ -322,10 +322,10 @@
       "blockstun": 10,
       "knockback": 6,
       "hitbox": {
-        "x": 28,
+        "x": 27,
         "y": -120,
         "w": 86,
-        "h": 50
+        "h": 51
       },
       "height": "high"
     },
@@ -338,10 +338,10 @@
       "blockstun": 12,
       "knockback": 9,
       "hitbox": {
-        "x": 30,
-        "y": -130,
-        "w": 96,
-        "h": 58
+        "x": 51,
+        "y": -37,
+        "w": 112,
+        "h": 66
       },
       "height": "high"
     },
@@ -354,10 +354,10 @@
       "blockstun": 14,
       "knockback": 12,
       "hitbox": {
-        "x": 32,
-        "y": -140,
-        "w": 110,
-        "h": 62
+        "x": 8,
+        "y": -214,
+        "w": 116,
+        "h": 238
       },
       "height": "high"
     },
@@ -379,7 +379,7 @@
       "projectile": {
         "vx": 6,
         "spawnX": 64,
-        "spawnY": -150,
+        "spawnY": -149,
         "box": {
           "x": -30,
           "y": -30,
@@ -490,7 +490,7 @@
       "hitbox": {
         "x": 16,
         "y": -200,
-        "w": 128,
+        "w": 127,
         "h": 180
       },
       "height": "mid",
@@ -524,7 +524,7 @@
       "knockback": 10,
       "hitbox": {
         "x": 10,
-        "y": -350,
+        "y": -349,
         "w": 110,
         "h": 220
       },
@@ -568,8 +568,12 @@
       "grab": {
         "range": 100
       },
-      "tossArc": { "vy": -6.5, "knockbackMult": 1.0 },
+      "tossArc": {
+        "vy": -6.5,
+        "knockbackMult": 1
+      },
       "techable": true
     }
-  }
+  },
+  "scale": 0.91
 }

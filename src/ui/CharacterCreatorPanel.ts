@@ -7,11 +7,12 @@
 import {
   CreatorModel, CREATOR_STEPS, makeDraft, BASE_CELLS, ATTACK_CELLS,
   ARCHETYPE_INFO, specialsForArchetype, SPECIAL_ARCHETYPES, controlsForArchetype,
-  BASE_MOVE_IDS, NORMAL_MOVE_IDS, moveCellNames, slugify,
+  BASE_MOVE_IDS, NORMAL_MOVE_IDS, moveCellNames, slugify, isProjectileArchetypeKey,
   CANONICAL_PROMPT, PORTRAIT_PROMPT, KO_PROMPT, SPRITE_PROMPT, fatalityBeats,
-  type CreatorJob, type AttackCell, type SpecialDraft,
+  type CreatorJob, type AttackCell, type DesignDraft, type SpecialDraft,
 } from './creatorModel';
 import { hitboxFromSkeleton, strikeKind } from './hitboxFromSkeleton';
+import { STAGES } from '../data/stages';
 
 const el = <K extends keyof HTMLElementTagNameMap>(
   tag: K, css = '', text = '',
@@ -298,6 +299,9 @@ export class CharacterCreatorPanel {
         name: typeof def.name === 'string' ? def.name : id.toUpperCase(),
         description: lore.personality ?? lore.tagline ?? String(def.name ?? id),
         lore: lore.backstory ?? '',
+        stageMode: typeof def.stage === 'string' ? 'existing' : 'none',
+        stageId: typeof def.stage === 'string' ? def.stage : undefined,
+        stageName: typeof def.stage === 'string' ? STAGES.find((s) => s.id === def.stage)?.name : undefined,
       };
       const draft = makeDraft(m.inputs.name, m.inputs.description);
       if (typeof def.color === 'string') draft.color = def.color;
@@ -379,13 +383,34 @@ export class CharacterCreatorPanel {
 
   private archetypeFromMove(move: Record<string, unknown>): string {
     const input = (move.input && typeof move.input === 'object') ? move.input as Record<string, unknown> : {};
-    if (move.projectile) return input.motion === 'cbf' ? 'sonic-boom' : 'projectile';
-    if (move.teleport) return 'teleport';
-    if (move.grab) return 'command-grab';
+    if (move.projectile && typeof move.projectile === 'object') {
+      const p = move.projectile as Record<string, unknown>;
+      if (input.motion === 'cbf') return 'sonic-boom';
+      if (p.detonate) return 'fuse-detonate';
+      if (p.pull) return 'pull-projectile';
+      if (p.field || p.slowFactor) return 'slow-field';
+      if (typeof p.count === 'number' && p.count > 1) return 'multi-projectile';
+      if (typeof p.vy === 'number' || typeof p.gravity === 'number') return 'lob-projectile';
+      if (typeof p.rehit === 'number' && p.rehit > 0) return p.vx === 0 ? 'stationary-trap' : 'lingering-cloud';
+      if (p.vx === 0) return 'stationary-trap';
+      if (typeof p.ttl === 'number' && p.ttl > 0 && p.ttl <= 30) return 'short-range-flame';
+      return 'projectile';
+    }
+    if (move.teleport && typeof move.teleport === 'object') return (move.teleport as Record<string, unknown>).mirror ? 'mirror-teleport' : 'teleport';
+    if (move.grab) {
+      if (input.button === 'LPLK' || move.techable) return 'techable-throw';
+      if (move.heal) return 'heal-grab';
+      if (move.grabRecoil) return 'grab-recoil';
+      return 'command-grab';
+    }
     if (input.mash || move.rehit) return 'mash';
     if (input.motion === 'du') return 'flash-kick';
+    if (move.reflect) return 'reflector';
+    if (move.projImmune) return 'projectile-immune';
+    if (move.vault) return 'vault';
+    if (move.float) return 'yoga-float';
     if (move.leap) return 'anti-air-dp';
-    if (move.forwardVel) return 'advancing-rush';
+    if (move.forwardVel) return input.motion === 'bf' ? 'horizontal-rush' : 'advancing-rush';
     if (move.invuln) return 'reversal';
     return 'advancing-rush';
   }
@@ -597,6 +622,7 @@ export class CharacterCreatorPanel {
   private beginSeed(): void {
     if (!this.m.inputs.name.trim()) { alert('Give your fighter a name first.'); return; }
     this.ensureDraft();
+    void this.runDesignDraft();
     const desc = this.m.inputs.description || this.m.inputs.name;
     const refs = (this.m.inputs.referencePhotos ?? []).map((p) => dataUrlToB64(p.dataUrl)).filter(Boolean) as string[];
     // portrait wants the FACE ref first (2nd photo per the D1 hint); fall back to whatever's provided
@@ -613,9 +639,126 @@ export class CharacterCreatorPanel {
     if (!this.m.draft) this.m.draft = makeDraft(this.m.inputs.name, this.m.inputs.description);
   }
 
+  private async runDesignDraft(): Promise<void> {
+    const name = this.m.inputs.name.trim();
+    if (!name) return;
+    this.logMsg('▸ designing fighter kit + voice lines…');
+    try {
+      const r = await fetch('/__editor/creator/design', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, description: this.m.inputs.description, lore: this.m.inputs.lore }),
+      });
+      const j = (await r.json()) as { ok?: boolean; mock?: boolean; draft?: Partial<DesignDraft>; prompt?: string; error?: string };
+      if (!j.ok) throw new Error(j.error ?? 'design failed');
+      if (j.mock || !j.draft) { this.logMsg('design draft mock — using local template'); return; }
+      this.m.draft = this.mergeDesignDraft(j.draft);
+      this.m.fatalityBeats = fatalityBeats(name, this.m.draft.fatality.name);
+      this.logMsg('✓ design draft ready — Profile/Moves prefilled from lore');
+      this.render(); this.renderPreviewControls();
+    } catch (e) {
+      this.logMsg('✕ design draft — ' + String(e));
+    }
+  }
+
+  private mergeDesignDraft(src: Partial<DesignDraft>): DesignDraft {
+    const base = this.m.draft ?? makeDraft(this.m.inputs.name, this.m.inputs.description);
+    const cleanSpecials = (list: unknown, fallback: SpecialDraft[]): SpecialDraft[] => {
+      if (!Array.isArray(list)) return fallback;
+      const out: SpecialDraft[] = [];
+      for (const raw of list) {
+        if (!raw || typeof raw !== 'object') continue;
+        const s = raw as Partial<SpecialDraft>;
+        const name = String(s.name ?? '').trim();
+        const archetype = String(s.archetype ?? '').trim();
+        const description = String(s.description ?? '').trim();
+        const archetypeInfo = SPECIAL_ARCHETYPES.find((a) => a.key === archetype);
+        if (!name || !archetypeInfo || !description) continue;
+        const controls = String(s.controls ?? '').trim();
+        out.push({
+          id: slugify(String(s.id ?? name)),
+          name,
+          controls: archetypeInfo.controls.includes(controls) ? controls : controlsForArchetype(archetype),
+          archetype,
+          description,
+          approved: false,
+        });
+      }
+      return out.length ? out : fallback;
+    };
+    const lines = (v: unknown, fallback: string[], n: number): string[] =>
+      Array.isArray(v) ? [...v.map(String).filter((x) => x.trim()).slice(0, n), ...fallback].slice(0, n) : fallback;
+    return {
+      ...base,
+      color: typeof src.color === 'string' ? src.color : base.color,
+      archetype: typeof src.archetype === 'string' ? src.archetype : base.archetype,
+      lore: {
+        tagline: typeof src.lore?.tagline === 'string' ? src.lore.tagline : base.lore.tagline,
+        personality: typeof src.lore?.personality === 'string' ? src.lore.personality : base.lore.personality,
+        backstory: typeof src.lore?.backstory === 'string' ? src.lore.backstory : base.lore.backstory,
+      },
+      winQuotes: lines(src.winQuotes, base.winQuotes, 3),
+      vo: {
+        kiai: lines(src.vo?.kiai, base.vo.kiai, 6),
+        hurt: lines(src.vo?.hurt, base.vo.hurt, 6),
+        victory: lines(src.vo?.victory, base.vo.victory, 4),
+      },
+      specials: cleanSpecials(src.specials, base.specials).slice(0, 4),
+      specialPool: cleanSpecials(src.specialPool, base.specialPool).slice(0, 8),
+      physics: { ...base.physics, ...(src.physics && typeof src.physics === 'object' ? src.physics : {}) },
+      fatality: {
+        id: slugify(String(src.fatality?.id ?? base.fatality.id)),
+        name: String(src.fatality?.name ?? base.fatality.name),
+        input: String(src.fatality?.input ?? base.fatality.input),
+      },
+      stagePrompt: typeof src.stagePrompt === 'string' ? src.stagePrompt : base.stagePrompt,
+      musicPrompt: typeof src.musicPrompt === 'string' ? src.musicPrompt : base.musicPrompt,
+    };
+  }
+
+  private ensureStageDefaults(): void {
+    this.m.inputs.stageMode ??= this.m.inputs.stageId ? 'existing' : 'generated';
+    if (this.m.inputs.stageMode === 'generated') {
+      this.m.inputs.stageId ||= `${this.m.id}-home`;
+      this.m.inputs.stageName ||= `${this.m.inputs.name.toUpperCase()} HOME`;
+    }
+  }
+
+  private stageLabel(): string {
+    this.ensureStageDefaults();
+    if (this.m.inputs.stageMode === 'none') return 'none (uses RANDOM/default)';
+    if (this.m.inputs.stageMode === 'existing') {
+      const st = STAGES.find((s) => s.id === this.m.inputs.stageId);
+      return st ? `existing → ${st.name}` : `existing → ${this.m.inputs.stageId ?? '(choose one)'}`;
+    }
+    return `generated → ${this.m.inputs.stageName || this.m.inputs.stageId}`;
+  }
+
+  private async loadExistingStagePreview(stageId: string): Promise<void> {
+    const st = STAGES.find((s) => s.id === stageId);
+    if (!st) return;
+    try {
+      const r = await fetch(st.file);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const blob = await r.blob();
+      const dataUrl = await new Promise<string>((resolve) => {
+        const fr = new FileReader();
+        fr.onload = () => resolve(String(fr.result));
+        fr.readAsDataURL(blob);
+      });
+      this.m.jobs.set('stage', { key: 'stage', kind: 'stage', label: st.name, status: 'done', approved: true, dataUrl, savedAs: 'stage.jpg' });
+      this.updateBackdrop();
+      this.renderTray();
+      this.redrawPreview();
+    } catch (e) {
+      this.logMsg(`stage preview failed for ${stageId}: ${String(e)}`);
+    }
+  }
+
   // ── D2 · PROFILE ─────────────────────────────────────────────────────────
   private renderProfile(): void {
     this.ensureDraft();
+    this.ensureStageDefaults();
     const d = this.m.draft!;
     this.h('Profile & stage', 'Edit the auto-draft while the base sprites bake below. Upload a stage + voice sample.');
 
@@ -676,11 +819,64 @@ export class CharacterCreatorPanel {
     // frame inspector (click the stage cell in the tray), like every other frame.
     const sjob = this.m.job('stage');
     const stageW = this.field('Home stage');
+    const mode = el('select', INPUT + 'cursor:pointer;margin-bottom:6px;') as HTMLSelectElement;
+    for (const [value, label] of [
+      ['generated', 'Generate a new home stage'],
+      ['existing', 'Assign an existing stage'],
+      ['none', 'No home stage'],
+    ] as const) {
+      const o = el('option', '', label) as HTMLOptionElement;
+      o.value = value; if (this.m.inputs.stageMode === value) o.selected = true;
+      mode.appendChild(o);
+    }
+    mode.onchange = () => {
+      this.m.inputs.stageMode = mode.value as CreatorModel['inputs']['stageMode'];
+      if (this.m.inputs.stageMode === 'generated') {
+        this.m.inputs.stageId ||= `${this.m.id}-home`;
+        this.m.inputs.stageName ||= `${this.m.inputs.name.toUpperCase()} HOME`;
+      } else if (this.m.inputs.stageMode === 'existing') {
+        this.m.inputs.stageId = this.m.inputs.stageId && STAGES.some((s) => s.id === this.m.inputs.stageId)
+          ? this.m.inputs.stageId
+          : STAGES[0]?.id;
+        this.m.inputs.stageName = STAGES.find((s) => s.id === this.m.inputs.stageId)?.name;
+        if (this.m.inputs.stageId) void this.loadExistingStagePreview(this.m.inputs.stageId);
+      }
+      this.render();
+    };
+    stageW.appendChild(mode);
+    if (this.m.inputs.stageMode === 'existing') {
+      const existing = el('select', INPUT + 'cursor:pointer;margin-bottom:6px;') as HTMLSelectElement;
+      for (const st of STAGES) {
+        const o = el('option', '', `${st.name} (${st.id})`) as HTMLOptionElement;
+        o.value = st.id; if (st.id === this.m.inputs.stageId) o.selected = true;
+        existing.appendChild(o);
+      }
+      existing.onchange = () => {
+        this.m.inputs.stageId = existing.value;
+        this.m.inputs.stageName = STAGES.find((s) => s.id === existing.value)?.name;
+        void this.loadExistingStagePreview(existing.value);
+        this.render();
+      };
+      stageW.appendChild(existing);
+    } else if (this.m.inputs.stageMode === 'generated') {
+      const idRow = el('div', 'display:flex;gap:6px;margin-bottom:6px;');
+      const idI = el('input', INPUT + 'flex:1;') as HTMLInputElement;
+      idI.value = this.m.inputs.stageId ?? `${this.m.id}-home`;
+      idI.placeholder = 'stage id, e.g. mirage-home';
+      idI.oninput = () => (this.m.inputs.stageId = slugify(idI.value));
+      const nameI = el('input', INPUT + 'flex:1;') as HTMLInputElement;
+      nameI.value = this.m.inputs.stageName ?? `${this.m.inputs.name.toUpperCase()} HOME`;
+      nameI.placeholder = 'display name, e.g. MIRAGE HOME';
+      nameI.oninput = () => (this.m.inputs.stageName = nameI.value.toUpperCase());
+      idRow.append(idI, nameI);
+      stageW.appendChild(idRow);
+    }
     const sbtn = el('button', BTN_HOT + 'font-size:12px;',
       sjob?.status === 'running' ? '◐ generating stage…' : sjob?.status === 'done' ? '↻ Regenerate stage' : '▸ Generate stage');
     sbtn.onclick = () => void this.genStage();
-    stageW.appendChild(sbtn);
-    if (sjob?.status === 'done') stageW.appendChild(el('div', 'font-size:11px;color:#8fa6b2;margin-top:6px;', 'click the stage cell in the tray to edit its prompt & regenerate'));
+    if (this.m.inputs.stageMode === 'generated') stageW.appendChild(sbtn);
+    if (sjob?.status === 'done') stageW.appendChild(el('div', 'font-size:11px;color:#8fa6b2;margin-top:6px;', `${this.stageLabel()} · click the stage cell in the tray to inspect/regenerate`));
+    else stageW.appendChild(el('div', 'font-size:11px;color:#8fa6b2;margin-top:6px;', this.stageLabel()));
     colB.appendChild(stageW);
     colB.appendChild(this.dropZone('Voice samples for cloning (optional, multiple)', { accept: 'audio/*', multiple: true }, this.m.inputs.voiceSamples));
     if ((this.m.inputs.voiceSamples ?? []).length) {
@@ -893,7 +1089,7 @@ export class CharacterCreatorPanel {
       // projectile art slot — only for approved projectile-archetype specials.
       // Just the thumbnail + a generate/inspect button here; the prompt, size,
       // spawn and auto-hitbox all live on the frame inspector (click the thumb).
-      if ((s.archetype === 'projectile' || s.archetype === 'sonic-boom') && s.approved) {
+      if (isProjectileArchetypeKey(s.archetype) && s.approved) {
         const pj = this.m.job('proj:' + s.id);
         const prow = el('div', 'display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px dashed #22303e;');
         prow.appendChild(el('span', 'font-size:11px;color:#9fb4be;', 'projectile:'));
@@ -1031,6 +1227,11 @@ export class CharacterCreatorPanel {
   /** generate (or regenerate) the home-stage backdrop from the editable stage
    *  prompt + the dropped landscape photo (if any). Text-only works with no photo. */
   private async genStage(): Promise<void> {
+    this.ensureStageDefaults();
+    if (this.m.inputs.stageMode !== 'generated') {
+      this.logMsg('stage: switch Home stage to "Generate a new home stage" first');
+      return;
+    }
     if (this.m.job('stage')?.status === 'running') return;
     const prompt = this.m.draft?.stagePrompt?.trim();
     if (!prompt) { this.logMsg('stage: add a prompt first'); return; }
@@ -1051,7 +1252,7 @@ export class CharacterCreatorPanel {
    *  (the pipeline's sequential special chain). Non-projectile specials just chain
    *  active → startup/recovery off the canonical. */
   private async genSpecial(s: SpecialDraft): Promise<void> {
-    const nm = this.m.inputs.name, id = s.id, isProj = s.archetype === 'projectile' || s.archetype === 'sonic-boom';
+    const nm = this.m.inputs.name, id = s.id, isProj = isProjectileArchetypeKey(s.archetype);
     let projRef: string | undefined;
     if (isProj) {
       if (this.m.job('proj:' + id)?.status !== 'done') await this.fireGen('proj:' + id, 'sprite', s.name + ' projectile', this.effectiveProjPrompt(s), []);
@@ -1187,6 +1388,7 @@ export class CharacterCreatorPanel {
 
   // ── D8 · SHIP ─────────────────────────────────────────────────────────
   private renderShip(): void {
+    this.ensureStageDefaults();
     this.h('Ship it', 'Composite the base cells into a sheet, write the character + register it, then reload and pick it on the select screen.');
     const cells = this.m.baseCellNames();
     const atk = this.m.allAttackCells();
@@ -1197,7 +1399,7 @@ export class CharacterCreatorPanel {
     const fatReady = this.m.generatedFatality.length;
     const stageReady = this.m.job('stage')?.status === 'done';
     this.bodyEl.appendChild(el('div', 'font-size:12px;color:#8fa6b2;margin-bottom:8px;',
-      `fatality: ${fatReady ? fatReady + ' panels' : 'none (omitted)'} · stage: ${stageReady ? 'generated → registered as ' + this.m.id + '-home' : 'none (uses default)'} · voice: ${this.m.voiceModelId ? 'cloned' : 'stock'}`));
+      `fatality: ${fatReady ? fatReady + ' panels' : 'none (omitted)'} · stage: ${stageReady || this.m.inputs.stageMode !== 'generated' ? this.stageLabel() : 'generated art pending'} · voice: ${this.m.voiceModelId ? 'cloned' : 'stock'}`));
     const voCount = Object.keys(this.m.finalVoClips()).length;
     const musicReady = !!this.m.finalMusic();
     this.bodyEl.appendChild(el('div', 'font-size:12px;color:#8fa6b2;margin-bottom:8px;',
@@ -1320,6 +1522,7 @@ export class CharacterCreatorPanel {
 
   /** the full build payload (shared by SHIP write + ZIP export). */
   private async buildPayload(): Promise<Record<string, unknown>> {
+    this.ensureStageDefaults();
     await this.syncRawFrames();
     const sheet = await this.composeSheet();
     const projectiles: Record<string, string> = {};
@@ -1332,6 +1535,7 @@ export class CharacterCreatorPanel {
       if ((!key.startsWith('sprite:') && !key.startsWith('proj:')) || !job.dataUrl) continue;
       const b = dataUrlToB64(job.dataUrl); if (b) rawFrames[this.savedAsFor(key, job)] = b;
     }
+    const generatedStage = this.m.inputs.stageMode === 'generated';
     return {
       projectiles,
       rawFrames,
@@ -1341,8 +1545,9 @@ export class CharacterCreatorPanel {
       koBase64: dataUrlToB64(this.m.job('ko')?.dataUrl),
       bustBase64: await this.bustFromCanonical(),
       voClips: this.m.finalVoClips(), musicBase64: this.m.finalMusic(), moveAudio: this.m.moveAudio,
-      stageBase64: dataUrlToB64(this.m.job('stage')?.dataUrl), stageId: this.m.id + '-home',
-      stageName: this.m.inputs.name.toUpperCase() + ' HOME',
+      stageBase64: generatedStage ? dataUrlToB64(this.m.job('stage')?.dataUrl) : undefined,
+      stageId: this.m.inputs.stageMode === 'none' ? undefined : this.m.inputs.stageId,
+      stageName: this.m.inputs.stageName,
       fatalityPanels: this.m.generatedFatality.length ? this.m.generatedFatality : undefined,
     };
   }
@@ -1471,7 +1676,7 @@ export class CharacterCreatorPanel {
     for (const s of this.m.draft!.specials) {
       if (!s.approved) continue;
       const cells = ['startup', 'active', 'recovery'].map((ph) => this.m.job(`sprite:${s.id}-${ph}`)?.status === 'done');
-      const projMissing = (s.archetype === 'projectile' || s.archetype === 'sonic-boom') && this.m.job('proj:' + s.id)?.status !== 'done';
+      const projMissing = isProjectileArchetypeKey(s.archetype) && this.m.job('proj:' + s.id)?.status !== 'done';
       if (cells.every(Boolean) && !projMissing) continue; // fully done — skip
       await this.genSpecial(s);
     }
@@ -2221,7 +2426,7 @@ export class CharacterCreatorPanel {
       const sp = this.m.draft?.specials.find((s) => 'proj:' + s.id === this.preview.key);
       if (sp) this.drawProjectile(ctx, sp, W, floorY, drawH, 0);
     } else if (this.preview.kind === 'group') {
-      const sp = this.m.draft?.specials.find((s) => s.id === this.preview.key && (s.archetype === 'projectile' || s.archetype === 'sonic-boom'));
+      const sp = this.m.draft?.specials.find((s) => s.id === this.preview.key && isProjectileArchetypeKey(s.archetype));
       if (sp) {
         const total = 200 + 220 + 340; // matches the 3-phase special sequence in previewFrame
         const ph = Date.now() % total;

@@ -66,8 +66,6 @@ export const STAGES: StageEntry[] = [
   stage('the-range', 'THE RANGE'),
   stage('tvs', 'TVS'),
   stage('van', 'VAN'),
-  stage('earl-home', 'EARL HOME'),
-  stage('vincent-home', 'VINCENT HOME'),
 ];
 
 // Merge the authored world-map pin coords (stage-pins.json) onto the registry.

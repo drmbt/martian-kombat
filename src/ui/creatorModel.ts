@@ -44,6 +44,9 @@ export interface CreatorInputs {
    *  survive a panel re-render (the zone renders from the model, not closure state) */
   referencePhotos?: UploadedFile[]; // [0] = full body, extras = face/other refs
   stagePhotos?: UploadedFile[];
+  stageMode?: 'generated' | 'existing' | 'none';
+  stageId?: string;
+  stageName?: string;
   /** BYO assets — used at SHIP time in place of generated/placeholder audio */
   voiceSamples?: UploadedFile[]; // for voice cloning
   kiaiClips?: UploadedFile[]; // BYO kiai/hurt/victory VO
@@ -247,15 +250,43 @@ export function specialsForArchetype(key: string): SpecialDraft[] {
  *  `controls` lists the sensible motion+button inputs for that archetype. */
 export const SPECIAL_ARCHETYPES: { key: string; label: string; desc: string; controls: string[] }[] = [
   { key: 'projectile', label: 'Projectile', desc: 'a ranged projectile thrown across the screen (fireball)', controls: ['qcf+P', 'qcf+K', 'hcf+P'] },
-  { key: 'anti-air-dp', label: 'Anti-air (DP)', desc: 'a rising, invincible reversal that swats jumpers (dragon punch)', controls: ['dp+P', 'dp+K'] },
-  { key: 'command-grab', label: 'Command grab', desc: 'an unblockable throw at close range', controls: ['hcb+P', '360+P'] },
-  { key: 'advancing-rush', label: 'Advancing rush', desc: 'a forward-moving strike that closes distance', controls: ['qcf+K', 'hcf+K'] },
-  { key: 'reversal', label: 'Reversal', desc: 'an invincible wake-up attack that beats pressure', controls: ['qcb+P', 'qcb+K'] },
-  { key: 'teleport', label: 'Teleport', desc: 'blink behind or away to reposition (deals no damage)', controls: ['qcb+K', 'qcf+K'] },
-  { key: 'mash', label: 'Mash barrage', desc: 'a rapid multi-hit flurry (mash the button, e.g. lightning legs)', controls: ['mash+P', 'mash+K'] },
   { key: 'sonic-boom', label: 'Sonic boom (charge)', desc: 'hold BACK ~0.6s then press forward — a charge projectile (Guile)', controls: ['cbf+P', 'cbf+K'] },
+  { key: 'short-range-flame', label: 'Short-range flame', desc: 'a brief cone/flame projectile with a short lifetime', controls: ['qcb+P', 'qcf+P'] },
+  { key: 'lob-projectile', label: 'Lob projectile', desc: 'an arcing projectile that rises, falls, and lands', controls: ['qcb+P', 'qcb+K'] },
+  { key: 'lingering-cloud', label: 'Lingering cloud', desc: 'a slow projectile/cloud that can tick repeatedly', controls: ['qcf+K', 'qcb+K'] },
+  { key: 'fuse-detonate', label: 'Fuse + detonate', desc: 'a lobbed bomb/trap that arms, then bursts after a fuse', controls: ['qcb+P', 'hcf+P'] },
+  { key: 'stationary-trap', label: 'Stationary trap', desc: 'a placed projectile trap that sits in space and re-hits', controls: ['qcb+K', 'qcf+K'] },
+  { key: 'slow-field', label: 'Slow field', desc: 'a non-damaging field that slows enemy projectiles and ground impulses', controls: ['qcf+P', 'qcb+P'] },
+  { key: 'pull-projectile', label: 'Pull projectile', desc: 'a "get over here" projectile that drags the victim on hit', controls: ['hcf+P', 'qcf+P'] },
+  { key: 'multi-projectile', label: 'Multi-projectile fan', desc: 'several projectiles spawned at once in a fan/stack', controls: ['hcf+P', 'qcf+P'] },
+  { key: 'anti-air-dp', label: 'Anti-air (DP)', desc: 'a rising, invincible reversal that swats jumpers (dragon punch)', controls: ['dp+P', 'dp+K'] },
   { key: 'flash-kick', label: 'Flash kick (charge)', desc: 'hold DOWN ~0.6s then press up — a rising, invincible charge anti-air (Guile)', controls: ['du+K', 'du+P'] },
+  { key: 'advancing-rush', label: 'Advancing rush', desc: 'a forward-moving strike that closes distance', controls: ['qcf+K', 'hcf+K'] },
+  { key: 'horizontal-rush', label: 'Horizontal rush', desc: 'a fast back-forward torpedo / shoulder-charge special', controls: ['bf+P', 'bf+K'] },
+  { key: 'mash', label: 'Mash barrage', desc: 'a rapid multi-hit flurry (mash the button, e.g. lightning legs)', controls: ['mash+P', 'mash+K'] },
+  { key: 'melee-rehit', label: 'Melee re-hit', desc: 'a sustained melee activation that can hit repeatedly', controls: ['qcf+P', 'PPP', 'KKK'] },
+  { key: 'command-grab', label: 'Command grab', desc: 'an unblockable throw at close range', controls: ['hcb+P', '360+P'] },
+  { key: 'heal-grab', label: 'Heal grab', desc: 'a command grab that restores health on hit', controls: ['hcb+P', '360+P'] },
+  { key: 'grab-recoil', label: 'Grab recoil', desc: 'a command grab that kicks the attacker backward after connecting', controls: ['hcb+K', '360+K'] },
+  { key: 'techable-throw', label: 'Techable throw', desc: 'a universal LP+LK throw that the victim can tech', controls: ['LPLK'] },
+  { key: 'teleport', label: 'Teleport', desc: 'blink behind or away to reposition (deals no damage)', controls: ['qcb+K', 'qcf+K'] },
+  { key: 'mirror-teleport', label: 'Mirror teleport', desc: 'a symmetric halfway-blink teleport that replays its cells mirrored', controls: ['qcb+K', 'qcf+K'] },
+  { key: 'reversal', label: 'Reversal', desc: 'an invincible wake-up attack that beats pressure', controls: ['qcb+P', 'qcb+K'] },
+  { key: 'reflector', label: 'Reflector', desc: 'a special that reflects enemy projectiles during startup/active', controls: ['qcb+P', 'hcb+P'] },
+  { key: 'projectile-immune', label: 'Projectile-immune rush', desc: 'an advancing/lariat strike that ignores projectiles while active', controls: ['PPP', 'qcf+P', 'qcf+K'] },
+  { key: 'vault', label: 'Vault / launch', desc: 'a grounded special that launches the attacker into a vault arc', controls: ['qcf+K', 'hcf+K'] },
+  { key: 'leaping-strike', label: 'Leaping strike', desc: 'a shoryuken-style leap without the full reversal profile', controls: ['dp+K', 'qcf+K'] },
+  { key: 'yoga-float', label: 'Yoga float', desc: 'a floaty launch with reduced gravity on the way down', controls: ['qcb+P', 'qcb+K'] },
 ];
+
+export const PROJECTILE_ARCHETYPE_KEYS = [
+  'projectile', 'sonic-boom', 'short-range-flame', 'lob-projectile', 'lingering-cloud',
+  'fuse-detonate', 'stationary-trap', 'slow-field', 'pull-projectile', 'multi-projectile',
+] as const;
+
+export function isProjectileArchetypeKey(key: string): boolean {
+  return (PROJECTILE_ARCHETYPE_KEYS as readonly string[]).includes(key);
+}
 
 export function controlsForArchetype(key: string): string {
   return (SPECIAL_ARCHETYPES.find((a) => a.key === key)?.controls[0]) ?? 'qcf+P';
@@ -465,6 +496,7 @@ export class CreatorModel {
       hurtStand: { x: -52, y: -256, w: 104, h: 256 },
       hurtCrouch: { x: -52, y: -150, w: 104, h: 150 },
       moves,
+      ...(this.inputs.stageMode !== 'none' && this.inputs.stageId ? { stage: this.inputs.stageId } : {}),
       fatality: { id: d.fatality.id, name: d.fatality.name, input: parseControls(d.fatality.input), panels: 4 },
     };
   }
@@ -485,7 +517,7 @@ export class CreatorModel {
       const existing = (moves[s.id] && typeof moves[s.id] === 'object') ? moves[s.id] as Record<string, unknown> : buildSpecial(s);
       existing.name = s.name;
       existing.input = parseControls(s.controls);
-      if (s.archetype === 'projectile' || s.archetype === 'sonic-boom') {
+      if (isProjectileArchetypeKey(s.archetype)) {
         const projectile = (existing.projectile && typeof existing.projectile === 'object') ? existing.projectile as Record<string, unknown> : {};
         if (s.projScale) projectile.renderSize = Math.round(72 * s.projScale);
         if (typeof s.projSpawnX === 'number') projectile.spawnX = s.projSpawnX;
@@ -501,6 +533,8 @@ export class CreatorModel {
       if (mv && mv.hitbox !== null) mv.hitbox = box;
     }
     out.moves = moves;
+    if (this.inputs.stageMode === 'none') delete out.stage;
+    else if (this.inputs.stageId) out.stage = this.inputs.stageId;
     if (this.generatedFatality.length) out.fatality = { id: d.fatality.id, name: d.fatality.name, input: parseControls(d.fatality.input), panels: this.generatedFatality.length };
     return out;
   }
@@ -550,24 +584,77 @@ export function parseControls(controls: string): { motion?: string; button: stri
 function buildSpecial(s: SpecialDraft): Record<string, unknown> {
   const input = parseControls(s.controls);
   const base = { name: s.name, input, height: 'mid' as const };
+  const pbox = s.projBox ?? { x: -28, y: -28, w: 56, h: 56 };
+  const renderSize = Math.round(72 * (s.projScale ?? 1));
+  const projectile = (patch: Record<string, unknown> = {}): Record<string, unknown> => ({
+    vx: 9, spawnX: s.projSpawnX ?? 96, spawnY: s.projSpawnY ?? -176,
+    box: pbox, renderSize, damage: 60, hitstun: 18, blockstun: 12, knockback: 9,
+    ...patch,
+  });
   switch (s.archetype) {
     case 'projectile':
     case 'sonic-boom': // charge (cbf) projectile — same shape, the input carries the charge
       return { ...base, startup: 13, active: 2, recovery: 24, damage: 0, hitstun: 0, blockstun: 0, knockback: 0, hitbox: null,
-        projectile: { vx: 9, spawnX: s.projSpawnX ?? 96, spawnY: s.projSpawnY ?? -176, box: s.projBox ?? { x: -28, y: -28, w: 56, h: 56 }, renderSize: Math.round(72 * (s.projScale ?? 1)), damage: 60, hitstun: 18, blockstun: 12, knockback: 9 } };
+        projectile: projectile(s.archetype === 'sonic-boom' ? { vx: 10 } : {}) };
+    case 'short-range-flame':
+      return { ...base, startup: 9, active: 4, recovery: 18, damage: 0, hitstun: 0, blockstun: 0, knockback: 0, hitbox: null,
+        projectile: projectile({ vx: 6, spawnX: s.projSpawnX ?? 72, spawnY: s.projSpawnY ?? -148, box: s.projBox ?? { x: -36, y: -34, w: 72, h: 68 }, renderSize: Math.round(96 * (s.projScale ?? 1)), damage: 18, hitstun: 8, blockstun: 6, knockback: 2, ttl: 18, rehit: 4 }) };
+    case 'lob-projectile':
+      return { ...base, startup: 16, active: 2, recovery: 27, damage: 0, hitstun: 0, blockstun: 0, knockback: 0, hitbox: null,
+        projectile: projectile({ vx: 5, vy: -9, gravity: 0.55, spawnX: s.projSpawnX ?? 78, spawnY: s.projSpawnY ?? -190, damage: 55, hitstun: 18, blockstun: 12, knockback: 8, ttl: 180, knockdown: true }) };
+    case 'lingering-cloud':
+      return { ...base, startup: 17, active: 2, recovery: 28, damage: 0, hitstun: 0, blockstun: 0, knockback: 0, hitbox: null,
+        projectile: projectile({ vx: 3.5, spawnX: s.projSpawnX ?? 82, spawnY: s.projSpawnY ?? -150, box: s.projBox ?? { x: -42, y: -42, w: 84, h: 84 }, renderSize: Math.round(104 * (s.projScale ?? 1)), damage: 16, hitstun: 8, blockstun: 6, knockback: 2, ttl: 90, rehit: 14 }) };
+    case 'fuse-detonate':
+      return { ...base, startup: 18, active: 2, recovery: 30, damage: 0, hitstun: 0, blockstun: 0, knockback: 0, hitbox: null,
+        projectile: projectile({ vx: 4, vy: -8, gravity: 0.6, spawnX: s.projSpawnX ?? 74, spawnY: s.projSpawnY ?? -188, damage: 0, hitstun: 0, blockstun: 0, knockback: 0, ttl: 180, fuse: 42, detonate: { box: { x: -62, y: -92, w: 124, h: 112 }, damage: 85, hitstun: 22, blockstun: 14, knockback: 10, ttl: 12 } }) };
+    case 'stationary-trap':
+      return { ...base, startup: 18, active: 2, recovery: 27, damage: 0, hitstun: 0, blockstun: 0, knockback: 0, hitbox: null,
+        projectile: projectile({ vx: 0, spawnX: s.projSpawnX ?? 86, spawnY: s.projSpawnY ?? -64, box: s.projBox ?? { x: -36, y: -46, w: 72, h: 64 }, renderSize: Math.round(88 * (s.projScale ?? 1)), damage: 28, hitstun: 10, blockstun: 8, knockback: 3, ttl: 120, rehit: 20 }) };
+    case 'slow-field':
+      return { ...base, startup: 18, active: 2, recovery: 24, damage: 0, hitstun: 0, blockstun: 0, knockback: 0, hitbox: null,
+        projectile: projectile({ vx: 0, spawnX: s.projSpawnX ?? 98, spawnY: s.projSpawnY ?? -132, box: s.projBox ?? { x: -74, y: -70, w: 148, h: 140 }, renderSize: Math.round(150 * (s.projScale ?? 1)), damage: 0, hitstun: 0, blockstun: 0, knockback: 0, ttl: 150, field: true, slowFactor: 0.42 }) };
+    case 'pull-projectile':
+      return { ...base, startup: 14, active: 2, recovery: 29, damage: 0, hitstun: 0, blockstun: 0, knockback: 0, hitbox: null,
+        projectile: projectile({ vx: 8, damage: 35, hitstun: 14, blockstun: 10, knockback: 4, ttl: 160, pull: true, knockdown: true }) };
+    case 'multi-projectile':
+      return { ...base, startup: 15, active: 2, recovery: 28, damage: 0, hitstun: 0, blockstun: 0, knockback: 0, hitbox: null,
+        projectile: projectile({ vx: 7.5, damage: 36, hitstun: 12, blockstun: 8, knockback: 5, count: 3, spreadVX: 1.2, spreadY: 28, ttl: 150 }) };
     case 'teleport':
       return { ...base, startup: 10, active: 1, recovery: 18, damage: 0, hitstun: 0, blockstun: 0, knockback: 0, hitbox: null, teleport: { mode: 'behind' }, invulnFrom: 6, invuln: 12 };
+    case 'mirror-teleport':
+      return { ...base, startup: 12, active: 4, recovery: 12, damage: 0, hitstun: 0, blockstun: 0, knockback: 0, hitbox: null, teleport: { mode: 'behind', mirror: true }, invulnFrom: 6, invuln: 10 };
     case 'anti-air-dp':
     case 'flash-kick': // charge (du) rising anti-air — same leap+invuln shape
       return { ...base, startup: 5, active: 8, recovery: 22, damage: 80, hitstun: 20, blockstun: 12, knockback: 8, knockdown: true, hitbox: { x: 20, y: -244, w: 72, h: 120 }, leap: { vx: 4, vy: 16 }, invuln: 8 };
     case 'advancing-rush':
       return { ...base, startup: 9, active: 4, recovery: 20, damage: 70, hitstun: 18, blockstun: 12, knockback: 8, hitbox: { x: 50, y: -184, w: 92, h: 72 }, forwardVel: 10 };
+    case 'horizontal-rush':
+      return { ...base, startup: 10, active: 5, recovery: 22, damage: 78, hitstun: 19, blockstun: 12, knockback: 10, knockdown: true, hitbox: { x: 48, y: -176, w: 110, h: 70 }, forwardVel: 14 };
     case 'command-grab':
       return { ...base, startup: 6, active: 2, recovery: 26, damage: 100, hitstun: 0, blockstun: 0, knockback: 8, hitbox: null, grab: { range: 72 }, knockdown: true };
+    case 'heal-grab':
+      return { ...base, startup: 7, active: 2, recovery: 28, damage: 85, hitstun: 0, blockstun: 0, knockback: 8, hitbox: null, grab: { range: 70 }, heal: 60, knockdown: true };
+    case 'grab-recoil':
+      return { ...base, startup: 7, active: 2, recovery: 28, damage: 90, hitstun: 0, blockstun: 0, knockback: 9, hitbox: null, grab: { range: 70 }, grabRecoil: 12, knockdown: true };
+    case 'techable-throw':
+      return { ...base, startup: 3, active: 2, recovery: 20, damage: 0, hitstun: 0, blockstun: 0, knockback: 6, hitbox: null, grab: { range: 64 }, techable: true };
     case 'reversal':
       return { ...base, startup: 3, active: 6, recovery: 26, damage: 70, hitstun: 18, blockstun: 12, knockback: 10, knockdown: true, hitbox: { x: 30, y: -224, w: 72, h: 120 }, invuln: 10 };
     case 'mash':
       return { ...base, startup: 6, active: 12, recovery: 16, damage: 12, hitstun: 8, blockstun: 6, knockback: 2, hitbox: { x: 46, y: -154, w: 74, h: 42 }, rehit: 4 };
+    case 'melee-rehit':
+      return { ...base, startup: 7, active: 14, recovery: 18, damage: 14, hitstun: 8, blockstun: 6, knockback: 2, hitbox: { x: 42, y: -170, w: 88, h: 58 }, rehit: 5 };
+    case 'reflector':
+      return { ...base, startup: 5, active: 16, recovery: 20, damage: 42, hitstun: 12, blockstun: 9, knockback: 4, hitbox: { x: 30, y: -212, w: 74, h: 116 }, reflect: true };
+    case 'projectile-immune':
+      return { ...base, startup: 8, active: 8, recovery: 22, damage: 74, hitstun: 18, blockstun: 12, knockback: 9, knockdown: true, hitbox: { x: 42, y: -188, w: 96, h: 76 }, forwardVel: 9, projImmune: true };
+    case 'vault':
+      return { ...base, startup: 8, active: 8, recovery: 20, damage: 70, hitstun: 18, blockstun: 11, knockback: 8, knockdown: true, hitbox: { x: 38, y: -186, w: 88, h: 76 }, vault: { vx: 7, vy: 15 } };
+    case 'leaping-strike':
+      return { ...base, startup: 7, active: 8, recovery: 20, damage: 68, hitstun: 17, blockstun: 11, knockback: 7, knockdown: true, hitbox: { x: 32, y: -214, w: 78, h: 96 }, leap: { vx: 6, vy: 13 } };
+    case 'yoga-float':
+      return { ...base, startup: 8, active: 2, recovery: 14, damage: 0, hitstun: 0, blockstun: 0, knockback: 0, hitbox: null, float: { vy: 13, gravity: 0.28, vx: 2 } };
     default:
       return { ...base, startup: 12, active: 3, recovery: 20, damage: 60, hitstun: 16, blockstun: 10, knockback: 6, hitbox: { x: 50, y: -184, w: 80, h: 60 } };
   }
