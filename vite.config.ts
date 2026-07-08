@@ -891,6 +891,146 @@ Cardinality requirements:
           .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
       });
 
+      // POST /__editor/roster-flag  { id, playable }
+      // -> flips a fighter's playable flag in roster.ts (the studio's
+      //    ONLINE/OFFLINE lifecycle: offline keeps every file on disk but the
+      //    fighter leaves the select screens, the boot loader, and the audit's
+      //    required set). Distinct path — '/__editor/character' would
+      //    prefix-match and eat anything under it.
+      server.middlewares.use('/__editor/roster-flag', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        readJsonBody(req)
+          .then((b) => {
+            const { id, playable } = b as { id?: unknown; playable?: unknown };
+            if (!okId(id)) throw new Error('invalid character id');
+            if (typeof playable !== 'boolean') throw new Error('missing playable');
+            const rosPath = join(root, 'src/data/roster.ts');
+            let ros = readFileSync(rosPath, 'utf-8');
+            const re = new RegExp(`(\\{[^}]*id:\\s*'${id}'[^}]*playable:\\s*)(true|false)`);
+            if (!re.test(ros)) throw new Error(`${id} not found in roster.ts`);
+            ros = ros.replace(re, `$1${playable}`);
+            writeFileSync(rosPath, ros);
+            sendJson(res, 200, { ok: true, id, playable });
+          })
+          .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
+      });
+
+      // POST /__editor/export-canon  { id }
+      // -> zips a CANON fighter's on-disk bundle (json + sprites + portraits +
+      //    audio + fatality + stage art + raw source frames + creator
+      //    progress) in the same layout /creator/import understands, so any
+      //    fighter round-trips as a .zip — not just in-flight drafts.
+      server.middlewares.use('/__editor/export-canon', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        readJsonBody(req)
+          .then((b) => {
+            const { id } = b as { id?: unknown };
+            if (!okId(id)) throw new Error('invalid character id');
+            const defPath = join(root, 'src/data/characters', `${id}.json`);
+            if (!existsSync(defPath)) throw new Error(`no such character ${id}`);
+            const def = JSON.parse(readFileSync(defPath, 'utf-8')) as { stage?: unknown };
+            const stage = join(tmpdir(), `mk-canonexp-${id}-${Date.now()}`);
+            const A = join(stage, 'assets');
+            mkdirSync(stage, { recursive: true });
+            const cpDir = (src: string, dst: string): void => { if (existsSync(src)) cpSync(src, dst, { recursive: true }); };
+            const cpFile = (src: string, dst: string): void => {
+              if (!existsSync(src)) return;
+              mkdirSync(join(dst, '..'), { recursive: true });
+              copyFileSync(src, dst);
+            };
+            cpDir(join(root, 'public/assets/sprites', id), join(A, 'sprites', id));
+            for (const f of [`${id}.png`, `${id}-bust.png`, `${id}-ko.png`]) {
+              cpFile(join(root, 'public/assets/portraits', f), join(A, 'portraits', f));
+            }
+            cpDir(join(root, 'public/assets/fatalities', id), join(A, 'fatalities', id));
+            cpFile(join(root, 'public/assets/audio/announcer', `${id}.mp3`), join(A, 'audio/announcer', `${id}.mp3`));
+            const voiceDir = join(root, 'public/assets/audio/voice');
+            if (existsSync(voiceDir)) {
+              for (const f of readdirSync(voiceDir)) {
+                if (f.startsWith(`${id}-`) && f.endsWith('.mp3')) cpFile(join(voiceDir, f), join(A, 'audio/voice', f));
+              }
+            }
+            if (typeof def.stage === 'string' && okId(def.stage)) {
+              cpFile(join(root, 'public/assets/backgrounds/stages', `${def.stage}.jpg`), join(A, 'backgrounds/stages', `${def.stage}.jpg`));
+            }
+            copyFileSync(defPath, join(stage, `${id}.json`));
+            cpDir(join(root, 'assets/raw/frames', id), join(stage, 'assets/raw/frames', id));
+            cpDir(join(root, 'assets/raw/creator', id), join(stage, 'raw'));
+            writeFileSync(join(stage, 'README.txt'),
+              `Martian Kombat character bundle: ${id} (canon export)\n\n` +
+              `Import via the Character Studio roster screen (IMPORT ZIP) or the\n` +
+              `Character Creator's ⤒ ZIP button — assets copy in, ${id}.json registers,\n` +
+              `manifests rescan, and the fighter is playable.\n`);
+            const zipPath = join(tmpdir(), `mk-${id}-${Date.now()}.zip`);
+            execFileSync('zip', ['-r', '-q', zipPath, '.'], { cwd: stage });
+            const zipBase64 = readFileSync(zipPath).toString('base64');
+            try { rmSync(stage, { recursive: true, force: true }); rmSync(zipPath, { force: true }); } catch { /* best-effort */ }
+            sendJson(res, 200, { ok: true, zipBase64, filename: `${id}.zip` });
+          })
+          .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
+      });
+
+      // POST /__editor/delete-character  { id, confirm }
+      // -> the guided DELETE: removes the character json, the roster + index
+      //    registrations, and every public asset the fighter owns (sprites,
+      //    portraits, fatality panels, VO, stage themes) as one transaction,
+      //    then rescans manifests. Raw dirs (assets/raw/**) are KEPT so a
+      //    deleted fighter is recoverable/re-packable. confirm must equal id.
+      server.middlewares.use('/__editor/delete-character', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        readJsonBody(req)
+          .then((b) => {
+            const { id, confirm } = b as { id?: unknown; confirm?: unknown };
+            if (!okId(id)) throw new Error('invalid character id');
+            if (confirm !== id) throw new Error('confirm must equal the character id');
+            const removed: string[] = [];
+            const rmIf = (p: string, label: string): void => {
+              if (!existsSync(p)) return;
+              rmSync(p, { recursive: true, force: true });
+              removed.push(label);
+            };
+            rmIf(join(root, 'src/data/characters', `${id}.json`), `${id}.json`);
+            // roster.ts entry line
+            const rosPath = join(root, 'src/data/roster.ts');
+            let ros = readFileSync(rosPath, 'utf-8');
+            const before = ros;
+            ros = ros.replace(new RegExp(`\\n[^\\n]*id:\\s*'${id}'[^\\n]*`), '');
+            if (ros !== before) { writeFileSync(rosPath, ros); removed.push('roster entry'); }
+            // characters/index.ts import + registry line
+            const idxPath = join(root, 'src/data/characters/index.ts');
+            let idx = readFileSync(idxPath, 'utf-8');
+            const beforeIdx = idx;
+            const varName = id.replace(/-/g, '_');
+            idx = idx.replace(new RegExp(`\\nimport ${varName} from '\\./${id}\\.json';`), '');
+            idx = idx.replace(new RegExp(`\\n\\s*'?${id}'?:\\s*load\\(${varName}\\),`), '');
+            if (idx !== beforeIdx) { writeFileSync(idxPath, idx); removed.push('index entry'); }
+            // public assets
+            rmIf(join(root, 'public/assets/sprites', id), 'sprites/');
+            rmIf(join(root, 'public/assets/fatalities', id), 'fatalities/');
+            for (const f of [`${id}.png`, `${id}-bust.png`, `${id}-ko.png`]) rmIf(join(root, 'public/assets/portraits', f), `portraits/${f}`);
+            rmIf(join(root, 'public/assets/audio/announcer', `${id}.mp3`), 'announcer VO');
+            for (const dir of ['voice']) {
+              const d = join(root, 'public/assets/audio', dir);
+              if (!existsSync(d)) continue;
+              for (const f of readdirSync(d)) {
+                if (f.startsWith(`${id}-`)) rmSync(join(d, f), { force: true });
+              }
+            }
+            removed.push('voice clips');
+            // per-stage character themes
+            const musicRoot = join(root, 'public/assets/audio/music/stages');
+            if (existsSync(musicRoot)) {
+              for (const sdir of readdirSync(musicRoot)) {
+                const t = join(musicRoot, sdir, `${id}-theme.mp3`);
+                if (existsSync(t)) { rmSync(t, { force: true }); removed.push(`music ${sdir}/`); }
+              }
+            }
+            rescanGeneratedManifests();
+            sendJson(res, 200, { ok: true, id, removed });
+          })
+          .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
+      });
+
       // POST /__editor/creator/export  (same payload as write)
       // -> stages a game-ready bundle + the raw progress into a temp dir and zips
       //    it, returning base64. Lets a remote user pack out their build/progress

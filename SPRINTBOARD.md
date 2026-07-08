@@ -1447,6 +1447,29 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-08 · ui+tools · Sprint 27 Phase 3g: StudioSelect — the studio's
+  roster-manager front door** (user-directed). DEV EDITOR → CHARACTER
+  STUDIO now lands on `StudioSelectScene`: every fighter (online AND
+  offline) as a portrait card with lifecycle actions — EDIT IN STUDIO
+  (jumps to the rail at MOVES), TAKE OFFLINE / BRING ONLINE (new
+  `/__editor/roster-flag` rewrites the roster.ts playable flag; offline
+  keeps all files but leaves select/loader/audit), EXPORT .ZIP (new
+  `/__editor/export-canon` bundles any CANON fighter from disk in the
+  /creator/import round-trip layout — json + sprites + portraits + VO +
+  fatality + stage art + raw sources), and DELETE… (new
+  `/__editor/delete-character`, typed-id confirm: removes json + roster +
+  index registrations + all public assets as one transaction, KEEPS
+  assets/raw for recovery, rescans manifests). Plus ＋ NEW CHARACTER
+  (straight into the CREATOR module), ⤒ IMPORT ZIP (existing import
+  endpoint), a WIP-drafts shelf (unshipped creator runs via
+  /creator/list), and a RELOAD prompt after roster changes (the boot
+  loader reads the flag). The lifecycle work pulled forward from Phase 5
+  §2.12 — "online/offline/publish/delete either" per the user. E2E
+  verified: roster-flag round-trip byte-clean, vanessa exports a 40MB
+  bundle, and a synthetic ztest fighter was created + deleted with zero
+  residue (9 asset classes, registrations clean). 361/361, tsc clean.
+  — Claude (Fable)
+
 - **2026-07-08 · ui+tools · Sprint 27 Phase 3f: STAGES module** — the rail
   is now CREATOR / SPRITES / MOVES / STAGES / TEST. `src/ui/StagesPanel.ts`:
   the stage registry as a panel (per-stage world-map pin status + home-stage

@@ -19,8 +19,8 @@ interface Tool {
 const TOOLS: Tool[] = [
   {
     label: 'CHARACTER STUDIO',
-    desc: 'module rail over a live fight: sprites · moves · test',
-    act: (s) => s.go('Select', { cpu: false, training: true, studio: true, render3d: false }),
+    desc: 'roster manager: new · edit · online/offline · import/export · delete',
+    act: (s) => s.go('StudioSelect'),
   },
   {
     label: 'CHARACTER CREATOR',
