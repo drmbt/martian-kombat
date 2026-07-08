@@ -13,6 +13,7 @@ import { menuNav, navDefer } from '../input/menu-nav';
 import { BindAction, getSettings } from '../settings';
 import type { OnlineSelectData, StartConfig } from '../net/lobby';
 import { UiLayer } from '../ui/layer';
+import { CELL_H, CELL_W, FLOOR_FRAC } from '../render/coords';
 // type-only: the real module (and three) loads dynamically on the 3D path
 import type { SelectPreview3D } from '../renderer3d/SelectPreview3D';
 
@@ -46,11 +47,7 @@ const CELL_MAX = 132; // don't let cells balloon when the roster is small
 
 // Animated idle sprite on each side. P1 (left) faces right toward the center;
 // P2 (right) is flipped to face left, so the two fighters square off inward.
-const CELL_W = 288; // sprite-sheet cell dims (matches FightScene)
-const CELL_H = 384;
-// feet-line fraction — MUST match FLOOR_FRAC in tools/qa/normalize_floor.py so
-// the roster preview's feet sit on SIDE_BASE_Y (see FightScene FLOOR_FRAC)
-const FLOOR_FRAC = 0.88;
+// CELL_W/CELL_H/FLOOR_FRAC come from src/render/coords (the single source)
 const SIDE_P1_X = 116;
 const SIDE_P2_X = STAGE_W - 116;
 const SIDE_SPRITE_H = 250; // display height of the idle sprite

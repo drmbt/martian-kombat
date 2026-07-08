@@ -10,15 +10,19 @@ import { execFileSync } from 'node:child_process';
 
 const CANDIDATES = ['python3.13', 'python3.12', 'python3.11', 'python3.10', 'python3'];
 
-/** Return an interpreter that can import `requireModule` (default 'rtmlib').
- *  Uses find_spec (fast — no heavy import) so probing is cheap. Throws with
- *  install guidance if none qualifies. */
-export function resolvePython(requireModule = 'rtmlib') {
+/** Return an interpreter that can import every module in `requireModules`.
+ *  Defaults to the full QA runtime (rtmlib alone isn't enough — an interpreter
+ *  with rtmlib but a broken/missing onnxruntime wheel passes a single-module
+ *  probe, then dies at model load). Uses find_spec (fast — no heavy import) so
+ *  probing is cheap. Throws with install guidance if none qualifies. */
+export function resolvePython(requireModules = ['rtmlib', 'onnxruntime', 'cv2']) {
+  const mods = Array.isArray(requireModules) ? requireModules : [requireModules];
+  const probe = mods.map((m) => `importlib.util.find_spec('${m}')`).join(' and ');
   const cands = process.env.MK_PYTHON ? [process.env.MK_PYTHON, ...CANDIDATES] : CANDIDATES;
   const tried = [];
   for (const py of cands) {
     try {
-      execFileSync(py, ['-c', `import importlib.util,sys; sys.exit(0 if importlib.util.find_spec('${requireModule}') else 1)`], {
+      execFileSync(py, ['-c', `import importlib.util,sys; sys.exit(0 if (${probe}) else 1)`], {
         stdio: 'ignore',
       });
       return py;
@@ -27,7 +31,7 @@ export function resolvePython(requireModule = 'rtmlib') {
     }
   }
   throw new Error(
-    `no python with '${requireModule}' found (tried: ${tried.join(', ')}). ` +
+    `no python with ${mods.join('+')} found (tried: ${tried.join(', ')}). ` +
       `Set MK_PYTHON=/path/to/python, or install: <python> -m pip install -r tools/qa/requirements.txt`,
   );
 }

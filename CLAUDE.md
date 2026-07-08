@@ -206,7 +206,7 @@ npm run gen:styletest              # style candidates + stage tests
 npm run gen:frames -- --char vincent   # pose keyframes (--concurrency N, --cells a,b)
 npm run gen:qa -- --char vincent --frames-dir assets/raw/frames/vincent  # DWPose/alpha QA (pre-pack)
 npm run gen:pack -- --char vincent     # key + pack -> sheet.png + meta.json (--normalize)
-python3 tools/qa/portrait_crop.py --all  # pose-centered bust crops -> <id>-bust.png
+npm run gen:busts                      # pose-centered bust crops -> <id>-bust.png (resolved python)
 npm run gen:stages -- --stage van      # 21:9 pixel-art stage (--force, --concurrency N)
 npm run gen:audio                      # announcer + grunts + sfx (--concurrency N)
 npm run gen:fatality -- --char vincent # 4 cutscene panels (--concurrency N)

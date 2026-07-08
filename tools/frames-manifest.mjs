@@ -2,8 +2,7 @@
 // per-character pose flavor. Cell order is a CONTRACT with the renderer
 // (src/scenes/FightScene.ts actionToCell) — never reorder, only append.
 
-export const CELL_W = 288;
-export const CELL_H = 384;
+export { CELL_W, CELL_H } from './core/coords.mjs'; // single shared source
 export const COLS = 6;
 export const ROWS = 4;
 

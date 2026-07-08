@@ -71,14 +71,17 @@ export function applyScale(def: CharacterDef): CharacterDef {
 
 // Each character's UNSCALED base geometry, snapshotted the first time it's
 // live-edited so repeated scale changes never accumulate rounding drift.
-const baseCache = new Map<string, CharacterDef>();
+// Keyed by the def OBJECT (not id): if Vite HMR reloads the character data
+// after a write, the fresh def object misses the cache and re-snapshots —
+// an id-keyed map would re-bake the new data from the stale old base.
+const baseCache = new WeakMap<CharacterDef, CharacterDef>();
 
 function baseOf(def: CharacterDef): CharacterDef {
-  let base = baseCache.get(def.id);
+  let base = baseCache.get(def);
   if (!base) {
     const cur = def.scale ?? 1;
     base = cur === 1 ? structuredClone(def) : scaleGeometry(structuredClone(def), 1 / cur);
-    baseCache.set(def.id, base);
+    baseCache.set(def, base);
   }
   return base;
 }
@@ -87,7 +90,7 @@ function baseOf(def: CharacterDef): CharacterDef {
  *  reset to 1 with the scaled boxes kept), drop the cached UNSCALED base so the
  *  next live scale edit re-snapshots from the new identity geometry. */
 export function resetScaleBase(def: CharacterDef): void {
-  baseCache.delete(def.id);
+  baseCache.delete(def);
 }
 
 /** Dev editor: set a character's scale and re-bake its geometry from the cached

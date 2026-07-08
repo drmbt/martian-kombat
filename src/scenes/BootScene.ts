@@ -13,9 +13,7 @@ import { initMusic, duckMusic, nextTrack, playMusic } from '../audio/music';
 import type { AudioCue } from '../presentation/soundDirector';
 import { applyMusicVolume, effectiveSfxVolume } from '../audio/volume';
 import { devBootTarget, rememberDevLaunch } from '../devLaunch';
-
-const CELL_W = 288;
-const CELL_H = 384;
+import { CELL_H, CELL_W } from '../render/coords';
 
 const ANNOUNCER = [
   'round-1', 'round-2', 'final-round', 'fight', 'ko', 'time-up',
@@ -29,7 +27,7 @@ const ANNOUNCER = [
 ];
 /** membership sets for the per-move art gates below */
 const HAS = {
-  legacyProj: new Set(assetManifest.legacyProj),
+  legacyProj: new Set<string>(assetManifest.legacyProj),
   moveProj: new Set(assetManifest.moveProj),
   moveBurst: new Set(assetManifest.moveBurst),
   moveVfx: new Set(assetManifest.moveVfx),

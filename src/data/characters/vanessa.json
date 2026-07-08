@@ -470,6 +470,7 @@
       "hitbox": null,
       "height": "mid",
       "invuln": 16,
+      "voice": true,
       "teleport": {
         "mode": "behind"
       }

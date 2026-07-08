@@ -26,24 +26,18 @@ import numpy as np
 from PIL import Image
 import cv2
 
+from coords import CELL_W as CW, CELL_H as CH, HEADROOM, FLOOR_FRAC, ORIGIN_CX, ORIGIN_FEET, CHROMA_GREEN
+
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-CW, CH = 288, 384
-# Vertical safe-zone (px) the packer reserves top+bottom so floor normalization
-# can't clip. MUST match HEADROOM in tools/pack-sheet.mjs, or the QA skeleton +
-# measured hitboxes won't register with the packed art.
-HEADROOM = 24
 ALPHA_THR = 16
-FFMPEG_KEY = "chromakey=0x00B140:0.15:0.06"  # matches tools/pack-sheet.mjs
+FFMPEG_KEY = f"chromakey=0x{CHROMA_GREEN}:0.15:0.06"  # matches tools/pack-sheet.mjs
 
 # The engine renders every sprite at origin (0.5, FLOOR_FRAC) and defines
 # hitboxes relative to THAT anchor (worldBox: l = f.x + box.x, t = f.y + box.y).
 # So a box aligns with a drawn limb only in this origin space — regardless of
 # where the alpha actually sits. Suggestions + overlays therefore use these refs;
 # the MEASURED sole/center are reported separately as the normalization target.
-# FLOOR_FRAC MUST match tools/qa/normalize_floor.py (canonical) + FightScene.
-FLOOR_FRAC = 0.88
-ORIGIN_CX = CW / 2          # 144
-ORIGIN_FEET = FLOOR_FRAC * CH   # 338
+# All coordinate constants come from tools/qa/coords.py (single shared source).
 
 # COCO-wholebody-133 indices
 KP = {"nose": 0, "Lsho": 5, "Rsho": 6, "Lelb": 7, "Relb": 8, "Lwri": 9,

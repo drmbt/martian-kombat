@@ -21,9 +21,8 @@ from PIL import Image
 # land. Lowered from 0.95 to 0.88 (2026-07-05) to give ~46px of headroom below
 # the feet (was 19px) — the per-cell floor spread (up to ~72px) was pushing deep
 # stances / sub-floor FX past the cell bottom on the single normalize shift.
-# MUST match: tools/qa/pose_qa.py ORIGIN_FEET, and setOrigin(0.5, FLOOR_FRAC) +
-# the skeleton map in src/scenes/FightScene.ts and src/scenes/SelectScene.ts.
-FLOOR_FRAC = 0.88
+# The value lives in src/render/coords.json (shared with the whole codebase).
+from coords import FLOOR_FRAC
 
 # poses with no ground contact — excluded from the floor measurement (their
 # lowest pixel is a tucked knee / airborne body, not a sole)

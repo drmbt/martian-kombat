@@ -16,10 +16,11 @@ import { mkdirSync, readdirSync, writeFileSync, readFileSync, existsSync, rmSync
 import { ROOT } from './lib.mjs';
 import { resolvePython } from './qa/resolve-python.mjs';
 import { CELL_W, CELL_H, CHARACTERS, buildJobs, gridFor } from './frames-manifest.mjs';
+import { HEADROOM, CHROMA_GREEN } from './core/coords.mjs';
 
 // chromakey (YUV) at low similarity, NO despill: despill bleaches the whole
 // sprite (green bandanas, dark hair), and 0.2+ similarity eats wardrobe greens
-const KEY = 'chromakey=0x00B140:0.15:0.06';
+const KEY = `chromakey=0x${CHROMA_GREEN}:0.15:0.06`;
 
 const keyer = process.argv.includes('--keyer')
   ? process.argv[process.argv.indexOf('--keyer') + 1]
@@ -67,10 +68,9 @@ function pack(charId) {
     }
   }
   // Vertical safe-zone (px) reserved top+bottom so floor normalization can't
-  // clip. MUST match HEADROOM in tools/qa/pose_qa.py — the cell DWPose measures
-  // keypoints/hitboxes on must be IDENTICAL to the cell that gets packed, or the
-  // baked skeleton + measured boxes won't register with the packed art.
-  const HEADROOM = 24;
+  // clip (HEADROOM comes from src/render/coords.json via core/coords.mjs — the
+  // cell RTMPose measures keypoints/hitboxes on must be IDENTICAL to the cell
+  // that gets packed, or the baked skeleton + measured boxes won't register).
   const SCALE_PAD =
     `scale=${CELL_W}:${CELL_H - 2 * HEADROOM}:force_original_aspect_ratio=decrease,` +
     `pad=${CELL_W}:${CELL_H}:(ow-iw)/2:${CELL_H - HEADROOM}-ih:color=0x00000000`;
@@ -115,7 +115,7 @@ function pack(charId) {
     frames: frames.map((f) => f.replace(/^\d\d-/, '').replace(/\.png$/, '')),
   };
 
-  // Optional: bake the DWPose keypoints tools/qa/pose_qa.py already measured
+  // Optional: bake the RTMPose keypoints tools/qa/pose_qa.py already measured
   // (assets/raw/qa/<char>/report.json, cells.<name>.kp) into meta.json as a
   // 2D skeleton overlay source — see src/scenes/FightScene.ts drawSkeleton().
   // Purely additive: no report.json (or an older one predating the `cells`

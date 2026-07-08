@@ -2,7 +2,7 @@
 // frames in a single pass? Generates 8 greyscale hit-spark grids on magenta
 // (some 3x3=9 frames, some 4x4=16). Raw -> assets/raw/vfx/grid-tests/<id>.png.
 // Post-processing (slice/key/centroid/gif) is deterministic, in vfx_grid.py.
-//   node tools/qa/gen-vfx-grid.mjs [--force] [--concurrency N]
+//   node tools/vfx/gen-vfx-grid.mjs [--force] [--concurrency N]
 import { join } from 'node:path';
 import { mkdirSync } from 'node:fs';
 import { ROOT, loadEnv, geminiImage, saveAsset, skip, pool, concurrencyArg } from '../lib.mjs';

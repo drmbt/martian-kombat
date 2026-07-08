@@ -9,8 +9,12 @@ import { FLOOR_Y } from '../engine';
 import type { Defs } from '../engine';
 import { engineToWorld, WORLD_SCALE } from './threeCoordinates';
 import { FX_LAYER, radialTexture } from './threeAssets';
+import assetManifest from '../data/assetManifest.json';
 
 const BASE = import.meta.env.BASE_URL;
+// chars that still ship a legacy single projectile.png — same gate BootScene
+// uses, so we never request (and 404) art the manifest says doesn't exist
+const HAS_LEGACY_PROJ = new Set<string>(assetManifest.legacyProj);
 
 /** deterministic-enough presentation rand: hash a seed into [0,1) */
 function hash01(seed: number): number {
@@ -127,7 +131,7 @@ export class ThreeFxSystem {
   private fightTextureUrls(charIds: string[]): string[] {
     const urls = ['spark-hit', 'spark-heavy', 'spark-block', 'dizzy'].map((k) => `${BASE}assets/vfx/${k}.png`);
     for (const id of charIds) {
-      urls.push(`${BASE}assets/sprites/${id}/projectile.png`);
+      if (HAS_LEGACY_PROJ.has(id)) urls.push(`${BASE}assets/sprites/${id}/projectile.png`);
       const def = this.defs[id];
       for (const [moveId, m] of Object.entries(def.moves)) {
         if (m.projectile) {
@@ -419,7 +423,9 @@ export class ThreeFxSystem {
   private projTexture(p: Projectile, ownerChar: string): THREE.Texture | null {
     return (
       this.texture(`${BASE}assets/sprites/${ownerChar}/projectile-${p.moveId}.png`) ??
-      this.texture(`${BASE}assets/sprites/${ownerChar}/projectile.png`)
+      (HAS_LEGACY_PROJ.has(ownerChar)
+        ? this.texture(`${BASE}assets/sprites/${ownerChar}/projectile.png`)
+        : null)
     );
   }
 

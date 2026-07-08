@@ -1248,15 +1248,36 @@ call): modules stay separately addressable via EditorMenu deep links (Move
 Tuner → MOVES+TEST, Sprite Editor → SPRITES, Stages & Map → STAGES) — one
 implementation, many doors; only the standalone scene implementations
 (StagePinEditorScene, the creator scene's own backdrop) retire.
-- [ ] Phase 0 — guardrails + cruft sweep (no API calls): delete orphan assets
-      (haidai portraits, flo rm-rf panels, catherine legacy projectile.png);
-      gate ThreeFxSystem's legacy-projectile load (kills 15 404s per 3D
-      match); grow `assets.audit.test.ts` (bust, orphans, schema lint, meta
-      shape); `tools/core/constants.mjs` (+ generated `qa/constants.py`) and
-      `core/geometry.mjs` replace the FLOOR_FRAC / 1.32 / cellBoxToHitbox
-      copies; QA-dir hygiene (vfx-grid experiments out, RTMPose naming,
-      resolver probes onnxruntime, `gen:busts` script); characterScale
-      base-cache invalidation on character write.
+- [x] Phase 0 — guardrails + cruft sweep (no API calls) — DONE 2026-07-08:
+      orphan assets deleted (haidai portraits, flo rm-rf panels, catherine
+      legacy projectile.png — manifest regenerated to legacyProj:[]);
+      vanessa's `teleportal` gained its missing `voice:true`; ThreeFxSystem
+      legacy-projectile load gated on the manifest (was 404ing for 15/16
+      fighters every 3D match); `assets.audit.test.ts` grew four suites —
+      bust check, orphan sweep (portraits/sprite dirs/fatality panels/
+      per-move VO), sheet-meta shape, and a character schema lint with an
+      explicit KNOWN_KIT_GAPS backfill list (ben/earl kit grammar, vanessa
+      quotes) — 324→361 tests, and the meta check immediately caught + fixed
+      real cruft: vincent's meta.json carried 3 duplicate pixel-identical
+      throw-* tail frames. Coordinate contract now has ONE source:
+      `src/render/coords.json` + typed accessor `src/render/coords.ts` +
+      `tools/core/coords.mjs` (Node) + `tools/qa/coords.py` (Python) — every
+      hand-copied FLOOR_FRAC/CELL_W/CELL_H/HEADROOM/SPRITE_FOOT_OFFSET_Y/
+      1.32-art-margin in FightScene/SelectScene/BootScene/SpriteEditorPanel/
+      spriteSheetModel/hitboxFromSkeleton/CharacterCreatorPanel/pack-sheet/
+      frames-manifest/pose_qa/normalize_floor replaced with imports; the
+      cell↔world transform now lives ONCE in `src/render/geometry.ts`
+      (renderScale/footOffset/cellToWorld/worldToCell/cellBoxToHitbox) —
+      FightScene, the Sprite Editor flatten, and the creator's auto-hitbox
+      all delegate to it. characterScale baseCache → WeakMap keyed by def
+      object (HMR-stale-base hazard gone). QA hygiene: vfx-grid experiments
+      moved to `tools/vfx/` (skill paths updated), resolver now probes
+      rtmlib+onnxruntime+cv2, `npm run gen:busts` added, RTMPose naming
+      fixed. tsc clean, prod build clean, 357/361 vitest (the 4 fails are
+      PRE-EXISTING data-vs-test drift at HEAD: vincent's creator-checkpoint
+      qcb remaps + the cbf sonic-boom test — Phase 2/3 rewrites those tests
+      against synthetic defs). Boot verified in-browser: 541 assets, 0 load
+      failures, 0 failed network requests, no console errors.
 - [ ] Phase 1 — one pack path + one prompt library (no API calls):
       `core/keying.mjs` fixes the vite FF_KEY_PAD missing-HEADROOM mismatch;
       `core/packer.mjs` unifies pack-sheet.mjs + `/__editor/sheet` + the
@@ -1333,6 +1354,19 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-08 · data+tools+ui · Sprint 27 Phase 0: guardrails + cruft sweep** —
+  One coordinate source (`src/render/coords.json` → TS/Node/Python accessors)
+  replaces every hand-synced FLOOR_FRAC/CELL/HEADROOM/1.32 copy; one shared
+  cell↔world transform (`src/render/geometry.ts`) replaces the 3 hand-rolled
+  cellBoxToHitbox copies. Orphan assets deleted (haidai, flo rm-rf, catherine
+  legacy projectile), ThreeFxSystem legacy-proj 404s gated, vanessa move-VO
+  flag fixed, vincent meta duplicate throw frames removed. Audit test grew
+  bust/orphan/meta-shape/schema-lint suites (324→361; KNOWN_KIT_GAPS tracks
+  the ben/earl/vanessa Phase-3 backfill). characterScale base cache → WeakMap
+  (HMR hazard). QA hygiene: vfx-grid experiments → tools/vfx/, resolver
+  probes onnxruntime+cv2, gen:busts script. tsc + build clean; 4 remaining
+  test fails are pre-existing data-vs-test drift (Phase 2/3). — Claude (Fable)
 
 - **2026-07-08 · docs · Sprint 27 third pass: pin editor folds in, deep-link
   access model** — Stage creation in the studio now includes world-map pin

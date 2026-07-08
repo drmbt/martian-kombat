@@ -24,7 +24,8 @@
     "gen:assets": "node tools/gen-asset-manifest.mjs",
     "gen:key": "node tools/corridorkey.mjs",
     "gen:voice": "node tools/gen-voice.mjs",
-    "gen:qa": "node tools/qa/run.mjs pose_qa.py"
+    "gen:qa": "node tools/qa/run.mjs pose_qa.py",
+    "gen:busts": "node tools/qa/run.mjs portrait_crop.py --all"
   },
   "dependencies": {
     "peerjs": "^1.5.5",

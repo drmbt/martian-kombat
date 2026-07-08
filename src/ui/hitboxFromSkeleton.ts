@@ -9,12 +9,7 @@
 // FightScene.cellBoxToHitbox, which uses the sprite's RENDER scale (so the box
 // draws over the art) — NOT the character `scale` collision multiplier.
 import type { Box, MoveDef } from '../engine';
-
-const CELL_W = 288;
-const CELL_H = 384;
-const FLOOR_FRAC = 0.88; // MUST match tools/qa (see FightScene FLOOR_FRAC)
-const ORIGIN_CX = CELL_W / 2; // 144
-const ORIGIN_FEET = FLOOR_FRAC * CELL_H; // ~338
+import { ORIGIN_CX, ORIGIN_FEET } from '../render/coords';
 
 type Joints = Record<string, [number, number, number]>;
 export type StrikeKind = 'punch' | 'kick';

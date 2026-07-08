@@ -13,6 +13,8 @@ import {
 } from './creatorModel';
 import { hitboxFromSkeleton, strikeKind } from './hitboxFromSkeleton';
 import { STAGES } from '../data/stages';
+import { ART_MARGIN, CELL_H, CELL_W, ORIGIN_CX, ORIGIN_FEET } from '../render/coords';
+import { cellBoxToHitbox, footOffset } from '../render/geometry';
 
 const el = <K extends keyof HTMLElementTagNameMap>(
   tag: K, css = '', text = '',
@@ -1472,7 +1474,7 @@ export class CharacterCreatorPanel {
   private async composeSheet(): Promise<{ sheetBase64: string; meta: object } | null> {
     const plan = this.m.sheetPlan(); // { name, jobKey } for base + attack-phase + special cells
     if (!plan.length) return null;
-    const cw = 288, ch = 384, cols = 6, rows = Math.ceil(plan.length / cols);
+    const cw = CELL_W, ch = CELL_H, cols = 6, rows = Math.ceil(plan.length / cols);
     const c = document.createElement('canvas'); c.width = cols * cw; c.height = rows * ch;
     const ctx = c.getContext('2d')!;
     for (let i = 0; i < plan.length; i++) {
@@ -1711,19 +1713,15 @@ export class CharacterCreatorPanel {
   /** auto-fit each attack move's hitbox from its ACTIVE cell's skeleton. */
   private autoHitboxesFromSkeleton(render = true): void {
     const def = this.m.buildFullCharacter() as { hurtStand: { h: number }; spriteOffsetY?: number; moves: Record<string, { input?: unknown }> };
-    // EXACTLY the Sprite Editor's FightScene.cellBoxToHitbox: the render scale
-    // (hurtStand.h·1.32/384) AND the vertical render offset between the collision
-    // origin (f.y) and the drawn feet (SPRITE_FOOT_OFFSET_Y + spriteOffsetY). The
-    // offset was missing before, so auto boxes sat a few px off the sprite editor's.
-    const rs = (def.hurtStand.h * 1.32) / 384;
-    const foot = CharacterCreatorPanel.SPRITE_FOOT_OFFSET_Y + (def.spriteOffsetY ?? 0);
     for (const c of this.m.allAttackCells()) {
       if (!c.active) continue;
       const joints = this.m.skeletons[c.name]; if (!joints) continue;
       const kind = strikeKind(c.move, def.moves[c.move] as never);
       const box = hitboxFromSkeleton(joints, kind);
       if (!box) continue;
-      this.m.autoHitboxes[c.move] = { x: Math.round(box.x * rs), y: Math.round(box.y * rs + foot), w: Math.round(box.w * rs), h: Math.round(box.h * rs) };
+      // the SAME transform the Sprite Editor uses (src/render/geometry) — these
+      // two hand-rolled copies drifted once before they were unified
+      this.m.autoHitboxes[c.move] = cellBoxToHitbox(def, box);
     }
     if (render) this.render();
   }
@@ -2271,9 +2269,9 @@ export class CharacterCreatorPanel {
   private async setCellImage(name: string, file: File): Promise<void> {
     const dataUrl = await readFile(file);
     const img = await this.loadImg(dataUrl);
-    const c = document.createElement('canvas'); c.width = 288; c.height = 384;
+    const c = document.createElement('canvas'); c.width = CELL_W; c.height = CELL_H;
     const ctx = c.getContext('2d')!;
-    const s = Math.min(288 / img.naturalWidth, 384 / img.naturalHeight);
+    const s = Math.min(CELL_W / img.naturalWidth, CELL_H / img.naturalHeight);
     const w = img.naturalWidth * s, h = img.naturalHeight * s;
     ctx.drawImage(img, (288 - w) / 2, 384 - h, w, h); // contain, feet at bottom
     const key = 'sprite:' + name;
@@ -2441,7 +2439,6 @@ export class CharacterCreatorPanel {
     if (port?.dataUrl) { ctx.save(); ctx.beginPath(); ctx.rect(12, 12, 70, 70); ctx.clip(); this.drawContain(ctx, port.dataUrl, 12, 12, 70, 70); ctx.restore(); ctx.strokeStyle = '#3f6070'; ctx.lineWidth = 1; ctx.strokeRect(12, 12, 70, 70); }
   }
 
-  private static readonly SPRITE_FOOT_OFFSET_Y = 16; // MUST match FightScene (render gap between f.y and the drawn feet)
   // The SAME limb graph + colors FightScene.drawSkeleton uses (torso/head orange,
   // arms blue, legs green; per-finger hands; ankle→toe/heel feet) so the creator
   // overlay reads identically to the in-game/Sprite-Editor F3 skeleton.
@@ -2468,10 +2465,10 @@ export class CharacterCreatorPanel {
   private static readonly SKEL_HAND_COLOR = '#33e0ff';
   private static readonly SKEL_FOOT_COLOR = '#3ad64a';
 
-  /** map a cell-space point (288×384) onto the drawn art in the preview. */
+  /** map a cell-space point (CELL_W×CELL_H) onto the drawn art in the preview. */
   private cellToPreview(jx: number, jy: number): [number, number] {
-    const g = this.geom!; const s = g.drawH / 384;
-    return [g.W / 2 + (jx - 144 + g.ox) * s, g.floorY + (jy - 384 + g.oy) * s];
+    const g = this.geom!; const s = g.drawH / CELL_H;
+    return [g.W / 2 + (jx - ORIGIN_CX + g.ox) * s, g.floorY + (jy - CELL_H + g.oy) * s];
   }
 
   /** DWPose skeleton over the current frame's art — a 1:1 port of
@@ -2525,11 +2522,11 @@ export class CharacterCreatorPanel {
     const g = this.geom;
     const W = this.previewCanvas.width, H = this.previewCanvas.height;
     const drawH = g?.drawH ?? H * 0.82;
-    const s = drawH / 384;               // cell → preview px
-    const e = drawH / (256 * 1.32);      // engine → preview px
+    const s = drawH / CELL_H;                  // cell → preview px
+    const e = drawH / (256 * ART_MARGIN);      // engine → preview px (256 = default hurtStand.h)
     const floorY = g?.floorY ?? Math.round(H * 0.94);
     const ox = (g?.ox ?? 0) * s, oy = (g?.oy ?? 0) * s; // current-frame art shift (jump/anti-air)
-    return { cx: W / 2 + ox, feetY: floorY + oy - (384 - 0.88 * 384) * s, e };
+    return { cx: W / 2 + ox, feetY: floorY + oy - (CELL_H - ORIGIN_FEET) * s, e };
   }
 
   /** the move currently being previewed as a group (normal or special), or null. */
@@ -2549,7 +2546,7 @@ export class CharacterCreatorPanel {
   /** the render y-offset between the collision origin (f.y) and the drawn sprite
    *  feet — SPRITE_FOOT_OFFSET_Y + spriteOffsetY, exactly as FightScene applies it
    *  (and as the Sprite Editor's cellBoxToHitbox bakes into an auto hitbox). */
-  private footOffset(): number { return CharacterCreatorPanel.SPRITE_FOOT_OFFSET_Y + (this.builtDef().spriteOffsetY ?? 0); }
+  private footOffset(): number { return footOffset(this.builtDef()); }
 
   /** the move's effective engine hitbox: the RIG-tuned one, else the built default
    *  (throttled buildFullCharacter). Returns null for boxless moves (throws/projectiles). */
@@ -2662,7 +2659,7 @@ export class CharacterCreatorPanel {
 
   // ── placeholder drawing (mock mode) ──────────────────────────────────────
   private placeholder(kind: string, seed: string, color: string): string {
-    const c = document.createElement('canvas'); c.width = 288; c.height = 384;
+    const c = document.createElement('canvas'); c.width = CELL_W; c.height = CELL_H;
     const ctx = c.getContext('2d')!;
     const s = seed.split('').reduce((a, ch) => a + ch.charCodeAt(0), 0);
     if (kind === 'portrait') this.drawHead(ctx, 144, 210, 120, color);

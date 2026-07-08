@@ -300,7 +300,7 @@ Cardinality requirements:
       });
 
       // POST /__editor/skeleton-regen  { id, cells: [{ name, pngBase64 }] }
-      // -> runs DWPose (tools/qa/infer_keypoints.py) on the freshly exported
+      // -> runs RTMPose (tools/qa/infer_keypoints.py) on the freshly exported
       //    cells and returns { name: { joint: [x, y, conf] } }.
       server.middlewares.use('/__editor/skeleton-regen', (req, res, next) => {
         if (req.method !== 'POST') return next();

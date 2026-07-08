@@ -37,6 +37,8 @@ import { HudModel } from '../presentation/hudModel';
 import { UiLayer } from '../ui/layer';
 import { WinOverlay } from '../ui/WinOverlay';
 import { FightShell } from './fightShell';
+import { ART_MARGIN, CELL_H, CELL_W, FLOOR_FRAC, SPRITE_FOOT_OFFSET_Y } from '../render/coords';
+import * as geom from '../render/geometry';
 
 // Cells are looked up BY NAME from each sheet's meta.json (written by
 // tools/pack-sheet.mjs), so v2 six-button sheets and legacy 23-cell sheets
@@ -44,16 +46,11 @@ import { FightShell } from './fightShell';
 /** Round ended by the clock (never true when the round clock is off). */
 const timedOut = (s: GameState): boolean => s.rules.roundTicks > 0 && s.timer <= 0;
 
-const CELL_W = 288;
-const CELL_H = 384;
-// Fraction of cell height where the fighter's feet sit — the sprite anchor and
-// skeleton floor line. MUST match FLOOR_FRAC in tools/qa/normalize_floor.py
-// (canonical) so the packed art's normalized feet land on the ground.
-const FLOOR_FRAC = 0.88;
+// CELL_W/CELL_H/FLOOR_FRAC/SPRITE_FOOT_OFFSET_Y now come from src/render/coords
+// (the single source shared with SelectScene, the editors, and tools/qa).
 const SHADOW_W = 96;
 const SHADOW_H = 36;
 const SHADOW_PAD = 8;
-const SPRITE_FOOT_OFFSET_Y = 16;
 const PHASE_NAME = ['startup', 'active', 'recovery'] as const;
 // per-special projectile draw size (square px); default 72
 const PROJ_SIZE: Record<string, number> = {
@@ -1067,7 +1064,7 @@ export class FightScene extends Phaser.Scene {
     const dist = Math.max(0, FLOOR_Y - f.y);
     const crouch = k === 'crouch' || k === 'landing' || f.action.guard === 'crouch' || (k === 'attack' && f.action.moveId?.startsWith('c'));
     const down = k === 'knockdown' || k === 'getup' || (k === 'ko' && f.y >= FLOOR_Y);
-    const artW = (def.hurtStand.h * 1.32 * CELL_W) / CELL_H;
+    const artW = geom.renderScale(def) * CELL_W;
     const width = artW * (down ? 1.78 : crouch ? 1.58 : 1.5) * (air ? Math.max(0.6, 1 - dist / 460) : 1);
     const height = (down ? 39 : crouch ? 34 : 32) * (air ? Math.max(0.58, 1 - dist / 540) : 1);
     const alpha = (down ? 0.64 : 0.74) * (air ? Math.max(0.24, 1 - dist / 280) : 1);
@@ -1196,9 +1193,9 @@ export class FightScene extends Phaser.Scene {
       if (sprite) {
         const flash = this.hitFlashSprites[slot];
         sprite.setVisible(true);
-        const h = def.hurtStand.h * 1.32; // art has margin around the body
+        const h = def.hurtStand.h * ART_MARGIN; // art has margin around the body
         sprite.setDisplaySize((h * CELL_W) / CELL_H, h);
-        sprite.setPosition(f.x, f.y + SPRITE_FOOT_OFFSET_Y + (def.spriteOffsetY ?? 0));
+        sprite.setPosition(f.x, f.y + geom.footOffset(def));
         sprite.setFlipX(f.facing === -1);
         sprite.setRotation(0);
         const frame = burnt ? this.cellFor(slot, ['down', 'fall', 'hit']) : this.actionToCell(slot, f);
@@ -1465,13 +1462,9 @@ export class FightScene extends Phaser.Scene {
       if (!joints) continue;
       const f = this.state.fighters[slot];
       const def = characters[f.charId];
-      const h = def.hurtStand.h * 1.32;
-      const scale = h / CELL_H;
-      const mirror = f.facing === -1 ? -1 : 1;
-      const toWorld = (jx: number, jy: number): [number, number] => [
-        f.x + mirror * (jx - 0.5 * CELL_W) * scale,
-        f.y + SPRITE_FOOT_OFFSET_Y + (def.spriteOffsetY ?? 0) + (jy - FLOOR_FRAC * CELL_H) * scale,
-      ];
+      const mirror: 1 | -1 = f.facing === -1 ? -1 : 1;
+      const toWorld = (jx: number, jy: number): [number, number] =>
+        geom.cellToWorld(def, f.x, f.y, jx, jy, mirror);
       const bone = (a: string, b: string, color: number, w = 2): void => {
         const ja = joints[a];
         const jb = joints[b];
@@ -1629,36 +1622,24 @@ export class FightScene extends Phaser.Scene {
     }
   }
 
-  /** the sprite's cell->world transform for slot 0 (facing right in editor) */
-  private editorCellTransform(): { scale: number; ox: number; oy: number } {
+  /** the editor's slot-0 fighter def (transforms live in src/render/geometry) */
+  private editorDef(): { def: (typeof characters)[string]; fx: number; fy: number } {
     const f = this.state.fighters[0];
-    const def = characters[f.charId];
-    const scale = (def.hurtStand.h * 1.32) / CELL_H;
-    return { scale, ox: f.x, oy: f.y + SPRITE_FOOT_OFFSET_Y + (def.spriteOffsetY ?? 0) };
+    return { def: characters[f.charId], fx: f.x, fy: f.y };
   }
   private cellToWorld(jx: number, jy: number): [number, number] {
-    const { scale, ox, oy } = this.editorCellTransform();
-    return [ox + (jx - 0.5 * CELL_W) * scale, oy + (jy - FLOOR_FRAC * CELL_H) * scale];
+    const { def, fx, fy } = this.editorDef();
+    return geom.cellToWorld(def, fx, fy, jx, jy);
   }
 
-  /** SpriteEditorHost: an origin-relative CELL-space box (hitboxFromSkeleton's
-   *  output, x from center / y from feet) -> an engine move.hitbox that
-   *  worldBox draws exactly over the art. Uses the RENDER scale + the y render
-   *  offset, so a box that hugs the drawn hand stays hugging it (the character
-   *  `scale` is a separate collision multiplier and must NOT be used here). */
+  /** SpriteEditorHost: delegate to the shared transform (RENDER scale + foot
+   *  offset — NOT the collision `scale`; see src/render/geometry.ts). */
   cellBoxToHitbox(b: Box): Box {
-    const { scale, oy } = this.editorCellTransform();
-    const f = this.state.fighters[0];
-    return {
-      x: Math.round(b.x * scale),
-      y: Math.round(b.y * scale + (oy - f.y)),
-      w: Math.round(b.w * scale),
-      h: Math.round(b.h * scale),
-    };
+    return geom.cellBoxToHitbox(this.editorDef().def, b);
   }
   private worldToCell(wx: number, wy: number): [number, number] {
-    const { scale, ox, oy } = this.editorCellTransform();
-    return [0.5 * CELL_W + (wx - ox) / scale, FLOOR_FRAC * CELL_H + (wy - oy) / scale];
+    const { def, fx, fy } = this.editorDef();
+    return geom.worldToCell(def, fx, fy, wx, wy);
   }
 
   private installEditorPointer(): void {

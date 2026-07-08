@@ -14,8 +14,8 @@ initial grid generation. Tools live in `tools/qa/`; the committed library is
 ## A. Generation (one model call → a whole animation)
 
 nano-banana reliably emits a clean **NxN grid of sequential animation frames** in
-ONE pass (3×3 = 9 frames, 4×4 = 16). `tools/qa/gen-vfx-grid.mjs` prompts it;
-`tools/qa/vfx_grid.py` post-processes; `tools/qa/vfx_canonize.py` bakes the
+ONE pass (3×3 = 9 frames, 4×4 = 16). `tools/vfx/gen-vfx-grid.mjs` prompts it;
+`tools/vfx/vfx_grid.py` post-processes; `tools/vfx/vfx_canonize.py` bakes the
 keepers into the library.
 
 ### Grid prompt rules (in `gen-vfx-grid.mjs`)
@@ -101,8 +101,8 @@ all.** Sprint 24 (SPRINTBOARD) tracks wiring this into the renderer.
 
 ## Commands
 ```
-node tools/qa/gen-vfx-grid.mjs            # generate NxN spark grids (edit SPARKS)
-python3 tools/qa/vfx_grid.py              # key/inset/normalize/center/validate + gif previews
-python3 tools/qa/vfx_grid_boomerang.py    # <id>-2.gif truncated bloom-and-recede loops
-python3 tools/qa/vfx_canonize.py          # bake keepers -> public/assets/vfx/sparks/ + tags
+node tools/vfx/gen-vfx-grid.mjs            # generate NxN spark grids (edit SPARKS)
+python3 tools/vfx/vfx_grid.py              # key/inset/normalize/center/validate + gif previews
+python3 tools/vfx/vfx_grid_boomerang.py    # <id>-2.gif truncated bloom-and-recede loops
+python3 tools/vfx/vfx_canonize.py          # bake keepers -> public/assets/vfx/sparks/ + tags
 ```

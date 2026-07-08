@@ -11,6 +11,8 @@ import type { SpriteSheetModel } from './spriteSheetModel';
 import { hitboxFromSkeleton, strikeKind } from './hitboxFromSkeleton';
 import { writeCharacterMoves, writeFlattenedCharacter } from './moveWriteback';
 import { setCharacterScale, resetScaleBase } from '../data/characterScale';
+import { FLOOR_FRAC } from '../render/coords';
+import { renderScale } from '../render/geometry';
 
 /** what the panel needs from FightScene (structural — FightScene satisfies it) */
 export interface SpriteEditorHost {
@@ -30,7 +32,6 @@ export interface SpriteEditorHost {
 const POSE_IDLE = '__idle__';
 const POSE_WALK = '__walk__';
 
-const FLOOR_FRAC = 0.88;
 const THUMB_W = 54;
 const THUMB_H = 72;
 
@@ -719,11 +720,10 @@ export class SpriteEditorPanel {
     }
     this.status('flattening scale + offset → identity…', '#7fe3ff');
     try {
-      // bake spriteOffsetY (render-only, world px) into the sheet by shifting every
-      // cell by offset / renderScale cell-px (renderScale = hurtStand.h·1.32/CELL_H)
+      // bake spriteOffsetY (render-only, world px) into the sheet by shifting
+      // every cell by offset / renderScale cell-px (src/render/geometry)
       if (oy !== 0) {
-        const renderScale = (this.def.hurtStand.h * 1.32) / this.model.cellH;
-        const dy = Math.round(oy / renderScale);
+        const dy = Math.round(oy / renderScale(this.def));
         if (dy !== 0) this.model.offsetCells(this.model.frames.map((_, i) => i), 0, dy);
       }
       await this.postSheet(); // baked pixels (+ shifted keypoints) → sheet.png/meta

@@ -2,11 +2,12 @@
 // sheet, for the Sprite Editor (src/ui/SpriteEditorPanel.ts + FightScene
 // spriteEditor mode). Slices the loaded sheet into per-cell canvases, applies
 // pixel edits (scale / offset / normalize / swap / clipboard / regen) to those
-// canvases in memory, keeps the DWPose keypoints in lockstep, and mirrors the
+// canvases in memory, keeps the RTMPose keypoints in lockstep, and mirrors the
 // composited result into a Phaser CanvasTexture so the live looping fighter
 // shows every edit immediately. Nothing touches disk until WRITE (which POSTs
 // exportPngBase64()/exportMeta() to /__editor/sheet).
 import Phaser from 'phaser';
+import { FLOOR_FRAC } from '../render/coords';
 
 export interface SheetMeta {
   cellW: number;
@@ -16,8 +17,6 @@ export interface SheetMeta {
   frames: string[];
   skeletons?: Record<string, Record<string, [number, number, number]>>;
 }
-
-const FLOOR_FRAC = 0.88; // MUST match tools/qa (see FightScene FLOOR_FRAC)
 
 type Joints = Record<string, [number, number, number]>;
 
