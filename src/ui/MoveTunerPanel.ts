@@ -145,7 +145,7 @@ export class MoveTunerPanel {
     // boxes + projectiles) live; saved with the moves on WRITE
     const def = this.defs[this.chars[this.inspectSlot]];
     this.el.appendChild(
-      this.numField('scale', def.scale ?? 1, (n) => setCharacterScale(def, Math.max(0.3, n))),
+      this.numField('scale', def.scale ?? 1, (n) => setCharacterScale(def, Math.max(0.3, n)), 0.01),
     );
 
     // per-side control mode
@@ -435,7 +435,7 @@ export class MoveTunerPanel {
     return wrap;
   }
 
-  private numField(label: string, value: number, onChange: (n: number) => void): HTMLDivElement {
+  private numField(label: string, value: number, onChange: (n: number) => void, step = 1): HTMLDivElement {
     const row = document.createElement('div');
     row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:6px;margin:2px 0;';
     const l = document.createElement('span');
@@ -443,6 +443,9 @@ export class MoveTunerPanel {
     l.style.color = '#8fa6b2';
     const input = document.createElement('input');
     input.type = 'number';
+    // frame data is integer (default), but fine controls like character
+    // scale need fractional steps — an un-stepped number input spins by 1
+    input.step = String(step);
     input.value = String(value);
     input.style.cssText = 'width:70px;background:#172230;color:#eaf6fb;border:1px solid #3f6070;';
     input.addEventListener('change', () => onChange(Number(input.value) || 0));
