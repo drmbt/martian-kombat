@@ -21,6 +21,7 @@ const ROSTER = ['catherine', 'flo', 'freeman', 'gene', 'kirby', 'marzipan', 'vin
 const TWEAKS = {
   vincent: 'He is wearing his signature small round dark sunglasses.',
   kirby: 'Use the face from the FIRST reference photo, but dress them in the same colorful outfit they wear in the SECOND reference image (their fighting sprite).',
+  rj: 'He wears his woven straw cowboy hat; full reddish-brown beard, weathered sunburned desert face, a thin gold chain at the neck.',
   tao: 'He is in his early 50s — a weathered handsome face with creases at the eyes, grey streaking the temples and stubble (do NOT make him look young). He wears round dark sunglasses and the collar of an ornate embroidered burgundy suit.',
 };
 
@@ -33,13 +34,16 @@ async function gen(id) {
   const face = ['.jpg', '.png', '.jpeg', '-face.png', '-face.jpg']
     .map((suffix) => join(ROOT, `assets/character-inspo/face/${id}${suffix}`))
     .find((p) => existsSync(p));
-  if (!face) {
-    console.warn(`[${id}] no face photo, skipping`);
+  // text-seeded fighters (rj) have no photo — their canonical IS the identity
+  const canonical = join(ROOT, `assets/raw/canonical/${id}.png`);
+  const ref = face ?? (existsSync(canonical) ? canonical : null);
+  if (!ref) {
+    console.warn(`[${id}] no face photo or canonical, skipping`);
     return;
   }
   const rawOut = join(ROOT, 'assets/raw/icons', `${id}.png`);
   if (!skip(rawOut, force)) {
-    const refs = [face];
+    const refs = [ref];
     // Kirby: face photo + canonical sprite for the outfit
     if (id === 'kirby') refs.push(join(ROOT, 'assets/raw/canonical/kirby.png'));
     const prompt = `${BASE}\n${TWEAKS[id] ?? ''}`;

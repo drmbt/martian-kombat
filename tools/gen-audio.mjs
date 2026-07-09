@@ -65,6 +65,7 @@ const announcerLines = {
   earl: 'EARL!',
   ben: 'BEN!',
   tao: 'TAO!',
+  rj: 'R J!',
   'finish-them': 'FINISH THEM!',
   fatality: 'FATALITY!',
   // stage-name call-outs (announced on stage select, mirrors the fighter
@@ -240,6 +241,23 @@ export const voiceLines = {
       'duende-kick': '¡Olé!',
       'maestros-advance': 'Andante!',
       throw: 'You bore me.',
+    },
+  },
+  // THE SUB-BOSS — RJ "The Gatekeeper": laconic desert artist. Daniel
+  // (VOICE_FLO) low style reads dry and weathered.
+  rj: {
+    voice: VOICE_FLO,
+    style: 0.2,
+    stability: 0.6,
+    kiai: ['Pow!', 'Git!', 'Hah!', 'Boo!', 'Plink!', 'Yaw!'],
+    hurt: ['Agh!', 'Dang it!', 'Ow!', 'Hey now!', 'Grr!', 'Tsk!'],
+    victory: ['Another ghost for the collection.', 'The birds saw everything.', 'Get off my lot.', 'Ooo-ooo yourself.'],
+    moves: {
+      'bb-gun': 'Plink!',
+      'tallest-ghost': 'Boo.',
+      'scatter-flock': 'Fly!',
+      'excavator-charge': 'Dig!',
+      throw: 'Evicted!',
     },
   },
 };

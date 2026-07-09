@@ -21,6 +21,7 @@ import vanessa from './vanessa.json';
 import ben from './ben.json';
 import earl from './earl.json';
 import tao from './tao.json';
+import rj from './rj.json';
 
 // Bake each character's optional `scale` into its geometry at load (see
 // src/data/characterScale.ts — the same math the dev editor re-applies live).
@@ -44,4 +45,5 @@ export const characters: Defs = {
   'earl': load(earl),
   'ben': load(ben),
   'tao': load(tao), // THE END BOSS (arcade M. Bison analog)
+  'rj': load(rj), // the sub-boss gatekeeper (Sagat analog)
 };

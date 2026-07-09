@@ -1488,6 +1488,32 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-08 · assets+data+tools · RJ "The Gatekeeper" SHIPS — 18th
+  fighter, Tao's first hench goon (the Sagat analog), built AUTONOMOUSLY**
+  — Vincent's brief: "look RJ up and pull it off." Research pass (web +
+  lore sheet) found only the repo's own "Rapha (RJ's raccoon-wrangler)"
+  breadcrumb; the first build interpreted RJ as the town RACCOON (full
+  asset run: canonical/frames-in-flight/VO/Trash-Day fatality/icon) before
+  Vincent supplied the real inspo photos + facts (ghost artist — World's
+  Tallest Ghost — bird fosterer, BB gun, excavator). Raccoon assets purged,
+  rebuilt from the photos: canonical (straw hat, denim, BB gun, belt ghost
+  charm, ghost-flame aura — compact guard ✓), 62 cells + BB-pellet +
+  tallest-ghost projectiles, "World's Tallest Ghost" fatality (the loser
+  is draped, hoisted, and becomes the newest installation), stock gruff VO
+  (Daniel low-style) + "R J!" announcer, square icon/bust/KO, kit =
+  the Sagat mapping (BB Gun ↔ Tiger Shot, Scatter Flock dp ↔ Tiger
+  Uppercut, Excavator Charge ↔ rush, Tallest Ghost trap, "Evicted" throw)
+  with full grammar via core/kit.mjs, arcade gatekeeper story. Pipeline
+  fixes found by the run: gen-frames' low-pose anchor now covers the
+  `down` cell (unanchored, the model stood the KO pose back up — one
+  reroll burned proving it), gen-icons falls back to the canonical for
+  photo-less fighters. KNOWN QUIRK: `gen:busts --all` re-crops (byte-
+  churns) every existing bust each run — roster busts restored from HEAD
+  twice; make portrait_crop skip-existing sometime. Verified live: RJ vs
+  TAO on salton, zero console errors, BB Gun + Tallest Ghost both spawning
+  projectiles in-engine. 379/379 vitest, tsc + prod build clean. — Claude
+  (Fable)
+
 - **2026-07-08 · assets+data+tools · THE DOGFOOD RUN: TAO SHIPS — 17th
   fighter, the arcade end boss, ZERO rerolls** — prompt-craft fixes first
   (user-directed): portraitPrompt/defeatPrompt(+soft) are now SQUARE

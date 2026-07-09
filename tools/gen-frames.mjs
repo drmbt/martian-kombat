@@ -56,7 +56,9 @@ async function genChar(charId) {
     ? join(outDir, `${String(lowAnchorName.i).padStart(2, '0')}-${lowAnchorName.id}.png`)
     : null;
   const LOW_ANCHOR = ` CRITICAL: copy the BODY HEIGHT of the SECOND reference image (the low pose) — the top of the head at that same low height, empty green above.`;
-  const isLowCell = (id) => id === 'crouch' || id === 'block-crouch' || /^c[lmh][pk]-/.test(id);
+  // 'down' (the KO lying pose) needs the height anchor MOST — unanchored, the
+  // model stands the character back up (seen on rj 2026-07-08)
+  const isLowCell = (id) => id === 'crouch' || id === 'block-crouch' || id === 'down' || /^c[lmh][pk]-/.test(id);
 
   // extraRefs: additional reference images (prior special phases, projectile
   // art, per-move inspo) appended after the canonical — the model keeps them

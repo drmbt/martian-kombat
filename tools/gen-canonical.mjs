@@ -45,6 +45,10 @@ const FLAVOR = {
   // portraits were swept in Sprint 27 Phase 0 (an unscoped portrait pass
   // once resurrected one from stale raws). Re-add deliberately if haidai
   // becomes a fighter (flavor text lives in git history).
+  // THE SUB-BOSS — RJ (Tao's first hench goon; the Sagat analog): Bombay
+  // Beach ghost artist (World's Tallest Ghost), bird fosterer, BB-gun
+  // plinker, excavator rider. FX ghost-WHITE/SILVER + AMBER, never green.
+  rj: `Character flavor: "The Gatekeeper" — the Biennale's first hench goon and Bombay Beach's resident ghost artist. Keep his real face and full reddish-brown beard from the photos, shoulder-length hair under a woven STRAW COWBOY HAT, a worn denim work shirt with rolled sleeves, jeans, dark work boots, a thin gold chain. He carries a well-used BB GUN (a small air rifle) slung in one hand, and a small white sheet-ghost charm dangles from his belt. Weathered, unhurried, faintly amused. Any light effects are ghost-WHITE/SILVER and warm AMBER (never green).`,
   // THE END BOSS (arcade mode's M. Bison analog — see CLAUDE.md arcade note)
   tao: `Character flavor: "The Patron Prince" — the END BOSS: an Italian aristocrat turned desert art patron, imperious and effortlessly charming, a man in his early 50s — a lived-in, weathered-handsome face with creases at the eyes, grey streaking the temples of the wild swept-up hair and flecking the stubble (do NOT make him look young). Keep the ornate embroidered burgundy-maroon suit with pale filigree patterns, the matching wide-leg trousers, tan leather cowboy boots and round sunglasses from the photo. A commanding, theatrical fighting stance — weight back, chin high, both hands in a loose conductor's guard held CLOSE to the chest; faint GOLD filigree light traces curling between the fingers (never green).`,
   // Tubs (his robot) is deliberately NOT in the canonical — he's a separate
@@ -65,6 +69,7 @@ const FACE = {
   earl: 'assets/character-inspo/face/earl.jpg',
   rapha: 'assets/character-inspo/face/rapha.jpg',
   tao: 'assets/character-inspo/face/tao-face.png',
+  rj: 'assets/character-inspo/face/rj-face.png',
   vanessa: 'assets/character-inspo/face/vanessa.jpg',
   ygor: 'assets/character-inspo/face/ygor.jpg',
 };

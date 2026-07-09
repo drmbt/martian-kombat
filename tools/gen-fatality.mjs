@@ -151,6 +151,18 @@ const FATALITIES = {
       `The man walking away across the desert floor, straightening an embroidered cuff, as the golden frame hangs behind him containing only a settling pile of ash — a small elegant gallery placard of light glowing beneath the frame. He does not look back. Final, curatorial.`,
     ],
   },
+  // THE SUB-BOSS — RJ: "World's Tallest Ghost" — the loser becomes the
+  // newest installation in his Bombay Beach ghost series. Eerie, not gory.
+  rj: {
+    id: 'tallest-ghost',
+    canonical: 'assets/raw/canonical/rj.png',
+    panels: [
+      `The man from the reference image (straw cowboy hat, reddish-brown beard, denim shirt, jeans, boots) unfurling an enormous WHITE SHEET over ${HUSK} with a matador's sweep, desert twilight, dust swirling, a tall bare steel pole standing behind them. Low dramatic angle.`,
+      `The sheet settling over the standing husk, the fabric draping into a tall GHOST shape with two dark hollow eyes forming where the face was, a faint ghost-white glow blooming through the cloth, the man calmly cinching a rope. Side angle, eerie and quiet.`,
+      `The man HOISTING the new sheet-ghost up the tall steel pole with the rope, hand over hand, the draped ghost rising high against the desert sky to tower over the rooftops — the WORLD'S TALLEST GHOST, its tattered hem fluttering. Dramatic low angle looking up the pole.`,
+      `The man standing back with small white and grey birds settling on his shoulders and hat, admiring the towering finished ghost installation glowing faintly against the dusk, a hand-painted "oOo-OoO" scrawl on a wall behind him. He tips his hat to it. Final, serene.`,
+    ],
+  },
 };
 
 async function genPanel(charId, spec, i) {
