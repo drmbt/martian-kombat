@@ -8,13 +8,12 @@
 //
 // --mock runs the whole DAG at $0 (MK_GEN_MOCK placeholders). Without --yes,
 // a real run prints the estimated API-call count and asks for confirmation —
-// no auto-fire spends (§2.8). The privacy opt-out gate runs FIRST, always.
+// no auto-fire spends (§2.8).
 import { createInterface } from 'node:readline';
 import { join } from 'node:path';
 import { ROOT, concurrencyArg } from './lib.mjs';
 import { JobRunner } from './core/jobs.mjs';
 import { WORKERS, buildCharacterDag, dagPrereqs, estimateDag } from './core/pipeline.mjs';
-import { lookupFighter } from './core/lore.mjs';
 
 const arg = (name) => {
   const i = process.argv.indexOf(name);
@@ -29,17 +28,6 @@ if (!charId) {
 }
 const mock = has('--mock');
 const only = arg('--only')?.split(',').map((s) => s.trim()).filter(Boolean) ?? null;
-
-// ── the HARD privacy gate, machine-enforced before anything else ──────────
-try {
-  await lookupFighter(charId, { cachePath: join(ROOT, 'assets/raw/lore-sheet.csv') });
-} catch (e) {
-  if (e?.optedOut) {
-    console.error(`✕ REFUSED: ${e.message}`);
-    process.exit(2);
-  }
-  throw e;
-}
 
 const missing = dagPrereqs(charId);
 if (missing.length && !only) {

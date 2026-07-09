@@ -34,5 +34,14 @@
     "modelId": "9c81ace6aa194af6974d523800d010ac",
     "title": "Martian Kombat — Ben",
     "createdAt": "2026-07-08T04:51:33.950Z"
+  },
+  "tao": {
+    "provider": "fish",
+    "modelId": "6501322ff1a545828d779f2461376e59",
+    "title": "Martian Kombat — tao",
+    "samples": [
+      "tao.wav"
+    ],
+    "createdAt": "2026-07-09T01:15:02.768Z"
   }
 }

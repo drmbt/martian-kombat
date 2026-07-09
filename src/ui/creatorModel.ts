@@ -78,6 +78,10 @@ export interface DesignDraft {
   specialPool: SpecialDraft[];
   physics: { health: number; walkSpeed: number; backSpeed: number; jumpVel: number; gravity: number; prejumpFrames: number };
   fatality: { id: string; name: string; input: string };
+  /** arcade-mode story (STUB feature — the mode itself isn't built yet):
+   *  the SF2-style intro motivation + the post-credits ending shown when the
+   *  fighter beats Tao and becomes Champion of the Bombay Beach Biennale */
+  arcade: { motivation: string; ending: string };
   stagePrompt: string;
   musicPrompt: string;
 }
@@ -323,6 +327,10 @@ export function makeDraft(name: string, description: string): DesignDraft {
     specialPool: mk(poolBase),
     physics: { health: 1000, walkSpeed: 3.3, backSpeed: 3.4, jumpVel: 18, gravity: 0.9, prejumpFrames: 4 },
     fatality: { id: 'finish', name: `${N} Finish`, input: 'hcb+P' },
+    arcade: {
+      motivation: `${N} hears the Bombay Beach Biennale has a champion's title — and a patron prince who has never been beaten. (edit me: why does ${N} set out?)`,
+      ending: `${N} stands over Tao as the biennale fireworks start. (edit me: the post-credits scene.)`,
+    },
     stagePrompt:
       'A Bombay Beach / Mars College desert locale, redraw as gritty 16-bit retro pixel-art anchored ' +
       'on the salton style reference. 21:9. The bottom quarter is a continuous textured walkable ground ' +
@@ -475,6 +483,7 @@ export class CreatorModel {
   buildFullCharacter(): Record<string, unknown> {
     this.draft ??= makeDraft(this.inputs.name, this.inputs.description);
     const d = this.draft;
+    d.arcade ??= { motivation: '', ending: '' }; // drafts saved before the arcade stub
     if (this.baseDef) return this.buildFromBase(d);
     const moves: Record<string, unknown> = {};
     for (const [key, m] of Object.entries(NORMAL_MOVES)) moves[key] = { ...m };
@@ -516,6 +525,8 @@ export class CreatorModel {
       hurtCrouch: { x: -52, y: -150, w: 104, h: 150 },
       moves,
       ...(this.inputs.stageMode !== 'none' && this.inputs.stageId ? { stage: this.inputs.stageId } : {}),
+      // arcade-mode story STUB: persisted now so the mode has data to build on
+      ...(d.arcade.motivation || d.arcade.ending ? { arcade: d.arcade } : {}),
       fatality: { id: d.fatality.id, name: d.fatality.name, input: parseControls(d.fatality.input), panels: 4 },
     };
   }
@@ -557,6 +568,7 @@ export class CreatorModel {
     // on a canon-reopened kit are never touched)
     applyKitGrammar(moves, d.specials);
     out.moves = moves;
+    if (d.arcade && (d.arcade.motivation || d.arcade.ending)) out.arcade = d.arcade;
     if (this.inputs.stageMode === 'none') delete out.stage;
     else if (this.inputs.stageId) out.stage = this.inputs.stageId;
     if (this.generatedFatality.length) out.fatality = { id: d.fatality.id, name: d.fatality.name, input: parseControls(d.fatality.input), panels: this.generatedFatality.length };

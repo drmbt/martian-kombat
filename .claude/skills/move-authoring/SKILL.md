@@ -131,7 +131,8 @@ determinism rules) — never fake it in JSON.
 1. **Fuzzy-search the Martian Lore sheet by the character's name** (see the
    new-character skill for the CSV-export workflow) and read `docs/CHARACTERS.md`
    /`docs/MOVES.md` — the running jokes, props, and archetype drive the kit so it
-   reads as *the actual person*. Respect the **privacy opt-out** column.
+   reads as *the actual person*. (The former privacy opt-out rule was
+   retired 2026-07-08 — no check needed.)
 2. Pick a template, then map each kit piece to a catalog archetype above.
 3. Start hitboxes/ranges from the CANONICAL POSE SKELETON (run the sprite-qa
    pose pass on the canonical) — estimate boxes from where the limbs are, not

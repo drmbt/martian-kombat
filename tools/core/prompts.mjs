@@ -80,3 +80,98 @@ export const fatalityBeats = (name, fatalityName) => {
     `the aftermath — ${N} standing victorious over the destroyed opponent, a smouldering husk`,
   ];
 };
+
+/** the creator/auto-pilot DESIGN-DRAFT prompt — one copy for the vite
+ *  endpoint (/__editor/creator/design) and headless scripts. Returns strict
+ *  JSON (see the shape inside); pair with geminiText responseMimeType json. */
+export const designPrompt = (name, description, lore) => `
+You are the narrative designer and fighting-game kit designer for Martian Kombat, a weird, affectionate SF2/MK-style fighter about real Mars College / Bombay Beach people.
+
+Task: turn the user's seed material into a playable, on-theme character draft. Preserve the person's specific jokes, contradictions, skills, places, and verbal texture. Do not genericize them into a trope.
+
+INPUT
+Name: ${name}
+One-line description: ${description || '(none provided)'}
+Lore/backstory notes: ${lore || '(none provided)'}
+
+ENGINE-CONSTRAINTS
+Return only buildable special moves. Supported archetypes and sensible controls:
+- projectile: qcf+P, qcf+K, hcf+P
+- sonic-boom: cbf+P, cbf+K
+- short-range-flame: qcb+P, qcf+P
+- lob-projectile: qcb+P, qcb+K
+- lingering-cloud: qcf+K, qcb+K
+- fuse-detonate: qcb+P, hcf+P
+- stationary-trap: qcb+K, qcf+K
+- slow-field: qcf+P, qcb+P
+- pull-projectile: hcf+P, qcf+P
+- multi-projectile: hcf+P, qcf+P
+- anti-air-dp: dp+P, dp+K
+- flash-kick: du+K, du+P
+- advancing-rush: qcf+K, hcf+K
+- horizontal-rush: bf+P, bf+K
+- mash: mash+P, mash+K
+- melee-rehit: qcf+P, PPP, KKK
+- command-grab: hcb+P, 360+P
+- heal-grab: hcb+P, 360+P
+- grab-recoil: hcb+K, 360+K
+- techable-throw: LPLK
+- teleport: qcb+K, qcf+K
+- mirror-teleport: qcb+K, qcf+K
+- reversal: qcb+P, qcb+K
+- reflector: qcb+P, hcb+P
+- projectile-immune: PPP, qcf+P, qcf+K
+- vault: qcf+K, hcf+K
+- leaping-strike: dp+K, qcf+K
+- yoga-float: qcb+P, qcb+K
+Do NOT invent unbuilt mechanics like installs, stances, armor, rekka chains, air throws, or forward-forward specials.
+
+STYLE RULES
+- The kit should read as the actual person through concrete props, habits, phrases, and lore.
+- Keep move names short enough for UI buttons: 1-4 words.
+- Descriptions should be vivid pose/art prompts and gameplay flavor, not mechanical JSON.
+- VO barks should be short enough for fighting-game audio, punchy, character-specific, and not mean-spirited unless the lore supports dry humor.
+- Kiai lines are attack exertions. Hurt lines are clipped pain/annoyance. Victory lines are post-round one-liners.
+- Stage prompt must describe a 21:9 gritty 16-bit pixel-art fight stage with a clear bottom-quarter walkable floor.
+- Music prompt must describe a loopable instrumental stage battle theme.
+
+ARCADE STORY WORLD (for the "arcade" block)
+The arcade ladder is a journey: the fighter moves through the Off Grid world of Mars College, into the town of Bombay Beach, fighting the other Martians one by one, then RJ (Tao's first hench goon — the Sagat of this world), and finally TAO RUSPOLI himself — the end boss (the M. Bison analog): aristocrat-turned-desert-patron, co-founder of the Bombay Beach Biennale. Winning makes the character Champion of the Bombay Beach Biennale. The "motivation" is the SF2-style attract/intro blurb: why THIS person sets out on that journey. The "ending" is their post-credits scene after defeating Tao — specific, funny or heartfelt, like classic SF2 endings.
+
+Return STRICT JSON with exactly this shape:
+{
+  "color": "hsl(H 55% 62%)",
+  "archetype": "zoner|grappler|rushdown|all-rounder|trickster",
+  "lore": {
+    "tagline": "one sentence character-select hook",
+    "personality": "one compact paragraph derived from the one-line description",
+    "backstory": "one arcade backstory paragraph derived from the lore"
+  },
+  "winQuotes": ["exactly 3 short victory quotes"],
+  "vo": {
+    "kiai": ["exactly 6 attack barks"],
+    "hurt": ["exactly 6 hurt barks"],
+    "victory": ["exactly 4 voice victory barks"]
+  },
+  "specials": [
+    { "id": "slug", "name": "Move Name", "controls": "qcf+P", "archetype": "projectile", "description": "visual/gameplay prompt", "voiceLine": "1-4 word call-out shouted when the move fires (lore-specific, not the move name)" }
+  ],
+  "specialPool": [
+    { "id": "slug", "name": "Move Name", "controls": "qcb+K", "archetype": "teleport", "description": "visual/gameplay prompt", "voiceLine": "1-4 word call-out" }
+  ],
+  "physics": { "health": 1000, "walkSpeed": 3.3, "backSpeed": 3.4, "jumpVel": 18, "gravity": 0.9, "prejumpFrames": 4 },
+  "fatality": { "id": "slug", "name": "Fatality Name", "input": "hcb+P" },
+  "arcade": {
+    "motivation": "2-3 sentence arcade-mode intro blurb: why this character journeys to challenge the Biennale",
+    "ending": "2-4 sentence post-credits scene after they defeat Tao and become Champion of the Bombay Beach Biennale"
+  },
+  "stagePrompt": "stage art prompt",
+  "musicPrompt": "music prompt"
+}
+
+Cardinality requirements:
+- specials: exactly 4, each a different tactical role when possible.
+- specialPool: exactly 8 alternate buildable specials.
+- Use lowercase kebab-case ids.
+- Make controls match the archetype.
+- Return JSON only; no markdown, no commentary.`;

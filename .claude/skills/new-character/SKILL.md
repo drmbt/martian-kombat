@@ -18,15 +18,15 @@ special), ≥3 winQuotes, a themed (non-placeholder) fatality, AND the
 persisted `vo` block (kiai/hurt/victory line TEXTS in the character JSON) +
 per-move `voiceText` for any `voice: true` move — the mp3s are runtime
 artifacts, the JSON texts are the durable source (the Sprint 27 recovery
-lesson). Steps have hard ordering dependencies and a few easy-to-forget
+lesson). Also author the `arcade: { motivation, ending }` story block —
+the SF2-style intro (why they set out) + post-credits ending for arcade
+mode (a stub mode today; the canon arc runs through Mars College's Off Grid
+world into Bombay Beach, past RJ the hench goon, to Tao Ruspoli the end
+boss, crowning the Champion of the Bombay Beach Biennale). Steps have hard ordering dependencies and a few easy-to-forget
 gates. Follow this order; delegate the deep work to the paired skills.
 
-## Gate 0 — privacy opt-out (HARD RULE, check FIRST)
-
-Re-read the **Martian Lore sheet's "privacy opt out" column** before anything.
-Anyone marked "NO AI PLEASE" (as of 2026-07: Maya Luna, Peter, Roarke, Summer)
-must NEVER be scaffolded, generated, or referenced by name. If the requested
-person is opted out, stop and say so.
+*(The former privacy opt-out gate was retired by Vincent on 2026-07-08 — no
+opt-out check is needed anymore.)*
 
 ## Gate 1 — gather flavor from the lore sheet (fuzzy search by name)
 

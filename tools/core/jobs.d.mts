@@ -42,4 +42,5 @@ export class JobRunner {
   list(): Job[];
   idle(): Promise<void>;
   busy(): boolean;
+  persist(): void;
 }

@@ -99,6 +99,7 @@ export class CharacterCreatorPanel {
   private logEl!: HTMLDivElement;
   private logLines: string[] = [];
   private adoptEl!: HTMLDivElement;
+  private dockEl: HTMLDivElement | null = null; // studio: lower-left moves player
   private onBack: () => void;
 
   constructor(mount: HTMLElement, onBack: () => void, opts: { sceneHosted?: boolean; subject?: StudioSubject } = {}) {
@@ -187,13 +188,19 @@ export class CharacterCreatorPanel {
     // completeness gaps at a glance: what's missing before this fighter ships
     this.gapBarEl = el('div', 'display:flex;flex-wrap:wrap;gap:4px;padding:6px 16px;border-bottom:1px solid #22303e;background:#0b1119;');
     right.appendChild(this.gapBarEl);
-    // studio: the preview switcher rides the wizard column — the LIVE scene is
-    // the preview, so these buttons drive the live fighter (host.loopMove)
+    // studio: the moves/animation player docks LOWER-LEFT beneath the live
+    // fighter (not inside the dialog) — the scene is the preview, so the
+    // play buttons live where the character is (host.loopMove drives it).
+    // pointer-events:auto is load-bearing: the UiLayer root is
+    // pointer-events:none, so an undocked opt-in means dead buttons.
     if (this.sceneHosted) {
-      const strip = el('div', 'display:flex;flex-direction:column;gap:3px;padding:6px 16px;border-bottom:1px solid #22303e;background:#0b1119;');
-      strip.append(this.previewControls, this.previewCaption);
+      this.dockEl = el('div', 'position:absolute;left:12px;bottom:3%;width:36%;min-width:320px;max-width:560px;' +
+        'pointer-events:auto;display:flex;flex-direction:column;gap:3px;padding:8px 10px;z-index:5;' +
+        'background:rgba(9,13,20,.72);border:1px solid #22303e;border-radius:6px;backdrop-filter:blur(2px);' + FONT);
+      this.previewControls.style.justifyContent = 'flex-start';
       this.previewCaption.style.textAlign = 'left';
-      right.appendChild(strip);
+      this.dockEl.append(this.previewControls, this.previewCaption);
+      mount.appendChild(this.dockEl);
     }
     right.appendChild(bodyWrap);
     right.appendChild(this.logEl);
@@ -213,6 +220,7 @@ export class CharacterCreatorPanel {
     void this.save(); // flush a final save on unmount (HMR reload, scene exit)
     this.root.removeEventListener('keydown', this.stopFormKeys, true);
     this.root.removeEventListener('keyup', this.stopFormKeys, true);
+    this.dockEl?.remove();
     this.root.remove();
   }
 
@@ -228,6 +236,7 @@ export class CharacterCreatorPanel {
    *  module (a draft save is flushed on unmount so nothing is lost). */
   setMounted(v: boolean): void {
     this.root.style.display = v ? 'flex' : 'none';
+    if (this.dockEl) this.dockEl.style.display = v ? 'flex' : 'none';
     if (!v) { this.subject?.stopLoop?.(); void this.save(); } // leave the fighter playable
   }
 
@@ -376,6 +385,7 @@ export class CharacterCreatorPanel {
       const j = (await r.json()) as {
         ok?: boolean; error?: string; def?: Record<string, unknown>; meta?: { cellW?: number; cellH?: number; cols?: number; frames?: string[]; version?: number; normalized?: boolean };
         sheetBase64?: string; portraitBase64?: string; bustBase64?: string; koBase64?: string; stageBase64?: string;
+        canonicalBase64?: string; voClips?: Record<string, string>; moveClips?: Record<string, string>;
         projectiles?: Record<string, string>; fatalityPanels?: string[];
         voiceModelId?: string; hasStageMusic?: boolean;
       };
@@ -401,6 +411,8 @@ export class CharacterCreatorPanel {
       if (typeof def.color === 'string') draft.color = def.color;
       if (typeof def.lore === 'object' && def.lore) draft.lore = { ...draft.lore, ...def.lore };
       if (Array.isArray(def.winQuotes)) draft.winQuotes = def.winQuotes;
+      const arcade = (def as { arcade?: { motivation?: string; ending?: string } }).arcade;
+      if (arcade) draft.arcade = { motivation: arcade.motivation ?? '', ending: arcade.ending ?? '' };
       // the persisted VO line texts (character JSON `vo` block, recovered by
       // tools/migrate-vo.mjs) repopulate the editor instead of template lines
       const vo = (def as { vo?: { kiai?: string[]; hurt?: string[]; victory?: string[] } }).vo;
@@ -441,6 +453,14 @@ export class CharacterCreatorPanel {
       }
       const metaSkeletons = (j.meta as { skeletons?: unknown }).skeletons;
       if (metaSkeletons && typeof metaSkeletons === 'object') m.skeletons = metaSkeletons as CreatorModel['skeletons'];
+      // the raw canonical is the identity anchor every regen references —
+      // registering it also turns the gap-bar 'canonical' chip honest
+      if (j.canonicalBase64) m.jobs.set('canonical', { key: 'canonical', kind: 'canonical', label: 'Canonical', status: 'done', approved: true, dataUrl: 'data:image/png;base64,' + j.canonicalBase64, savedAs: 'canonical.png' });
+      // generated VO + per-move call-out clips on disk register as done
+      // (silence placeholders are filtered server-side)
+      m.generatedVo = j.voClips ?? {};
+      if (Object.keys(m.generatedVo).length) m.voStatus = 'done';
+      for (const [moveId, b64] of Object.entries(j.moveClips ?? {})) m.moveAudio[moveId] = b64;
       if (j.portraitBase64) m.jobs.set('portrait', { key: 'portrait', kind: 'portrait', label: 'Portrait', status: 'done', approved: true, dataUrl: 'data:image/png;base64,' + j.portraitBase64, savedAs: 'portrait.png' });
       if (j.koBase64) m.jobs.set('ko', { key: 'ko', kind: 'ko', label: 'KO portrait', status: 'done', approved: true, dataUrl: 'data:image/png;base64,' + j.koBase64, savedAs: 'ko.png' });
       if (j.stageBase64) m.jobs.set('stage', { key: 'stage', kind: 'stage', label: 'Stage', status: 'done', approved: true, dataUrl: 'data:image/jpeg;base64,' + j.stageBase64, savedAs: 'stage.jpg' });
@@ -833,6 +853,10 @@ export class CharacterCreatorPanel {
         name: String(src.fatality?.name ?? base.fatality.name),
         input: String(src.fatality?.input ?? base.fatality.input),
       },
+      arcade: {
+        motivation: typeof src.arcade?.motivation === 'string' ? src.arcade.motivation : (base.arcade?.motivation ?? ''),
+        ending: typeof src.arcade?.ending === 'string' ? src.arcade.ending : (base.arcade?.ending ?? ''),
+      },
       stagePrompt: typeof src.stagePrompt === 'string' ? src.stagePrompt : base.stagePrompt,
       musicPrompt: typeof src.musicPrompt === 'string' ? src.musicPrompt : base.musicPrompt,
     };
@@ -917,9 +941,28 @@ export class CharacterCreatorPanel {
     const pi = el('textarea', INPUT + 'height:44px;') as HTMLTextAreaElement; pi.value = d.lore.personality;
     pi.oninput = () => (d.lore.personality = pi.value); pers.appendChild(pi); colA.appendChild(pers);
 
-    const back = this.field('Backstory (arcade)');
+    const back = this.field('Backstory');
     const bi = el('textarea', INPUT + 'height:60px;') as HTMLTextAreaElement; bi.value = d.lore.backstory;
     bi.oninput = () => (d.lore.backstory = bi.value); back.appendChild(bi); colA.appendChild(back);
+
+    // arcade-mode story (STUB — the mode isn't built yet, the data ships now):
+    // the SF2-style intro motivation + the post-credits ending after beating
+    // Tao, end boss and patron of the Bombay Beach Biennale
+    d.arcade ??= { motivation: '', ending: '' };
+    const arcW = this.field('Arcade story — motivation (intro blurb)');
+    const am = el('textarea', INPUT + 'height:52px;font-size:12px;') as HTMLTextAreaElement;
+    am.value = d.arcade.motivation;
+    am.placeholder = 'why does this fighter journey through Mars College and Bombay Beach to challenge the Biennale?';
+    am.oninput = () => (d.arcade.motivation = am.value);
+    arcW.appendChild(am);
+    colA.appendChild(arcW);
+    const arcE = this.field('Arcade story — ending (post-credits scene)');
+    const ae = el('textarea', INPUT + 'height:52px;font-size:12px;') as HTMLTextAreaElement;
+    ae.value = d.arcade.ending;
+    ae.placeholder = 'what happens after they defeat Tao and become Champion of the Bombay Beach Biennale?';
+    ae.oninput = () => (d.arcade.ending = ae.value);
+    arcE.appendChild(ae);
+    colA.appendChild(arcE);
 
     colA.appendChild(this.lockGrid('Victory quotes (win-screen text)', d.winQuotes));
     // announcer name call-out (Maverick — same announcer voice as the roster)
@@ -935,8 +978,10 @@ export class CharacterCreatorPanel {
     // col B — stage + BYO audio + sprite batch (all model-backed + removable)
     this.m.inputs.stagePhotos ??= []; this.m.inputs.voiceSamples ??= [];
     this.m.inputs.kiaiClips ??= []; this.m.inputs.musicTracks ??= [];
+    // dropping a stage photo only STAGES it (§2.8: no auto-fire spends —
+    // the explicit ▸ Generate stage button below is the only trigger)
     colB.appendChild(this.dropZone('Stage landscape (optional)', { accept: 'image/*' }, this.m.inputs.stagePhotos,
-      () => { void this.genStage(); this.renderTray(); }));
+      () => this.renderTray()));
     // just the generate button here; the editable prompt + regenerate live on the
     // frame inspector (click the stage cell in the tray), like every other frame.
     const sjob = this.m.job('stage');
@@ -1043,8 +1088,10 @@ export class CharacterCreatorPanel {
     nx.onclick = () => this.goto(2);
     nav.append(bk, nx); this.bodyEl.appendChild(nav);
 
-    // auto-fire the base batch on entering profile if canonical is ready (tight pipelining)
-    if (!anyBase && this.m.job('canonical')?.status === 'done') this.runBaseBatch();
+    // NO auto-fire on entry (§2.8: every spend is an explicit click — the
+    // old "tight pipelining" auto-batch fired 11 image calls just for
+    // opening this step; it burned a mock run on 2026-07-08 and would have
+    // been real money on a keyed server)
   }
 
   /** VO line editor: per line = text + ▶ play (its clip) + ↻ regen (re-synth). */

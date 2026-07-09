@@ -918,7 +918,17 @@ column before starting — do NOT scaffold anyone marked NO AI PLEASE):
       fighter in their home stage, with intro/ending story beats per
       character. Between fights, a stylized overhead map of Mars + Bombay
       Beach zooms into a defined map location associated with each stage as
-      the player advances the ladder (wants CPU difficulty levels first)
+      the player advances the ladder (wants CPU difficulty levels first).
+      **Canon story arc (Vincent, 2026-07-08):** the run moves through the
+      Off Grid world of Mars College and into the town of Bombay Beach,
+      fighting each Martian, then **RJ** (Tao's first hench goon — the Sagat
+      analog), and finally **Tao Ruspoli** — the end boss (M. Bison analog),
+      aristocrat-turned-desert-patron and Biennale co-founder — to become
+      **Champion of the Bombay Beach Biennale**. DATA STUB SHIPS NOW:
+      character JSONs carry `arcade: { motivation, ending }` (SF2-style
+      intro blurb + post-credits scene), authored in the creator's PROFILE
+      step and written by the design-draft LLM from the fighter's lore —
+      so every fighter accumulates story data before the mode exists.
 - [ ] **Super bar + super move** — per-player meter builds over the fight;
       when full, each fighter gets one cinematic signature super (super
       freeze/flash ships with it). Promoted from the Icebox
@@ -1422,25 +1432,29 @@ implementation, many doors; only the standalone scene implementations
       full real-API dogfood run (one reroll max per asset).
       FOUNDATION LANDED (2026-07-08, see changelog): withBackoff (429/5xx)
       wrapping every provider helper + MK_GEN_MOCK $0 mock mode in lib.mjs;
-      core/lore.mjs (CSV fetch/cache, fuzzy lookup, PrivacyOptOutError —
-      enforced at /__editor/creator/design, /__editor/lore, jobs enqueue,
-      and studio:run entry; design drafts auto-inherit sheet lore);
       core/jobs.mjs runner (DAG deps, pooled concurrency, persistence +
       resume, cost accounting, cancel) + /__editor/jobs endpoints with SSE;
       core/pipeline.mjs asset DAG over the idempotent gen:* scripts +
       `npm run studio:run` (confirm-before-spend, --mock/--only/--force).
+      RETIRED same day (Vincent): the core/lore.mjs sheet-search + the
+      machine-enforced privacy opt-out gate — no opt-out check is needed
+      for this game anymore; lore is typed/pasted into the creator.
+      The two §2.8 PROFILE auto-fire hazards are FIXED (entry auto-batch +
+      drop-zone auto-stage-gen — every spend is an explicit click now).
       REMAINING: manual creator mode onto jobs; studio cost-UI strip +
       jobs panel; headless design-scaffold for brand-new names (today the
-      wizard scaffolds, then the DAG takes over); alwaysFromLore → frame
-      prompts + lore-aware fatality beats; FX module; context cache §16 +
-      seed/prompt manifest; skills refresh pass 2; full-DAG mock E2E on a
-      scratch fighter; then the ONE real dogfood run. DOGFOOD SUBJECT
-      DECIDED (Vincent, 2026-07-08): **Tao**, with Vincent supplying the
-      lore (no lore-sheet row exists — his typed lore or a new sheet row).
-      Still needed before firing: Tao's lore text, ideally a FULL-BODY
-      photo (both inspo shots on disk are head/bust — the canonical wants
-      a full-body primary ref per §2.9), optional voice samples. Opt-out
-      column re-checked 2026-07-08: Tao not listed.
+      wizard/profile-script scaffolds, then the DAG takes over); FX module;
+      context cache §16 + seed/prompt manifest; skills refresh pass 2;
+      full-DAG mock E2E on a scratch fighter; then the real dogfood run.
+      DOGFOOD SUBJECT: **Tao — profile GENERATED 2026-07-08** (end boss):
+      full-body inspo is now assets/character-inspo/tao.jpg (+ tao-bust.jpg,
+      face/tao-face.png), Fish voice clone registered (voices.json) and
+      whisper-verified, real-Gemini design draft (zoner: Paparazzi Flash /
+      Director's Cut / Duende Kick / Maestro's Advance, "Final Critique"
+      fatality, arcade motivation/ending) + canonical (embroidered burgundy
+      suit, gold FX, §2.9 gate passed) assembled as the studio WIP draft
+      `assets/raw/creator/tao/`. Next: frames → pack → audio → fatality
+      via studio:run/wizard.
 - [ ] Phase 5 — storage seam + publish: StorageDriver (LocalRepoStorage /
       R2Storage per CHARACTER_CREATOR.md §6, env-gated local no-op);
       PUBLISH in SHIP; custom-characters registry + resolveAssetBase roster
@@ -1476,6 +1490,39 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-08 · ui+tools+data · dogfood feedback batch 2 + TAO the end
+  boss** — (a) privacy opt-out gate + lore-sheet search RETIRED (Vincent:
+  not needed for this game) — core/lore.mjs + its tests deleted, gates
+  stripped from the design endpoint / jobs enqueue / studio:run, CLAUDE.md +
+  new-character/move-authoring skills + voice-inspo README updated.
+  (b) canon-import fix: /__editor/creator/canon now returns the raw
+  canonical (assets/raw/canonical — regens previously ran with NO reference
+  for canon fighters), all real VO clips + per-move call-outs from
+  public/assets/audio (silence placeholders filtered by size), and loadCanon
+  registers them — gene verifies canonical ✓ + VO 17/17 ✓ (was ⚠/0).
+  (c) the moves/animation player moved OUT of the wizard dialog into a
+  lower-left dock beneath the live fighter. (d) ARCADE STORY STUB: character
+  JSONs + DesignDraft carry `arcade: { motivation, ending }` (SF2-style
+  intro + post-credits scene), the design-draft LLM writes them (world
+  framing: through Mars College's Off Grid world into Bombay Beach, past
+  RJ the hench goon — Sagat analog — to TAO the end boss — M. Bison
+  analog — Champion of the Bombay Beach Biennale), PROFILE edits them;
+  vision documented in CLAUDE.md + the arcade RFE + new-character skill;
+  creatorDesignPrompt moved to core/prompts.mjs (designPrompt — one copy
+  for vite + headless). (e) §2.8 auto-fire hazards FIXED: entering PROFILE
+  no longer fires the 11-cell base batch (it burned a mock run today —
+  would have been real money), stage-photo drop no longer auto-generates.
+  (f) **TAO PROFILE GENERATED** (end boss): full-body inspo promoted to
+  tao.jpg, boss FLAVOR/FACE in gen-canonical, Fish voice clone registered +
+  whisper-verified ("You fight for art? I am the patron of art…"), real
+  design draft (zoner; Paparazzi Flash cbf / Director's Cut trap / Duende
+  Kick dp / Maestro's Advance hcf; per-move call-outs "Smile!"/"Action!"/
+  "¡Olé!"; "Final Critique" fatality; arcade motivation/ending in his own
+  voice) + canonical (burgundy embroidered suit, gold filigree FX, §2.9
+  gate passed) — assembled as the WIP draft assets/raw/creator/tao/,
+  verified loading in the studio. 366/366 (lore tests removed), tsc + prod
+  build clean. — Claude (Fable)
 
 - **2026-07-08 · tools · Sprint 27 Phase 4 foundation: backoff + mock mode +
   lore gate + jobs runner + headless auto-pilot** — (a) `withBackoff` in

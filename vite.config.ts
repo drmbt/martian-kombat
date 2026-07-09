@@ -1,6 +1,6 @@
 /// <reference types="vitest/config" />
 import { defineConfig, type Plugin } from 'vite';
-import { readFileSync, writeFileSync, mkdirSync, copyFileSync, existsSync, readdirSync, cpSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, copyFileSync, existsSync, readdirSync, cpSync, rmSync, statSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -177,90 +177,7 @@ function editorApi(): Plugin {
         if (start < 0 || end <= start) throw new Error('design response did not contain JSON');
         return JSON.parse(text.slice(start, end + 1)) as Record<string, unknown>;
       };
-      const creatorDesignPrompt = (name: string, description: string, lore: string): string => `
-You are the narrative designer and fighting-game kit designer for Martian Kombat, a weird, affectionate SF2/MK-style fighter about real Mars College / Bombay Beach people.
 
-Task: turn the user's seed material into a playable, on-theme character draft. Preserve the person's specific jokes, contradictions, skills, places, and verbal texture. Do not genericize them into a trope.
-
-INPUT
-Name: ${name}
-One-line description: ${description || '(none provided)'}
-Lore/backstory notes: ${lore || '(none provided)'}
-
-ENGINE-CONSTRAINTS
-Return only buildable special moves. Supported archetypes and sensible controls:
-- projectile: qcf+P, qcf+K, hcf+P
-- sonic-boom: cbf+P, cbf+K
-- short-range-flame: qcb+P, qcf+P
-- lob-projectile: qcb+P, qcb+K
-- lingering-cloud: qcf+K, qcb+K
-- fuse-detonate: qcb+P, hcf+P
-- stationary-trap: qcb+K, qcf+K
-- slow-field: qcf+P, qcb+P
-- pull-projectile: hcf+P, qcf+P
-- multi-projectile: hcf+P, qcf+P
-- anti-air-dp: dp+P, dp+K
-- flash-kick: du+K, du+P
-- advancing-rush: qcf+K, hcf+K
-- horizontal-rush: bf+P, bf+K
-- mash: mash+P, mash+K
-- melee-rehit: qcf+P, PPP, KKK
-- command-grab: hcb+P, 360+P
-- heal-grab: hcb+P, 360+P
-- grab-recoil: hcb+K, 360+K
-- techable-throw: LPLK
-- teleport: qcb+K, qcf+K
-- mirror-teleport: qcb+K, qcf+K
-- reversal: qcb+P, qcb+K
-- reflector: qcb+P, hcb+P
-- projectile-immune: PPP, qcf+P, qcf+K
-- vault: qcf+K, hcf+K
-- leaping-strike: dp+K, qcf+K
-- yoga-float: qcb+P, qcb+K
-Do NOT invent unbuilt mechanics like installs, stances, armor, rekka chains, air throws, or forward-forward specials.
-
-STYLE RULES
-- The kit should read as the actual person through concrete props, habits, phrases, and lore.
-- Keep move names short enough for UI buttons: 1-4 words.
-- Descriptions should be vivid pose/art prompts and gameplay flavor, not mechanical JSON.
-- VO barks should be short enough for fighting-game audio, punchy, character-specific, and not mean-spirited unless the lore supports dry humor.
-- Kiai lines are attack exertions. Hurt lines are clipped pain/annoyance. Victory lines are post-round one-liners.
-- Stage prompt must describe a 21:9 gritty 16-bit pixel-art fight stage with a clear bottom-quarter walkable floor.
-- Music prompt must describe a loopable instrumental stage battle theme.
-
-Return STRICT JSON with exactly this shape:
-{
-  "color": "hsl(H 55% 62%)",
-  "archetype": "zoner|grappler|rushdown|all-rounder|trickster",
-  "lore": {
-    "tagline": "one sentence character-select hook",
-    "personality": "one compact paragraph derived from the one-line description",
-    "backstory": "one arcade backstory paragraph derived from the lore"
-  },
-  "winQuotes": ["exactly 3 short victory quotes"],
-  "vo": {
-    "kiai": ["exactly 6 attack barks"],
-    "hurt": ["exactly 6 hurt barks"],
-    "victory": ["exactly 4 voice victory barks"]
-  },
-  "specials": [
-    { "id": "slug", "name": "Move Name", "controls": "qcf+P", "archetype": "projectile", "description": "visual/gameplay prompt", "voiceLine": "1-4 word call-out shouted when the move fires (lore-specific, not the move name)" }
-  ],
-  "specialPool": [
-    { "id": "slug", "name": "Move Name", "controls": "qcb+K", "archetype": "teleport", "description": "visual/gameplay prompt", "voiceLine": "1-4 word call-out" }
-  ],
-  "physics": { "health": 1000, "walkSpeed": 3.3, "backSpeed": 3.4, "jumpVel": 18, "gravity": 0.9, "prejumpFrames": 4 },
-  "fatality": { "id": "slug", "name": "Fatality Name", "input": "hcb+P" },
-  "stagePrompt": "stage art prompt",
-  "musicPrompt": "music prompt"
-}
-
-Cardinality requirements:
-- specials: exactly 4, each a different tactical role when possible.
-- specialPool: exactly 8 alternate buildable specials.
-- Use lowercase kebab-case ids.
-- Make controls match the archetype.
-- Return JSON only; no markdown, no commentary.`;
       const playableRoster = (): { id: string; name: string }[] => {
         const src = readFileSync(join(root, 'src/data/roster.ts'), 'utf-8');
         const out: { id: string; name: string }[] = [];
@@ -471,15 +388,8 @@ Cardinality requirements:
           .then(async (b) => {
             const { name, description, lore } = b as { name?: unknown; description?: unknown; lore?: unknown };
             if (typeof name !== 'string' || !name.trim()) throw new Error('missing name');
-            // HARD privacy gate (machine-enforced, core/lore.mjs): an opted-out
-            // Martian throws here — no design draft, no downstream generation.
-            // A clean/unknown name passes and inherits the sheet's lore when
-            // the user typed none (bios drive archetypes/quotes/VO).
-            const loreMod = await import('./tools/core/lore.mjs');
-            const person = await loreMod.lookupFighter(name.trim(), { cachePath: join(root, 'assets/raw/lore-sheet.csv') });
-            const typedLore = typeof lore === 'string' ? lore.trim() : '';
-            const effectiveLore = typedLore || loreMod.loreContext(person);
-            const prompt = creatorDesignPrompt(name.trim(), typeof description === 'string' ? description.trim() : '', effectiveLore);
+            const { designPrompt } = await import('./tools/core/prompts.mjs');
+            const prompt = designPrompt(name.trim(), typeof description === 'string' ? description.trim() : '', typeof lore === 'string' ? lore.trim() : '');
             const lib = await import('./tools/lib.mjs');
             const env = lib.loadEnv();
             const apiKey = env.GEMINI_API_KEY;
@@ -493,24 +403,6 @@ Cardinality requirements:
             sendJson(res, 200, { ok: true, draft: extractJsonObject(text), prompt });
           })
           .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
-      });
-
-      // POST /__editor/lore  { query }
-      // -> the Martian Lore sheet, machine-readable: fuzzy person lookup with
-      //    the HARD privacy opt-out gate (tools/core/lore.mjs). Returns
-      //    { ok, person|null }; an opted-out match returns
-      //    { ok:false, optedOut:true } so the studio can refuse loudly.
-      server.middlewares.use('/__editor/lore', (req, res, next) => {
-        if (req.method !== 'POST') return next();
-        readJsonBody(req)
-          .then(async (b) => {
-            const { query } = b as { query?: unknown };
-            if (typeof query !== 'string' || !query.trim()) throw new Error('missing query');
-            const loreMod = await import('./tools/core/lore.mjs');
-            const person = await loreMod.lookupFighter(query.trim(), { cachePath: join(root, 'assets/raw/lore-sheet.csv') });
-            sendJson(res, 200, { ok: true, person, context: loreMod.loreContext(person) });
-          })
-          .catch((err) => sendJson(res, err?.optedOut ? 403 : 400, { ok: false, optedOut: !!err?.optedOut, error: String(err?.message ?? err) }));
       });
 
       // ── /__editor/jobs — the server-side job runner (§2.4) ────────────────
@@ -541,7 +433,7 @@ Cardinality requirements:
       // POST /__editor/jobs
       //   { action:'list' } → all jobs
       //   { action:'enqueue-dag', char, mock?, only?, force? } → per-char DAG
-      //     (privacy opt-out gate FIRST; returns the estimated API-call count)
+      //     (returns the estimated API-call count)
       //   { action:'cancel', id }
       server.middlewares.use('/__editor/jobs', (req, res, next) => {
         if (req.method !== 'POST') return next();
@@ -559,8 +451,6 @@ Cardinality requirements:
             if (action === 'enqueue-dag') {
               const { char, mock, only, force } = b as { char?: string; mock?: boolean; only?: string[]; force?: boolean };
               if (typeof char !== 'string' || !okId(char)) throw new Error('invalid char');
-              const loreMod = await import('./tools/core/lore.mjs');
-              await loreMod.lookupFighter(char, { cachePath: join(root, 'assets/raw/lore-sheet.csv') }); // throws on opt-out
               const pipe = await import('./tools/core/pipeline.mjs');
               const missing = pipe.dagPrereqs(char);
               if (missing.length && !only) throw new Error(`missing prerequisites: ${missing.join(', ')}`);
@@ -571,7 +461,7 @@ Cardinality requirements:
             }
             throw new Error(`unknown action ${String(action)}`);
           })
-          .catch((err) => sendJson(res, err?.optedOut ? 403 : 400, { ok: false, optedOut: !!err?.optedOut, error: String(err?.message ?? err) }));
+          .catch((err) => sendJson(res, 400, { ok: false, error: String(err?.message ?? err) }));
       });
 
       // POST /__editor/creator/gen  { kind, prompt, referenceBase64?[] }
@@ -949,6 +839,29 @@ Cardinality requirements:
                 if (p) fatalityPanels.push(p);
               }
             }
+            // existing generated audio → the wizard's play buttons + gap bar.
+            // SHIP writes ~1.2kb silence placeholders for missing slots —
+            // don't register those as real clips (real grunts are ≥7kb).
+            const voiceDir = join(root, 'public/assets/audio/voice');
+            const SILENCE_MAX = 2500;
+            const voClips: Record<string, string> = {};
+            const moveClips: Record<string, string> = {};
+            if (existsSync(voiceDir)) {
+              for (const f of readdirSync(voiceDir)) {
+                if (!f.startsWith(`${id}-`) || !f.endsWith('.mp3')) continue;
+                if (statSync(join(voiceDir, f)).size <= SILENCE_MAX) continue;
+                const rest = f.slice(id.length + 1, -4); // kiai-1 | hurt-3 | victory-2 | move-<moveId>
+                const b64 = readFileSync(join(voiceDir, f)).toString('base64');
+                if (rest.startsWith('move-')) moveClips[rest.slice(5)] = b64;
+                else if (/^(kiai|hurt|victory)-\d+$/.test(rest)) voClips[rest] = b64;
+              }
+            }
+            const annPath = join(root, 'public/assets/audio/announcer', `${id}.mp3`);
+            if (existsSync(annPath) && statSync(annPath).size > SILENCE_MAX) voClips.announcer = readFileSync(annPath).toString('base64');
+            // the raw canonical (assets/raw/canonical) — the identity anchor
+            // every cell regen references; without it canon fighters regen'd
+            // cells with NO reference image
+            const canonPath = join(root, 'assets/raw/canonical', `${id}.png`);
             // inherited status the def can't tell us: an existing Fish voice
             // clone (tools/voices.json) and whether the home stage has music —
             // the gap bar reports these honestly instead of "missing"
@@ -964,6 +877,9 @@ Cardinality requirements:
               fighters: playableRoster(),
               voiceModelId: voices[id]?.modelId,
               hasStageMusic,
+              voClips,
+              moveClips,
+              canonicalBase64: existsSync(canonPath) ? readFileSync(canonPath).toString('base64') : undefined,
               def,
               meta: JSON.parse(readFileSync(metaPath, 'utf-8')),
               sheetBase64: readFileSync(sheetPath).toString('base64'),

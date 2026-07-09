@@ -10,3 +10,5 @@ export function portraitPrompt(name: string, desc?: string): string;
 export function defeatPrompt(): string;
 export function defeatPromptSoft(): string;
 export function fatalityBeats(name: string, fatalityName: string): string[];
+
+export function designPrompt(name: string, description: string, lore: string): string;

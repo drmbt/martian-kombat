@@ -13,8 +13,8 @@ assets/voice-inspo/<char>/clip1.txt   # optional transcript sidecar (else Fish r
 - Formats: mp3 / wav / m4a / flac / ogg.
 - Source material: the Martian Lore sheet's per-person media folders often
   have voice samples — check there first.
-- **Respect the lore sheet's "privacy opt out" column** — same hard rule as
-  images: no cloning anyone marked "NO AI PLEASE".
+- *(The former privacy opt-out rule was retired 2026-07-08 — no check
+  needed anymore.)*
 
 Then: `npm run gen:voice -- --char <name>` clones the voice via Fish Audio
 (`FISH_API_KEY` in `.env`) and registers the private model id in

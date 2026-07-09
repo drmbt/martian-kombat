@@ -134,7 +134,7 @@ The pipeline turns a photo of a real person into a game-ready sprite sheet:
 6. **Audio** — ElevenLabs for announcer VO ("ROUND ONE… FIGHT!"), per-character
    grunts/taunts, and hit SFX. When a real voice sample exists, clone the actual
    person's voice instead: drop clips in `assets/voice-inspo/<name>/` (see its
-   README; the lore sheet's **privacy opt-out column applies**), run
+   README), run
    `npm run gen:voice -- --char <name>` (Fish Audio, `FISH_API_KEY`; registers
    a private model id in `tools/voices.json`), and `gen:audio` automatically
    routes that fighter's kiai/hurt/victory VO through the clone (announcer +
@@ -230,10 +230,8 @@ The **Mars People** tab maps each Martian to discord handle, caption, bio,
 lore, links, and media references (photo/voice-sample folders). Bios and
 running jokes there should drive archetypes, move names, quotes and VO so each
 fighter reads as *the actual person*, not a generic trope.
-**HARD RULE: respect the "privacy opt out" column.** Anyone marked
-"NO AI PLEASE" (as of 2026-07: Maya Luna, Peter, Roarke, Summer) must never be
-scaffolded as a fighter, generated as an asset, or referenced by name in game
-content. Re-check that column before starting any new character.
+*(The former privacy opt-out rule was retired by Vincent on 2026-07-08 —
+no opt-out check is needed for this game anymore.)*
 
 ## The roster
 
@@ -251,6 +249,17 @@ Each character JSON carries an optional `stage: "<id>"` **home-stage** field
 (the stage-select dialog badges it; arcade mode will end there). A home stage
 whose art doesn't exist yet fails gracefully (falls back to RANDOM/default), so
 it's fine to assign a fighter a stage before that stage is generated.
+
+**Arcade story data (stub — the mode is unbuilt, the data ships now):**
+character JSONs carry an optional `arcade: { motivation, ending }` block —
+the SF2-style attract-mode intro (why this fighter sets out) and their
+post-credits ending scene. The canon arc: the arcade ladder journeys through
+the Off Grid world of Mars College into the town of Bombay Beach, fighting
+each Martian, then RJ (Tao's first hench goon — the Sagat analog), and
+finally **Tao Ruspoli, the end boss** (M. Bison analog; Biennale co-founder),
+to become **Champion of the Bombay Beach Biennale**. The creator's PROFILE
+step edits both texts and the design-draft LLM writes them from the lore, so
+new fighters accumulate story data before the mode exists.
 
 ## Dev-mode front-end editor (BUILT — Sprints 23 & 25; dev-only)
 
