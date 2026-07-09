@@ -1721,7 +1721,12 @@ export class FightScene extends Phaser.Scene {
       if (!creatorPanel) {
         creatorPanel = new CharacterCreatorPanel(this.uiLayer.root, () => this.studioRail?.setActive(null), {
           sceneHosted: true,
-          subject: { mount: (def, meta, canvas) => this.setStudioSubject(def as unknown as (typeof characters)[string], meta, canvas) },
+          subject: {
+            mount: (def, meta, canvas) => this.setStudioSubject(def as unknown as (typeof characters)[string], meta, canvas),
+            // the wizard's preview/move buttons drive the LIVE fighter
+            loopMove: (moveId) => this.loopMove(moveId),
+            stopLoop: () => this.manualControl(),
+          },
         });
         // editing an existing fighter (opened from the roster screen on their
         // home stage): auto-open them as a canon edit — the wireframe stage

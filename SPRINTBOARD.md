@@ -1383,7 +1383,7 @@ implementation, many doors; only the standalone scene implementations
       FightScene studio mode + module rail + TEST/STAGES modules +
       EditorMenu deep links + projectile editor + module-scoped write
       endpoint + core/kit.mjs + Adopt flow v1.
-- [ ] Phase 3 (shell) — studio as a FightScene mode
+- [~] Phase 3 (shell) — studio as a FightScene mode
       (collapsible module rail Identity/Look/Sprites/Moves/Audio/FX/Test/
       Ship over the live scene; creator panels re-hosted, standalone
       creator scene retires) mounting the existing Sprite Editor + Move
@@ -1400,6 +1400,15 @@ implementation, many doors; only the standalone scene implementations
       cancel — fixes the ben/earl regression) + themed fatality slots;
       backfill ben/earl kits + fatalities + vanessa quotes; Adopt flow v1
       (legacy upgrade checklist + diff view).
+      NEARLY DONE (3b–3j, see changelog): shell/rail/TEST/STAGES/deep-links/
+      projectile spawns/kit.mjs/backfill shipped earlier; 3j added the field
+      add-remove controls (quotes/VO/specials + locked throw), skeleton
+      badges + regen-missing, the live-driven wizard preview, and Adopt v1
+      (checklist + WRITE diff — gene/catherine verify byte-identical).
+      REMAINING: the single character-write endpoint with module-scoped
+      merges + provenance (today: tuner shallow-merges moves, creator
+      writes whole-def — fold both into one endpoint when Phase 4's job
+      runner touches the write path anyway).
 - [ ] Phase 4 — auto-pilot + jobs + lore: `/__editor/jobs` runner (SSE
       progress, persistence, cost accounting, 429 backoff); auto-pilot DAG +
       headless `npm run studio:run`; skills refresh (new-character /
@@ -1446,6 +1455,33 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-08 · ui · Sprint 27 Phase 3j: creator finishers — field controls,
+  rig badges, live-driven preview, Adopt v1** — quotes + kiai/hurt/victory VO
+  get per-line add/remove (VO capped at the 6/6/4 on-disk clip contract;
+  generated clips REINDEX on remove so `prefix-N` names keep matching their
+  texts; VO slot lists + the gap-bar total now derive from the draft instead
+  of a hardcoded 17); specials get ＋add/✕remove slots (removed moves return
+  to the drafted pool) with the techable throw rendered as the LOCKED 5th
+  special — canon rows lock archetype/controls, new drafts get a synthetic
+  locked row whose call-out persists as `moves.throw.voiceText`; per-frame
+  skeleton badges (⬢/⬡) on the tray cells + a Rig-step "regen missing
+  keypoints only (N)" button; the wizard's preview/move buttons moved into
+  the studio wizard column (they lived on the DETACHED left preview — dead
+  UI in studio mode) and now drive the LIVE fighter via `host.loopMove`
+  (idle/walk pseudo-poses, normals, motion specials — verified `attack:lp`
+  and the qcf `rate-limit` executing in the live scene; module switch hands
+  back manual control); **Adopt flow v1**: opening a canon fighter runs the
+  roster-standard upgrade checklist (mirrors the audit/schema-lint: meta v2 +
+  normalized, per-cell skeleton coverage, no spriteOffsetY, chains/cancel/
+  variants, universal throw, ≥3 quotes, themed fatality, vo texts, per-move
+  voiceText, portrait/bust/KO) + a structural WRITE diff of baseDef vs what
+  SHIP would write — auto-opens when below standard, reopenable from the new
+  gap-bar ⚕ chip; **gene AND catherine verify BYTE-IDENTICAL on
+  reopen→write**. Found + fixed in passing: canon `sheetPlan` double-counted
+  the throw-* cells (the "skeletons 65/68" gap-bar lie), and the move player
+  drew a duplicate THROW button. 361/361, tsc + prod build clean, all flows
+  verified in-browser on the mock server. — Claude (Fable)
 
 - **2026-07-08 · data+tools · VO ground-truthing via whisper** — the recovered
   vo texts were spot-checked against the ACTUAL clips (Apple `afconvert`
@@ -3181,21 +3217,19 @@ spawns in the tuner, and the VO-text persistence layer
 (CharacterDef.vo + MoveDef.voiceText, recovered roster-wide by
 tools/migrate-vo.mjs and whisper-verified for the dogfooded fighters).
 
-**Still open in Phase 3** (all user-requested, see the 3h/3i changelog
-entries): add/remove field controls for quotes + kiai/hurt/victory VO +
-specials slots (defaults 3/6/6/4 + throw as the locked 5th special);
-per-frame skeleton badges + a "regen missing keypoints only" button;
-wire the wizard preview-control buttons to drive the LIVE fighter
-(host.loopMove); transcribe/mark vincent's 2 SFX call-outs properly if
-desired; stage-music coverage for all stages; repro any remaining
-older-character load error (a null-sourceSize clamp guard is in); the
-Adopt flow v1 (upgrade checklist + diff view). Then Phase 4 (the
-/__editor/jobs runner, auto-pilot DAG + `studio:run`, core/lore.mjs with
-machine-enforced privacy opt-out, FX module, context cache, ONE full
-real-API dogfood run — reference-chaining policy is locked in
-docs/CHARACTER_STUDIO.md §2.9 and the sprite-generation skill) and Phase 5
-(StorageDriver/R2 seam, publish, docs consolidation, retire the standalone
-CharacterCreatorScene).
+**Still open in Phase 3** (shrunk 2026-07-08 by the 3j batch — field
+add/remove controls, skeleton badges + regen-missing, live-driven wizard
+preview, and Adopt v1 are DONE, see the 3j changelog entry): the single
+character-write endpoint with module-scoped merges + provenance (fold into
+Phase 4's job-runner write path); transcribe/mark vincent's 2 SFX
+call-outs properly if desired; stage-music coverage for all stages; repro
+any remaining older-character load error (a null-sourceSize clamp guard is
+in). Then Phase 4 (the /__editor/jobs runner, auto-pilot DAG +
+`studio:run`, core/lore.mjs with machine-enforced privacy opt-out, FX
+module, context cache, ONE full real-API dogfood run —
+reference-chaining policy is locked in docs/CHARACTER_STUDIO.md §2.9 and
+the sprite-generation skill) and Phase 5 (StorageDriver/R2 seam, publish,
+docs consolidation, retire the standalone CharacterCreatorScene).
 
 **Landmines / lessons this sprint:**
 - Every fight flag must pass through VersusScene AND fightShell's

@@ -8,7 +8,7 @@ import {
   CreatorModel, CREATOR_STEPS, makeDraft, BASE_CELLS, ATTACK_CELLS,
   ARCHETYPE_INFO, specialsForArchetype, SPECIAL_ARCHETYPES, controlsForArchetype,
   BASE_MOVE_IDS, NORMAL_MOVE_IDS, moveCellNames, slugify, isProjectileArchetypeKey,
-  CANONICAL_PROMPT, PORTRAIT_PROMPT, KO_PROMPT, SPRITE_PROMPT, fatalityBeats,
+  CANONICAL_PROMPT, PORTRAIT_PROMPT, KO_PROMPT, SPRITE_PROMPT, fatalityBeats, VO_CAPS,
   type CreatorJob, type AttackCell, type DesignDraft, type SpecialDraft,
 } from './creatorModel';
 import { hitboxFromSkeleton, strikeKind } from './hitboxFromSkeleton';
@@ -52,6 +52,11 @@ export interface StudioSubject {
     meta: { cellW: number; cellH: number; cols: number; rows: number; frames: string[]; skeletons?: Record<string, Record<string, [number, number, number]>> },
     canvas: HTMLCanvasElement,
   ): { refresh: () => void };
+  /** drive the LIVE fighter: loop a move id or a pseudo-pose ('__idle__' /
+   *  '__walk__') — the wizard's preview/move buttons play in the real scene */
+  loopMove?(moveId: string): void;
+  /** hand the fighter back to manual control (stop the loop driver) */
+  stopLoop?(): void;
 }
 
 export class CharacterCreatorPanel {
@@ -93,6 +98,7 @@ export class CharacterCreatorPanel {
   private lastSaveAt = 0;
   private logEl!: HTMLDivElement;
   private logLines: string[] = [];
+  private adoptEl!: HTMLDivElement;
   private onBack: () => void;
 
   constructor(mount: HTMLElement, onBack: () => void, opts: { sceneHosted?: boolean; subject?: StudioSubject } = {}) {
@@ -168,7 +174,10 @@ export class CharacterCreatorPanel {
     this.bodyEl = el('div', 'position:absolute;inset:0;overflow:auto;padding:16px 20px;');
     this.previewInspect = el('div', 'position:absolute;inset:0;z-index:20;overflow:auto;padding:14px 18px;' +
       'background:rgba(9,13,20,.97);display:none;');
-    bodyWrap.append(this.bodyEl, this.previewInspect);
+    // Adopt flow: the legacy-upgrade checklist + write-diff overlay (canon edits)
+    this.adoptEl = el('div', 'position:absolute;inset:0;z-index:21;overflow:auto;padding:14px 18px;' +
+      'background:rgba(9,13,20,.97);display:none;');
+    bodyWrap.append(this.bodyEl, this.previewInspect, this.adoptEl);
     // activity log: every gen start / done / error with timing (debug the "stuck wheel")
     this.logEl = el('div', "flex:0 0 auto;max-height:84px;overflow:auto;border-top:1px solid #22303e;" +
       "padding:5px 12px;font-family:monospace;font-size:10px;line-height:1.5;color:#8fa6b2;background:#080b11;white-space:pre-wrap;");
@@ -178,6 +187,14 @@ export class CharacterCreatorPanel {
     // completeness gaps at a glance: what's missing before this fighter ships
     this.gapBarEl = el('div', 'display:flex;flex-wrap:wrap;gap:4px;padding:6px 16px;border-bottom:1px solid #22303e;background:#0b1119;');
     right.appendChild(this.gapBarEl);
+    // studio: the preview switcher rides the wizard column — the LIVE scene is
+    // the preview, so these buttons drive the live fighter (host.loopMove)
+    if (this.sceneHosted) {
+      const strip = el('div', 'display:flex;flex-direction:column;gap:3px;padding:6px 16px;border-bottom:1px solid #22303e;background:#0b1119;');
+      strip.append(this.previewControls, this.previewCaption);
+      this.previewCaption.style.textAlign = 'left';
+      right.appendChild(strip);
+    }
     right.appendChild(bodyWrap);
     right.appendChild(this.logEl);
     right.appendChild(this.trayEl);
@@ -211,7 +228,7 @@ export class CharacterCreatorPanel {
    *  module (a draft save is flushed on unmount so nothing is lost). */
   setMounted(v: boolean): void {
     this.root.style.display = v ? 'flex' : 'none';
-    if (!v) void this.save();
+    if (!v) { this.subject?.stopLoop?.(); void this.save(); } // leave the fighter playable
   }
 
   private logMsg(msg: string): void {
@@ -276,7 +293,7 @@ export class CharacterCreatorPanel {
       version: 1, step: this.m.step, inputs: this.m.inputs, draft: this.m.draft, existingId: this.m.existingId, baseDef: this.m.baseDef,
       generatedVo: this.m.generatedVo, generatedMusic: this.m.generatedMusic, generatedFatality: this.m.generatedFatality, fatalityBeats: this.m.fatalityBeats,
       skeletons: this.m.skeletons, autoHitboxes: this.m.autoHitboxes, voiceModelId: this.m.voiceModelId,
-      moveAudioText: this.m.moveAudioText,
+      moveAudioText: this.m.moveAudioText, canonMeta: this.m.canonMeta, canonAssets: this.m.canonAssets,
       jobs: [...this.m.jobs.values()].map((j) => ({
         key: j.key, kind: j.kind, label: j.label, status: j.status, prompt: j.prompt,
         mock: j.mock, approved: j.approved, scale: j.scale, offX: j.offX, offY: j.offY, mime: j.dataUrl?.startsWith('data:image/jpeg') ? 'image/jpeg' : 'image/png', savedAs: j.savedAs,
@@ -327,6 +344,8 @@ export class CharacterCreatorPanel {
       this.m.autoHitboxes = (s.autoHitboxes ?? {});
       this.m.voiceModelId = s.voiceModelId;
       this.m.moveAudioText = ((s as { moveAudioText?: Record<string, string> }).moveAudioText ?? {});
+      this.m.canonMeta = (s as { canonMeta?: CreatorModel['canonMeta'] }).canonMeta;
+      this.m.canonAssets = (s as { canonAssets?: CreatorModel['canonAssets'] }).canonAssets;
       this.m.jobs = new Map();
       for (const jb of s.jobs ?? []) {
         const img = j.images?.[jb.key];
@@ -355,8 +374,8 @@ export class CharacterCreatorPanel {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }),
       });
       const j = (await r.json()) as {
-        ok?: boolean; error?: string; def?: Record<string, unknown>; meta?: { cellW?: number; cellH?: number; cols?: number; frames?: string[] };
-        sheetBase64?: string; portraitBase64?: string; koBase64?: string; stageBase64?: string;
+        ok?: boolean; error?: string; def?: Record<string, unknown>; meta?: { cellW?: number; cellH?: number; cols?: number; frames?: string[]; version?: number; normalized?: boolean };
+        sheetBase64?: string; portraitBase64?: string; bustBase64?: string; koBase64?: string; stageBase64?: string;
         projectiles?: Record<string, string>; fatalityPanels?: string[];
         voiceModelId?: string; hasStageMusic?: boolean;
       };
@@ -409,6 +428,9 @@ export class CharacterCreatorPanel {
       // music on disk (so the gap bar doesn't cry wolf on canon fighters)
       m.voiceModelId = j.voiceModelId;
       m.inheritedMusic = !!j.hasStageMusic;
+      // Adopt-checklist evidence: the packed meta + which portraits exist on disk
+      m.canonMeta = { version: j.meta.version, normalized: j.meta.normalized, frames: j.meta.frames };
+      m.canonAssets = { portrait: !!j.portraitBase64, bust: !!j.bustBase64, ko: !!j.koBase64 };
       m.step = 2;
       const frames = await this.sliceSheet(j.sheetBase64, j.meta);
       for (const [name, dataUrl] of Object.entries(frames)) {
@@ -429,6 +451,9 @@ export class CharacterCreatorPanel {
       void this.syncRawFrames();
       this.logMsg(`✓ opened ${id} from canon assets`);
       this.renderStepper(); this.render(); this.renderPreviewControls(); this.renderTray(); this.redrawPreview();
+      // Adopt flow (§2.7): surface the upgrade checklist right away when the
+      // fighter is below the roster standard; the gap-bar ⚕ chip reopens it
+      if ((this.adoptReport() ?? []).some((r) => !r.ok)) this.renderAdopt();
     } catch (e) { console.error(e); alert('Could not open canon fighter: ' + String(e)); }
   }
 
@@ -1024,16 +1049,42 @@ export class CharacterCreatorPanel {
 
   /** VO line editor: per line = text + ▶ play (its clip) + ↻ regen (re-synth). */
   private voEditor(label: string, lines: string[], prefix: 'kiai' | 'hurt' | 'victory'): HTMLDivElement {
-    const w = this.field(label + ' VO');
+    const cap = VO_CAPS[prefix];
+    const w = this.field(`${label} VO (${lines.length}/${cap})`);
     lines.forEach((val, i) => {
       const clip = `${prefix}-${i + 1}`;
       const row = el('div', 'display:flex;gap:5px;margin-bottom:4px;align-items:center;');
       const inp = el('input', INPUT + 'font-size:12px;') as HTMLInputElement;
       inp.value = val; inp.oninput = () => (lines[i] = inp.value);
       row.append(inp, this.playBtn(clip), this.regenClipBtn(clip, () => lines[i]));
+      if (lines.length > 1) {
+        const rm = el('button', BTN + 'padding:4px 8px;font-size:11px;', '✕');
+        rm.title = 'remove this line (its clip slot is dropped; later clips shift up)';
+        rm.onclick = () => { this.removeVoLine(lines, prefix, i); this.render(); };
+        row.appendChild(rm);
+      }
       w.appendChild(row);
     });
+    if (lines.length < cap) {
+      const add = el('button', BTN + 'padding:3px 10px;font-size:11px;', '＋ add line');
+      add.title = `add a ${label.toLowerCase()} line (up to ${cap} — the game loads ${cap} clip slots)`;
+      add.onclick = () => { lines.push(''); this.render(); };
+      w.appendChild(add);
+    }
     return w;
+  }
+
+  /** remove one VO line and shift the generated clips above it down a slot so
+   *  clip names (`prefix-N`) keep matching their texts. */
+  private removeVoLine(lines: string[], prefix: 'kiai' | 'hurt' | 'victory', i: number): void {
+    lines.splice(i, 1);
+    const vo = this.m.generatedVo;
+    for (let k = i + 1; k <= lines.length + 1; k++) {
+      const from = `${prefix}-${k + 1}`, to = `${prefix}-${k}`;
+      if (vo[from] !== undefined) vo[to] = vo[from]; else delete vo[to];
+    }
+    delete vo[`${prefix}-${lines.length + 1}`];
+    this.scheduleSave();
   }
 
   private playBtn(clip: string): HTMLDivElement {
@@ -1086,7 +1137,7 @@ export class CharacterCreatorPanel {
   }
 
   private lockGrid(label: string, items: string[]): HTMLDivElement {
-    const w = this.field(label);
+    const w = this.field(`${label} (${items.length})`);
     items.forEach((val, i) => {
       const row = el('div', 'display:flex;gap:6px;margin-bottom:4px;');
       const inp = el('input', INPUT + 'font-size:12px;') as HTMLInputElement;
@@ -1094,8 +1145,19 @@ export class CharacterCreatorPanel {
       const rr = el('button', BTN + 'padding:4px 8px;font-size:11px;', '↻');
       rr.title = 'reroll (pool draw — no LLM call)';
       rr.onclick = () => { items[i] = this.poolLine(label); inp.value = items[i]; };
-      row.append(inp, rr); w.appendChild(row);
+      row.append(inp, rr);
+      if (items.length > 1) {
+        const rm = el('button', BTN + 'padding:4px 8px;font-size:11px;', '✕');
+        rm.title = 'remove this line';
+        rm.onclick = () => { items.splice(i, 1); this.scheduleSave(); this.render(); };
+        row.appendChild(rm);
+      }
+      w.appendChild(row);
     });
+    const add = el('button', BTN + 'padding:3px 10px;font-size:11px;', '＋ add line');
+    add.title = 'add a line (the roster standard is 3+ win quotes)';
+    add.onclick = () => { items.push(''); this.render(); };
+    w.appendChild(add);
     return w;
   }
 
@@ -1121,15 +1183,24 @@ export class CharacterCreatorPanel {
     this.bodyEl.appendChild(run);
     this.bodyEl.appendChild(el('div', 'font-size:11px;color:#8fa6b2;margin:8px 0 14px;',
       `${done}/${total} frames generated. Un-generated moves reuse the idle pose in-game; grab a single one from its ghost slot in the tray.`));
-    this.bodyEl.appendChild(el('div', 'font-size:12px;font-weight:bold;color:#bff0ff;margin-bottom:8px;', 'Specials'));
     const d = this.m.draft!;
+    this.bodyEl.appendChild(el('div', 'font-size:12px;font-weight:bold;color:#bff0ff;margin-bottom:8px;',
+      `Specials (${d.specials.length}) + the locked throw`));
     d.specials.forEach((s, i) => {
+      // the techable throw is the LOCKED roster-standard 5th special: always
+      // present, LP+LK, archetype fixed — editable flavor only
+      const locked = s.archetype === 'techable-throw' || s.id === 'throw';
       const box = el('div', 'border:1px solid #22303e;border-radius:6px;padding:10px 12px;margin-bottom:10px;background:#0b1119;');
       const top = el('div', 'display:flex;gap:8px;align-items:center;margin-bottom:6px;');
       const name = el('input', INPUT + 'flex:2;font-size:13px;') as HTMLInputElement;
       name.value = s.name; name.oninput = () => (s.name = name.value);
-      name.onchange = () => this.renameSpecial(s, name.value.trim() || s.name); // commit id rename on blur
-      name.title = 'rename — the move id, cells, frames and player button follow the new name';
+      if (locked) {
+        name.readOnly = true;
+        name.title = 'the universal techable throw — locked (LP+LK, roster standard)';
+      } else {
+        name.onchange = () => this.renameSpecial(s, name.value.trim() || s.name); // commit id rename on blur
+        name.title = 'rename — the move id, cells, frames and player button follow the new name';
+      }
       // archetype dropdown (full catalog)
       const arch = el('select', INPUT + 'flex:2;cursor:pointer;font-size:12px;') as HTMLSelectElement;
       for (const a of SPECIAL_ARCHETYPES) { const o = el('option', '', a.label) as HTMLOptionElement; o.value = a.key; if (a.key === s.archetype) o.selected = true; arch.appendChild(o); }
@@ -1148,7 +1219,8 @@ export class CharacterCreatorPanel {
         fillCtrl(); info.textContent = SPECIAL_ARCHETYPES.find((a) => a.key === s.archetype)?.desc ?? '';
       };
       ctrl.onchange = () => (s.controls = ctrl.value);
-      top.append(el('span', 'font-size:11px;color:#5c6b78;width:14px;', String(i + 1)), name, arch, ctrl);
+      if (locked) { arch.disabled = true; ctrl.disabled = true; arch.style.opacity = ctrl.style.opacity = '.55'; }
+      top.append(el('span', 'font-size:11px;color:#5c6b78;width:14px;', locked ? '🔒' : String(i + 1)), name, arch, ctrl);
       box.append(top, info);
       // editable flavor description — drives the projectile art + active-frame prompt
       const descIn = el('input', INPUT + 'font-size:11px;margin-top:5px;') as HTMLInputElement;
@@ -1158,7 +1230,7 @@ export class CharacterCreatorPanel {
       // swap for one of the extra drafted moves (pool) + approve gate
       const ctrlRow = el('div', 'display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap;');
       const pool = this.m.draft!.specialPool;
-      if (pool.length) {
+      if (pool.length && !locked) {
         const swap = el('select', INPUT + 'flex:1;min-width:150px;cursor:pointer;font-size:11px;') as HTMLSelectElement;
         const ph0 = el('option', '', '↔ swap for a drafted move…') as HTMLOptionElement; ph0.value = ''; swap.appendChild(ph0);
         for (const p of pool) { const o = el('option', '', `${p.name} — ${p.description}`) as HTMLOptionElement; o.value = p.id; swap.appendChild(o); }
@@ -1175,6 +1247,18 @@ export class CharacterCreatorPanel {
       const appr = el('button', (s.approved ? BTN_HOT : BTN) + 'font-size:11px;', s.approved ? '✓ approved' : 'Approve');
       appr.onclick = () => { s.approved = !s.approved; this.render(); };
       ctrlRow.appendChild(appr);
+      if (!locked) {
+        const rm = el('button', BTN + 'font-size:11px;', '✕ remove');
+        rm.title = 'remove this special — it goes back to the drafted pool (generated cells stay in the tray)';
+        rm.onclick = () => {
+          const out = this.m.draft!.specials.splice(i, 1)[0];
+          this.m.draft!.specialPool.push({ ...out, approved: false });
+          this.logMsg(`special removed → pool: ${out.name}`);
+          this.scheduleSave(); this.scheduleStudioMount();
+          this.render(); this.renderPreviewControls(); this.renderTray(); this.redrawPreview();
+        };
+        ctrlRow.appendChild(rm);
+      }
       box.appendChild(ctrlRow);
       // per-special sprite status + generate — gated on approval
       const phases = ['startup', 'active', 'recovery'].map((ph) => this.m.job(`sprite:${s.id}-${ph}`)?.status === 'done');
@@ -1217,10 +1301,68 @@ export class CharacterCreatorPanel {
       box.appendChild(arow);
       this.bodyEl.appendChild(box);
     });
+    // grow the kit: a new slot draws from the drafted pool first, else blank
+    const addBtn = el('button', BTN + 'font-size:11px;margin-bottom:10px;', '＋ add special slot');
+    addBtn.title = 'add a special slot (drafted-pool move first, else a blank one to design)';
+    addBtn.onclick = () => this.addSpecialSlot();
+    this.bodyEl.appendChild(addBtn);
+    // the locked 5th special: for a NEW character the throw isn't a draft
+    // special (buildFullCharacter adds moves.throw itself) — show it as a
+    // locked row anyway so the kit reads complete and its call-out is editable
+    if (!d.specials.some((s) => s.archetype === 'techable-throw' || s.id === 'throw')) {
+      this.bodyEl.appendChild(this.lockedThrowRow());
+    }
     const nav = el('div', 'margin-top:8px;display:flex;gap:10px;');
     const bk = el('button', BTN, '‹ Back'); bk.onclick = () => this.goto(this.m.step - 1);
     const nx = el('button', BTN_HOT, 'Next ▸'); nx.onclick = () => this.goto(this.m.step + 1);
     nav.append(bk, nx); this.bodyEl.appendChild(nav);
+  }
+
+  /** append a specials slot: first unused pool move, else a blank draft. */
+  private addSpecialSlot(): void {
+    const d = this.m.draft!;
+    const taken = new Set([...BASE_MOVE_IDS, ...d.specials.map((s) => s.id)]);
+    const fromPool = d.specialPool.findIndex((p) => !taken.has(p.id));
+    let next: SpecialDraft;
+    if (fromPool >= 0) next = { ...d.specialPool.splice(fromPool, 1)[0], approved: false };
+    else {
+      let id = 'new-special', n = 2;
+      while (taken.has(id)) id = `new-special-${n++}`;
+      next = { id, name: 'New Special', controls: 'qcf+P', archetype: 'advancing-rush', description: 'a new special move — describe what it looks like' };
+    }
+    d.specials.push(next);
+    this.logMsg(`special slot added: ${next.name}`);
+    this.scheduleSave(); this.scheduleStudioMount();
+    this.render(); this.renderPreviewControls(); this.renderTray(); this.redrawPreview();
+  }
+
+  /** the NEW-character throw display row: locked identity (LP+LK techable —
+   *  buildFullCharacter writes moves.throw itself), live cell status, and an
+   *  editable call-out that persists as moves.throw.voiceText. */
+  private lockedThrowRow(): HTMLDivElement {
+    const box = el('div', 'border:1px solid #2c4757;border-radius:6px;padding:10px 12px;margin-bottom:10px;background:#0b1119;');
+    const top = el('div', 'display:flex;gap:8px;align-items:center;margin-bottom:4px;');
+    top.append(
+      el('span', 'font-size:11px;color:#5c6b78;width:14px;', '🔒'),
+      el('span', 'font-size:13px;color:#eaf6fb;font-weight:bold;', 'THROW'),
+      el('span', 'font-size:11px;color:#8fa6b2;', 'LP+LK · techable — the locked roster-standard 5th special'),
+    );
+    box.appendChild(top);
+    const done = ['throw-startup', 'throw-active', 'throw-recovery'].filter((n) => this.m.job('sprite:' + n)?.status === 'done').length;
+    box.appendChild(el('div', 'font-size:11px;color:#8fa6b2;', `sprites ${done}/3 — generated with the attack batch above`));
+    const arow = el('div', 'display:flex;gap:6px;align-items:center;margin-top:8px;padding-top:8px;border-top:1px dashed #22303e;flex-wrap:wrap;');
+    arow.appendChild(el('span', 'font-size:11px;color:#9fb4be;', 'call-out:'));
+    const atext = el('input', INPUT + 'flex:1;min-width:120px;font-size:11px;') as HTMLInputElement;
+    atext.placeholder = 'VO line or an SFX description (e.g. a grunt and a body slam)';
+    atext.value = this.m.moveAudioText.throw ?? '';
+    atext.oninput = () => (this.m.moveAudioText.throw = atext.value);
+    const vbtn = el('button', BTN + 'font-size:11px;', '▸ voice');
+    vbtn.onclick = () => this.genMoveAudio('throw', atext.value, 'voice');
+    const sbtn = el('button', BTN + 'font-size:11px;', '▸ sfx');
+    sbtn.onclick = () => this.genMoveAudio('throw', atext.value, 'sfx');
+    arow.append(atext, vbtn, sbtn, this.audioChip(() => this.m.moveAudio.throw, (b) => (this.m.moveAudio.throw = b), `${this.m.id}-move-throw.mp3`));
+    box.appendChild(arow);
+    return box;
   }
 
   /** the projectile-art prompt, written from the special's + character's description. */
@@ -1379,13 +1521,21 @@ export class CharacterCreatorPanel {
   private renderRig(): void {
     this.ensureDraft();
     this.h('Rig — skeleton & hitboxes', 'Run LOCAL DWPose over every generated cell (fal is ship-only), then auto-fit each attack hitbox from the skeleton. Baked into meta.skeletons + move data on SHIP.');
-    const cellsReady = this.m.sheetPlan().length;
+    const plan = this.m.sheetPlan();
+    const cellsReady = plan.length;
+    const missing = plan.filter((p) => !this.m.skeletons[p.name]).length;
     const skel = Object.keys(this.m.skeletons).length;
     const hb = Object.keys(this.m.autoHitboxes).length;
     const runBtn = el('button', BTN_HOT + 'font-size:13px;margin-right:6px;',
-      this.m.rigStatus === 'running' ? '◐ running DWPose…' : skel ? `↻ Re-run skeleton (${skel} cells)` : '▸ Run skeleton (local DWPose)');
+      this.m.rigStatus === 'running' ? '◐ running DWPose…' : skel ? `↻ Re-run skeleton (all ${cellsReady} cells)` : '▸ Run skeleton (local DWPose)');
     runBtn.onclick = () => this.runSkeleton();
     this.bodyEl.appendChild(runBtn);
+    // the cheap pass: only cells with no keypoints yet (rerolls, new specials)
+    const missBtn = el('button', (missing && this.m.rigStatus !== 'running' ? BTN_HOT : BTN + 'opacity:.5;pointer-events:none;') + 'font-size:13px;margin-right:6px;',
+      `▸ Regen missing keypoints only (${missing})`);
+    missBtn.title = 'run the skeleton ONLY over cells without keypoints — the tray badges (⬡) show which';
+    missBtn.onclick = () => this.runSkeleton(true);
+    this.bodyEl.appendChild(missBtn);
     const hbBtn = el('button', (skel ? BTN_HOT : BTN + 'opacity:.5;pointer-events:none;') + 'font-size:13px;', hb ? `↻ Re-fit hitboxes (${hb})` : '▸ Auto-hitboxes from skeleton');
     hbBtn.onclick = () => this.autoHitboxesFromSkeleton();
     this.bodyEl.appendChild(hbBtn);
@@ -1500,7 +1650,7 @@ export class CharacterCreatorPanel {
     const voCount = Object.keys(this.m.finalVoClips()).length;
     const musicReady = !!this.m.finalMusic();
     this.bodyEl.appendChild(el('div', 'font-size:12px;color:#8fa6b2;margin-bottom:8px;',
-      `audio: ${voCount}/17 VO clips ${voCount ? 'ready' : '— generate VO on Profile (else silent placeholders)'} · music: ${musicReady ? 'ready' : 'none (falls back to default)'}`));
+      `audio: ${voCount}/${this.m.voTotal()} VO clips ${voCount ? 'ready' : '— generate VO on Profile (else silent placeholders)'} · music: ${musicReady ? 'ready' : 'none (falls back to default)'}`));
     this.bodyEl.appendChild(el('pre', FONT + 'font-size:10px;color:#8fa6b2;background:#0b1119;border:1px solid #22303e;' +
       'border-radius:6px;padding:10px;white-space:pre-wrap;max-height:220px;overflow:auto;', JSON.stringify(this.m.buildFullCharacter(), null, 2)));
     const status = el('div', 'font-size:12px;color:#bff0ff;margin:10px 0;');
@@ -1690,6 +1840,7 @@ export class CharacterCreatorPanel {
     const throwDone = ['throw-startup', 'throw-active', 'throw-recovery'].every((n) => done('sprite:' + n));
     const vo = m.finalVoClips() ?? {};
     const voCount = Object.keys(vo).length;
+    const voTotal = m.voTotal();
     const d = m.draft;
     const skel = Object.keys(m.skeletons).length;
     return [
@@ -1701,7 +1852,7 @@ export class CharacterCreatorPanel {
       { label: `skeletons ${skel}/${plan.length || '—'}`, ok: plan.length > 0 && skel >= plan.length, soft: true },
       { label: 'lore', ok: !!(m.inputs.lore?.trim() || d?.lore.backstory) },
       { label: `quotes ${d?.winQuotes.length ?? 0}/3`, ok: (d?.winQuotes.length ?? 0) >= 3 },
-      { label: `VO ${voCount}/17`, ok: voCount >= 17, soft: voCount > 0 },
+      { label: `VO ${voCount}/${voTotal}`, ok: voCount >= voTotal, soft: voCount > 0 },
       { label: 'voice sample', ok: !!m.voiceModelId || !!m.inputs.voiceSamples?.length, soft: true },
       { label: 'music', ok: !!m.finalMusic() || m.inheritedMusic, soft: true },
       { label: `fatality ${m.generatedFatality.length}/4`, ok: m.generatedFatality.length === 4 },
@@ -1719,6 +1870,104 @@ export class CharacterCreatorPanel {
         `border:1px solid ${color};color:${fg};border-radius:3px;padding:1px 7px;font-size:10px;`,
         `${g.ok ? '✓' : '⚠'} ${g.label}`));
     }
+    // canon edits get the Adopt entry point: the legacy-upgrade checklist
+    const rep = this.adoptReport();
+    if (rep) {
+      const issues = rep.filter((r) => !r.ok).length;
+      const c = issues ? '#8a6a3a' : '#3d5a48', fg = issues ? '#ffcf8a' : '#8fd6a8';
+      const chip = el('button', FONT + `cursor:pointer;border:1px solid ${c};color:${fg};background:#121a24;` +
+        'border-radius:3px;padding:1px 8px;font-size:10px;', issues ? `⚕ ADOPT · ${issues} to upgrade` : '⚕ ADOPT ✓ up to standard');
+      chip.title = 'legacy-upgrade checklist + a diff of what WRITE would change';
+      chip.onclick = () => this.renderAdopt();
+      this.gapBarEl.appendChild(chip);
+    }
+  }
+
+  // ── Adopt flow v1: the legacy-upgrade checklist + write diff ─────────────
+  /** the roster-standard checklist for a canon-opened fighter — mirrors the
+   *  audit/schema-lint (assets.audit.test.ts) so the studio flags the same
+   *  gaps the suite would. null when this isn't a canon edit. */
+  private adoptReport(): { label: string; ok: boolean; detail: string }[] | null {
+    const def = this.m.baseDef as {
+      spriteOffsetY?: number; winQuotes?: string[]; fatality?: { id?: string };
+      vo?: { kiai?: string[]; hurt?: string[]; victory?: string[] };
+      moves?: Record<string, Record<string, unknown>>;
+    } | undefined;
+    if (!def) return null;
+    const meta = this.m.canonMeta;
+    const assets = this.m.canonAssets;
+    const moves = Object.values(def.moves ?? {});
+    const frames = meta?.frames?.length ?? 0;
+    const skel = Object.keys(this.m.skeletons).length;
+    const voiced = Object.entries(def.moves ?? {}).filter(([, m]) => m.voice === true);
+    const unvoicedTexts = voiced.filter(([, m]) => typeof m.voiceText !== 'string' || !m.voiceText);
+    const quotes = def.winQuotes?.length ?? 0;
+    const vo = def.vo;
+    return [
+      { label: 'meta v2 + normalized', ok: meta?.version === 2 && meta?.normalized !== false, detail: `sheet meta v${meta?.version ?? 1}${meta?.normalized === false ? ', not floor-normalized' : ''} — re-pack with the studio packer to upgrade` },
+      { label: 'skeletons for every cell', ok: frames > 0 && skel >= frames, detail: `${skel}/${frames} cells carry RTMPose keypoints — Rig → regen missing` },
+      { label: 'no spriteOffsetY', ok: def.spriteOffsetY === undefined, detail: 'legacy render nudge — a normalized re-pack makes it obsolete (Phase-2 standard)' },
+      { label: 'light chains', ok: moves.some((m) => Array.isArray(m.chains) && m.chains.length > 0), detail: 'no move carries chains[] — apply the kit grammar (core/kit.mjs) on write' },
+      { label: 'medium cancels', ok: moves.some((m) => m.cancel === true), detail: 'no cancellable mediums — apply the kit grammar on write' },
+      { label: 'L/H variants', ok: moves.some((m) => m.variants && typeof m.variants === 'object' && Object.keys(m.variants as object).length > 0), detail: 'no special carries variants — apply the kit grammar on write' },
+      { label: 'universal throw', ok: !!def.moves?.throw, detail: 'missing the locked techable throw (the roster-standard 5th special)' },
+      { label: 'win quotes ≥ 3', ok: quotes >= 3, detail: `${quotes} quotes — the win screen needs at least 3 (Profile → Victory quotes)` },
+      { label: 'themed fatality', ok: !!def.fatality?.id && def.fatality.id !== 'finish', detail: 'placeholder fatality id "finish" — author a themed one (Polish)' },
+      { label: 'vo line texts', ok: !!(vo?.kiai?.length && vo?.hurt?.length && vo?.victory?.length), detail: 'the persisted vo{} block is missing/partial — fill kiai/hurt/victory texts (Profile)' },
+      { label: 'per-move voiceText', ok: unvoicedTexts.length === 0, detail: voiced.length ? `${unvoicedTexts.length}/${voiced.length} voiced moves lack voiceText (${unvoicedTexts.map(([id]) => id).join(', ') || '—'})` : 'no voiced moves' },
+      { label: 'portrait · bust · KO', ok: !!(assets?.portrait && assets.bust && assets.ko), detail: `portrait ${assets?.portrait ? '✓' : '✕'} · bust ${assets?.bust ? '✓' : '✕'} · ko ${assets?.ko ? '✓' : '✕'} (bust regenerates from the canonical on write)` },
+    ];
+  }
+
+  /** structural diff (paths that WRITE would add/remove/change) — the Adopt
+   *  overlay's evidence that a re-ship is safe. Depth-first, capped. */
+  private diffLines(a: unknown, b: unknown, path: string, out: string[]): string[] {
+    if (out.length >= 300) return out;
+    const short = (v: unknown): string => {
+      const s = JSON.stringify(v) ?? 'undefined';
+      return s.length > 64 ? s.slice(0, 61) + '…' : s;
+    };
+    const isObj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
+    if (a === undefined) { out.push(`+ ${path} = ${short(b)}`); return out; }
+    if (b === undefined) { out.push(`− ${path} (removed, was ${short(a)})`); return out; }
+    if (isObj(a) && isObj(b)) {
+      for (const k of [...new Set([...Object.keys(a), ...Object.keys(b)])].sort()) {
+        this.diffLines(a[k], b[k], path ? `${path}.${k}` : k, out);
+      }
+      return out;
+    }
+    if (JSON.stringify(a) !== JSON.stringify(b)) out.push(`~ ${path}: ${short(a)} → ${short(b)}`);
+    return out;
+  }
+
+  /** the Adopt overlay: checklist chips with fix pointers + the write diff. */
+  private renderAdopt(): void {
+    const rep = this.adoptReport();
+    if (!rep) return;
+    this.adoptEl.replaceChildren();
+    this.adoptEl.style.display = 'block';
+    const head = el('div', 'display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;');
+    head.append(el('div', 'font-size:15px;font-weight:bold;color:#bff0ff;', `Adopt · ${this.m.id} — legacy upgrade checklist`));
+    const close = el('button', BTN_HOT + 'padding:4px 12px;', '✕ close');
+    close.onclick = () => { this.adoptEl.style.display = 'none'; };
+    head.appendChild(close);
+    this.adoptEl.appendChild(head);
+    this.adoptEl.appendChild(el('div', 'font-size:11px;color:#8fa6b2;margin-bottom:10px;',
+      'The same standard the audit/schema-lint holds the roster to. Fix items in their module, then WRITE on Ship — the diff below is exactly what that write changes.'));
+    for (const r of rep) {
+      const row = el('div', `border:1px solid ${r.ok ? '#22303e' : '#8a6a3a'};border-radius:5px;padding:6px 10px;margin-bottom:5px;background:#0b1119;`);
+      row.appendChild(el('div', `font-size:12px;color:${r.ok ? '#8fd6a8' : '#ffcf8a'};`, `${r.ok ? '✓' : '⚠'} ${r.label}`));
+      if (!r.ok) row.appendChild(el('div', 'font-size:11px;color:#8fa6b2;margin-top:2px;', r.detail));
+      this.adoptEl.appendChild(row);
+    }
+    // the write diff: baseDef → what buildFullCharacter would write today
+    const diff = this.diffLines(this.m.baseDef, this.m.buildFullCharacter(), '', []);
+    this.adoptEl.appendChild(el('div', 'font-size:12px;font-weight:bold;color:#bff0ff;margin:12px 0 4px;',
+      `WRITE diff — ${diff.length ? diff.length + ' change(s)' : 'no changes'}${diff.length >= 300 ? ' (truncated at 300)' : ''}`));
+    this.adoptEl.appendChild(el('div', 'font-size:10px;color:#8fa6b2;margin-bottom:6px;',
+      'JSON only (sheet/audio/portrait writes are separate); + added · − removed · ~ changed'));
+    this.adoptEl.appendChild(el('pre', FONT + 'font-size:10px;line-height:1.5;color:#c8d6de;background:#080b11;border:1px solid #22303e;' +
+      'border-radius:6px;padding:10px;white-space:pre-wrap;max-height:340px;overflow:auto;', diff.join('\n') || '(byte-identical)'));
   }
 
   // ── generation ─────────────────────────────────────────────────────────
@@ -1916,18 +2165,21 @@ export class CharacterCreatorPanel {
     this.render();
   }
 
-  /** RIG: run the LOCAL Python DWPose over every generated cell (fal is ship-only). */
-  private async runSkeleton(): Promise<void> {
+  /** RIG: run the LOCAL Python DWPose over generated cells (fal is ship-only).
+   *  `missingOnly` skips cells that already carry keypoints — the cheap pass
+   *  after a few rerolls/new cells instead of re-inferring the whole sheet. */
+  private async runSkeleton(missingOnly = false): Promise<void> {
     this.m.rigStatus = 'running'; this.render();
     try {
       const seen = new Set<string>();
       const cells: { name: string; pngBase64: string }[] = [];
       for (const p of this.m.sheetPlan()) {
         if (seen.has(p.name)) continue; seen.add(p.name);
+        if (missingOnly && this.m.skeletons[p.name]) continue;
         const b = dataUrlToB64(this.m.job(p.jobKey)?.dataUrl);
         if (b) cells.push({ name: p.name, pngBase64: b });
       }
-      if (!cells.length) throw new Error('no cells generated yet');
+      if (!cells.length) throw new Error(missingOnly ? 'no cells are missing keypoints' : 'no cells generated yet');
       const r = await fetch('/__editor/skeleton-regen', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: this.m.id, cells }),
@@ -2078,6 +2330,18 @@ export class CharacterCreatorPanel {
     return groups;
   }
 
+  /** scene-hosted: mirror the preview selection onto the LIVE fighter — real
+   *  moves and idle/walk loop via the scene's loop driver; groups the driver
+   *  can't hold (jump/crouch/block/hit/fall/down) drop back to manual/idle. */
+  private driveLive(key: string): void {
+    if (!this.subject?.loopMove) return;
+    const pseudo: Record<string, string> = { idle: '__idle__', walk: '__walk__' };
+    const moveIds = new Set([...BASE_MOVE_IDS, ...(this.m.draft?.specials ?? []).map((s) => s.id)]);
+    const moveId = pseudo[key] ?? (moveIds.has(key) ? key : null);
+    if (moveId) this.subject.loopMove(moveId);
+    else this.subject.stopLoop?.();
+  }
+
   /** buttons: one per generated group (click → play it) + regen for a picked cell. */
   private renderPreviewControls(): void {
     if (!this.previewControls) return;
@@ -2086,13 +2350,14 @@ export class CharacterCreatorPanel {
     for (const g of groups) {
       const on = this.preview.kind === 'group' && this.preview.key === g.key;
       const b = el('button', (on ? BTN_HOT : BTN) + 'padding:3px 9px;font-size:11px;', (g.cells.length > 1 ? '▶ ' : '') + g.label);
-      b.onclick = () => { this.preview = { kind: 'group', key: g.key }; this.renderPreviewControls(); this.renderTray(); this.redrawPreview(); };
+      b.onclick = () => { this.preview = { kind: 'group', key: g.key }; this.driveLive(g.key); this.renderPreviewControls(); this.renderTray(); this.redrawPreview(); };
       this.previewControls.appendChild(b);
     }
     // per-move player buttons (grey until generated, lit when done) on the moves/rig steps
     const step = CREATOR_STEPS[this.m.step];
     if (step === 'MOVES' || step === 'RIG' || step === 'SHIP') {
-      const moves = [...BASE_MOVE_IDS, ...(this.m.draft?.specials ?? []).map((s) => s.id)];
+      // Set-dedup: a canon fighter's locked throw is both a base move and a draft special
+      const moves = [...new Set([...BASE_MOVE_IDS, ...(this.m.draft?.specials ?? []).map((s) => s.id)])];
       for (const mv of moves) {
         const special = !!this.m.draft?.specials.some((s) => s.id === mv);
         const cells = moveCellNames(mv, special);
@@ -2100,8 +2365,8 @@ export class CharacterCreatorPanel {
         const done = this.m.job('sprite:' + active)?.status === 'done';
         const on = this.preview.kind === 'group' && this.preview.key === mv;
         const b = el('button', (on ? BTN_HOT : BTN) + `padding:2px 5px;font-size:9px;${done ? '' : 'opacity:.38;'}`, mv.toUpperCase());
-        b.title = done ? 'play ' + mv : mv + ' — not generated yet';
-        b.onclick = () => { this.preview = { kind: 'group', key: mv }; this.renderPreviewControls(); this.renderTray(); this.redrawPreview(); };
+        b.title = done ? 'play ' + mv + ' (loops on the live fighter in the scene)' : mv + ' — not generated yet';
+        b.onclick = () => { this.preview = { kind: 'group', key: mv }; this.driveLive(mv); this.renderPreviewControls(); this.renderTray(); this.redrawPreview(); };
         this.previewControls.appendChild(b);
       }
     }
@@ -2464,6 +2729,15 @@ export class CharacterCreatorPanel {
     }
     if (err) { cell.appendChild(el('div', 'position:absolute;top:0;left:0;right:0;bottom:18px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#e0736a;', '✕')); cell.title = 'error: ' + (j.error ?? '') + ' — click to see prompt & retry'; }
     else cell.title = 'click to inspect · drag onto another cell to SWAP (hold Shift = copy over)';
+    // per-frame skeleton badge: does this cell have RTMPose keypoints yet?
+    if (j.key.startsWith('sprite:') && j.status === 'done') {
+      const hasSkel = !!this.m.skeletons[j.key.slice('sprite:'.length)];
+      const badge = el('div', 'position:absolute;bottom:16px;right:2px;font-size:9px;line-height:1;pointer-events:none;' +
+        `text-shadow:0 1px 2px #000;color:${hasSkel ? '#3ad64a' : '#ffcf8a'};`, hasSkel ? '⬢' : '⬡');
+      badge.title = hasSkel ? 'skeleton keypoints baked' : 'no skeleton yet — run the Rig step';
+      cell.appendChild(badge);
+      if (!hasSkel) cell.title += ' · ⬡ no skeleton yet (Rig → regen missing)';
+    }
     cell.onclick = () => this.selectCell(j.key);
     // drag-to-copy/swap on the timeline — sprite cells only
     if (j.key.startsWith('sprite:') && j.status === 'done') {

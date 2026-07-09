@@ -333,6 +333,11 @@ export function makeDraft(name: string, description: string): DesignDraft {
   };
 }
 
+/** the on-disk VO clip contract (audit VOICE_COUNTS + the SHIP clipMap write
+ *  6/6/4 slots with silence fallback) — the editor lets lines be removed and
+ *  re-added but never beyond what the game will actually load. */
+export const VO_CAPS = { kiai: 6, hurt: 6, victory: 4 } as const;
+
 // ── the model ───────────────────────────────────────────────────────────────
 export const CREATOR_STEPS = ['SEED', 'PROFILE', 'MOVES', 'RIG', 'POLISH', 'SHIP'] as const;
 export type CreatorStep = typeof CREATOR_STEPS[number];
@@ -362,6 +367,10 @@ export class CreatorModel {
   voiceModelId?: string; // Fish clone reference id (if the user cloned a voice)
   /** canon-reopen: the home stage already has music on disk (gap-bar honesty) */
   inheritedMusic = false;
+  /** canon-reopen: the packed meta.json as loaded (version/normalized/frames)
+   *  + which committed portrait assets exist — the Adopt checklist's evidence */
+  canonMeta?: { version?: number; normalized?: boolean; frames?: string[] };
+  canonAssets?: { portrait: boolean; bust: boolean; ko: boolean };
   skeletons: Record<string, Record<string, [number, number, number]>> = {}; // cellName -> DWPose joints
   autoHitboxes: Record<string, { x: number; y: number; w: number; h: number }> = {}; // moveId -> engine hitbox
   voStatus: 'idle' | 'running' | 'done' | 'error' = 'idle';
@@ -370,9 +379,13 @@ export class CreatorModel {
   cloneStatus: 'idle' | 'running' | 'done' | 'error' = 'idle';
   rigStatus: 'idle' | 'running' | 'done' | 'error' = 'idle';
 
-  /** all special phase cells for the draft (startup/active/recovery × each special). */
+  /** all special phase cells for the draft (startup/active/recovery × each
+   *  special). The locked techable throw is skipped: its throw-* cells are
+   *  already in ATTACK_CELLS (canon-reopen used to double-count them). */
   specialCellList(): AttackCell[] {
-    return (this.draft?.specials ?? []).flatMap((s) => specialCells(s.id, s.name, s.description));
+    return (this.draft?.specials ?? [])
+      .filter((s) => s.id !== 'throw' && s.archetype !== 'techable-throw')
+      .flatMap((s) => specialCells(s.id, s.name, s.description));
   }
 
   /** every sheet cell → the job whose image fills it (base + attack phases + specials).
@@ -406,11 +419,31 @@ export class CreatorModel {
     return (i >= 0 ? String(i).padStart(2, '0') + '-' : '') + name;
   }
 
-  /** final VO map for the SHIP write: BYO clips override generated ones, slot by slot. */
+  /** the VO clip slots the current draft actually fills (line counts are
+   *  add/removable, capped by the on-disk contract VO_CAPS). */
+  voSlots(): string[] {
+    const n = (arr: string[] | undefined, cap: number, dflt: number): number => Math.min(arr?.length ?? dflt, cap);
+    const d = this.draft;
+    return [
+      ...Array.from({ length: n(d?.vo.kiai, VO_CAPS.kiai, VO_CAPS.kiai) }, (_, i) => `kiai-${i + 1}`),
+      ...Array.from({ length: n(d?.vo.hurt, VO_CAPS.hurt, VO_CAPS.hurt) }, (_, i) => `hurt-${i + 1}`),
+      ...Array.from({ length: n(d?.vo.victory, VO_CAPS.victory, VO_CAPS.victory) }, (_, i) => `victory-${i + 1}`),
+    ];
+  }
+
+  /** announcer + every drafted line — the gap bar's denominator. */
+  voTotal(): number {
+    return 1 + this.voSlots().length;
+  }
+
+  /** final VO map for the SHIP write: BYO clips override generated ones, slot
+   *  by slot; clips for since-removed lines are dropped (SHIP writes silence). */
   finalVoClips(): Record<string, string> {
-    const out = { ...this.generatedVo };
+    const slots = this.voSlots();
+    const keep = new Set(['announcer', ...slots]);
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(this.generatedVo)) if (keep.has(k)) out[k] = v;
     const byo = this.inputs.kiaiClips ?? [];
-    const slots = ['kiai-1', 'kiai-2', 'kiai-3', 'kiai-4', 'kiai-5', 'kiai-6', 'hurt-1', 'hurt-2', 'hurt-3', 'hurt-4', 'hurt-5', 'hurt-6', 'victory-1', 'victory-2', 'victory-3', 'victory-4'];
     byo.forEach((f, i) => { if (slots[i]) out[slots[i]] = f.dataUrl.includes(',') ? f.dataUrl.split(',')[1] : f.dataUrl; });
     return out;
   }
@@ -446,6 +479,9 @@ export class CreatorModel {
     const moves: Record<string, unknown> = {};
     for (const [key, m] of Object.entries(NORMAL_MOVES)) moves[key] = { ...m };
     moves.throw = { startup: 3, active: 2, recovery: 20, damage: 0, hitstun: 0, blockstun: 0, knockback: 6, hitbox: null, height: 'mid', grab: { range: 64 }, techable: true };
+    // the locked 5th special gets call-outs like any other special
+    if (this.moveAudio.throw) (moves.throw as Record<string, unknown>).voice = true;
+    if (this.moveAudioText.throw) (moves.throw as Record<string, unknown>).voiceText = this.moveAudioText.throw;
     for (const s of d.specials) {
       moves[s.id] = buildSpecial(s);
       if (this.moveAudio[s.id]) (moves[s.id] as Record<string, unknown>).voice = true; // has a per-move VO/SFX call-out
