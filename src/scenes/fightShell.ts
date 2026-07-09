@@ -146,9 +146,11 @@ export class FightShell {
       else this.restartMatch();
     });
     kb.on('keydown-ENTER', () => {
-      // tuner/sprite editor: ENTER types into number inputs / triggers buttons
-      // in the DOM sidebar — it must never also bail out to char select underneath
-      if (this.opts.tuner || this.opts.spriteEditor) return;
+      // tuner/sprite editor/STUDIO: ENTER types into number inputs / triggers
+      // buttons in the DOM panels — it must never also bail out to char
+      // select underneath (the studio flag was missed here once: pressing
+      // ENTER while editing sprite size dumped the user to the main menu)
+      if (this.opts.tuner || this.opts.spriteEditor || this.opts.studio) return;
       if (this.opts.online && this.opts.state().phase === 'matchEnd') this.optInRematch();
       else if (this.opts.training) this.toCharacterSelect();
       else if (this.opts.state().phase === 'matchEnd') this.toCharacterSelect();

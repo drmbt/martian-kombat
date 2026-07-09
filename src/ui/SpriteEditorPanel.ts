@@ -838,6 +838,9 @@ export class SpriteEditorPanel {
     range.style.cssText = 'flex:1;min-width:0;';
     const num = document.createElement('input');
     num.type = 'number';
+    // match the slider's step — un-stepped number inputs spin in INTEGERS,
+    // which made fine controls (0.01 character scale) unusable
+    num.step = String(step);
     num.value = String(value);
     num.style.cssText = 'width:56px;background:#172230;color:#eaf6fb;border:1px solid #3f6070;';
     const apply = (n: number) => {
