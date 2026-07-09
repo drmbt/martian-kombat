@@ -25,7 +25,8 @@
     "gen:key": "node tools/corridorkey.mjs",
     "gen:voice": "node tools/gen-voice.mjs",
     "gen:qa": "node tools/qa/run.mjs pose_qa.py",
-    "gen:busts": "node tools/qa/run.mjs portrait_crop.py --all"
+    "gen:busts": "node tools/qa/run.mjs portrait_crop.py --all",
+    "studio:run": "node tools/studio-run.mjs"
   },
   "dependencies": {
     "peerjs": "^1.5.5",

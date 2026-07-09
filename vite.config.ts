@@ -41,6 +41,8 @@ const FF_STAGE = STAGE_COVER;
 // the shipped site. See src/scenes/StagePinEditorScene.ts for the client.
 function editorApi(): Plugin {
   const clamp01 = (n: number) => Math.max(0, Math.min(1, n));
+  // one job runner per dev-server process (created lazily by getJobRunner)
+  let jobRunner: import('./tools/core/jobs.mjs').JobRunner | null = null;
   return {
     name: 'mk-editor-api',
     apply: 'serve',
@@ -469,7 +471,15 @@ Cardinality requirements:
           .then(async (b) => {
             const { name, description, lore } = b as { name?: unknown; description?: unknown; lore?: unknown };
             if (typeof name !== 'string' || !name.trim()) throw new Error('missing name');
-            const prompt = creatorDesignPrompt(name.trim(), typeof description === 'string' ? description.trim() : '', typeof lore === 'string' ? lore.trim() : '');
+            // HARD privacy gate (machine-enforced, core/lore.mjs): an opted-out
+            // Martian throws here — no design draft, no downstream generation.
+            // A clean/unknown name passes and inherits the sheet's lore when
+            // the user typed none (bios drive archetypes/quotes/VO).
+            const loreMod = await import('./tools/core/lore.mjs');
+            const person = await loreMod.lookupFighter(name.trim(), { cachePath: join(root, 'assets/raw/lore-sheet.csv') });
+            const typedLore = typeof lore === 'string' ? lore.trim() : '';
+            const effectiveLore = typedLore || loreMod.loreContext(person);
+            const prompt = creatorDesignPrompt(name.trim(), typeof description === 'string' ? description.trim() : '', effectiveLore);
             const lib = await import('./tools/lib.mjs');
             const env = lib.loadEnv();
             const apiKey = env.GEMINI_API_KEY;
@@ -478,25 +488,90 @@ Cardinality requirements:
               return;
             }
             const model = env.GEMINI_TEXT_MODEL || 'gemini-2.5-pro';
-            const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
-                  temperature: 0.85,
-                  topP: 0.9,
-                  responseMimeType: 'application/json',
-                },
-              }),
-            });
-            const json = await r.json();
-            if (!r.ok) throw new Error(`gemini ${model}: ${r.status} ${JSON.stringify(json).slice(0, 400)}`);
-            const text = json.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? '').join('\n') ?? '';
-            if (!text.trim()) throw new Error(`gemini ${model}: empty design response`);
+            // shared helper: one implementation, 429/5xx backoff included
+            const text = await lib.geminiText({ apiKey, model, prompt, responseMimeType: 'application/json' });
             sendJson(res, 200, { ok: true, draft: extractJsonObject(text), prompt });
           })
           .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
+      });
+
+      // POST /__editor/lore  { query }
+      // -> the Martian Lore sheet, machine-readable: fuzzy person lookup with
+      //    the HARD privacy opt-out gate (tools/core/lore.mjs). Returns
+      //    { ok, person|null }; an opted-out match returns
+      //    { ok:false, optedOut:true } so the studio can refuse loudly.
+      server.middlewares.use('/__editor/lore', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        readJsonBody(req)
+          .then(async (b) => {
+            const { query } = b as { query?: unknown };
+            if (typeof query !== 'string' || !query.trim()) throw new Error('missing query');
+            const loreMod = await import('./tools/core/lore.mjs');
+            const person = await loreMod.lookupFighter(query.trim(), { cachePath: join(root, 'assets/raw/lore-sheet.csv') });
+            sendJson(res, 200, { ok: true, person, context: loreMod.loreContext(person) });
+          })
+          .catch((err) => sendJson(res, err?.optedOut ? 403 : 400, { ok: false, optedOut: !!err?.optedOut, error: String(err?.message ?? err) }));
+      });
+
+      // ── /__editor/jobs — the server-side job runner (§2.4) ────────────────
+      // One JobRunner per dev-server process (persists to assets/raw/jobs so
+      // reloads/restarts resume). Jobs run the same idempotent gen:* scripts
+      // the CLI uses — `npm run studio:run` is the headless twin.
+      const getJobRunner = async () => {
+        if (!jobRunner) {
+          const { JobRunner } = await import('./tools/core/jobs.mjs');
+          const { WORKERS } = await import('./tools/core/pipeline.mjs');
+          jobRunner = new JobRunner({ dir: join(root, 'assets/raw/jobs'), workers: WORKERS, concurrency: 2 });
+        }
+        return jobRunner;
+      };
+
+      // GET /__editor/jobs/stream → SSE: snapshot, then live job/log/cost events
+      server.middlewares.use('/__editor/jobs/stream', (req, res, next) => {
+        if (req.method !== 'GET') return next();
+        void getJobRunner().then((runner) => {
+          res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' });
+          res.write(`data: ${JSON.stringify({ type: 'snapshot', jobs: runner.list() })}\n\n`);
+          const un = runner.subscribe((ev: unknown) => res.write(`data: ${JSON.stringify(ev)}\n\n`));
+          const ping = setInterval(() => res.write(': ping\n\n'), 25_000);
+          req.on('close', () => { un(); clearInterval(ping); });
+        });
+      });
+
+      // POST /__editor/jobs
+      //   { action:'list' } → all jobs
+      //   { action:'enqueue-dag', char, mock?, only?, force? } → per-char DAG
+      //     (privacy opt-out gate FIRST; returns the estimated API-call count)
+      //   { action:'cancel', id }
+      server.middlewares.use('/__editor/jobs', (req, res, next) => {
+        if (req.method !== 'POST') return next();
+        readJsonBody(req)
+          .then(async (b) => {
+            const { action } = b as { action?: string };
+            const runner = await getJobRunner();
+            if (action === 'list') { sendJson(res, 200, { ok: true, jobs: runner.list() }); return; }
+            if (action === 'cancel') {
+              const { id } = b as { id?: string };
+              if (typeof id !== 'string') throw new Error('missing id');
+              sendJson(res, 200, { ok: true, cancelled: runner.cancel(id) });
+              return;
+            }
+            if (action === 'enqueue-dag') {
+              const { char, mock, only, force } = b as { char?: string; mock?: boolean; only?: string[]; force?: boolean };
+              if (typeof char !== 'string' || !okId(char)) throw new Error('invalid char');
+              const loreMod = await import('./tools/core/lore.mjs');
+              await loreMod.lookupFighter(char, { cachePath: join(root, 'assets/raw/lore-sheet.csv') }); // throws on opt-out
+              const pipe = await import('./tools/core/pipeline.mjs');
+              const missing = pipe.dagPrereqs(char);
+              if (missing.length && !only) throw new Error(`missing prerequisites: ${missing.join(', ')}`);
+              const specs = pipe.buildCharacterDag(char, { mock: !!mock, only: only ?? null, force: !!force });
+              const jobs = runner.enqueueDag(specs);
+              sendJson(res, 200, { ok: true, jobs: jobs.map((j: { id: string }) => j.id), estimate: pipe.estimateDag(specs) });
+              return;
+            }
+            throw new Error(`unknown action ${String(action)}`);
+          })
+          .catch((err) => sendJson(res, err?.optedOut ? 403 : 400, { ok: false, optedOut: !!err?.optedOut, error: String(err?.message ?? err) }));
       });
 
       // POST /__editor/creator/gen  { kind, prompt, referenceBase64?[] }

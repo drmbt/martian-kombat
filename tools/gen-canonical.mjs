@@ -22,7 +22,7 @@ const PORTRAITS = join(ROOT, 'public/assets/portraits');
 // prompt craft now lives in tools/core/prompts.mjs (shared with the Character
 // Creator). DEFEAT_SOFT is the automatic IMAGE_SAFETY fallback (first seen:
 // cat, 2026-07-04) so the batch still gets a usable loser portrait.
-import { canonicalFromPhoto, defeatPrompt, defeatPromptSoft } from './core/prompts.mjs';
+import { STYLE_ART, canonicalFromPhoto, defeatPrompt, defeatPromptSoft } from './core/prompts.mjs';
 const DEFEAT = defeatPrompt();
 const DEFEAT_SOFT = defeatPromptSoft();
 
@@ -41,7 +41,10 @@ const FLAVOR = {
   cat: `Character flavor: "Wet Paint" — a barefoot painter-dancer trickster. Keep her white sundress but splashed with vivid wet ORANGE, MAGENTA and BLUE paint (no green paint), long dark wavy hair in motion, barefoot with a dancer's poise mid-step, one hand flinging an arc of colorful paint droplets.`,
   chebel: `Character flavor: "The Spirit Deck" — a Brazilian mystic kick-fighter. Keep her brown crop top, oxblood red shorts, strap sandals and long dark hair mid-whip from the photo. One leg chambered for a high kick; her other hand fans out glowing golden tarot cards, a faint translucent PURPLE-GOLD jaguar spirit curling behind her (never green).`,
   earl: `Character flavor: "The Madd Wikkid" — a psychedelic sound wizard. Keep the enormous silver-grey afro, paisley patterned shirt, grey goatee and heart-shaped sunglasses from the photo. Visible AMBER-ORANGE sine-wave sound ripples radiate from one raised hand (never green), the afro caught mid-groove.`,
-  haidai: `Character flavor: "The Vibration Priest" — a serene Balinese priest counter-fighter. Keep the crisp white shirt, long black skirt and the black-and-white checkered poleng sash tied at the waist, long grey-black hair half-tied. Calm receiving stance with one open palm forward, faint WHITE-GOLD vibration rings emanating from the palm (never green).`,
+  // haidai removed 2026-07-08: never built as a fighter; their orphan
+  // portraits were swept in Sprint 27 Phase 0 (an unscoped portrait pass
+  // once resurrected one from stale raws). Re-add deliberately if haidai
+  // becomes a fighter (flavor text lives in git history).
   // Tubs (his robot) is deliberately NOT in the canonical — he's a separate
   // assist entity generated as his own chroma cell (Jazzper pattern), and
   // overlapping the fighter in the reference hurts frame-gen leg anatomy.
@@ -58,7 +61,6 @@ const FACE = {
   cat: 'assets/character-inspo/face/cat.jpg',
   chebel: 'assets/character-inspo/face/chebel.jpg',
   earl: 'assets/character-inspo/face/earl.jpg',
-  haidai: 'assets/character-inspo/face/haidai.jpg',
   rapha: 'assets/character-inspo/face/rapha.jpg',
   vanessa: 'assets/character-inspo/face/vanessa.jpg',
   ygor: 'assets/character-inspo/face/ygor.jpg',
@@ -79,25 +81,33 @@ for (const [id, src] of Object.entries(REUSE)) {
   if (!existsSync(dst) && existsSync(join(ROOT, src))) copyFileSync(join(ROOT, src), dst);
 }
 
-for (const [id, flavor] of Object.entries(FLAVOR)) {
-  if (only && id !== only) continue;
+// --char <id> works for NEW fighters too: an id with an inspo photo but no
+// FLAVOR entry gets a flavorless canonical (the studio's design draft is
+// where flavor lives for creator-built fighters).
+const canonicalIds = only ? [only] : Object.keys(FLAVOR);
+for (const id of canonicalIds) {
+  if (REUSE[id]) continue; // approved style-test canon already copied above
+  const inspo = join(ROOT, `assets/character-inspo/${id}.jpg`);
+  if (!existsSync(inspo)) { console.warn(`  canonical ${id} SKIPPED — no ${inspo}`); continue; }
   const out = join(CANON, `${id}.png`);
   if (skip(out, force)) continue;
   console.log(`canonical ${id} ...`);
-  const prompt = canonicalFromPhoto(flavor);
+  const prompt = canonicalFromPhoto(FLAVOR[id] ?? '');
   const faceRef = FACE[id] && existsSync(join(ROOT, FACE[id])) ? [join(ROOT, FACE[id])] : [];
   const buf = await geminiImage({
     apiKey: env.GEMINI_API_KEY,
     model: MODEL,
     prompt,
-    referencePaths: [join(ROOT, `assets/character-inspo/${id}.jpg`), ...faceRef],
+    referencePaths: [inspo, ...faceRef],
     aspectRatio: '3:4',
   });
   saveAsset(out, buf, prompt);
 }
 
 // head-and-shoulders portraits: upper-center crop of the canonical sheet
-for (const id of [...Object.keys(REUSE), ...Object.keys(FLAVOR)]) {
+for (const id of [...Object.keys(REUSE), ...Object.keys(FLAVOR), ...(only ? [only] : [])]) {
+  if (only && id !== only) continue; // --char scopes EVERY pass (an unscoped
+  // portrait loop once resurrected a deleted orphan portrait from stale raws)
   const src = join(CANON, `${id}.png`);
   const out = join(PORTRAITS, `${id}.png`);
   if (!existsSync(src) || skip(out, force)) continue;
@@ -112,7 +122,7 @@ for (const id of [...Object.keys(REUSE), ...Object.keys(FLAVOR)]) {
 // beaten-and-bloodied defeated busts -> public/assets/portraits/<id>-ko.png
 const KORAW = join(CANON, 'ko'); // raw busts (gitignored with the rest of assets/raw)
 mkdirSync(KORAW, { recursive: true });
-for (const id of [...Object.keys(REUSE), ...Object.keys(FLAVOR)]) {
+for (const id of new Set([...Object.keys(REUSE), ...Object.keys(FLAVOR), ...(only ? [only] : [])])) {
   if (only && id !== only) continue;
   const canonical = join(CANON, `${id}.png`);
   const inspo = join(ROOT, `assets/character-inspo/${id}.jpg`);
@@ -125,7 +135,7 @@ for (const id of [...Object.keys(REUSE), ...Object.keys(FLAVOR)]) {
     // IMAGE_SAFETY rejections once with the bloodless fallback prompt
     let done = false;
     for (const variant of [DEFEAT, DEFEAT_SOFT]) {
-      const prompt = `${variant}\n${STYLE}`;
+      const prompt = `${variant}\n${STYLE_ART}`;
       try {
         const buf = await geminiImage({
           apiKey: env.GEMINI_API_KEY,

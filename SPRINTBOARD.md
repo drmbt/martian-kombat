@@ -1409,7 +1409,7 @@ implementation, many doors; only the standalone scene implementations
       merges + provenance (today: tuner shallow-merges moves, creator
       writes whole-def — fold both into one endpoint when Phase 4's job
       runner touches the write path anyway).
-- [ ] Phase 4 — auto-pilot + jobs + lore: `/__editor/jobs` runner (SSE
+- [~] Phase 4 — auto-pilot + jobs + lore: `/__editor/jobs` runner (SSE
       progress, persistence, cost accounting, 429 backoff); auto-pilot DAG +
       headless `npm run studio:run`; skills refresh (new-character /
       move-authoring / sprite-generation / sprite-qa rewritten against
@@ -1420,6 +1420,22 @@ implementation, many doors; only the standalone scene implementations
       estimated-cost UI (no auto-fire spends); QA minimal (local skeletons
       + canonical/anchor vision gate only); validated E2E in mock, then ONE
       full real-API dogfood run (one reroll max per asset).
+      FOUNDATION LANDED (2026-07-08, see changelog): withBackoff (429/5xx)
+      wrapping every provider helper + MK_GEN_MOCK $0 mock mode in lib.mjs;
+      core/lore.mjs (CSV fetch/cache, fuzzy lookup, PrivacyOptOutError —
+      enforced at /__editor/creator/design, /__editor/lore, jobs enqueue,
+      and studio:run entry; design drafts auto-inherit sheet lore);
+      core/jobs.mjs runner (DAG deps, pooled concurrency, persistence +
+      resume, cost accounting, cancel) + /__editor/jobs endpoints with SSE;
+      core/pipeline.mjs asset DAG over the idempotent gen:* scripts +
+      `npm run studio:run` (confirm-before-spend, --mock/--only/--force).
+      REMAINING: manual creator mode onto jobs; studio cost-UI strip +
+      jobs panel; headless design-scaffold for brand-new names (today the
+      wizard scaffolds, then the DAG takes over); alwaysFromLore → frame
+      prompts + lore-aware fatality beats; FX module; context cache §16 +
+      seed/prompt manifest; skills refresh pass 2; full-DAG mock E2E on a
+      scratch fighter; then the ONE real dogfood run (subject proposed to
+      Vincent first).
 - [ ] Phase 5 — storage seam + publish: StorageDriver (LocalRepoStorage /
       R2Storage per CHARACTER_CREATOR.md §6, env-gated local no-op);
       PUBLISH in SHIP; custom-characters registry + resolveAssetBase roster
@@ -1455,6 +1471,37 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-08 · tools · Sprint 27 Phase 4 foundation: backoff + mock mode +
+  lore gate + jobs runner + headless auto-pilot** — (a) `withBackoff` in
+  tools/lib.mjs: every provider helper (geminiImage, new shared geminiText,
+  elevenTts/Sfx, fishTTS, openaiImage) retries 429/5xx with exponential
+  backoff + jitter — wide pools are finally rate-limit-safe; the vite design
+  endpoint's inline Gemini fetch folded into lib.geminiText. (b) MK_GEN_MOCK=1
+  $0 mock mode AT THE HELPER LAYER: ffmpeg-drawn keyable figures + silence
+  mp3s, so the whole pipeline (CLI + jobs + studio) is E2E-walkable unkeyed.
+  (c) `tools/core/lore.mjs`: the Martian Lore sheet as machine-readable —
+  public-CSV fetch with disk cache, RFC-4180 parser, fuzzy person lookup, and
+  the HARD privacy gate (PrivacyOptOutError + a static offline fallback list)
+  enforced at /__editor/creator/design (which now auto-injects sheet lore into
+  drafts), the new /__editor/lore endpoint, jobs enqueue-dag, AND studio:run
+  entry (verified live: gene resolves, Maya Luna/Roarke REFUSED, exit 2).
+  (d) `tools/core/jobs.mjs`: the §2.4 job runner — DAG deps (key-based
+  enqueueDag), pooled concurrency, persistence + interrupted-job resume,
+  per-job cost accounting, cancel-with-dependent-skip; served by
+  /__editor/jobs (list/enqueue-dag/cancel) + an SSE stream; 5 new vitests.
+  (e) `tools/core/pipeline.mjs` + `npm run studio:run`: the asset auto-pilot
+  DAG over the existing idempotent gen:* scripts (canonical→frames→pack,
+  icons/busts/audio/fatality→manifest) with estimated-spend confirm before
+  any real fire (--yes to skip, --mock, --only, --force). Mock smoke found +
+  fixed THREE latent gen-canonical bugs: the portrait pass ignored --char
+  (it resurrected the deleted haidai orphan from stale raws — haidai's
+  FLAVOR/FACE entries removed), an undefined STYLE ReferenceError that would
+  have crashed any NEW fighter's KO pass, and unknown --char ids being
+  silently skipped (new fighters now get flavorless canonicals). Server-side
+  runner verified E2E in-browser (SSE snapshot, jobs to done, state
+  survives reload). 373/373 vitest (12 new), tsc + prod build clean.
+  — Claude (Fable)
 
 - **2026-07-08 · ui · Sprint 27 Phase 3j: creator finishers — field controls,
   rig badges, live-driven preview, Adopt v1** — quotes + kiai/hurt/victory VO
