@@ -1488,6 +1488,17 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-09 · ui+assets+data · studio input fixes + boss raw frames +
+  roster dial-in** — ENTER no longer dumps the studio to character select
+  (fightShell's training-exit guard gained the missed `studio` flag) and
+  the un-stepped number inputs beside sliders (Sprite Editor `slider()`,
+  Move Tuner `numField()`) now honor fractional steps — character scale
+  moves by 0.01 instead of browser-default integers. Committed the rj/tao
+  raw source frames (assets/raw/frames/ is the one raw dir git KEEPS) and
+  Vincent's in-studio tuning pass: catherine + yulia re-packed sheets/meta
+  (sprite-size dialing) and scale/kit tweaks in catherine/freeman/rapha/
+  yulia JSONs. — Claude (Fable) + Vincent
+
 - **2026-07-08 · assets+data+tools · RJ "The Gatekeeper" SHIPS — 18th
   fighter, Tao's first hench goon (the Sagat analog), built AUTONOMOUSLY**
   — Vincent's brief: "look RJ up and pull it off." Research pass (web +

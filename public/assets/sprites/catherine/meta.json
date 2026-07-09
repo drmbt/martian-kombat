@@ -1,12 +1,8 @@
 {
-  "version": 2,
   "cellW": 288,
   "cellH": 384,
   "cols": 8,
   "rows": 8,
-  "floorFrac": 0.88,
-  "headroom": 24,
-  "normalized": true,
   "frames": [
     "idle-a",
     "idle-b",
