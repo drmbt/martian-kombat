@@ -1692,4 +1692,123 @@ export const CHARACTERS = {
       },
     },
   },
+  // THE END BOSS — "The Patron Prince" (arcade mode's M. Bison analog).
+  // Kit from the 2026-07-08 design draft: imperious zoner-boss — camera-flash
+  // charge projectile, a placed film-frame trap, a flamenco anti-air, a
+  // conductor's advancing rush. All FX are GOLD/warm AMBER (never green).
+  tao: {
+    canonical: 'assets/raw/canonical/tao.png',
+    layout: 'v2',
+    always:
+      'He is in his early 50s — grey streaks the wild swept-up hair and stubble, a weathered handsome face (do NOT make him look young). He ALWAYS wears his round dark sunglasses, the ornate embroidered burgundy-maroon suit with pale gold filigree patterns, and tan leather cowboy boots. Any light effects, filigree traces or camera flashes around him are GOLD and warm AMBER — never green.',
+    moves6: {
+      stand: {
+        lp: {
+          startup: 'chambering a quick dismissive backhand, chin high, barely deigning to look',
+          active: 'a sharp backhand slap fully extended forward at head height, gold filigree wisps trailing the knuckles',
+          recovery: 'the hand withdrawing, fingers flicking as if brushing away dust',
+        },
+        mp: {
+          startup: 'drawing one arm back across the chest, palm open, gold light gathering along the fingers',
+          active: 'an imperious open-palm thrust FULLY EXTENDED forward at chest height, a burst of gold filigree light at the palm',
+          recovery: 'the arm drawing back with a conductor\'s flourish, gold traces fading',
+        },
+        hp: {
+          startup: 'both hands rising like a maestro about to cue a crescendo, gold light coiling between them',
+          active: 'a heavy two-handed downbeat strike driven forward and down, whole body committed, a crash of gold filigree light on the impact point',
+          recovery: 'straightening up and adjusting a cufflink, the last gold sparks settling',
+        },
+        lk: {
+          startup: 'weight shifting back, front knee lifting, trousers swaying',
+          active: 'a crisp flamenco snap-kick extended forward at shin height, cowboy-boot toe pointed',
+          recovery: 'the boot stamping back down in a precise flamenco plant',
+        },
+        mk: {
+          startup: 'hips turning, one leg chambering across the body, arms in a dancer\'s frame',
+          active: 'a roundhouse kick extended at chest height — exactly ONE foot planted firmly on the ground, NOT jumping, boot heel leading',
+          recovery: 'the leg sweeping back down, settling into the guard with a matador\'s poise',
+        },
+        hk: {
+          startup: 'balancing on his LEFT leg only, RIGHT knee chambered high, arms counterbalanced like a dancer',
+          active: 'a tall theatrical side kick fully extended at head height, his RIGHT leg (clearly attached at the hip) driven out, gold light trailing off the boot heel — exactly ONE foot on the ground',
+          recovery: 'the kicking leg lowering with control, coat settling, chin still high',
+        },
+      },
+      crouch: {
+        lp: {
+          active: 'a short contemptuous jab snapped out at waist height from the squat',
+          recovery: 'the jab arm pulled back in, still compact in the squat',
+        },
+        mp: {
+          active: 'a rising open-palm thrust angled upward out of the squat, gold filigree ring flaring at the wrist',
+          recovery: 'the arm settling down, weight sinking back into the squat',
+        },
+        hp: {
+          active: 'both palms thrust powerfully straight upward out of the squat, a rising column of gold filigree light above them (anti-air)',
+          recovery: 'arms lowering from overhead, settling back into the squat',
+        },
+        lk: {
+          active: 'squatting on his left leg while his RIGHT leg (clearly attached at the hip) snaps a quick kick forward at ankle height, boot toe pointed',
+          recovery: 'the kicking leg pulled back beneath him, both feet planted in the squat',
+        },
+        mk: {
+          active: 'squatting on his bent left leg while his RIGHT leg (clearly attached at the hip) is fully extended forward along the ground in a long low kick',
+          recovery: 'sliding the extended leg back beneath him into a compact squat',
+        },
+        hk: {
+          active: 'a low spinning leg sweep fully extended along the ground, coat tails fanning, gold sparks scattering off the boot',
+          recovery: 'rising from the sweep back toward stance, straightening a lapel',
+        },
+      },
+      air: {
+        lp: 'throwing a quick short downward-angled jab, coat fluttering',
+        mp: 'a straight punch driven at a 45-degree downward angle, gold light trailing the fist',
+        hp: 'a double-fist overhead hammer blow swung downward, a crescent of gold filigree light following the arc',
+        lk: 'a sharp knee strike raised toward the opponent, trouser leg snapping',
+        mk: 'a side kick extended at a downward angle, body tilted, boot sole leading',
+        hk: 'a flying kick — RIGHT leg fully extended with a gold light trail, LEFT leg tucked beneath him, both legs clearly attached',
+      },
+      specials: {
+        'paparazzi-flash': {
+          startup: 'one arm drawn back at the hip, a blinding point of white-gold light charging in the cupped hand like a camera flash about to fire, face turned away slightly',
+          active: 'the palm thrust fully forward having just released a blinding white-GOLD camera-flash burst, rings of warm amber light expanding from the open hand, his sunglasses catching the glare',
+          recovery: 'the arm lowering with a satisfied smirk, afterimage sparkles of gold light drifting off the fingers',
+        },
+        'directors-cut': {
+          startup: 'both hands raised framing the air in front of him like a film director framing a shot, thumbs and fingers forming a rectangle, gold light tracing the frame edges',
+          active: 'presenting forward with both hands as a large glowing GOLD rectangular film-frame hangs in the air in front of him — an empty picture frame of warm golden light with tiny sprocket-hole notches along its edges',
+          recovery: 'stepping back from the hanging frame and dusting his palms, chin high, the frame still glowing where he left it',
+        },
+        'duende-kick': {
+          startup: 'sinking low on bent knees, arms sweeping down and back like a flamenco dancer gathering for a leap, coat tails flaring',
+          active: 'a rising flamenco kick launched steeply UPWARD — his whole body ascending off the ground, RIGHT leg driven up above his head with a spiral of gold filigree light around the rising boot, arms swept down in opposition',
+          recovery: 'landing back on both feet in a matador\'s finish pose, one arm raised, gold sparks raining down around him',
+        },
+        'maestros-advance': {
+          startup: 'leaning forward onto the ball of the front foot, one arm sweeping up like a conductor raising a baton, gold light gathering along the sleeve',
+          active: 'striding powerfully forward mid-lunge, the leading forearm driven across his body like a conductor\'s downbeat cutting through an orchestra, a wide arc of gold filigree light sweeping in front of him',
+          recovery: 'the stride completing, straightening the embroidered jacket with both hands, the gold arc dissolving',
+        },
+        throw: {
+          startup: 'reaching forward to seize the empty green air with one commanding hand, the other arm swept back theatrically — he is COMPLETELY ALONE, no second person, no opponent',
+          active: 'hurling something unseen aside with a full-body conductor\'s sweep of both arms, coat tails whirling, a small burst of gold light at his hands — still COMPLETELY ALONE, no second person',
+          recovery: 'composing himself, smoothing the embroidered lapels, chin high',
+        },
+      },
+    },
+    extra: {
+      projectiles: {
+        // Paparazzi Flash — the cbf charge projectile: a camera-flash burst
+        'paparazzi-flash': {
+          prompt:
+            'ONLY a blinding white-GOLD camera-flash energy burst — a bright white-hot core inside concentric expanding rings of warm gold and amber light, tiny lens-flare star points and a few drifting gold sparkles, streaking to the RIGHT with a short amber light trail. It is a SMALL ISOLATED light burst floating alone, centered, with a wide empty green margin on ALL FOUR SIDES. Painted cel-shaded anime style, on solid flat chroma-key green background #00B140. ABSOLUTELY NO PERSON, no camera, no hands, no body. No text, no watermark.',
+        },
+        // Director's Cut — the placed trap: a hanging golden film frame
+        'directors-cut': {
+          prompt:
+            'ONLY a glowing GOLD rectangular film-frame hovering upright — an empty picture frame of warm golden light with tiny sprocket-hole notches along its top and bottom edges, faint amber glow radiating from the border, the center of the frame EMPTY (transparent). It is a SMALL ISOLATED OBJECT floating alone, centered, with a wide empty green margin on ALL FOUR SIDES. Painted cel-shaded anime style, on solid flat chroma-key green background #00B140. ABSOLUTELY NO PERSON, no hands, no body, no scenery inside the frame. No text, no watermark.',
+        },
+      },
+    },
+  },
 };

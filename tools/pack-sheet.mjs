@@ -51,6 +51,11 @@ for (const c of chars) {
     expected: buildJobs(spec).length,
     keyer,
     normalize: NORMALIZE,
-    python: NORMALIZE ? resolvePython('numpy') : undefined,
+    // the roster standard (Sprint 27 Phase 2): every normalized sheet carries
+    // fresh per-cell RTMPose skeletons in meta v2 — without this, new
+    // fighters packed by the CLI shipped skeleton-less (F3 overlay dead,
+    // no auto-hitboxes, Adopt flags them)
+    inferSkeletons: NORMALIZE,
+    python: NORMALIZE ? resolvePython() : undefined,
   });
 }

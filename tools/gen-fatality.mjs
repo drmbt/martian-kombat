@@ -139,6 +139,18 @@ const FATALITIES = {
       `The fired ceramic statue SHATTERING into scattered pottery shards across a kiln floor, the woman from the reference image placing a small pale clay round-headed Little Martian idol figurine atop the pile of broken shards like an offering, a soft moonbeam falling from above. She does not look back. Final, reverent.`,
     ],
   },
+  // THE END BOSS — "Final Critique": the Patron Prince curates his victim
+  // into an exhibit and dismisses it. All light FX gold/amber, never green.
+  tao: {
+    id: 'final-critique',
+    canonical: 'assets/raw/canonical/tao.png',
+    panels: [
+      `The man from the reference image (early 50s, grey-streaked wild swept-up hair, round dark sunglasses, ornate embroidered burgundy suit, cowboy boots) raising both hands to frame ${HUSK} between his thumbs and fingers like a film director framing a shot, a rectangle of warm GOLD light tracing itself in the air around the frozen husk (gold, never green). Low imperious angle, desert twilight.`,
+      `A blinding white-GOLD camera-flash BURST erupting from the man's extended palm, the glowing gold frame around ${HUSK} flashing like a paparazzi wall, the husk lit stark white mid-disintegration, cracks of gold light splitting across its charred surface. Harsh dramatic contrast, lens-flare star points.`,
+      `${HUSK} crumbling into a drifting column of ash and gold embers INSIDE the hanging golden frame — the frame now displaying the collapsing figure like a gallery piece, while the man studies it with one hand at his chin, unimpressed, sunglasses catching the gold light. Side angle, quiet and cruel.`,
+      `The man walking away across the desert floor, straightening an embroidered cuff, as the golden frame hangs behind him containing only a settling pile of ash — a small elegant gallery placard of light glowing beneath the frame. He does not look back. Final, curatorial.`,
+    ],
+  },
 };
 
 async function genPanel(charId, spec, i) {

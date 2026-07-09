@@ -62,6 +62,9 @@ const announcerLines = {
   ygor: 'YGOR!',
   rapha: 'RAPHA!',
   vanessa: 'VANESSA!',
+  earl: 'EARL!',
+  ben: 'BEN!',
+  tao: 'TAO!',
   'finish-them': 'FINISH THEM!',
   fatality: 'FATALITY!',
   // stage-name call-outs (announced on stage select, mirrors the fighter
@@ -221,6 +224,23 @@ export const voiceLines = {
     hurt: ['Ai!', 'Merda!', 'Caralho!', 'Porra!', 'Ai, não!', 'Puta que pariu!'],
     victory: ['The Little Martians dreamed this.', 'Say thank you. The ceremony requires it.', 'The ancestors are pleased.', 'Dear human: you are forgettable.'],
     moves: { teleportal: 'Dream.' },
+  },
+  // THE END BOSS — imperious Italian aristocrat, conducts the fight like a
+  // symphony. His Fish clone (voices.json) overrides kiai/hurt/victory/moves.
+  tao: {
+    voice: VOICE_M, // fallback only; the registered clone carries his real voice
+    style: 0.25,
+    stability: 0.6,
+    kiai: ['Presto!', 'Adagio!', 'Crescendo!', 'Fin!', 'Ancora!', 'Bravo!'],
+    hurt: ['Crude.', 'Hmph.', 'Uncouth.', 'Tedious.', 'No...', 'Enough.'],
+    victory: ['The performance is over.', 'A flawed composition.', 'You lack authenticity.', "Return when you've practiced."],
+    moves: {
+      'paparazzi-flash': 'Smile!',
+      'directors-cut': 'Action!',
+      'duende-kick': '¡Olé!',
+      'maestros-advance': 'Andante!',
+      throw: 'You bore me.',
+    },
   },
 };
 

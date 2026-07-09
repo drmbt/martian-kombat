@@ -21,6 +21,7 @@ const ROSTER = ['catherine', 'flo', 'freeman', 'gene', 'kirby', 'marzipan', 'vin
 const TWEAKS = {
   vincent: 'He is wearing his signature small round dark sunglasses.',
   kirby: 'Use the face from the FIRST reference photo, but dress them in the same colorful outfit they wear in the SECOND reference image (their fighting sprite).',
+  tao: 'He is in his early 50s — a weathered handsome face with creases at the eyes, grey streaking the temples and stubble (do NOT make him look young). He wears round dark sunglasses and the collar of an ornate embroidered burgundy suit.',
 };
 
 const BASE = `Painted cel-shaded 2D fighting game character-select icon portrait of the person in the reference photo: head and shoulders bust, facing the camera STRAIGHT-ON, fierce confident fighting-spirit expression, dramatic even lighting.
@@ -28,8 +29,11 @@ Art style: hand-painted cel-shaded anime fighter (modern Capcom / Arc System Wor
 Background: solid flat chroma-key green (#00B140), completely uniform, no shadows, no text, no watermark, no border, no frame.`;
 
 async function gen(id) {
-  const face = join(ROOT, `assets/character-inspo/face/${id}.jpg`);
-  if (!existsSync(face)) {
+  // face shots come in whatever format they were sourced in (tao: -face.png)
+  const face = ['.jpg', '.png', '.jpeg', '-face.png', '-face.jpg']
+    .map((suffix) => join(ROOT, `assets/character-inspo/face/${id}${suffix}`))
+    .find((p) => existsSync(p));
+  if (!face) {
     console.warn(`[${id}] no face photo, skipping`);
     return;
   }

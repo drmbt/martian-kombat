@@ -30,42 +30,52 @@ export const FRAME_RULES =
 export const spritePrompt = (pose, always = '') =>
   `${pose}${always ? ` ${always}` : ''} ${FRAME_RULES} ${STYLE_ART}`;
 
+/** the canonical-stance arm contract (§2.9 gate, now IN the prompt): every
+ *  generated frame copies the canonical's stance, so an arm extended far
+ *  forward/out/up kills the visual reach of every punch built from it. */
+export const COMPACT_GUARD =
+  'BOTH hands held in a COMPACT guard close to the body and chin, elbows tucked — ' +
+  'NEVER an arm extended far forward, stretched out to the side, or raised high overhead ' +
+  '(every animation frame is generated FROM this stance; an extended arm ruins the reach of every punch).';
+
 /** photo → canonical fighter sheet (the pipeline CHAR_BASE language) */
 export const canonicalFromPhoto = (flavor = '') =>
   'Transform the person in the reference photo into a full-body 2D fighting game character.\n' +
   'CRITICAL: preserve their real facial features, hairstyle, skin tone, body type and the outfit they are wearing in the photo — it must be recognizably the same person.\n' +
-  'Pose: dynamic side-on martial-arts fighting stance facing right, knees bent, hands up ready to fight, full body visible head to toe with a small margin, centered.\n' +
+  `Pose: dynamic side-on martial-arts fighting stance facing right, knees bent, ${COMPACT_GUARD} Full body visible head to toe with a small margin, centered.\n` +
   `${flavor ? flavor + '\n' : ''}${CHROMA_BG}\n${STYLE_ART}`;
 
 /** description → canonical (the creator's text-seeded variant; reference
  *  photos still ride along as image refs) */
 export const canonicalFromDescription = (desc) =>
-  `Full-body fighting-game character sheet of ${desc}. Neutral confident standing pose, arms relaxed, facing right. ` +
+  `Full-body fighting-game character sheet of ${desc}. Neutral confident standing pose facing right, ${COMPACT_GUARD} ` +
   'If reference photos are provided, CRITICAL: preserve the real person\'s facial features, hairstyle, skin tone and body type — recognizably the same person. ' +
   `Full body head to toe with a small margin, centered. ${CHROMA_BG} ${STYLE_ART}`;
 
 /** tight select-icon bust (must NOT inherit the full-body rules) */
 export const portraitPrompt = (name, desc) =>
-  `Tight head-and-shoulders BUST portrait of ${name}${desc ? ` (${desc})` : ''} for a fighting-game character-select icon. ` +
-  'ONLY the head and shoulders fill the frame — face straight-on toward the viewer, direct gaze, neutral confident expression, ' +
+  `SQUARE straight-on HEADSHOT of ${name}${desc ? ` (${desc})` : ''} for a fighting-game character-select icon. ` +
+  'A square 1:1 composition: ONLY the head and shoulders fill the frame — the face square-on toward the viewer (no three-quarter turn, no profile), ' +
+  'direct gaze into the camera, neutral confident expression, head centered, ' +
   'top of the head near the top edge, shoulders cropped at the bottom edge. This is a close-up: do NOT show a full body, ' +
   `do NOT show the torso below the chest, hands, legs or feet, do NOT zoom out. ${STYLE_ART} ${CHROMA_BG}`;
 
 /** beaten-and-bloodied defeated bust (post-match loser portrait) */
 export const defeatPrompt = () =>
-  'Head-and-shoulders BUST portrait of the same person as the reference (preserve their real face, hairstyle, skin tone and outfit), ' +
+  'SQUARE straight-on HEADSHOT of the same person as the reference (preserve their real face, hairstyle, skin tone and outfit), ' +
   'but they have just LOST a brutal fight: face bruised and swollen, blackened puffy eye, split bleeding lip, a trickle of blood down the cheek, ' +
-  'sweat-matted hair, dirt smudges, dazed and downcast defeated expression with the head tilted slightly down. Head and shoulders only, centered, filling the frame.\n' +
+  'sweat-matted hair, dirt smudges, dazed defeated expression. A square 1:1 composition: head and shoulders only, ' +
+  'the face toward the viewer (a slight downcast tilt is fine, but square-on — no profile), head centered filling the frame.\n' +
   `${CHROMA_BG} ${STYLE_ART}`;
 
 /** IMAGE_SAFETY-safe fallback for defeatPrompt — gemini sometimes rejects the
  *  bloody variant (first seen: cat, 2026-07-04); retry with this instead of
  *  aborting the batch. */
 export const defeatPromptSoft = () =>
-  'Head-and-shoulders BUST portrait of the same person as the reference (preserve their real face, hairstyle, skin tone and outfit), ' +
+  'SQUARE straight-on HEADSHOT of the same person as the reference (preserve their real face, hairstyle, skin tone and outfit), ' +
   'but they have just lost a cartoon martial-arts match: exhausted and dazed, comic swirl of dizziness, messy sweat-matted hair, ' +
-  'a small bruise on the cheek, dirt smudges, defeated downcast expression with the head tilted slightly down. No blood. ' +
-  `Head and shoulders only, centered, filling the frame.\n${CHROMA_BG} ${STYLE_ART}`;
+  'a small bruise on the cheek, dirt smudges, defeated expression. No blood. A square 1:1 composition: head and shoulders only, ' +
+  `the face toward the viewer (square-on — no profile), head centered filling the frame.\n${CHROMA_BG} ${STYLE_ART}`;
 
 /** the 4 default fatality panel BEATS (the editable half of each cutscene
  *  panel prompt — the endpoint wraps each in the cinematic frame). One copy;

@@ -46,7 +46,7 @@ const FLAVOR = {
   // once resurrected one from stale raws). Re-add deliberately if haidai
   // becomes a fighter (flavor text lives in git history).
   // THE END BOSS (arcade mode's M. Bison analog — see CLAUDE.md arcade note)
-  tao: `Character flavor: "The Patron Prince" — the END BOSS: an Italian aristocrat turned desert art patron, imperious and effortlessly charming. Keep the ornate embroidered burgundy-maroon suit with pale filigree patterns, the matching wide-leg trousers, tan leather cowboy boots, round sunglasses and wild swept-up hair from the photo. A commanding, theatrical fighting stance — weight back, chin high, one hand raised as if conducting; faint GOLD filigree light traces curling off the raised hand (never green).`,
+  tao: `Character flavor: "The Patron Prince" — the END BOSS: an Italian aristocrat turned desert art patron, imperious and effortlessly charming, a man in his early 50s — a lived-in, weathered-handsome face with creases at the eyes, grey streaking the temples of the wild swept-up hair and flecking the stubble (do NOT make him look young). Keep the ornate embroidered burgundy-maroon suit with pale filigree patterns, the matching wide-leg trousers, tan leather cowboy boots and round sunglasses from the photo. A commanding, theatrical fighting stance — weight back, chin high, both hands in a loose conductor's guard held CLOSE to the chest; faint GOLD filigree light traces curling between the fingers (never green).`,
   // Tubs (his robot) is deliberately NOT in the canonical — he's a separate
   // assist entity generated as his own chroma cell (Jazzper pattern), and
   // overlapping the fighter in the reference hurts frame-gen leg anatomy.

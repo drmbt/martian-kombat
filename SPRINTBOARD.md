@@ -1446,15 +1446,12 @@ implementation, many doors; only the standalone scene implementations
       wizard/profile-script scaffolds, then the DAG takes over); FX module;
       context cache §16 + seed/prompt manifest; skills refresh pass 2;
       full-DAG mock E2E on a scratch fighter; then the real dogfood run.
-      DOGFOOD SUBJECT: **Tao — profile GENERATED 2026-07-08** (end boss):
-      full-body inspo is now assets/character-inspo/tao.jpg (+ tao-bust.jpg,
-      face/tao-face.png), Fish voice clone registered (voices.json) and
-      whisper-verified, real-Gemini design draft (zoner: Paparazzi Flash /
-      Director's Cut / Duende Kick / Maestro's Advance, "Final Critique"
-      fatality, arcade motivation/ending) + canonical (embroidered burgundy
-      suit, gold FX, §2.9 gate passed) assembled as the studio WIP draft
-      `assets/raw/creator/tao/`. Next: frames → pack → audio → fatality
-      via studio:run/wizard.
+      DOGFOOD: **TAO SHIPPED 2026-07-08 — the full real-API run is DONE**
+      (see the changelog entry): 17th fighter, registered + playable +
+      audit-green (372/372), ZERO rerolls needed across ~70 images.
+      Outstanding for tao: a home stage (needs Biennale reference photos —
+      assign/create via the STAGES module) and optional per-move vfx
+      overlays (degrades to generic sparks).
 - [ ] Phase 5 — storage seam + publish: StorageDriver (LocalRepoStorage /
       R2Storage per CHARACTER_CREATOR.md §6, env-gated local no-op);
       PUBLISH in SHIP; custom-characters registry + resolveAssetBase roster
@@ -1490,6 +1487,39 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-07-08 · assets+data+tools · THE DOGFOOD RUN: TAO SHIPS — 17th
+  fighter, the arcade end boss, ZERO rerolls** — prompt-craft fixes first
+  (user-directed): portraitPrompt/defeatPrompt(+soft) are now SQUARE
+  straight-on headshots; a new COMPACT_GUARD clause in both canonical
+  builders bakes the §2.9 arm gate INTO the prompt (an extended arm ruins
+  every punch's reach); tao's flavor carries his age (early 50s, grey
+  temples — do NOT make him look young). Canonical regenerated to spec
+  (compact conductor's guard, aged, embroidered burgundy suit, gold FX) and
+  the §2.9 anchors vision-verified (crouch properly low, jump tucked).
+  Full pipeline, all real API: 62 frame cells + 2 projectiles (montage QA:
+  walk strides mirror, sweep low, KO lying head-left, throw alone,
+  projectiles isolated + keyable — NOTHING rerolled), pack --normalize with
+  62/62 fresh RTMPose skeletons (meta v2) — and the CLI pack now infers
+  skeletons whenever --normalize runs (it silently shipped skeleton-less
+  sheets for new fighters before; migrate-floor was the only caller that
+  passed the flag); 18 button normals skeleton-refit (migrate-hitboxes
+  --char tao); square icon + pose-centered bust + square KO; 16 VO clips +
+  announcer "TAO!" + 5 per-move call-outs ALL through his Fish clone
+  (whisper-verified: "The performance is over." / "Crescendo!" / "Smile!");
+  "Final Critique" fatality (4 panels: director's frame → paparazzi flash →
+  gallery-piece disintegration → the placard walk-away); tao.json hand-
+  scaffolded from the design draft through core/kit.mjs grammar (chains/
+  cancels/L-H variants, techable throw "The Dismissal", 1050 HP boss
+  health, arcade motivation/ending persisted); gen-icons face probe accepts
+  .png; announcer name table gained earl/ben/tao. haidai resurrected AGAIN
+  via gen:busts --all (stale raw canonical) — orphan bust deleted, raws
+  quarantined to assets/raw/retired/. Verified live: tao vs CPU gene on
+  hyperion, zero console errors, knockdown/getup states, Paparazzi Flash
+  projectile fired and CONNECTED (960→816). 372/372 vitest (audit + schema
+  lint hold the 17-fighter roster), tsc + prod build clean. Outstanding:
+  home stage (needs Biennale reference photos), optional per-move vfx.
+  — Claude (Fable)
 
 - **2026-07-08 · ui+tools+data · dogfood feedback batch 2 + TAO the end
   boss** — (a) privacy opt-out gate + lore-sheet search RETIRED (Vincent:

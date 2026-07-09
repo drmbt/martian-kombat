@@ -26,4 +26,5 @@ export const ROSTER: RosterEntry[] = [
   { id: 'vanessa', name: 'VANESSA', playable: true },
   { id: 'earl', name: 'EARL', playable: true },
   { id: 'ben', name: 'BEN', playable: true },
+  { id: 'tao', name: 'TAO', playable: true }, // the arcade end boss
 ];
