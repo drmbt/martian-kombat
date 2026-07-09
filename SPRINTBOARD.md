@@ -1434,8 +1434,13 @@ implementation, many doors; only the standalone scene implementations
       wizard scaffolds, then the DAG takes over); alwaysFromLore → frame
       prompts + lore-aware fatality beats; FX module; context cache §16 +
       seed/prompt manifest; skills refresh pass 2; full-DAG mock E2E on a
-      scratch fighter; then the ONE real dogfood run (subject proposed to
-      Vincent first).
+      scratch fighter; then the ONE real dogfood run. DOGFOOD SUBJECT
+      DECIDED (Vincent, 2026-07-08): **Tao**, with Vincent supplying the
+      lore (no lore-sheet row exists — his typed lore or a new sheet row).
+      Still needed before firing: Tao's lore text, ideally a FULL-BODY
+      photo (both inspo shots on disk are head/bust — the canonical wants
+      a full-body primary ref per §2.9), optional voice samples. Opt-out
+      column re-checked 2026-07-08: Tao not listed.
 - [ ] Phase 5 — storage seam + publish: StorageDriver (LocalRepoStorage /
       R2Storage per CHARACTER_CREATOR.md §6, env-gated local no-op);
       PUBLISH in SHIP; custom-characters registry + resolveAssetBase roster
