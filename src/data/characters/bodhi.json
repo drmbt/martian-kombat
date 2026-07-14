@@ -574,5 +574,14 @@
       "The stars are aligned.",
       "Not today."
     ]
+  },
+  "lore": {
+    "tagline": "You carry so much tension. Let me release it.",
+    "personality": "Thai-bodywork practitioner and astrologer who reads your chart before he reads your guard. Unnervingly calm hands; frames a beating as a session.",
+    "backstory": "Brought bodywork to Mars in 2024, built one of its first self-organized camps in 2025, and now runs the Community Laboratory. Knows your rising sign and every knot in your back."
+  },
+  "arcade": {
+    "motivation": "The stars told Bodhi the Biennale is badly out of alignment, and he’s the practitioner on call. He climbs the ladder giving the whole desert a full-body session, one opponent at a time.",
+    "ending": "Champion, Bodhi books everyone a follow-up and realigns the desert’s chart. Mercury is finally direct. The tension of a hundred fights releases all at once, and Bombay Beach sleeps well for the first time in years."
   }
 }

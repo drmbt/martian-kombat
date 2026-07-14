@@ -6,7 +6,9 @@
   "winQuotes": [
     "This isn't violence; it's alignment.",
     "Prosperity finds the still. You found the floor.",
-    "I anchored my root chakra. You anchored the dirt."
+    "I anchored my root chakra. You anchored the dirt.",
+    "I built the ground you’re lying on.",
+    "Be still. You’ve had enough motion."
   ],
   "fatality": {
     "id": "ego-death",
@@ -406,7 +408,9 @@
             "vy": 19
           }
         }
-      }
+      },
+      "voiceText": "Inhale.",
+      "voice": true
     },
     "sun-salutation": {
       "name": "Sun Salutation",
@@ -441,7 +445,9 @@
           "damage": 124,
           "recovery": 28
         }
-      }
+      },
+      "voiceText": "Salute the sun.",
+      "voice": true
     },
     "presence": {
       "name": "Presence",
@@ -479,7 +485,9 @@
           "damage": 104,
           "recovery": 24
         }
-      }
+      },
+      "voiceText": "Be present.",
+      "voice": true
     },
     "yoga-float": {
       "name": "Yoga Float",
@@ -499,7 +507,9 @@
       "float": {
         "vy": 12,
         "gravity": 0.35
-      }
+      },
+      "voiceText": "Rise.",
+      "voice": true
     },
     "throw": {
       "name": "Throw",
@@ -523,25 +533,27 @@
         "vy": -10.5,
         "knockbackMult": 1.5
       },
-      "techable": true
+      "techable": true,
+      "voiceText": "CROW!",
+      "voice": true
     }
   },
   "vo": {
     "kiai": [
-      "Hmm... hah!",
-      "Ha.",
-      "Be still.",
       "Hah!",
+      "Hyah!",
+      "Be still.",
       "Breathe.",
-      "Release."
+      "Release.",
+      "Hm!"
     ],
     "hurt": [
+      "Ugh!",
+      "Ah!",
       "Hmph!",
-      "Mm.",
-      "Hnh.",
-      "...ah.",
       "Unmoved.",
-      "Hm!"
+      "Hnh!",
+      "Grounded."
     ],
     "victory": [
       "Peace, achieved.",
@@ -550,5 +562,14 @@
       "Stillness prevails."
     ]
   },
-  "scale": 0.98
+  "scale": 0.98,
+  "lore": {
+    "tagline": "Stillness prevails. The mind bends steel.",
+    "personality": "Startup-founder-turned-off-grid-guru with an unmoveable calm. Frames combat as alignment, not violence, and rides an electric unicycle to the arena.",
+    "backstory": "Left Silicon Valley for an off-grid coding-and-yoga bootcamp in Bangalore, then came to Bombay Beach at Tao Ruspoli’s invitation and founded Mars — the twenty acres of desert this whole world stands on. Builds monolithic pallet-rack cathedrals and preaches remote work as a path to sustainability."
+  },
+  "arcade": {
+    "motivation": "Freeman broke the ground this whole world stands on. He climbs the ladder not for the title but for a reckoning with the Patron Prince who once invited him to the desert — a quiet reminder of who built Mars first.",
+    "ending": "Champion, Freeman declines the throne. He rides the electric unicycle back to the pallet-rack cathedrals of Mars, having proven that stillness outlasts spectacle. The desert exhales."
+  }
 }

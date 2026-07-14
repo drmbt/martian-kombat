@@ -10,7 +10,9 @@
   "winQuotes": [
     "This was never going to work out for you",
     "Your expectations were too high",
-    "This meeting could have been an email"
+    "This meeting could have been an email",
+    "Kind, but not always nice. Guess which one that was.",
+    "Should’ve had your coffee first. I did."
   ],
   "health": 1000,
   "walkSpeed": 3.3,
@@ -542,7 +544,7 @@
       }
     }
   },
-  "stage": "last-resort",
+  "stage": "dome",
   "fatality": {
     "id": "dinners-ready",
     "name": "Dinner's Ready",
@@ -576,5 +578,9 @@
       "So very predictable.",
       "Maybe next time."
     ]
+  },
+  "arcade": {
+    "motivation": "Ben would honestly rather be cooking, but somebody has to keep the flies — and the challengers — down. He takes on the ladder the way he took on the Midnight Kitchen: grudgingly, because no one else will.",
+    "ending": "Champion, Ben announces that the entire tournament could have been an email, then fires up the Midnight Kitchen and feeds everyone anyway. Kind, but not always nice. Don’t talk to him before his coffee."
   }
 }

@@ -71,7 +71,10 @@ prompt (search the location/scene name; combine with `assets/stage-inspo/`).
 7. **VO** — voice-clone if a real sample exists (`gen:voice`, drop clips in
    `assets/voice-inspo/<id>/`); author lines in `gen-audio` (`announcerLines` +
    `voiceLines`: exactly 6 kiai / 6 hurt / 4 victory; cloned chars route through
-   Fish automatically). Announcer name callout uses ElevenLabs (needs paid plan).
+   Fish automatically). Cloned lines get emotion-tagged by context×temperament
+   (`tools/core/vo-emotion.mjs`); add the fighter to its `TEMPERAMENT` table and
+   audition on a soundboard before baking — see `docs/VO_EMOTION.md`. Announcer
+   name callout uses ElevenLabs (needs paid plan).
 8. **Fatality** — panel prompts in `gen-fatality` FATALITIES + `gen:fatality`
    (4 panels). The JSON `fatality` block's `id` must match.
 9. **VFX** (optional) — per-move overlays in `gen-vfx` PER_MOVE; degrades

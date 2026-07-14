@@ -424,7 +424,9 @@
             "knockback": 12
           }
         }
-      }
+      },
+      "voiceText": "Spirit, draw!",
+      "voice": true
     },
     "crescent-moon": {
       "name": "Crescent Moon Kick",
@@ -460,7 +462,9 @@
           "recovery": 24,
           "forwardVel": 11
         }
-      }
+      },
+      "voiceText": "Crescent moon!",
+      "voice": true
     },
     "ceremony": {
       "name": "Ceremony",
@@ -506,7 +510,9 @@
             "vy": 19
           }
         }
-      }
+      },
+      "voiceText": "The ceremony begins.",
+      "voice": true
     },
     "unicycle-rush": {
       "name": "Unicycle Rush",
@@ -544,7 +550,9 @@
           "startup": 12,
           "recovery": 24
         }
-      }
+      },
+      "voiceText": "Hold on!",
+      "voice": true
     },
     "throw": {
       "name": "Throw",
@@ -568,7 +576,9 @@
         "vy": -6.5,
         "knockbackMult": 1
       },
-      "techable": true
+      "techable": true,
+      "voiceText": "Reversed.",
+      "voice": true
     }
   },
   "vo": {
@@ -578,7 +588,7 @@
       "Draw!",
       "Ha!",
       "Voa!",
-      "Toma!"
+      "HA!"
     ],
     "hurt": [
       "Ai!",
@@ -594,5 +604,14 @@
       "Sit. Have tea. Reflect.",
       "You. Reversed."
     ]
+  },
+  "lore": {
+    "tagline": "The deck told me of your weakness.",
+    "personality": "Mimos co-founder, filmmaker, and animal-spirit tarot reader. Serene and ceremonial; reads the cards mid-fight. Partner of Ygor.",
+    "backstory": "Brazilian multimedia artist who founded the solarpunk café Mimos (born on Saturn, now on Mars) with Ygor. VJ, photographer, tea-ceremony host, and embroiderer of Sintography prints; arrived in 2023 at Vanessa’s invitation."
+  },
+  "arcade": {
+    "motivation": "The animal-spirit deck laid out the entire bracket, so Chebel goes where the cards send her — and the Biennale is long overdue for a proper tea ceremony.",
+    "ending": "Champion, Chebel serves tea to the defeated and reads the desert’s future in the deck. Ygor films the whole thing for the sci-fi cut. The card is The World, upright."
   }
 }

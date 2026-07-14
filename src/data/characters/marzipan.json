@@ -595,5 +595,14 @@
       "Grow with me, or don't.",
       "Everything composts eventually."
     ]
+  },
+  "lore": {
+    "tagline": "Everything composts eventually. Now it’s your turn.",
+    "personality": "Microbiologist and print-shop steward who sees every fight as an ecosystem. Patient, symbiotic, and faintly menacing — would rather cultivate than compete.",
+    "backstory": "A PhD microbiologist (cyanobacteria, photosynthetic hydrogen) who runs the Nomicon Press on Mars. Arrived in 2022 after a chance meeting with Pseudo at a regional burn; cut-up poet, newsletter-maker, and Burning Man builder since 2012."
+  },
+  "arcade": {
+    "motivation": "To Marzipan the tournament is a succession event — the desert reclaiming itself. He enters to compost the old order and seed something regenerative in the ruins.",
+    "ending": "Champion, Marzipan lets the Biennale grounds go feral: cyanobacteria in the fountains, vines through the sculptures, a living installation with no curator. Everything composts eventually. Nature wins."
   }
 }

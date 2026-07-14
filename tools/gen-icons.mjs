@@ -21,7 +21,7 @@ const ROSTER = ['catherine', 'flo', 'freeman', 'gene', 'kirby', 'marzipan', 'vin
 const TWEAKS = {
   vincent: 'He is wearing his signature small round dark sunglasses.',
   kirby: 'Use the face from the FIRST reference photo, but dress them in the same colorful outfit they wear in the SECOND reference image (their fighting sprite).',
-  rj: 'He wears his woven straw cowboy hat; full reddish-brown beard, weathered sunburned desert face, a thin gold chain at the neck.',
+  rj: 'He wears his woven straw cowboy hat and an off-white henley under an open black waistcoat; full DARK BROWN beard and dark brown hair (NOT red, NOT ginger, NOT auburn), weathered sun-worn desert face. Use the SECOND reference image (his fighting sprite) for the correct beard color and outfit.',
   tao: 'He is in his early 50s — a weathered handsome face with creases at the eyes, grey streaking the temples and stubble (do NOT make him look young). He wears round dark sunglasses and the collar of an ornate embroidered burgundy suit.',
 };
 
@@ -44,8 +44,10 @@ async function gen(id) {
   const rawOut = join(ROOT, 'assets/raw/icons', `${id}.png`);
   if (!skip(rawOut, force)) {
     const refs = [ref];
-    // Kirby: face photo + canonical sprite for the outfit
+    // Kirby/RJ: face photo + canonical sprite for the outfit (and RJ's corrected
+    // dark-brown beard — the face photo reads too ginger on its own)
     if (id === 'kirby') refs.push(join(ROOT, 'assets/raw/canonical/kirby.png'));
+    if (id === 'rj' && ref !== canonical) refs.push(canonical);
     const prompt = `${BASE}\n${TWEAKS[id] ?? ''}`;
     console.log(`[${id}] icon ...`);
     const buf = await geminiImage({

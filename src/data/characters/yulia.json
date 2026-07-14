@@ -581,5 +581,14 @@
       "Done."
     ]
   },
-  "scale": 1.09
+  "scale": 1.09,
+  "lore": {
+    "tagline": "Hungry experimentalist. Spirit animal: snacks.",
+    "personality": "The newest Martian: a self-taught coder and junior network engineer who maps everything from LAN topologies to childhood memories. Yoga teacher with a cold competitive streak, unbothered and always mid-snack.",
+    "backstory": "Arrived in 2026 and immediately started charting the Bombay-Mars network the way she charts poetic maps of the places she grew up. Working her way toward software developer while nurturing a Nasty AI chatbot."
+  },
+  "arcade": {
+    "motivation": "Yulia is mapping Mars completely, and the tournament is the last uncharted subnet. Each fighter is just another node to trace; she climbs the ladder the way she maps a network — methodically, unbothered, snacking.",
+    "ending": "The map is finished; the title is almost incidental. Her Nasty AI chatbot narrates the victory in a voice she trained herself, Yulia shrugs, and goes to find a snack."
+  }
 }

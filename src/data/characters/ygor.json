@@ -585,5 +585,14 @@
       "Mais Amor Por Favor.",
       "Nice render."
     ]
+  },
+  "lore": {
+    "tagline": "This was not a microdosis.",
+    "personality": "VJ Suave animator and vibecoding stoner who projects psychedelic creatures onto everything. Loose, luminous, suave. Partner of Chebel.",
+    "backstory": "São Paulo new-media artist, half of VJ Suave (25+ countries), maker of the microdosys AI-art project. Co-runs the Mimos café, drives Appa the golf cart, and is building the oRACLE booth. Fights like a projection mapping the desert."
+  },
+  "arcade": {
+    "motivation": "The Biennale is the ultimate surface to project onto. Ygor enters half for the render and half for the trip, to paint the whole desert in psychedelic light.",
+    "ending": "Champion, Ygor throws the Final Render across every fence and rooftop in Bombay Beach from the roof of Appa. Suave creatures roam the dark. Mais Amor Por Favor."
   }
 }

@@ -10,7 +10,9 @@
   "winQuotes": [
     "EARL wins. That's music to my ears...",
     "This was the rehearsal. You should come to the gig.",
-    "You'll never be a star."
+    "You'll never be a star.",
+    "That wasn’t a soundcheck. That was the whole set.",
+    "I don’t abide charlatans. Especially not slow ones."
   ],
   "health": 1000,
   "walkSpeed": 3.3,
@@ -541,5 +543,9 @@
       "Predictable.",
       "Not my band."
     ]
+  },
+  "arcade": {
+    "motivation": "The Biennale is a stage, and Earl is an off-the-wagon musician who needs exactly one more gig. He enters to conduct the whole tournament like a live set — proving, again, that the sound beats the spectacle.",
+    "ending": "Champion, Earl books The Unhung Zeros to headline the Biennale and takes the stage sober-ish. The mix is perfect and the room is packed. No charlatans made the guest list."
   }
 }

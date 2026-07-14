@@ -348,7 +348,7 @@
       "hitstun": 22,
       "blockstun": 13,
       "knockback": 11,
-      "comment": "hitbox is authored, NOT pose-measured: the drawn crescent-kick leg sits high (measured y=-218) but jhk's role is an air overhead that must reach a grounded/crouching defender on descent \u2014 an art-vs-intent divergence, so the box is intentionally lower/bigger than the limb. Do not --calibrate-force this cell.",
+      "comment": "hitbox is authored, NOT pose-measured: the drawn crescent-kick leg sits high (measured y=-218) but jhk's role is an air overhead that must reach a grounded/crouching defender on descent — an art-vs-intent divergence, so the box is intentionally lower/bigger than the limb. Do not --calibrate-force this cell.",
       "hitbox": {
         "x": 47,
         "y": -185,
@@ -603,7 +603,7 @@
       "Oof.",
       "Ihck!",
       "Awweee",
-      "Schei\u00dfe!",
+      "Scheiße!",
       "God damn it!"
     ],
     "victory": [
@@ -612,5 +612,14 @@
       "As it was written.",
       "You were only noise?"
     ]
+  },
+  "lore": {
+    "tagline": "Chaotic evil with a heart of gold — and root on the MarsNAS.",
+    "personality": "Multimedia artist and creative coder who teaches by ranting; DJ, stand-up, live-coder, professor of the dark arts. Sees every fight as signal versus noise and keeps the receipts.",
+    "backstory": "Rolled into Mars in 2022 in a spray-paint-riddled 2004 Dodge Sprinter and never really left. Runs the Media Cave, co-founded Promp Industries with Flo, is a founding Data Daddy, and stewards the MarsNAS — the living archive and shared lore of Mars College."
+  },
+  "arcade": {
+    "motivation": "To Vincent the whole ladder is just noise around his signal — and every fighter is a recording worth keeping. He enters to prove it, and to feed the MarsNAS one more chapter of Mars’s living lore.",
+    "ending": "Champion of the Biennale, Vincent uploads the entire tournament to the MarsNAS as its definitive record, annotated and archived. Somewhere in the desert the Sprinter’s engine turns over, and the signal rolls on to the next town."
   }
 }

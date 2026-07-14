@@ -10,10 +10,10 @@ export interface RosterEntry {
 }
 
 export const ROSTER: RosterEntry[] = [
-  { id: 'vincent', name: 'VINCENT', playable: true, mesh3d: true },
-  { id: 'yulia', name: 'YULIA', playable: true, mesh3d: true },
+  { id: 'vincent', name: 'VINCENT', playable: true },
+  { id: 'yulia', name: 'YULIA', playable: true },
   { id: 'catherine', name: 'CATHERINE', playable: true },
-  { id: 'flo', name: 'FLO', playable: true, mesh3d: true },
+  { id: 'flo', name: 'FLO', playable: true },
   { id: 'freeman', name: 'FREEMAN', playable: true },
   { id: 'gene', name: 'GENE', playable: true },
   { id: 'kirby', name: 'KIRBY', playable: true },
@@ -22,10 +22,10 @@ export const ROSTER: RosterEntry[] = [
   { id: 'cat', name: 'CAT', playable: true },
   { id: 'chebel', name: 'CHEBEL', playable: true },
   { id: 'ygor', name: 'YGOR', playable: true },
-  { id: 'rapha', name: 'RAPHA', playable: true, mesh3d: true },
+  { id: 'rapha', name: 'RAPHA', playable: true },
   { id: 'vanessa', name: 'VANESSA', playable: true },
   { id: 'earl', name: 'EARL', playable: true },
   { id: 'ben', name: 'BEN', playable: true },
   { id: 'tao', name: 'TAO', playable: true }, // the arcade end boss
-  { id: 'rj', name: 'RJ', playable: true }, // Tao's first hench goon (Sagat analog)
+  { id: 'rj', name: 'RJ', playable: true }, // v2 "The Living Skeleton" — Tao's hench goon (v1 archived in assets/archive/rj-v1-gatekeeper)
 ];

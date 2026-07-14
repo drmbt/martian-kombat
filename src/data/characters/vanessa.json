@@ -4,9 +4,11 @@
   "color": "#a98cff",
   "stage": "saturn",
   "winQuotes": [
-    "Dear Human: you are forgettable.",
-    "Deleting our chat history now.",
-    "You were trained on bad data."
+    "The Little Martians dreamed this. You were only in it.",
+    "Kneel. The cacao ceremony requires gratitude.",
+    "The ancestors watched. They were not impressed.",
+    "I am the bridge between worlds. You are not crossing.",
+    "Moonchild does not lose. Nyx never did."
   ],
   "fatality": {
     "id": "fired-and-glazed",
@@ -602,5 +604,14 @@
       "The ancestors are pleased.",
       "Dear human: you are forgettable."
     ]
+  },
+  "lore": {
+    "tagline": "The High Priestess of Mars. The Little Martians dreamed you here.",
+    "personality": "Mars’s high priestess — once Nyx, now Moonchild. Serene, oracular, ceremonial; channels the Little Martians and the ancestors. Married to the Code Weaver.",
+    "backstory": "Arrived in Mars’s first year fleeing a collapsing country and began the ancestors’ clay-worship that the priest Sofy recognized as a priesthood. Her cacao gratitude ceremony and the Little Martians — future descendants who speak through her dreams and her AI characters — made her the bridge Pseudo renamed Moonchild."
+  },
+  "arcade": {
+    "motivation": "The Little Martians showed Vanessa the tournament in a dream — a ceremony she must complete. She climbs the ladder as High Priestess to consecrate the Biennale, ending at the Patron Prince’s throne. Her partner, the Code Weaver, is somewhere in the bracket too.",
+    "ending": "Champion, Moonchild consecrates the desert. The Little Martians speak through the winning banner, and the cacao gratitude ceremony becomes the Biennale’s founding rite. The ancestors, at last, are pleased."
   }
 }

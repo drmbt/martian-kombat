@@ -62,20 +62,22 @@ export const portraitPrompt = (name, desc) =>
 
 /** beaten-and-bloodied defeated bust (post-match loser portrait) */
 export const defeatPrompt = () =>
-  'SQUARE straight-on HEADSHOT of the same person as the reference (preserve their real face, hairstyle, skin tone and outfit), ' +
+  'SQUARE HEADSHOT of the same person as the reference (preserve their real face, hairstyle, skin tone and outfit), ' +
   'but they have just LOST a brutal fight: face bruised and swollen, blackened puffy eye, split bleeding lip, a trickle of blood down the cheek, ' +
   'sweat-matted hair, dirt smudges, dazed defeated expression. A square 1:1 composition: head and shoulders only, ' +
-  'the face toward the viewer (a slight downcast tilt is fine, but square-on — no profile), head centered filling the frame.\n' +
+  'the head clearly TILTED and lolling to ONE SIDE with the chin dropped toward one shoulder (beaten and dazed, NOT upright and square-on), ' +
+  'a three-quarter view toward the viewer — never a full side profile — head centered filling the frame.\n' +
   `${CHROMA_BG} ${STYLE_ART}`;
 
 /** IMAGE_SAFETY-safe fallback for defeatPrompt — gemini sometimes rejects the
  *  bloody variant (first seen: cat, 2026-07-04); retry with this instead of
  *  aborting the batch. */
 export const defeatPromptSoft = () =>
-  'SQUARE straight-on HEADSHOT of the same person as the reference (preserve their real face, hairstyle, skin tone and outfit), ' +
+  'SQUARE HEADSHOT of the same person as the reference (preserve their real face, hairstyle, skin tone and outfit), ' +
   'but they have just lost a cartoon martial-arts match: exhausted and dazed, comic swirl of dizziness, messy sweat-matted hair, ' +
   'a small bruise on the cheek, dirt smudges, defeated expression. No blood. A square 1:1 composition: head and shoulders only, ' +
-  `the face toward the viewer (square-on — no profile), head centered filling the frame.\n${CHROMA_BG} ${STYLE_ART}`;
+  'the head clearly TILTED and lolling to ONE SIDE with the chin dropped toward one shoulder (dazed, NOT upright and square-on), ' +
+  `a three-quarter view toward the viewer — never a full side profile — head centered filling the frame.\n${CHROMA_BG} ${STYLE_ART}`;
 
 /** the 4 default fatality panel BEATS (the editable half of each cutscene
  *  panel prompt — the endpoint wraps each in the cinematic frame). One copy;

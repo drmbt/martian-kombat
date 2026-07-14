@@ -4,6 +4,7 @@
 
 import { join } from 'node:path';
 import { ROOT, loadEnv, saveAsset, skip, pool, concurrencyArg, loadVoices, fishTTS, elevenTts, elevenSfx, ELEVEN_VOICES } from './lib.mjs';
+import { withEmotion } from './core/vo-emotion.mjs';
 
 const env = loadEnv();
 const force = process.argv.includes('--force');
@@ -150,18 +151,21 @@ export const voiceLines = {
     voice: VOICE_M,
     style: 0.3,
     stability: 0.7,
-    kiai: ['Hmm... hah!', 'Ha.', 'Be still.', 'Hah!', 'Breathe.', 'Release.'],
-    hurt: ['Hmph!', 'Mm.', 'Hnh.', '...ah.', 'Unmoved.', 'Hm!'],
-    victory: ['Peace, achieved.', 'The mind bends steel.', 'Namaste... now leave.', 'Stillness prevails.'],
+    // dialed in on the soundboard: low-temp calm tracks his real reference.
+    // (calm) overrides where the category default (relaxed/groaning) drifted.
+    kiai: ['Hah!', 'Hyah!', 'Be still.', 'Breathe.', 'Release.', 'Hm!'],
+    hurt: ['Ugh!', 'Ah!', 'Hmph!', '(calm) Unmoved.', 'Hnh!', 'Grounded.'],
+    victory: ['Peace, achieved.', 'The mind bends steel.', '(calm) Namaste... now leave.', 'Stillness prevails.'],
+    moves: { breathwork: '(calm) Inhale…', 'sun-salutation': 'Salute the sun.', presence: 'Be present.', 'yoga-float': 'Rise.', throw: 'CROW!' },
   },
   gene: {
     voice: VOICE_GENE,
-    kiai: ['Ship it!', 'Force push!', 'Straight to prod!', 'Deploy!', 'Zero-shot!', 'Mana Blast!'],
-    hurt: ['Ow!', 'Ah, fuck.', "Eden's down!", 'Segfault!', 'Bad output!', 'Nope!'],
-    victory: ['Yeah! Shipped it.', "Oh yeah — that's a merge.", 'Mana Blast secured.', 'Your context window just closed.'],
+    kiai: ['Ship it!', 'Force push!', 'Hah!', 'Deploy!', 'Zero-shot!', 'Hup!'],
+    hurt: ['Ow!', 'Ugh!', 'Ah, fuck.', "Eden's down!", 'Segfault!', 'Bad output!'],
+    victory: ['Yeah! Shipped it.', "Oh yeah — that's a merge.", "(excited) I'm bullish on this one!", 'Your context window just closed.'],
     // per-move call-outs: v-<char>-move-<moveId>, played when that move fires
     // (see soundDirector). rate-limit is the "Line Goes Up" special.
-    moves: { 'rate-limit': 'Line goes up!' },
+    moves: { 'diffusion-strike': 'Generating!', 'diffusion-escape': 'Diffusing out!', 'rate-limit': 'Line goes up!', hallucination: "That's not real.", 'mana-burst': 'Mana burst!', throw: 'Force pushed.' },
   },
   // Marzipan is a laid-back dreadlocked vegan biologist; mellow + earthy, not fierce
   marzipan: {
@@ -195,9 +199,11 @@ export const voiceLines = {
     voice: VOICE_F,
     style: 0.5,
     stability: 0.45,
-    kiai: ['Hyah!', 'Vai!', 'Draw!', 'Ha!', 'Voa!', 'Toma!'],
-    hurt: ['Ai!', 'Agh!', 'Ui!', 'Não!', 'Tss!', 'Ei!'],
+    // (shouting) on the attack HA!, (raw) leaves the short "Ui!" untagged
+    kiai: ['Hyah!', 'Vai!', 'Draw!', 'Ha!', 'Voa!', '(shouting) HA!'],
+    hurt: ['Ai!', 'Agh!', '(raw) Ui!', 'Não!', 'Tss!', 'Ei!'],
     victory: ['The deck never lies.', 'This outcome was foretold.', 'Sit. Have tea. Reflect.', 'You. Reversed.'],
+    moves: { 'spirit-draw': 'Spirit, draw!', 'crescent-moon': 'Crescent moon!', ceremony: 'The ceremony begins.', 'unicycle-rush': 'Hold on!', throw: 'Reversed.' },
   },
   // Ygor is a laid-back, permanently-unbothered Brazilian projection artist
   ygor: {
@@ -245,29 +251,47 @@ export const voiceLines = {
   },
   // THE SUB-BOSS — RJ "The Gatekeeper": laconic desert artist. Daniel
   // (VOICE_FLO) low style reads dry and weathered.
+  // RJ v2 — cloned voice, dialed in on the soundboard. Deadpan desert raconteur:
+  // the temperament default is (confident)/(groaning)/(sarcastic), and the
+  // overrides below are the takes that actually landed. `(raw)` = no tag at all,
+  // which is what finally worked for the short barks (tags mangle half-second
+  // grunts). Low `style` (= fish temperature) tracks his real reference voice.
   rj: {
     voice: VOICE_FLO,
-    style: 0.2,
+    style: 0.5,
     stability: 0.6,
-    kiai: ['Pow!', 'Git!', 'Hah!', 'Boo!', 'Plink!', 'Yaw!'],
-    hurt: ['Agh!', 'Dang it!', 'Ow!', 'Hey now!', 'Grr!', 'Tsk!'],
-    victory: ['Another ghost for the collection.', 'The birds saw everything.', 'Get off my lot.', 'Ooo-ooo yourself.'],
+    kiai: ['(shouting) Go on, git!!!', 'Hup!', '(shouting) YAW!!!', '(raw) Hyah!', '(raw) Hyee-YAH!', '(raw) Whooooa.'],
+    hurt: ['(raw) Ngh!', 'Dang.', 'Rude.', 'Ow, hell.', 'Tsk.', '(screaming) FUUUCK!!!'],
+    victory: [
+      '(angry) Get. Off. My. Lot.',
+      "Well, I reckon that's that.",
+      'The ghosts saw everything.',
+      "Your problem is, you've got no style",
+    ],
     moves: {
       'bb-gun': 'Plink!',
-      'tallest-ghost': 'Boo.',
-      'scatter-flock': 'Fly!',
-      'excavator-charge': 'Dig!',
+      'excavator-charge': 'Dig in!',
+      'tallest-ghost': 'Boo!',
+      rattlebones: "C'mere.",
       throw: 'Evicted!',
     },
   },
 };
 
 // Route one grunt line: cloned fish voice when registered, ElevenLabs stock
-// voice otherwise (style maps loosely onto fish temperature).
-function speak(charId, voice, text, style, stability) {
+// voice otherwise (style maps loosely onto fish temperature). `category`
+// (kiai/hurt/victory/move) drives the Fish emotion tag — see core/vo-emotion.
+// The tag is Fish-ONLY: ElevenLabs would read "(excited)" aloud, so the stock
+// path gets the raw text and leans on its own style/stability instead.
+function speak(charId, voice, text, style, stability, category) {
   const cloned = CLONED[charId];
   if (cloned?.provider === 'fish' && env.FISH_API_KEY) {
-    return fishTTS({ apiKey: env.FISH_API_KEY, referenceId: cloned.modelId, text, temperature: style ?? 0.7 });
+    return fishTTS({
+      apiKey: env.FISH_API_KEY,
+      referenceId: cloned.modelId,
+      text: withEmotion(charId, category, text),
+      temperature: style ?? 0.7,
+    });
   }
   return tts(voice, text, style ?? 0.9, stability);
 }
@@ -275,7 +299,7 @@ function speak(charId, voice, text, style, stability) {
 const grunts = Object.entries(voiceLines).flatMap(([id, def]) =>
   Object.entries({ kiai: def.kiai, hurt: def.hurt, victory: def.victory }).flatMap(
     ([category, lines]) =>
-      lines.map((text, i) => [id, `${id}-${category}-${i + 1}`, def.voice, text, def.style, def.stability])
+      lines.map((text, i) => [id, `${id}-${category}-${i + 1}`, def.voice, text, def.style, def.stability, category])
   )
 );
 
@@ -283,7 +307,7 @@ const grunts = Object.entries(voiceLines).flatMap(([id, def]) =>
 // line for a specific move; played instead of a random kiai when it fires
 const moveGrunts = Object.entries(voiceLines).flatMap(([id, def]) =>
   Object.entries(def.moves ?? {}).map(([moveId, text]) => [
-    id, `${id}-move-${moveId}`, def.voice, text, def.style, def.stability,
+    id, `${id}-move-${moveId}`, def.voice, text, def.style, def.stability, 'move',
   ])
 );
 
@@ -310,11 +334,11 @@ const announcerTasks = Object.entries(announcerLines)
   }));
 const gruntTasks = [...grunts, ...moveGrunts]
   .filter(([charId]) => !only || charId === only)
-  .map(([charId, id, voice, text, style, stability]) => ({
+  .map(([charId, id, voice, text, style, stability, category]) => ({
     out: join(AUDIO, 'voice', `${id}.mp3`),
     label: `grunt ${id}${CLONED[charId] ? ' (cloned voice)' : ''}`,
     prompt: text,
-    run: () => speak(charId, voice, text, style, stability),
+    run: () => speak(charId, voice, text, style, stability, category),
   }));
 const soundTasks = only
   ? []

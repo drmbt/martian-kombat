@@ -1488,6 +1488,71 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-14 · infra · Cloudflare Workers deploy (martiankombat.com) +
+  asset diet** — moving hosting from GitHub Pages to **Cloudflare Workers
+  Static Assets** (registrar + R2 all on Cloudflare; R2's zero egress is
+  the win for an asset-heavy game). Added `wrangler.jsonc` (assets-only,
+  `directory: ./dist`, SPA fallback — `name` must match the dashboard
+  Worker) and expanded `.env.example` (VITE_ASSET_BASE for the future R2
+  asset origin; CLOUDFLARE_/R2_ vars for CLI/CI + uploads, NOT needed for
+  the dashboard build's own "build token"). **Workers/Pages both cap assets
+  at 25 MiB/file + 20k files** — three fixes: (1) deleted `public/assets/
+  meshes/` (333 MB FBX zips) + `public/assets/animations/` (77 MB FBX) from
+  the served bundle — both were 100% unreferenced dead weight, moved to the
+  gitignored `assets/raw/unused-3d-sources/`; (2) the three 30 MB character
+  GLBs exceed the cap and the runtime GLTFLoader has NO Draco/meshopt
+  decoder, so they're excluded from the upload via `public/.assetsignore`
+  (`assets/3d/`) and kept in public/ for local dev; (3) the 4 `mesh3d`
+  roster flags flipped off so 3D reads "SOON" — no broken 404 path ships.
+  **TODO to restore 3D:** serve `assets/3d/` from R2 (custom domain
+  `cdn.martiankombat.com`), add the `VITE_ASSET_BASE` seam in BootScene +
+  threeAssets, re-enable the 4 mesh3d flags. The old `.github/workflows/
+  deploy.yml` (GH Pages) still fires on push to main — remove it or it
+  double-deploys. — Claude (Opus) + Vincent
+
+- **2026-07-14 · assets+data+tools+docs · VO emotion system, roster lore
+  backfill, and RJ v2 "The Living Skeleton" REBUILD** — three threads.
+  **(1) Roster lore backfill:** every playable fighter now carries an
+  `arcade: {motivation, ending}` block (16 authored from the Mars People
+  lore sheet — only tao/rj had one) and an inline `lore:
+  {tagline,personality,backstory}` (14 added). Vanessa's win quotes were
+  chatbot-toned against a High-Priestess identity — reconciled; ben/earl/
+  freeman/tao expanded off the 3-quote floor. Home stages assigned: tao →
+  `institute`, rj → `last-resort`, ben → `dome`. NOTE: **flo has no row on
+  the lore sheet** — her lore/arcade are DERIVED from Vincent's entry and
+  marked inline; confirm the canon.
+  **(2) VO emotion control (`tools/core/vo-emotion.mjs`, `docs/VO_EMOTION.md`):**
+  Fish S1 reads a leading `(tag)` as an expression control it performs but
+  never speaks. `withEmotion(charId, category, text)` resolves a tag from
+  **context × temperament** (kiai→exertion, hurt→pain, victory→triumph,
+  crossed with a per-fighter TEMPERAMENT table) and `gen-audio`'s `speak()`
+  applies it — **on the Fish clone path ONLY**; ElevenLabs would read
+  "(excited)" out loud. A leading `(raw)` is an explicit no-tag escape. Tags
+  live in `gen-audio` `voiceLines` (synth recipe); the character JSON `vo`
+  stays clean display text. Cloned + baked chebel/freeman/gene (64 clips,
+  16 per-move call-outs) via an iterative soundboard-audition loop.
+  **(3) RJ v2:** v1 "The Gatekeeper" archived to
+  `assets/archive/rj-v1-gatekeeper/` + offlined, then rebuilt from new
+  photos/voice sample and his (much weirder) LinkedIn persona — a deadpan
+  erudite desert raconteur who calls himself a living skeleton above a
+  miasma of ghosts. New canonical (dark beard, henley + black waistcoat, NO
+  gun/ghosts), icon, bust, tilted KO; 62-cell sheet (bare-fisted boxer
+  normals — the v1 manifest swung the BB gun in every normal); kit rewired
+  to real plumbing — BB Gun (qcf projectile), Excavator Charge (bf rush),
+  **World's Tallest Ghost is now the dp anti-air** (was a projectile), new
+  **Rattlebones** hcb command grab (skeleton bear-hug, replaces
+  scatter-flock), Evicted throw. 21 VO clips through a fresh clone; new
+  **"For The Birds"** fatality (lighter → burnt husk → birdseed →
+  Hitchcock pigeon swarm → he spits on the torso). Re-onlined; 379 tests
+  green. `defeatPrompt` now forces the KO head-tilt. Skills updated
+  (new-character, sprite-generation, sprite-qa).
+  **Still open on RJ:** QA flags 4 cells Vincent hand-edited and I did NOT
+  overwrite — `mp-active`/`hp-active` have **no reach** (fists barely pass
+  the idle guard, so those hitboxes are honestly short) and `idle-b`/
+  `walk-b` are near-identical to their partners (idle/walk won't visibly
+  animate). Re-roll when convenient. `rj-kiai-5` ("Hyee-YAH!") was an
+  inferred pick — Vincent never named a letter. — Claude (Opus) + Vincent
+
 - **2026-07-09 · ui+assets+data · studio input fixes + boss raw frames +
   roster dial-in** — ENTER no longer dumps the studio to character select
   (fightShell's training-exit guard gained the missed `studio` flag) and

@@ -149,6 +149,17 @@ to-crop scale) so every character matches — never a fixed crop box
 a SEPARATE generated asset (`gen-icons`) and must NOT be overwritten by the bust
 crop.
 
+**KO / defeated bust (`<id>-ko.png`, `gen-canonical`).** Roster convention
+(`defeatPrompt` in `tools/core/prompts.mjs`): the head is **tilted / lolling to
+one side, chin dropped toward a shoulder** — beaten and dazed, three-quarter to
+the viewer, NEVER upright-square-on or a full profile. The KO's PRIMARY face
+reference is the shipped straight-on portrait (`public/assets/portraits/<id>.png`),
+then the canonical for outfit/style — so the KO matches the select-screen face.
+Regenerate just the KO without touching an approved canonical/portrait by
+deleting `assets/raw/canonical/ko/<id>.png` + `public/assets/portraits/<id>-ko.png`
+and running `gen-canonical --char <id>` WITHOUT `--force` (the existing
+canonical/portrait skip, only the KO rebuilds).
+
 ## Confidence / when to escalate to vision
 
 Trust the deterministic verdict when: one figure detected, keypoint confidence

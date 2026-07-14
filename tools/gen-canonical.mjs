@@ -48,7 +48,7 @@ const FLAVOR = {
   // THE SUB-BOSS — RJ (Tao's first hench goon; the Sagat analog): Bombay
   // Beach ghost artist (World's Tallest Ghost), bird fosterer, BB-gun
   // plinker, excavator rider. FX ghost-WHITE/SILVER + AMBER, never green.
-  rj: `Character flavor: "The Gatekeeper" — the Biennale's first hench goon and Bombay Beach's resident ghost artist. Keep his real face and full reddish-brown beard from the photos, shoulder-length hair under a woven STRAW COWBOY HAT, a worn denim work shirt with rolled sleeves, jeans, dark work boots, a thin gold chain. He carries a well-used BB GUN (a small air rifle) slung in one hand, and a small white sheet-ghost charm dangles from his belt. Weathered, unhurried, faintly amused. Any light effects are ghost-WHITE/SILVER and warm AMBER (never green).`,
+  rj: `Character flavor: "The Living Skeleton" — Bombay Beach's ghost artist and the Biennale's first hench goon, a weathered desert raconteur who talks like a dusty dictionary. Keep his real face from the photos and a full DARK BROWN beard (NOT red or ginger), shoulder-length dark brown hair under a woven STRAW COWBOY HAT, an off-white henley shirt under an open black waistcoat with sleeves pushed up, dark jeans, black work boots, a thin cord necklace and beaded bracelets. Bare empty hands raised in a relaxed boxing guard — NO weapon, NO gun of any kind, and absolutely NO ghosts, wraiths, spirits, or floating figures anywhere in the frame. Weathered, unhurried, deadpan and faintly amused. Clean solid chroma-green background, no props or extra objects.`,
   // THE END BOSS (arcade mode's M. Bison analog — see CLAUDE.md arcade note)
   tao: `Character flavor: "The Patron Prince" — the END BOSS: an Italian aristocrat turned desert art patron, imperious and effortlessly charming, a man in his early 50s — a lived-in, weathered-handsome face with creases at the eyes, grey streaking the temples of the wild swept-up hair and flecking the stubble (do NOT make him look young). Keep the ornate embroidered burgundy-maroon suit with pale filigree patterns, the matching wide-leg trousers, tan leather cowboy boots and round sunglasses from the photo. A commanding, theatrical fighting stance — weight back, chin high, both hands in a loose conductor's guard held CLOSE to the chest; faint GOLD filigree light traces curling between the fingers (never green).`,
   // Tubs (his robot) is deliberately NOT in the canonical — he's a separate
@@ -138,7 +138,15 @@ for (const id of new Set([...Object.keys(REUSE), ...Object.keys(FLAVOR), ...(onl
   const raw = join(KORAW, `${id}.png`);
   if (!skip(raw, force)) {
     console.log(`ko-portrait ${id} ...`);
-    const refs = [canonical, ...(existsSync(inspo) ? [inspo] : [])];
+    // the straight-on select portrait is the cleanest, keyed, canon-correct face
+    // — use it as the PRIMARY reference so the KO matches the shipped portrait,
+    // then the canonical for the outfit/style anchor.
+    const portrait = join(PORTRAITS, `${id}.png`);
+    const refs = [
+      ...(existsSync(portrait) ? [portrait] : []),
+      canonical,
+      ...(existsSync(inspo) ? [inspo] : []),
+    ];
     // log-and-skip on failure (pipeline rule: never abort the batch); retry
     // IMAGE_SAFETY rejections once with the bloodless fallback prompt
     let done = false;

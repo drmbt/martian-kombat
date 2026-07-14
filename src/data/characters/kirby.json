@@ -593,5 +593,14 @@
       "Encore?",
       "Darling, please."
     ]
+  },
+  "lore": {
+    "tagline": "Organizer of chaos. I bend; you break.",
+    "personality": "Community-wrangler and showstopper — flexible, theatrical, and gossipy. Turns any brawl into a performance, then tells everyone about it (with embellishments).",
+    "backstory": "The one who herds Mars's chaos into something like community. Equal parts fire-breather and lawn chair; a contortionist's flexibility and a performer's timing."
+  },
+  "arcade": {
+    "motivation": "The Biennale is the biggest stage on the Salton Sea and the juiciest gossip in three counties. Kirby enters for the story she’ll get to tell afterward — and she intends it to be a good one.",
+    "ending": "Champion, Kirby throws the after-party the desert deserves and tells everyone exactly how she won. The details grow more flexible with each retelling. So does she."
   }
 }

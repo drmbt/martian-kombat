@@ -661,5 +661,14 @@
       "Root access granted.",
       "Works on my machine."
     ]
+  },
+  "lore": {
+    "tagline": "Works on my machine. Root access denied — to you.",
+    "personality": "German hacker-engineer and Vincent's co-founder at Promp Industries. Dry, precise, unbothered — settles arguments with a fork bomb and a blunt.",
+    "backstory": "Co-built Promp Industries' digital-media tooling (OSC.LINK, Prompin' Studio) and the Mars Be Prompin' prompt-battle game with Vincent. Treats the fight like a terminal she happens to have root on. [Derived from Vincent's lore-sheet entry — Flo has no sheet row; confirm canon.]"
+  },
+  "arcade": {
+    "motivation": "Someone filed a bug — the tournament — and Flo has never left a repro un-triaged. She enters to root-cause the whole ladder and ship the patch. [Motivation derived from Promp Industries lore; confirm.]",
+    "ending": "Champion, Flo commits the fix, force-pushes to prod, and closes the ticket. It works on her machine. She lights a blunt and watches the desert compile."
   }
 }

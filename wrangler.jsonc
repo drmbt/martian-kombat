@@ -1,0 +1,15 @@
+{
+  // Cloudflare Workers Static Assets config — serves the Vite build (`dist/`)
+  // as a static site. `npx wrangler deploy` (the dashboard build's deploy
+  // command) reads this. No Worker script: assets-only.
+  //
+  // `name` MUST match the Worker you created in the Cloudflare dashboard, or
+  // wrangler targets/creates a different Worker.
+  "name": "martian-kombat",
+  "compatibility_date": "2025-06-01",
+  "assets": {
+    "directory": "./dist",
+    // single-page canvas app — serve index.html for any unmatched route
+    "not_found_handling": "single-page-application"
+  }
+}

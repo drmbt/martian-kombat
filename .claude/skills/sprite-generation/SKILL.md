@@ -29,6 +29,17 @@ idle-a (not the canonical), walk-b refs walk-a, specials chain sequentially
 (startup←idle; projectile alone; active←startup+projectile+idle;
 recovery←active+idle). One re-roll per asset, max.
 
+**Staged approval — what "basic sprites" means.** When the creator asks for
+"basic sprites," generate and get sign-off on ONLY the shared foundation cells
+FIRST — the 11 in `cells.mjs` CELLS: `idle-a/-b`, `walk-a/-b`, `crouch`, `jump`,
+`block`, `block-crouch`, `hit`, `fall`, `down`. These establish the look, floor
+plane, and locomotion. Only after they pass do you move on to the normals
+(`lp..hk` × stand/crouch/air), and only after THOSE to the named specials +
+throw. Three gates, in that order — never front-load all 47+ cells (or the
+specials) into a first "basic" pass. Generate a subset with
+`gen:frames --char <id> --cells <comma-list>`; a later pass without `--force`
+skips the approved/edited cells and fills in the rest.
+
 ## Universal invariants (already in FRAME_RULES — reinforce when a cell fails)
 
 - **Exactly ONE figure.** One person, drawn once. Never a second copy, never an

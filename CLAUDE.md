@@ -138,7 +138,10 @@ The pipeline turns a photo of a real person into a game-ready sprite sheet:
    `npm run gen:voice -- --char <name>` (Fish Audio, `FISH_API_KEY`; registers
    a private model id in `tools/voices.json`), and `gen:audio` automatically
    routes that fighter's kiai/hurt/victory VO through the clone (announcer +
-   stage call-outs always stay ElevenLabs). Music tracks (Suno, generated outside the repo
+   stage call-outs always stay ElevenLabs). Cloned VO is emotion-tagged by
+   context×temperament (kiai→exertion, hurt→pain, victory→triumph) via
+   `tools/core/vo-emotion.mjs` — Fish-only `(tag)` syntax, tuned per fighter;
+   see `docs/VO_EMOTION.md`. Music tracks (Suno, generated outside the repo
    scripts) drop into `public/assets/audio/music/<context>/` (`menu/`,
    `versus/`, `victory/`, `stages/<id>/` + `stages/default/` fallback);
    `npm run gen:music` rescans folders into `manifest.json` (runs automatically

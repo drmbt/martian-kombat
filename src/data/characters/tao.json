@@ -2,6 +2,7 @@
   "id": "tao",
   "name": "TAO",
   "color": "#d36983",
+  "stage": "institute",
   "lore": {
     "tagline": "The desert's philosopher-king awaits your challenge.",
     "personality": "Imperious, worldly, and effortlessly charming, Tao conducts himself like an orchestra conductor and the battle like a symphony. He is an untouchable philosopher-king, a patron of the arts who sees this contest not as a brawl, but as the ultimate form of creative expression, a dialogue of Being he is destined to win.",
@@ -10,7 +11,9 @@
   "winQuotes": [
     "A fleeting, yet beautiful, performance.",
     "Consider this an education in Dasein.",
-    "The Biennale requires a higher caliber of artist."
+    "The Biennale requires a higher caliber of artist.",
+    "Being reveals itself in the fall. You revealed little.",
+    "The desert remembers only its philosopher-king."
   ],
   "vo": {
     "kiai": [

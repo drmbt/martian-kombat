@@ -2,48 +2,49 @@
   "id": "rj",
   "name": "RJ",
   "color": "#e8e4d8",
+  "stage": "last-resort",
   "lore": {
-    "tagline": "The Gatekeeper. The ghosts are art. The BB gun isn't.",
-    "personality": "Bombay Beach's resident ghost artist and the Biennale's first line of defense — a weathered, unhurried desert artist in a straw hat who fosters stray birds, rides his mini-excavator around town like a horse, and settles most disputes with a lever-action BB gun and infinite patience. Tao calls him the Gatekeeper; RJ calls it keeping the lot tidy.",
-    "backstory": "RJ came to Bombay Beach for the quiet and stayed for the ghosts — the ones he builds. His white sheet-ghost installations haunt fences and rooftops all over town, crowned by the World's Tallest Ghost towering over the Ghost Theater. He fosters every bird the desert dumps on him, digs art cars out of the mud with his excavator, and when the Biennale needs a door watched, the Patron Prince asks RJ. Challengers who want Tao answer to the BB gun first."
+    "tagline": "A well-defined living skeleton, standing head and clavicle above a miasma of screaming ghosts.",
+    "personality": "A deadpan desert raconteur and ghost artist who talks like a dusty dictionary — obscure vocabulary, infinite patience, a BB gun, and a mini-excavator he rides like a horse. Adamant that he is not a golem, homunculus, or puppet coaxed to life by dark magic.",
+    "backstory": "RJ builds the white sheet-ghost installations that haunt Bombay Beach, crowned by the World's Tallest Ghost over the Ghost Theater. He is an expert at everything from MS-DOS to snake-wrangling (in a strictly supervisory capacity, phone in hand). As the Biennale's gatekeeper he is the last door between a challenger and the Patron Prince — and when his patience runs out, the flesh goes and the skeleton answers."
   },
   "winQuotes": [
-    "Another ghost for the collection.",
-    "The Prince said no visitors.",
-    "The birds saw the whole thing.",
-    "Get off my lot."
+    "I know words like 'burgeomeister.' You knew none of them.",
+    "I watched a man run MS-DOS from a crashing plane. This was less impressive.",
+    "Get off my lot.",
+    "You know nothing of bats."
   ],
   "vo": {
     "kiai": [
-      "Pow!",
-      "Git!",
-      "Hah!",
-      "Boo!",
-      "Plink!",
-      "Yaw!"
+      "Go on, git!!!",
+      "Hup!",
+      "YAW!!!",
+      "Hyah!",
+      "Hyee-YAH!",
+      "Whooooa."
     ],
     "hurt": [
-      "Agh!",
-      "Dang it!",
-      "Ow!",
-      "Hey now!",
-      "Grr!",
-      "Tsk!"
+      "Ngh!",
+      "Dang.",
+      "Rude.",
+      "Ow, hell.",
+      "Tsk.",
+      "FUUUCK!!!"
     ],
     "victory": [
-      "Another ghost for the collection.",
-      "The birds saw everything.",
-      "Get off my lot.",
-      "Ooo-ooo yourself."
+      "Get. Off. My. Lot.",
+      "Well, I reckon that's that.",
+      "The ghosts saw everything.",
+      "Your problem is, you've got no style"
     ]
   },
   "arcade": {
-    "motivation": "RJ doesn't care who wins the Biennale — he cares who tramples his lot getting there. Tao pays him in diesel and birdseed to watch the gate, and RJ watches it like the desert watches everything: patiently, with a BB gun across his knees. If you want the Patron Prince, you go through the Gatekeeper.",
-    "ending": "With Tao dethroned, RJ shrugs and gets back to work. There's a new ghost to raise — the tallest yet, stitched from a champion's banner — and the birds need feeding, and somebody left an art car axle-deep in the mud again. Bombay Beach doesn't need a champion. It needs a caretaker. It's always had one."
+    "motivation": "RJ doesn't care who wins the Biennale — he cares who tramples his lot getting there. Tao pays him in diesel and birdseed to watch the gate, and RJ watches it the way the desert watches everything: patiently, with a BB gun across his knees. Anyone who wants the Patron Prince answers to the gun, the ghosts, and the skeleton first.",
+    "ending": "With Tao dethroned, RJ shrugs and gets back to work. There's a new ghost to raise — the tallest yet — and somebody left an art car axle-deep in the mud again. Bombay Beach never needed a champion. It needed a caretaker, and it always had one."
   },
   "fatality": {
-    "id": "tallest-ghost",
-    "name": "World's Tallest Ghost",
+    "id": "for-the-birds",
+    "name": "For The Birds",
     "input": {
       "motion": "hcb",
       "button": "kick"
@@ -85,10 +86,10 @@
       "blockstun": 9,
       "knockback": 5,
       "hitbox": {
-        "x": 55,
-        "y": -220,
-        "w": 58,
-        "h": 52
+        "x": 65,
+        "y": -264,
+        "w": 81,
+        "h": 68
       },
       "height": "mid",
       "chains": [
@@ -107,10 +108,10 @@
       "blockstun": 14,
       "knockback": 8,
       "hitbox": {
-        "x": 29,
-        "y": -215,
-        "w": 62,
-        "h": 53
+        "x": 58,
+        "y": -261,
+        "w": 81,
+        "h": 67
       },
       "height": "mid",
       "cancel": true
@@ -124,10 +125,10 @@
       "blockstun": 14,
       "knockback": 8,
       "hitbox": {
-        "x": 11,
-        "y": -255,
-        "w": 54,
-        "h": 55
+        "x": 42,
+        "y": -256,
+        "w": 80,
+        "h": 67
       },
       "height": "mid",
       "knockdown": true
@@ -141,10 +142,10 @@
       "blockstun": 9,
       "knockback": 3,
       "hitbox": {
-        "x": 31,
-        "y": -181,
-        "w": 68,
-        "h": 77
+        "x": 52,
+        "y": -219,
+        "w": 75,
+        "h": 100
       },
       "height": "mid",
       "chains": [
@@ -163,10 +164,10 @@
       "blockstun": 14,
       "knockback": 8,
       "hitbox": {
-        "x": 57,
-        "y": -229,
-        "w": 55,
-        "h": 55
+        "x": 54,
+        "y": -268,
+        "w": 79,
+        "h": 81
       },
       "height": "mid",
       "cancel": true
@@ -180,10 +181,10 @@
       "blockstun": 14,
       "knockback": 8,
       "hitbox": {
-        "x": 48,
-        "y": -269,
-        "w": 61,
-        "h": 71
+        "x": 54,
+        "y": -271,
+        "w": 77,
+        "h": 80
       },
       "height": "mid",
       "knockdown": true
@@ -197,10 +198,10 @@
       "blockstun": 9,
       "knockback": 3,
       "hitbox": {
-        "x": 55,
-        "y": -148,
-        "w": 54,
-        "h": 48
+        "x": 42,
+        "y": -150,
+        "w": 72,
+        "h": 61
       },
       "height": "mid",
       "chains": [
@@ -219,10 +220,10 @@
       "blockstun": 9,
       "knockback": 5,
       "hitbox": {
-        "x": 20,
-        "y": -136,
-        "w": 51,
-        "h": 55
+        "x": 61,
+        "y": -142,
+        "w": 72,
+        "h": 63
       },
       "height": "mid",
       "cancel": true
@@ -236,10 +237,10 @@
       "blockstun": 14,
       "knockback": 8,
       "hitbox": {
-        "x": 11,
-        "y": -216,
-        "w": 52,
-        "h": 54
+        "x": 54,
+        "y": -201,
+        "w": 76,
+        "h": 64
       },
       "height": "mid"
     },
@@ -252,10 +253,10 @@
       "blockstun": 9,
       "knockback": 3,
       "hitbox": {
-        "x": 40,
-        "y": -83,
-        "w": 60,
-        "h": 62
+        "x": 56,
+        "y": -56,
+        "w": 79,
+        "h": 64
       },
       "height": "low",
       "chains": [
@@ -291,10 +292,10 @@
       "blockstun": 14,
       "knockback": 8,
       "hitbox": {
-        "x": 56,
-        "y": -53,
-        "w": 62,
-        "h": 54
+        "x": 52,
+        "y": -58,
+        "w": 86,
+        "h": 62
       },
       "height": "low",
       "knockdown": true
@@ -308,10 +309,10 @@
       "blockstun": 9,
       "knockback": 3,
       "hitbox": {
-        "x": 31,
-        "y": -212,
-        "w": 60,
-        "h": 51
+        "x": 41,
+        "y": -249,
+        "w": 77,
+        "h": 67
       },
       "height": "high"
     },
@@ -324,10 +325,10 @@
       "blockstun": 14,
       "knockback": 8,
       "hitbox": {
-        "x": 39,
-        "y": -229,
-        "w": 61,
-        "h": 52
+        "x": 60,
+        "y": -217,
+        "w": 76,
+        "h": 73
       },
       "height": "high"
     },
@@ -340,10 +341,10 @@
       "blockstun": 14,
       "knockback": 8,
       "hitbox": {
-        "x": -17,
-        "y": -268,
-        "w": 55,
-        "h": 50
+        "x": -6,
+        "y": -300,
+        "w": 72,
+        "h": 68
       },
       "height": "high"
     },
@@ -356,10 +357,10 @@
       "blockstun": 9,
       "knockback": 3,
       "hitbox": {
-        "x": -22,
-        "y": -110,
-        "w": 61,
-        "h": 70
+        "x": -17,
+        "y": -111,
+        "w": 86,
+        "h": 91
       },
       "height": "high"
     },
@@ -372,10 +373,10 @@
       "blockstun": 14,
       "knockback": 8,
       "hitbox": {
-        "x": 39,
-        "y": -228,
-        "w": 60,
-        "h": 80
+        "x": 59,
+        "y": -80,
+        "w": 75,
+        "h": 84
       },
       "height": "high"
     },
@@ -388,10 +389,10 @@
       "blockstun": 14,
       "knockback": 8,
       "hitbox": {
-        "x": 46,
-        "y": -199,
-        "w": 66,
-        "h": 70
+        "x": 49,
+        "y": -215,
+        "w": 82,
+        "h": 60
       },
       "height": "high"
     },
@@ -472,130 +473,120 @@
       }
     },
     "tallest-ghost": {
-      "name": "Tallest Ghost",
-      "input": {
-        "motion": "qcb",
-        "button": "punch"
-      },
-      "startup": 18,
-      "active": 2,
-      "recovery": 28,
-      "damage": 0,
-      "hitstun": 0,
-      "blockstun": 0,
-      "knockback": 0,
-      "hitbox": null,
-      "height": "mid",
-      "projectile": {
-        "vx": 0,
-        "spawnX": 118,
-        "spawnY": -110,
-        "box": {
-          "x": -34,
-          "y": -110,
-          "w": 68,
-          "h": 220
-        },
-        "renderSize": 230,
-        "damage": 24,
-        "hitstun": 12,
-        "blockstun": 9,
-        "knockback": 3,
-        "ttl": 120,
-        "rehit": 20
-      },
-      "voiceText": "Boo.",
-      "voice": true,
-      "variants": {
-        "l": {
-          "startup": 16,
-          "projectile": {
-            "damage": 20,
-            "ttl": 96
-          }
-        },
-        "h": {
-          "startup": 21,
-          "projectile": {
-            "damage": 28,
-            "ttl": 150
-          }
-        }
-      }
-    },
-    "scatter-flock": {
-      "name": "Scatter Flock",
+      "name": "World's Tallest Ghost",
       "input": {
         "motion": "dp",
         "button": "punch"
       },
       "startup": 5,
       "active": 8,
-      "recovery": 25,
-      "damage": 98,
-      "hitstun": 21,
-      "blockstun": 12,
+      "recovery": 26,
+      "damage": 96,
+      "hitstun": 22,
+      "blockstun": 14,
       "knockback": 9,
       "knockdown": true,
       "height": "mid",
       "hitbox": {
-        "x": 22,
-        "y": -250,
-        "w": 76,
-        "h": 126
+        "x": 14,
+        "y": -304,
+        "w": 86,
+        "h": 196
       },
       "leap": {
-        "vx": 4,
-        "vy": 16.5
+        "vx": 3,
+        "vy": 17
       },
       "invuln": 8,
-      "voiceText": "Fly!",
+      "voiceText": "Boo!",
       "voice": true,
       "variants": {
         "l": {
           "startup": 3,
-          "damage": 83
+          "damage": 82,
+          "invuln": 6,
+          "recovery": 22
         },
         "h": {
           "startup": 8,
-          "damage": 113
+          "damage": 110,
+          "invuln": 10,
+          "recovery": 32
         }
       }
     },
     "excavator-charge": {
       "name": "Excavator Charge",
       "input": {
-        "motion": "hcf",
-        "button": "kick"
+        "motion": "bf",
+        "button": "punch"
       },
-      "startup": 11,
-      "active": 5,
-      "recovery": 23,
-      "damage": 84,
-      "hitstun": 19,
-      "blockstun": 12,
-      "knockback": 10,
+      "startup": 12,
+      "active": 8,
+      "recovery": 24,
+      "damage": 92,
+      "hitstun": 22,
+      "blockstun": 14,
+      "knockback": 12,
       "knockdown": true,
       "height": "mid",
       "hitbox": {
-        "x": 50,
-        "y": -180,
-        "w": 112,
-        "h": 74
+        "x": 20,
+        "y": -192,
+        "w": 132,
+        "h": 172
       },
-      "forwardVel": 13,
-      "voiceText": "Dig!",
+      "forwardVel": 15,
+      "voiceText": "Dig in!",
       "voice": true,
       "variants": {
         "l": {
-          "startup": 9,
-          "damage": 71,
-          "forwardVel": 9.8
+          "forwardVel": 11,
+          "damage": 76,
+          "recovery": 20
         },
         "h": {
-          "startup": 14,
-          "damage": 97,
-          "forwardVel": 15.6
+          "forwardVel": 19,
+          "damage": 106,
+          "recovery": 30
+        }
+      }
+    },
+    "rattlebones": {
+      "name": "Rattlebones",
+      "input": {
+        "motion": "hcb",
+        "button": "punch"
+      },
+      "startup": 8,
+      "active": 3,
+      "recovery": 30,
+      "damage": 130,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 8,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 105
+      },
+      "tossArc": {
+        "vy": -5,
+        "knockbackMult": 1
+      },
+      "voiceText": "C'mere.",
+      "voice": true,
+      "variants": {
+        "l": {
+          "startup": 6,
+          "damage": 112,
+          "recovery": 26
+        },
+        "h": {
+          "startup": 11,
+          "damage": 148,
+          "recovery": 36
         }
       }
     }

@@ -599,5 +599,14 @@
       "You blinked first.",
       "Que tempo horrível…"
     ]
+  },
+  "lore": {
+    "tagline": "Hold still — this is your good side.",
+    "personality": "Portuguese mixed-media painter and fearless poker player: sassy, dyslexic, gloriously over-confident. Fights like she paints — messy, instinctive, and always in her own light.",
+    "backstory": "A fashion-designer-turned-visual-artist who grinds her own paint from flour and pigment. Built the communitarian Loom, teaches improv, live-paints Martians, and every Sunday becomes D. Catarina, the weather-cursing old lady of Carlota’s bakery."
+  },
+  "arcade": {
+    "motivation": "The whole Biennale is one enormous canvas, and Cat wants it in her light. She enters to paint the tournament — each opponent a portrait, held very, very still.",
+    "ending": "Champion, Cat turns the desert into her installation: every fighter live-painted, the Thread of Life loom strung between the sculptures. D. Catarina wanders through at sunset, complaining it was far too hot."
   }
 }

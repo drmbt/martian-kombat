@@ -383,7 +383,9 @@
       "invuln": 16,
       "teleport": {
         "mode": "behind"
-      }
+      },
+      "voiceText": "Generating!",
+      "voice": true
     },
     "diffusion-escape": {
       "name": "Diffusion (out)",
@@ -403,7 +405,9 @@
       "invuln": 14,
       "teleport": {
         "mode": "retreat"
-      }
+      },
+      "voiceText": "Diffusing out!",
+      "voice": true
     },
     "rate-limit": {
       "name": "Line Goes Up",
@@ -513,7 +517,9 @@
             "vx": 5
           }
         }
-      }
+      },
+      "voiceText": "That's not real.",
+      "voice": true
     },
     "mana-burst": {
       "name": "Mana Burst",
@@ -556,7 +562,9 @@
             "vx": 13
           }
         }
-      }
+      },
+      "voiceText": "Mana burst!",
+      "voice": true
     },
     "throw": {
       "name": "Throw",
@@ -580,31 +588,42 @@
         "vy": -6.5,
         "knockbackMult": 1
       },
-      "techable": true
+      "techable": true,
+      "voiceText": "Force pushed.",
+      "voice": true
     }
   },
   "vo": {
     "kiai": [
       "Ship it!",
       "Force push!",
-      "Straight to prod!",
+      "Hah!",
       "Deploy!",
       "Zero-shot!",
-      "Mana Blast!"
+      "Hup!"
     ],
     "hurt": [
       "Ow!",
+      "Ugh!",
       "Ah, fuck.",
       "Eden's down!",
       "Segfault!",
-      "Bad output!",
-      "Nope!"
+      "Bad output!"
     ],
     "victory": [
       "Yeah! Shipped it.",
       "Oh yeah — that's a merge.",
-      "Mana Blast secured.",
+      "I'm bullish on this one!",
       "Your context window just closed."
     ]
+  },
+  "lore": {
+    "tagline": "Quack. Ship it. Straight to prod.",
+    "personality": "ML-engineer-turned-artist who ships first and debugs never. Handler of the Mechanical Duck, maker of agents and generative art, married to Vanessa.",
+    "backstory": "Co-founded Mars College with Freeman and Eden with Xander, and married Vanessa in a ceremony HaiDai officiated on Mars. Interested in agents, simulation, and generative art — and memes, as the Mechanical Duck."
+  },
+  "arcade": {
+    "motivation": "To Gene the tournament is a simulation he wants to run to convergence, and the winning agent is himself. It doesn’t hurt that Vanessa is in the bracket — a fight he’d never live down losing.",
+    "ending": "Champion, Gene deploys the Biennale as one enormous generative-art piece, Eden’s agents running the desert on their own. He ships it, force-pushes, and goes home to Vanessa. The Mechanical Duck quacks once."
   }
 }

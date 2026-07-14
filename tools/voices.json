@@ -43,5 +43,41 @@
       "tao.wav"
     ],
     "createdAt": "2026-07-09T01:15:02.768Z"
+  },
+  "chebel": {
+    "provider": "fish",
+    "modelId": "bef183a9e7ce42c5bfae65f592905c77",
+    "title": "Martian Kombat — chebel",
+    "samples": [
+      "chebel.wav"
+    ],
+    "createdAt": "2026-07-10T23:55:28.161Z"
+  },
+  "freeman": {
+    "provider": "fish",
+    "modelId": "2978df58152e4a66b6c0524646505949",
+    "title": "Martian Kombat — freeman",
+    "samples": [
+      "freeman.wav"
+    ],
+    "createdAt": "2026-07-10T23:55:35.413Z"
+  },
+  "gene": {
+    "provider": "fish",
+    "modelId": "96b4e18257b04ff5997b4596ff88f7b2",
+    "title": "Martian Kombat — gene",
+    "samples": [
+      "gene.wav"
+    ],
+    "createdAt": "2026-07-10T23:55:42.386Z"
+  },
+  "rj": {
+    "provider": "fish",
+    "modelId": "9d95e7aa6df64b0696f3f00e6ab1f7a1",
+    "title": "Martian Kombat — rj",
+    "samples": [
+      "rj.mp3"
+    ],
+    "createdAt": "2026-07-14T19:08:37.938Z"
   }
 }

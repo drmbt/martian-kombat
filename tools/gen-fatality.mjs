@@ -154,13 +154,13 @@ const FATALITIES = {
   // THE SUB-BOSS — RJ: "World's Tallest Ghost" — the loser becomes the
   // newest installation in his Bombay Beach ghost series. Eerie, not gory.
   rj: {
-    id: 'tallest-ghost',
+    id: 'for-the-birds',
     canonical: 'assets/raw/canonical/rj.png',
     panels: [
-      `The man from the reference image (straw cowboy hat, reddish-brown beard, denim shirt, jeans, boots) unfurling an enormous WHITE SHEET over ${HUSK} with a matador's sweep, desert twilight, dust swirling, a tall bare steel pole standing behind them. Low dramatic angle.`,
-      `The sheet settling over the standing husk, the fabric draping into a tall GHOST shape with two dark hollow eyes forming where the face was, a faint ghost-white glow blooming through the cloth, the man calmly cinching a rope. Side angle, eerie and quiet.`,
-      `The man HOISTING the new sheet-ghost up the tall steel pole with the rope, hand over hand, the draped ghost rising high against the desert sky to tower over the rooftops — the WORLD'S TALLEST GHOST, its tattered hem fluttering. Dramatic low angle looking up the pole.`,
-      `The man standing back with small white and grey birds settling on his shoulders and hat, admiring the towering finished ghost installation glowing faintly against the dusk, a hand-painted "oOo-OoO" scrawl on a wall behind him. He tips his hat to it. Final, serene.`,
+      `The man from the reference image (straw cowboy hat, full DARK BROWN beard, off-white henley under an open black waistcoat, dark jeans, black work boots) calmly flicking open a battered brass LIGHTER and touching its small flame to a defeated fighter, who erupts into flame and blackens on the spot into ${HUSK}. He watches without expression, hat brim low, embers and ash spiralling up into the desert twilight. Low dramatic angle.`,
+      `The man tearing open a paper sack and casually TOSSING A HANDFUL OF BIRDSEED over the smouldering ${HUSK} — pale seed scattering across its charred shoulders and cracked ember-seamed chest, bouncing off the blackened torso. He shakes the last of the sack out, deadpan and unhurried. Side angle, matter-of-fact.`,
+      `A DENSE SCREAMING SWARM of grey-and-white PIGEONS plunging down onto the seed-strewn ${HUSK} in a vortex of wings — dozens of birds mobbing the charred body, feathers exploding outward, the husk nearly buried under the flock. Behind them the sky is black with more birds and every fence wire and rooftop is packed with silhouetted pigeons in rows. Hitchcock horror composition, chaotic and terrifying.`,
+      `The man leaning over the picked-clean, feather-strewn ${HUSK} and SPITTING squarely onto its charred torso, one glob catching the last light. Hat brim low, utterly deadpan, hands in his pockets. Pigeons still perched along his shoulders and hat brim and all over the wreckage behind him, watching. Final, dry, contemptuous.`,
     ],
   },
 };

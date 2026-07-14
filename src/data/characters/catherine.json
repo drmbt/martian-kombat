@@ -573,5 +573,14 @@
       "Compliments to the chef!"
     ]
   },
-  "scale": 1.16
+  "scale": 1.16,
+  "lore": {
+    "tagline": "Type-A chef. The kitchen runs on time — or else.",
+    "personality": "Fearless leader of the Culinary Academy who brings order, systems thinking, and economies of scale to the desert. Runs the brigade tight; her AI line-cook Jazzper plates the finishing blows.",
+    "backstory": "A trained private chef who transferred the discipline to the Mars experiment, feeding the whole college. Treats a tournament like a dinner rush: mise en place, fire, plate, next."
+  },
+  "arcade": {
+    "motivation": "The Biennale is just the biggest dinner service yet, and Catherine’s kitchen has never missed a ticket. She enters to prove her brigade can plate anyone the desert sends to the pass.",
+    "ending": "Champion, Catherine turns the Biennale into a banquet run on her clock — mise en place across the whole Salton Sea, Jazzper on the line. Everyone eats, and everyone eats on time."
+  }
 }

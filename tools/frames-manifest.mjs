@@ -1819,26 +1819,26 @@ export const CHARACTERS = {
     canonical: 'assets/raw/canonical/rj.png',
     layout: 'v2',
     cells: {
-      down: 'knocked out COLD lying FLAT on his back, a HORIZONTAL shape along the BOTTOM QUARTER of the frame, HEAD ON THE LEFT (he fell backward while facing right), limbs sprawled, the BB gun dropped beside him, hat tumbled off',
+      down: 'knocked out COLD lying FLAT on his back, a HORIZONTAL shape along the BOTTOM QUARTER of the frame, HEAD ON THE LEFT (he fell backward while facing right), limbs sprawled, hat tumbled off',
     },
     always:
-      'He ALWAYS wears his woven straw cowboy hat, worn denim work shirt with rolled sleeves, jeans, dark work boots and thin gold chain, with his full reddish-brown beard and shoulder-length hair; a small white sheet-ghost charm hangs from his belt, and he carries his well-used lever-action BB GUN (a small air rifle) in one hand or slung at his side. A faint ghost-white and warm-amber flame aura flickers around him. Any light effects are ghost-WHITE/SILVER and warm AMBER — never green.',
+      'He ALWAYS wears his woven straw cowboy hat, an off-white henley shirt under an open black waistcoat with sleeves pushed up, dark jeans, black work boots, a thin cord necklace and beaded bracelets, with a full DARK BROWN beard (never red or ginger) and shoulder-length dark brown hair. He fights BARE-HANDED like a boxer-brawler — NO gun and NO ghosts in his hands. Any light effects are ghost-WHITE/SILVER and warm AMBER — never green.',
     moves6: {
       stand: {
         lp: {
-          startup: 'a quick fist chambered at the chin, the BB gun held low in the other hand, eyes narrowing under the hat brim',
-          active: 'a fast straight jab fully extended forward at head height, a wisp of white aura trailing the knuckles',
+          startup: 'a quick lead fist chambered at the chin, rear hand guarding at the jaw, eyes narrowing under the hat brim',
+          active: 'a fast straight jab fully extended forward at head height, knuckles thrust past his guard',
           recovery: 'the jab arm snapping back to guard, hat brim dipping',
         },
         mp: {
-          startup: 'shifting his grip to swing the BB GUN up like a club, shoulders loading',
-          active: 'a hard horizontal swing of the BB-gun stock FULLY EXTENDED forward at chest height, amber streaks off the wooden butt',
-          recovery: 'the rifle swinging back down to his side, resettling his stance',
+          startup: 'weight loading onto the back foot, rear fist cocked at the hip, lead hand guarding',
+          active: 'a hard straight cross FULLY EXTENDED forward at chest height, rear shoulder rotating in behind the knuckles, a faint amber streak off the fist',
+          recovery: 'the cross retracting to a tight boxing guard, resettling his stance',
         },
         hp: {
-          startup: 'both hands raising the BB gun overhead like a two-handed maul, back arched',
-          active: 'a huge overhead smash of the rifle stock driven down in front of him, a white-amber shockwave burst at the impact point',
-          recovery: 'straightening up, spinning the rifle once back to his side',
+          startup: 'winding up a big overhand haymaker, rear shoulder dropping back, fist cocked high',
+          active: 'a huge overhand hook driven FORWARD and down in front of him at head height, his whole body torqued behind the fist, a white-amber shockwave burst at the impact point',
+          recovery: 'straightening up from the swing, rolling the shoulder back to guard',
         },
         lk: {
           startup: 'weight rocking back, front boot lifting',
@@ -1846,28 +1846,28 @@ export const CHARACTERS = {
           recovery: 'the boot stamping back down into the wide stance',
         },
         mk: {
-          startup: 'hips coiling, one leg chambering across the body, rifle counterbalanced',
+          startup: 'hips coiling, one leg chambering across the body, arms tight in guard',
           active: 'a roundhouse kick extended at chest height — exactly ONE boot planted firmly on the ground, NOT jumping',
           recovery: 'the leg swinging back down, dust puffing off the boot',
         },
         hk: {
-          startup: 'balancing on his LEFT leg only, RIGHT knee chambered high, the rifle swept back for balance',
+          startup: 'balancing on his LEFT leg only, RIGHT knee chambered high, arms out for balance',
           active: 'a tall powerful side kick fully extended at head height, his RIGHT leg (clearly attached at the hip) driven out with an amber streak off the boot — exactly ONE foot on the ground',
           recovery: 'the kicking leg lowering with control, hat straightened with one finger',
         },
       },
       crouch: {
         lp: {
-          active: 'a short quick jab snapped out at waist height from the squat, rifle resting across his knees',
+          active: 'a short quick jab snapped out at waist height from the squat, rear hand guarding',
           recovery: 'the jab arm pulled back in, still compact in the squat',
         },
         mp: {
-          active: 'a rising butt-stroke of the BB gun angled upward out of the squat, amber glint on the stock',
-          recovery: 'the rifle settling back across his knees in the squat',
+          active: 'a rising uppercut angled upward out of the squat, knuckles leading, an amber glint off the fist',
+          recovery: 'the fist settling back down, hunkering back in the squat',
         },
         hp: {
-          active: 'both arms thrusting the rifle straight upward out of the squat like a lifted barbell, a column of white-amber light above (anti-air)',
-          recovery: 'the rifle lowering from overhead, hunkering back down',
+          active: 'both fists driven straight upward out of the squat in a rising double-fist smash, a column of white-amber light above (anti-air)',
+          recovery: 'the arms lowering from overhead, hunkering back down',
         },
         lk: {
           active: 'squatting on his left leg while his RIGHT leg (clearly attached at the hip) snaps a quick kick forward at ankle height',
@@ -1884,37 +1884,37 @@ export const CHARACTERS = {
       },
       air: {
         lp: 'throwing a quick short downward-angled jab, shirt tails flapping',
-        mp: 'a straight punch driven at a 45-degree downward angle, white aura wisp on the fist',
-        hp: 'a two-handed overhead rifle-stock smash swung downward mid-leap, amber burst',
+        mp: 'a straight punch driven at a 45-degree downward angle mid-leap',
+        hp: 'a two-handed overhead double-fist smash swung downward mid-leap, an amber burst',
         lk: 'a sharp knee strike raised toward the opponent, boot laces flying',
         mk: 'a side kick extended at a downward angle, body tilted, hat held on with one hand',
         hk: 'a flying kick — RIGHT leg fully extended with an amber streak, LEFT leg tucked beneath him, both legs clearly attached',
       },
       specials: {
         'bb-gun': {
-          startup: 'shouldering the lever-action BB GUN and sighting down the barrel toward the right, one eye squinted under the hat brim',
-          active: 'the instant after firing — the BB gun kicked back against his shoulder, a bright white-silver muzzle flash and a thin tracer line streaking to the right, hat brim lifted by the pop',
-          recovery: 'working the lever with a flick to rechamber, lowering the rifle with a satisfied smirk',
-        },
-        'tallest-ghost': {
-          startup: 'both arms sweeping dramatically upward, a huge WHITE SHEET billowing up out of the ground in front of him, dust swirling',
-          active: 'presenting with both arms as a TOWERING white sheet-ghost installation stands fully risen in front of him — a tall draped ghost figure with dark hollow eyes on a pole, ghost-white glow at its base',
-          recovery: 'stepping back from the towering ghost and dusting his palms, admiring his work, chin up',
-        },
-        'scatter-flock': {
-          startup: 'crouching low and cupping both hands to his chest, small white and grey BIRDS gathering fluttering around his shoulders',
-          active: 'a rising leap launched steeply UPWARD — his whole body ascending off the ground, one fist driven up while an explosion of small white-and-grey birds bursts upward around him in a spiral of feathers',
-          recovery: 'landing back on both feet in a crouch, one last bird settling on the brim of his hat',
+          startup: 'reaching to his hip and pulling out his lever-action BB GUN, bringing it up to his shoulder, one eye squinting down the barrel aimed toward the right under the hat brim',
+          active: 'the instant AFTER firing — the BB gun recoiled hard back against his shoulder, a burst of white-silver muzzle flash with radiating IMPACT LINES right at the spot where the barrel TIP was when it fired, a thin tracer streaking off to the right, hat brim kicked up by the pop',
+          recovery: 'lowering the rifle and BLOWING a thin curl of white smoke off the TIP of the barrel, lips pursed, a satisfied smirk under the brim',
         },
         'excavator-charge': {
-          startup: 'hopping up to crouch on the arm of a small weathered orange MINI-EXCAVATOR, gripping its hydraulic arm, engine smoke puffing',
-          active: 'riding the mini-excavator as it lunges forward, its steel BUCKET thrust out in front like a battering ram, amber sparks and dust streaming behind — barreling to the right',
-          recovery: 'hopping off the excavator back onto his feet, patting its bucket once like a good horse',
+          startup: 'hopping up to crouch on the arm of a small weathered orange MINI-EXCAVATOR, gripping its hydraulic arm, engine smoke puffing, leaning forward toward the right',
+          active: 'riding the mini-excavator as it lunges FORWARD to the right, its steel BUCKET thrust out in front like a battering ram, amber sparks and dust streaming behind',
+          recovery: 'hopping off the excavator back onto his feet, patting its bucket once like a good horse, straightening the hat',
+        },
+        'tallest-ghost': {
+          startup: 'dropping into a slight crouch and cocking a rising uppercut fist, a white sheet just beginning to billow up from the ground at his feet',
+          active: 'LEAPING straight UPWARD in a rising dragon-punch uppercut, one fist thrust high overhead, a TOWERING white-and-silver sheet-ghost erupting skyward around and above him — a tall draped ghost figure with dark hollow eyes rising like a column with a ghost-white glow — his whole body lifted OFF the ground',
+          recovery: 'landing back down in a low crouch as the towering ghost dissipates into wisps of white smoke, one hand steadying the hat',
+        },
+        rattlebones: {
+          startup: 'lunging forward with both arms sweeping WIDE open for a bear-hug, his body starting to FLICKER and glow, flesh going translucent to reveal a white glowing SKELETON underneath — he is COMPLETELY ALONE, no second person, no opponent',
+          active: 'transformed into a glowing white living SKELETON, both skeletal arms clamped shut in a crushing bear-hug around the empty green air in front of his chest, ribcage grinding closed with a ghost-white glow — still COMPLETELY ALONE, gripping nothing, no opponent',
+          recovery: 'releasing the hug and straightening as the flesh flows back over the bones, dusting his hands, resettling the straw hat — COMPLETELY ALONE',
         },
         throw: {
-          startup: 'reaching forward to seize the empty green air with both work-gloved hands — he is COMPLETELY ALONE, no second person, no opponent',
-          active: 'a full-body heave hurling something unseen over his shoulder, hat brim whipping, a small amber impact flash at his hands — still COMPLETELY ALONE',
-          recovery: 'dusting his hands off and resettling the straw hat, unhurried',
+          startup: 'reaching forward to seize the empty green air with both hands — he is COMPLETELY ALONE, no second person, no opponent',
+          active: 'a full-body heave hurling something unseen over his shoulder and off his lot, hat brim whipping, a small amber impact flash at his hands — still COMPLETELY ALONE',
+          recovery: 'dusting his hands off and resettling the straw hat, unhurried, chin up',
         },
       },
     },
@@ -1923,10 +1923,6 @@ export const CHARACTERS = {
         'bb-gun': {
           prompt:
             'ONLY a tiny bright SILVER BB pellet streaking to the RIGHT with a thin white-silver tracer line and a small white muzzle-flash sparkle behind it — a fast small projectile. It is a SMALL ISOLATED OBJECT flying alone, centered, with a wide empty green margin on ALL FOUR SIDES. Painted cel-shaded anime style, on solid flat chroma-key green background #00B140. ABSOLUTELY NO PERSON, no gun, no hands, no body. No text, no watermark.',
-        },
-        'tallest-ghost': {
-          prompt:
-            'ONLY a TALL narrow white sheet-ghost sculpture — a towering draped white fabric ghost figure with two dark hollow eyes, tattered hem, mounted upright on a thin steel pole, glowing faintly ghost-white. It is a SINGLE ISOLATED OBJECT standing alone, vertically centered, with a wide empty green margin on ALL FOUR SIDES (nothing touching any edge). Painted cel-shaded anime style, on solid flat chroma-key green background #00B140. ABSOLUTELY NO PERSON, no hands, no body, no background scenery. No text, no watermark.',
         },
       },
     },
