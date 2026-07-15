@@ -273,11 +273,14 @@ export class ThreeFighterView {
     // personal fill: a soft short-range light that rides the fighter so the
     // all-black outfit stays readable anywhere on the lane — classic
     // fighting-game character lighting, separate from the set
-    const fill = new THREE.PointLight(0xd8dff0, 7, 3.4, 2);
-    fill.position.set(0, 1.4, 1.1);
+    // head-high and set back with a gentle (decay 1) linear falloff so the light
+    // covers the whole body evenly — face included — instead of pooling a hot
+    // spot on the chest/floor right under a close, sharp-falloff lamp
+    const fill = new THREE.PointLight(0xd8dff0, 3.6, 6, 1);
+    fill.position.set(0, 2.3, 1.8);
     // rim kicker from behind-above: separates the silhouette from the walls
-    const rim = new THREE.PointLight(0xbcd2ff, 6, 3.2, 2);
-    rim.position.set(0, 2.1, -1.2);
+    const rim = new THREE.PointLight(0xbcd2ff, 5, 5, 1.4);
+    rim.position.set(0, 2.4, -1.4);
     this.group.add(fill, rim);
   }
 
@@ -300,7 +303,7 @@ export class ThreeFighterView {
     const active = tick < this.flashUntil;
     for (const m of this.materials) {
       m.emissive.copy(active ? this.flashColor : BLACK);
-      m.emissiveIntensity = active ? 0.45 : 0;
+      m.emissiveIntensity = active ? 0.3 : 0;
     }
   }
 

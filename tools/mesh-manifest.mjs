@@ -100,7 +100,9 @@ const ARCHETYPES = {
   'tai-chi': {
     'attack/lp': { file: 'Lead Jab.fbx' },
     'attack/lp#2': { file: 'Jab Cross.fbx' },
-    'attack/mp': { file: 'Hook Punch.fbx' },
+    // 'Hook Punch.fbx' bakes ~90° yaw-rotated (faces camera, not the opponent);
+    // 'Hook.fbx' is the same swing but authored on the standard facing.
+    'attack/mp': { file: 'Hook.fbx' },
     'attack/hp': { file: 'Uppercut.fbx', stripY: true },
     'attack/lk': { file: 'Illegal Knee.fbx' },
     'attack/mk': { file: 'Inside Crescent Kick.fbx' },
@@ -163,7 +165,8 @@ export const MESHES = {
       'attack/cossack-spiral': { file: 'Cross Jumps Rotation.fbx', stripY: true },
       'attack/backbend-guillotine': { file: 'Back Flip To Uppercut.fbx', stripY: true },
       'attack/volga-piledriver': { file: 'Illegal Headbutt.fbx' },
-      'attack/braid-lariat': { file: 'Hook Punch.fbx' },
+      // 'Hook Punch.fbx' bakes ~90° yaw-rotated (see tai-chi mp) → use 'Hook.fbx'
+      'attack/braid-lariat': { file: 'Hook.fbx' },
       'attack/spinning-star-kick': { file: 'Hurricane Kick.fbx', stripY: true },
       'attack/spinning-star-kick#2': { file: 'Hurricane Kick (1).fbx', stripY: true },
     },

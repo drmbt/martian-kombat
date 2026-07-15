@@ -21,7 +21,7 @@ export const DEFAULT_SETTINGS: RenderSettings = {
   shadowMapSize: 2048,
   aoEnabled: true,
   bloomEnabled: true, // night scene: lamp glow + magic projectiles want it (V8: watch fps)
-  bloomStrength: 0.35,
+  bloomStrength: 0.2,
   exposure: 1.02, // dark-ish base; lamps/neon carry, fighters stay readable
   keyIntensity: 0.6,
   fillIntensity: 0.3,

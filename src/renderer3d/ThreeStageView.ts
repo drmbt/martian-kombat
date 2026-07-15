@@ -170,7 +170,9 @@ export class ThreeStageView {
     // the painted world
     const catcher = new THREE.Mesh(
       new THREE.PlaneGeometry(40, 20),
-      new THREE.ShadowMaterial({ opacity: 0.4 }),
+      // deeper + cool-tinted so the contact shadow reads rich, not a flat pale
+      // grey smudge (a black ShadowMaterial washes out desaturated under bright art)
+      new THREE.ShadowMaterial({ color: 0x0a0a1e, opacity: 0.55 }),
     );
     catcher.rotation.x = -Math.PI / 2;
     catcher.position.set(0, 0.002, 0);
@@ -204,7 +206,8 @@ export class ThreeStageView {
     floorTex.repeat.set(1, BAND);
     const floor = new THREE.Mesh(
       new THREE.PlaneGeometry(W, floorDepth),
-      new THREE.MeshBasicMaterial({ map: floorTex, fog: false }),
+      // painted art is final-look — skip tone mapping so ACES/exposure doesn't blow it out
+      new THREE.MeshBasicMaterial({ map: floorTex, fog: false, toneMapped: false }),
     );
     // rotate so the art's NEAR floor edge (v=0) is at FRONT_Z, far edge at the wall
     floor.rotation.x = -Math.PI / 2;
@@ -219,7 +222,7 @@ export class ThreeStageView {
     const wallH = (W * (1 - BAND)) / ThreeStageView.ART_ASPECT;
     const wall = new THREE.Mesh(
       new THREE.PlaneGeometry(W, wallH),
-      new THREE.MeshBasicMaterial({ map: wallTex, fog: false }),
+      new THREE.MeshBasicMaterial({ map: wallTex, fog: false, toneMapped: false }),
     );
     wall.position.set(0, wallH / 2, BACK_Z);
     wall.renderOrder = -11;
@@ -245,7 +248,7 @@ export class ThreeStageView {
         const W = 26;
         const floor = new THREE.Mesh(
           new THREE.PlaneGeometry(W, W / ThreeStageView.ART_ASPECT),
-          new THREE.MeshBasicMaterial({ map: tex, fog: false, transparent }),
+          new THREE.MeshBasicMaterial({ map: tex, fog: false, transparent, toneMapped: false }),
         );
         floor.rotation.x = -Math.PI / 2;
         floor.position.set(0, 0, -3);
@@ -259,7 +262,7 @@ export class ThreeStageView {
       const w = h * ThreeStageView.ART_ASPECT;
       const plane = new THREE.Mesh(
         new THREE.PlaneGeometry(w, h),
-        new THREE.MeshBasicMaterial({ map: tex, transparent, fog: false }),
+        new THREE.MeshBasicMaterial({ map: tex, transparent, fog: false, toneMapped: false }),
       );
       plane.position.set(0, h / 2 - h * FLOOR_FRACTION, z);
       plane.renderOrder = -10;

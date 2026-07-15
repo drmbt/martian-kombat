@@ -376,8 +376,11 @@ function doubleTapped(f: FighterState, dir: 'f' | 'b'): boolean {
   return false;
 }
 
-const DASH_SPEED = 9;
-const BACKDASH_SPEED = 7;
+// Initial impulse; ground friction (0.85) bleeds it, so total travel is
+// ~speed/(1-0.85) ≈ speed×6.7. At 9 a dash cleared <1 char width (80–100u) and
+// read as a limp step — 17 gives a ~113u burst, a real dash of ~1.3 char widths.
+const DASH_SPEED = 17;
+const BACKDASH_SPEED = 12;
 
 // ---------- state queries ----------
 

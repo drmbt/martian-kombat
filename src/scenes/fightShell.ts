@@ -117,6 +117,7 @@ export class FightShell {
       [
         { label: 'RESUME', act: () => this.togglePause() },
         { label: 'RESTART', act: () => this.restartMatch() },
+        { label: 'FULLSCREEN', act: () => scene.scale.toggleFullscreen() },
         { label: 'CHARACTER SELECT', act: () => this.toCharacterSelect() },
         { label: 'MAIN MENU', act: () => this.toMainMenu() },
       ],

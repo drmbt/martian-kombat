@@ -97,11 +97,21 @@ export class ThreeFightRenderer {
     // mood per room: the street is a dark night scene the lamps carry; the
     // test room is a neutral, evenly lit chamber for structure readouts
     // the 2D bridge keeps neutral-bright lighting so painted art reads true
-    const testRoom = this.roomKind === 'test-room' || this.roomKind === '2d';
-    this.scene.background = new THREE.Color(testRoom ? 0x1a1a1e : 0x0b0e17);
-    if (!testRoom) this.scene.fog = new THREE.Fog(0x0e1120, 11, 30);
+    // The painted stage planes are UNLIT MeshBasic, so this rig only models the
+    // 3D fighters — it never touches the backdrop art. That lets the '2d' bridge
+    // run a proper cinematic key/rim (warm key, cool rim, LOW ambient for real
+    // shadow contrast) instead of the flat, even 'test-room' fill.
+    const twoD = this.roomKind === '2d';
+    const testRoom = this.roomKind === 'test-room';
+    const bright = twoD || testRoom;
+    this.scene.background = new THREE.Color(bright ? 0x1a1a1e : 0x0b0e17);
+    if (this.roomKind === 'street') this.scene.fog = new THREE.Fog(0x0e1120, 11, 30);
 
-    const key = new THREE.DirectionalLight(testRoom ? 0xffffff : 0xcfd8ff, testRoom ? 2.4 : 0.6);
+    // warm key from front-left; strong on the 2D bridge so faces get modeled
+    const key = new THREE.DirectionalLight(
+      twoD ? 0xffe6c2 : testRoom ? 0xffffff : 0xcfd8ff,
+      twoD ? 3.1 : testRoom ? 2.4 : 0.6,
+    );
     key.position.set(-3.5, 7, 4.5);
     key.castShadow = true;
     key.shadow.mapSize.set(2048, 2048);
@@ -110,14 +120,20 @@ export class ThreeFightRenderer {
     key.shadow.camera.top = 8;
     key.shadow.camera.bottom = -2;
     key.shadow.bias = -0.0005;
-    const fill = new THREE.DirectionalLight(testRoom ? 0xe8e8f0 : 0x7a86b8, testRoom ? 0.8 : 0.3);
+    key.shadow.radius = twoD ? 3.5 : 1; // soft PCF edge = cinematic contact shadow
+    // cool fill kept low so the key's shadows survive (contrast reads cinematic)
+    const fill = new THREE.DirectionalLight(
+      twoD ? 0x8ea2cc : testRoom ? 0xe8e8f0 : 0x7a86b8,
+      twoD ? 0.4 : testRoom ? 0.8 : 0.3,
+    );
     fill.position.set(4, 2.5, 7);
-    const rim = new THREE.DirectionalLight(0x8fb4ff, testRoom ? 1.8 : 1.6);
+    // cool rim from behind-above pops the silhouette off the painted backdrop
+    const rim = new THREE.DirectionalLight(twoD ? 0x9fc4ff : 0x8fb4ff, twoD ? 2.6 : testRoom ? 1.8 : 1.6);
     rim.position.set(1, 4.5, -6);
     const ambient = new THREE.HemisphereLight(
-      testRoom ? 0x8a8a92 : 0x232c48,
-      testRoom ? 0x3a3a3e : 0x0e0c0a,
-      testRoom ? 0.55 : 0.4,
+      twoD ? 0x4a4f66 : testRoom ? 0x8a8a92 : 0x232c48,
+      twoD ? 0x140f0a : testRoom ? 0x3a3a3e : 0x0e0c0a,
+      twoD ? 0.26 : testRoom ? 0.55 : 0.4,
     );
     this.scene.add(key, fill, rim, ambient);
     this.lights = { key, fill, rim };
@@ -296,7 +312,7 @@ export class ThreeFightRenderer {
     }
     if (s.bloomEnabled) {
       color = (color as ReturnType<typeof vec4>).add(
-        bloom(color as ReturnType<typeof vec4>, s.bloomStrength, 0.35, 0.85),
+        bloom(color as ReturnType<typeof vec4>, s.bloomStrength, 0.35, 0.92),
       );
     }
     this.post = new THREE.RenderPipeline(this.renderer);

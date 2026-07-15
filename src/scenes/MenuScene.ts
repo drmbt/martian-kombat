@@ -84,6 +84,25 @@ export class MenuScene extends Phaser.Scene {
     this.menuItems.push(this.renderChip);
     this.refreshRenderChip();
 
+    // Fullscreen toggle chip, bottom-right corner. Always visible (independent
+    // of the coin drop) so it's reachable the moment the title loads.
+    const fsChip = this.add
+      .text(STAGE_W - 10, 10, '', {
+        fontFamily: 'monospace', fontSize: '12px', fontStyle: 'bold', color: '#f5ead9',
+        stroke: '#000', strokeThickness: 3, backgroundColor: '#241b2e', padding: { x: 7, y: 4 },
+      })
+      .setOrigin(1, 0)
+      .setInteractive({ useHandCursor: true })
+      .on('pointerdown', () => this.scale.toggleFullscreen());
+    const refreshFsChip = () => fsChip.setText(this.scale.isFullscreen ? '⛶ EXIT FULLSCREEN' : '⛶ FULLSCREEN');
+    refreshFsChip();
+    this.scale.on(Phaser.Scale.Events.ENTER_FULLSCREEN, refreshFsChip);
+    this.scale.on(Phaser.Scale.Events.LEAVE_FULLSCREEN, refreshFsChip);
+    this.events.once('shutdown', () => {
+      this.scale.off(Phaser.Scale.Events.ENTER_FULLSCREEN, refreshFsChip);
+      this.scale.off(Phaser.Scale.Events.LEAVE_FULLSCREEN, refreshFsChip);
+    });
+
     // clickable menu buttons (mouse) — also 1/2/3 hotkeys + ENTER
     const toSettings = () => {
       play(this, 's-blip');
