@@ -70,8 +70,8 @@
       "blockstun": 9,
       "knockback": 5,
       "hitbox": {
-        "x": 56,
-        "y": -234,
+        "x": 32,
+        "y": -199,
         "w": 59,
         "h": 48
       },
@@ -87,15 +87,15 @@
       "blockstun": 14,
       "knockback": 8,
       "hitbox": {
-        "x": 59,
-        "y": -212,
-        "w": 55,
-        "h": 49
+        "x": 33,
+        "y": -203,
+        "w": 73,
+        "h": 50
       },
       "height": "mid"
     },
     "lk": {
-      "startup": 5,
+      "startup": 8,
       "active": 10,
       "recovery": 1,
       "damage": 32,
@@ -117,7 +117,7 @@
       ]
     },
     "mk": {
-      "startup": 5,
+      "startup": 8,
       "active": 8,
       "recovery": 14,
       "damage": 52,
@@ -142,10 +142,10 @@
       "blockstun": 14,
       "knockback": 8,
       "hitbox": {
-        "x": 63,
-        "y": -296,
-        "w": 51,
-        "h": 67
+        "x": 62,
+        "y": -257,
+        "w": 53,
+        "h": 160
       },
       "height": "mid"
     },
@@ -197,10 +197,10 @@
       "blockstun": 14,
       "knockback": 8,
       "hitbox": {
-        "x": -4,
-        "y": -290,
-        "w": 57,
-        "h": 60
+        "x": 15,
+        "y": -274,
+        "w": 63,
+        "h": 73
       },
       "height": "mid"
     },
@@ -213,7 +213,7 @@
       "blockstun": 9,
       "knockback": 3,
       "hitbox": {
-        "x": 59,
+        "x": 73,
         "y": -68,
         "w": 62,
         "h": 73
@@ -388,14 +388,14 @@
       "projectile": {
         "vx": 9,
         "spawnX": 58,
-        "spawnY": -260,
+        "spawnY": -150,
         "box": {
           "x": -28,
           "y": -28,
           "w": 56,
           "h": 56
         },
-        "renderSize": 88,
+        "renderSize": 96,
         "damage": 60,
         "hitstun": 18,
         "blockstun": 12,
@@ -438,14 +438,14 @@
       "projectile": {
         "vx": 6,
         "spawnX": 70,
-        "spawnY": -236,
+        "spawnY": -230,
         "box": {
           "x": -36,
           "y": -34,
           "w": 72,
           "h": 68
         },
-        "renderSize": 52,
+        "renderSize": 57,
         "damage": 18,
         "hitstun": 8,
         "blockstun": 6,
@@ -554,7 +554,6 @@
     },
     "panels": 4
   },
-  "scale": 1.09,
   "vo": {
     "kiai": [
       "Huh.",

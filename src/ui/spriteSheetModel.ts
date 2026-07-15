@@ -1,11 +1,15 @@
 // In-browser, non-destructive working model of a character's packed sprite
 // sheet, for the Sprite Editor (src/ui/SpriteEditorPanel.ts + FightScene
-// spriteEditor mode). Slices the loaded sheet into per-cell canvases, applies
-// pixel edits (scale / offset / normalize / swap / clipboard / regen) to those
-// canvases in memory, keeps the RTMPose keypoints in lockstep, and mirrors the
-// composited result into a Phaser CanvasTexture so the live looping fighter
-// shows every edit immediately. Nothing touches disk until WRITE (which POSTs
-// exportPngBase64()/exportMeta() to /__editor/sheet).
+// spriteEditor mode). Slices the loaded sheet into per-cell PRISTINE canvases;
+// geometric edits (scale / offset / flip / normalize) accumulate into a per-cell
+// transform and the slot is RE-RENDERED from pristine each time — ONE resample,
+// so scale-down-then-up returns to the sharp original instead of compounding
+// blur, and the baked export is single-resample too. Pixel-replacing edits
+// (regen / paste / swap) rewrite pristine and reset the transform. RTMPose
+// keypoints stay in lockstep (derived from pristine joints under the same
+// transform). The composited result mirrors into a Phaser CanvasTexture so the
+// live looping fighter shows every edit immediately. Nothing touches disk until
+// WRITE (POSTs exportPngBase64()/exportMeta() to /__editor/sheet).
 import Phaser from 'phaser';
 import { FLOOR_FRAC } from '../render/coords';
 
@@ -19,6 +23,19 @@ export interface SheetMeta {
 }
 
 type Joints = Record<string, [number, number, number]>;
+
+/** accumulated per-cell geometric transform, applied to the pristine slice:
+ *  flip → scale-about-cell-center → translate. Composes losslessly (only the
+ *  final render resamples), which is what kills the scale-down/up blur. */
+interface CellXf {
+  s: number;
+  dx: number;
+  dy: number;
+  fx: boolean;
+  fy: boolean;
+}
+
+const IDENTITY = (): CellXf => ({ s: 1, dx: 0, dy: 0, fx: false, fy: false });
 
 function blankCell(w: number, h: number): HTMLCanvasElement {
   const c = document.createElement('canvas');
@@ -36,8 +53,11 @@ export class SpriteSheetModel {
    *  engine resolves cells by). Editing swaps pixels, not this array. */
   readonly frames: string[];
   readonly texKey: string;
-  private slots: HTMLCanvasElement[] = []; // per physical slot, current pixels
-  private skeletons: Record<string, Joints>;
+  private slots: HTMLCanvasElement[] = []; // per physical slot, RENDERED pixels
+  private pristine: HTMLCanvasElement[] = []; // per slot, never resampled
+  private xf: CellXf[] = []; // per slot, accumulated geometric transform
+  private pristineSkel: Record<string, Joints>; // joints of the pristine art
+  private skeletons: Record<string, Joints>; // derived: pristine joints under xf
   private working: HTMLCanvasElement;
   private wctx: CanvasRenderingContext2D;
   private tex: Phaser.Textures.CanvasTexture;
@@ -51,7 +71,8 @@ export class SpriteSheetModel {
     this.rows = meta.rows;
     this.frames = [...meta.frames];
     this.skeletons = structuredClone(meta.skeletons ?? {});
-    // slice each physical cell out of the loaded sheet into its own canvas
+    this.pristineSkel = structuredClone(this.skeletons);
+    // slice each physical cell into a PRISTINE canvas; slots render from it
     for (let i = 0; i < this.frames.length; i++) {
       const c = blankCell(this.cellW, this.cellH);
       c.getContext('2d')!.drawImage(
@@ -59,7 +80,10 @@ export class SpriteSheetModel {
         (i % this.cols) * this.cellW, Math.floor(i / this.cols) * this.cellH, this.cellW, this.cellH,
         0, 0, this.cellW, this.cellH,
       );
-      this.slots.push(c);
+      this.pristine.push(c);
+      this.xf.push(IDENTITY());
+      this.slots.push(blankCell(this.cellW, this.cellH));
+      this.renderSlot(i);
     }
     this.working = blankCell(this.cols * this.cellW, this.rows * this.cellH);
     this.wctx = this.working.getContext('2d')!;
@@ -88,6 +112,46 @@ export class SpriteSheetModel {
   }
   jointsFor(name: string): Joints | undefined {
     return this.skeletons[name];
+  }
+
+  /** re-render slot i from its pristine art under the accumulated transform
+   *  (flip → scale-about-center → translate) in a SINGLE resample, and derive
+   *  the cell's live keypoints from the pristine joints under the same map. */
+  private renderSlot(i: number): void {
+    const cx = this.cellW / 2;
+    const cy = this.cellH / 2;
+    const t = this.xf[i];
+    const ctx = this.slots[i].getContext('2d')!;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, this.cellW, this.cellH);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.translate(t.dx, t.dy);
+    ctx.translate(cx, cy);
+    ctx.scale(t.s, t.s);
+    if (t.fx) ctx.scale(-1, 1);
+    if (t.fy) ctx.scale(1, -1);
+    ctx.drawImage(this.pristine[i], -cx, -cy);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    const pj = this.pristineSkel[this.frames[i]];
+    if (pj) {
+      const out: Joints = {};
+      for (const k in pj) out[k] = this.xformJoint(pj[k], t);
+      this.skeletons[this.frames[i]] = out;
+    }
+  }
+
+  /** map a pristine joint through a cell transform (matches renderSlot pixels) */
+  private xformJoint(j: [number, number, number], t: CellXf): [number, number, number] {
+    const cx = this.cellW / 2;
+    const cy = this.cellH / 2;
+    let x = j[0];
+    let y = j[1];
+    if (t.fx) x = this.cellW - x;
+    if (t.fy) y = this.cellH - y;
+    x = cx + (x - cx) * t.s;
+    y = cy + (y - cy) * t.s;
+    return [x + t.dx, y + t.dy, j[2]];
   }
 
   private composite(i: number): void {
@@ -129,22 +193,15 @@ export class SpriteSheetModel {
     return x1 < 0 ? null : { x0, y0, x1: x1 + 1, y1: y1 + 1 };
   }
 
-  // ---- pixel edits (mutate slot canvas + keypoints in lockstep) ----
+  // ---- geometric edits (accumulate transform, re-render from pristine) ----
 
-  /** scale each selected cell's art about its center; keypoints scale to match */
+  /** scale each selected cell's art about its center; keypoints scale to match.
+   *  Composes with prior scales, so ×0.95 then ×1.0526 lands back on ×1.0 —
+   *  the art is re-rendered from pristine, NOT the already-scaled raster. */
   scaleCells(indices: number[], factor: number): void {
-    const cx = this.cellW / 2;
-    const cy = this.cellH / 2;
     for (const i of indices) {
-      const src = this.slots[i];
-      const out = blankCell(this.cellW, this.cellH);
-      const ctx = out.getContext('2d')!;
-      ctx.translate(cx, cy);
-      ctx.scale(factor, factor);
-      ctx.drawImage(src, -cx, -cy);
-      this.slots[i] = out;
-      const j = this.skeletons[this.frames[i]];
-      if (j) for (const k in j) j[k] = [cx + (j[k][0] - cx) * factor, cy + (j[k][1] - cy) * factor, j[k][2]];
+      this.xf[i].s *= factor;
+      this.renderSlot(i);
     }
     this.manifest.push({ op: 'scale', cells: indices.map((i) => this.frames[i]), factor });
     this.refresh(indices);
@@ -153,40 +210,20 @@ export class SpriteSheetModel {
   /** translate each selected cell's art; keypoints translate to match */
   offsetCells(indices: number[], dx: number, dy: number): void {
     for (const i of indices) {
-      const src = this.slots[i];
-      const out = blankCell(this.cellW, this.cellH);
-      out.getContext('2d')!.drawImage(src, dx, dy);
-      this.slots[i] = out;
-      const j = this.skeletons[this.frames[i]];
-      if (j) for (const k in j) j[k] = [j[k][0] + dx, j[k][1] + dy, j[k][2]];
+      this.xf[i].dx += dx;
+      this.xf[i].dy += dy;
+      this.renderSlot(i);
     }
     this.manifest.push({ op: 'offset', cells: indices.map((i) => this.frames[i]), dx, dy });
     this.refresh(indices);
   }
 
-  /** mirror selected cells in place; keypoints mirror with the pixels. */
+  /** mirror selected cells about the cell center; keypoints mirror with them. */
   flipCells(indices: number[], axis: 'x' | 'y'): void {
     for (const i of indices) {
-      const src = this.slots[i];
-      const out = blankCell(this.cellW, this.cellH);
-      const ctx = out.getContext('2d')!;
-      if (axis === 'x') {
-        ctx.translate(this.cellW, 0);
-        ctx.scale(-1, 1);
-      } else {
-        ctx.translate(0, this.cellH);
-        ctx.scale(1, -1);
-      }
-      ctx.drawImage(src, 0, 0);
-      this.slots[i] = out;
-      const j = this.skeletons[this.frames[i]];
-      if (j) {
-        for (const k in j) {
-          j[k] = axis === 'x'
-            ? [this.cellW - j[k][0], j[k][1], j[k][2]]
-            : [j[k][0], this.cellH - j[k][1], j[k][2]];
-        }
-      }
+      if (axis === 'x') this.xf[i].fx = !this.xf[i].fx;
+      else this.xf[i].fy = !this.xf[i].fy;
+      this.renderSlot(i);
     }
     this.manifest.push({ op: 'flip', cells: indices.map((i) => this.frames[i]), axis });
     this.refresh(indices);
@@ -213,18 +250,21 @@ export class SpriteSheetModel {
     return null;
   }
 
-  /** swap two cells' art + keypoints (drag-reorder): the cell that draws for a
-   *  given move name now shows the other's image */
+  /** swap two cells' pristine art + transform + keypoints (drag-reorder): the
+   *  cell that draws for a given move name now shows the other's image */
   swapCells(a: number, b: number): void {
-    [this.slots[a], this.slots[b]] = [this.slots[b], this.slots[a]];
+    [this.pristine[a], this.pristine[b]] = [this.pristine[b], this.pristine[a]];
+    [this.xf[a], this.xf[b]] = [this.xf[b], this.xf[a]];
     const na = this.frames[a];
     const nb = this.frames[b];
-    const ja = this.skeletons[na];
-    const jb = this.skeletons[nb];
-    if (ja) this.skeletons[nb] = ja;
-    else delete this.skeletons[nb];
-    if (jb) this.skeletons[na] = jb;
-    else delete this.skeletons[na];
+    for (const map of [this.skeletons, this.pristineSkel]) {
+      const ja = map[na];
+      const jb = map[nb];
+      if (jb) map[na] = jb; else delete map[na];
+      if (ja) map[nb] = ja; else delete map[nb];
+    }
+    this.renderSlot(a);
+    this.renderSlot(b);
     this.manifest.push({ op: 'swap', cells: [na, nb] });
     this.refresh([a, b]);
   }
@@ -240,8 +280,10 @@ export class SpriteSheetModel {
     for (const i of indices) {
       const c = blankCell(this.cellW, this.cellH);
       c.getContext('2d')!.drawImage(this.clip.canvas, 0, 0);
-      this.slots[i] = c;
-      this.skeletons[this.frames[i]] = structuredClone(this.clip.joints);
+      this.pristine[i] = c; // pasted pixels become the new pristine art
+      this.xf[i] = IDENTITY();
+      this.pristineSkel[this.frames[i]] = structuredClone(this.clip.joints);
+      this.renderSlot(i);
     }
     this.manifest.push({ op: 'paste', cells: indices.map((i) => this.frames[i]) });
     this.refresh(indices);
@@ -256,8 +298,11 @@ export class SpriteSheetModel {
   replaceCellImage(i: number, img: CanvasImageSource): void {
     const c = blankCell(this.cellW, this.cellH);
     c.getContext('2d')!.drawImage(img, 0, 0, this.cellW, this.cellH);
-    this.slots[i] = c;
+    this.pristine[i] = c; // regenerated pixels become the new pristine art
+    this.xf[i] = IDENTITY();
     delete this.skeletons[this.frames[i]];
+    delete this.pristineSkel[this.frames[i]];
+    this.renderSlot(i);
     this.manifest.push({ op: 'regen-frame', cells: [this.frames[i]] });
     this.refresh([i]);
   }
@@ -268,11 +313,18 @@ export class SpriteSheetModel {
   private touchedJoints = new Set<string>();
   setKeypoints(name: string, joints: Joints): void {
     this.skeletons[name] = joints;
+    this.pristineSkel[name] = structuredClone(joints); // re-inferred on current pixels
+    const i = this.frames.indexOf(name);
+    if (i >= 0) this.xf[i] = IDENTITY(); // joints are in the CURRENT frame, so pristine == current
     this.touchedJoints.add(name);
   }
   setJoint(name: string, joint: string, x: number, y: number): void {
     const j = (this.skeletons[name] ??= {});
     j[joint] = [x, y, j[joint]?.[2] ?? 1];
+    const p = (this.pristineSkel[name] ??= {});
+    p[joint] = [x, y, p[joint]?.[2] ?? 1];
+    const i = this.frames.indexOf(name);
+    if (i >= 0) this.xf[i] = IDENTITY();
     this.touchedJoints.add(name);
   }
 
@@ -288,7 +340,8 @@ export class SpriteSheetModel {
   }
   /** every cell whose PIXELS were edited this session (from the op manifest) —
    *  the overlay set /__editor/sheet persists to assets/raw/edits/<id>/cells/
-   *  so tools/core/packer.mjs keeps the edits on a later re-pack */
+   *  so tools/core/packer.mjs keeps the edits on a later re-pack. Single-resample
+   *  now (rendered from pristine), so the baked overlay is sharp. */
   exportEditedCells(): { name: string; pngBase64: string }[] {
     const names = new Set(this.manifest.flatMap((m) => m.cells));
     const out: { name: string; pngBase64: string }[] = [];

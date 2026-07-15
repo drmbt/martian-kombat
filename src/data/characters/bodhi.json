@@ -85,17 +85,17 @@
     },
     "hp": {
       "startup": 11,
-      "active": 4,
-      "recovery": 20,
+      "active": 8,
+      "recovery": 16,
       "damage": 104,
       "hitstun": 24,
       "blockstun": 15,
       "knockback": 12,
       "hitbox": {
-        "x": 60,
-        "y": -225,
-        "w": 55,
-        "h": 49
+        "x": -4,
+        "y": -269,
+        "w": 116,
+        "h": 137
       },
       "height": "mid",
       "knockdown": true
@@ -109,10 +109,10 @@
       "blockstun": 9,
       "knockback": 6,
       "hitbox": {
-        "x": 20,
-        "y": -50,
-        "w": 77,
-        "h": 53
+        "x": 44,
+        "y": -100,
+        "w": 72,
+        "h": 91
       },
       "height": "mid",
       "chains": [
@@ -131,27 +131,27 @@
       "blockstun": 13,
       "knockback": 11,
       "hitbox": {
-        "x": -7,
-        "y": -92,
-        "w": 70,
-        "h": 69
+        "x": 34,
+        "y": -159,
+        "w": 67,
+        "h": 155
       },
       "height": "mid",
       "cancel": true
     },
     "hk": {
       "startup": 13,
-      "active": 4,
-      "recovery": 21,
+      "active": 8,
+      "recovery": 16,
       "damage": 106,
       "hitstun": 26,
       "blockstun": 15,
       "knockback": 13,
       "hitbox": {
-        "x": 42,
-        "y": -230,
-        "w": 73,
-        "h": 60
+        "x": 6,
+        "y": -220,
+        "w": 120,
+        "h": 101
       },
       "height": "mid",
       "knockdown": true
@@ -167,7 +167,7 @@
       "hitbox": {
         "x": 63,
         "y": -215,
-        "w": 58,
+        "w": 59,
         "h": 47
       },
       "height": "mid",
@@ -187,10 +187,10 @@
       "blockstun": 11,
       "knockback": 8,
       "hitbox": {
-        "x": 51,
-        "y": -192,
-        "w": 56,
-        "h": 55
+        "x": 35,
+        "y": -180,
+        "w": 72,
+        "h": 61
       },
       "height": "mid",
       "cancel": true
@@ -204,10 +204,10 @@
       "blockstun": 14,
       "knockback": 10,
       "hitbox": {
-        "x": 35,
-        "y": -233,
-        "w": 49,
-        "h": 74
+        "x": 7,
+        "y": -245,
+        "w": 96,
+        "h": 117
       },
       "height": "mid",
       "knockdown": true
@@ -246,7 +246,7 @@
         "x": 47,
         "y": -52,
         "w": 68,
-        "h": 58
+        "h": 59
       },
       "height": "low",
       "cancel": true
@@ -342,7 +342,7 @@
       "knockback": 9,
       "hitbox": {
         "x": 50,
-        "y": -142,
+        "y": -141,
         "w": 68,
         "h": 76
       },
@@ -437,7 +437,7 @@
           "damage": 132,
           "recovery": 26,
           "grab": {
-            "range": 108
+            "range": 109
           }
         }
       }
@@ -583,5 +583,6 @@
   "arcade": {
     "motivation": "The stars told Bodhi the Biennale is badly out of alignment, and he’s the practitioner on call. He climbs the ladder giving the whole desert a full-body session, one opponent at a time.",
     "ending": "Champion, Bodhi books everyone a follow-up and realigns the desert’s chart. Mercury is finally direct. The tension of a hundred fights releases all at once, and Bombay Beach sleeps well for the first time in years."
-  }
+  },
+  "scale": 0.94
 }
