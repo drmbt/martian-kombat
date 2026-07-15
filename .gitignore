@@ -13,13 +13,17 @@ dist/
 .vite/
 *.log
 
-# Asset pipeline intermediates. Only the source FRAMES under assets/raw/frames/
-# stay versioned — a useful hand-edit point during dev. Everything else under
-# assets/raw/ (qa reports/montages, keyed, stages, style-tests, vfx, canonical,
-# icons, music, voice-tests, sprite-editor backups) is a regen intermediate and
-# is kept OUT of the repo to avoid bloat (regenerate via the gen:* scripts).
+# Asset pipeline intermediates. The source FRAMES (assets/raw/frames/) and the
+# Character-Studio edit overlays (assets/raw/edits/) stay versioned — they are
+# hand-authored SOURCE, not regen intermediates: a fighter's packed sheet is
+# built FROM its edits/ overlays, so dropping them loses the manual tuning.
+# Everything else under assets/raw/ (qa reports/montages, keyed, stages,
+# style-tests, vfx, canonical, icons, music, voice-tests, and the timestamped
+# sprite-editor pack BACKUPS in sprite-edits/) is a regen intermediate and is
+# kept OUT of the repo to avoid bloat (regenerate via the gen:* scripts).
 assets/raw/*
 !assets/raw/frames/
+!assets/raw/edits/
 assets/veo-clips/
 assets/frame-dumps/
 *.mp4.tmp
