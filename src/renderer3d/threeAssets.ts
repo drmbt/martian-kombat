@@ -26,12 +26,19 @@ export function radialTexture(stops: [number, string][] = [
   return new THREE.CanvasTexture(c);
 }
 
+// Heavy 3D meshes (30 MB GLBs) exceed the 25 MiB Cloudflare Workers per-file
+// cap, so they're excluded from the Workers upload (public/.assetsignore) and
+// served from R2 instead. VITE_ASSET_BASE (e.g. https://cdn.martiankombat.com/)
+// is the R2 origin; empty falls back to same-origin BASE_URL for local dev.
+// See docs/3D_MODE_R2.md.
+const ASSET_BASE = import.meta.env.VITE_ASSET_BASE || import.meta.env.BASE_URL;
+
 export function characterGlbUrl(charId: string): string {
-  return `${import.meta.env.BASE_URL}assets/3d/characters/${charId}/${charId}.glb`;
+  return `${ASSET_BASE}assets/3d/characters/${charId}/${charId}.glb`;
 }
 
 export function stageGlbUrl(stageId: string): string {
-  return `${import.meta.env.BASE_URL}assets/3d/stages/${stageId}/stage.glb`;
+  return `${ASSET_BASE}assets/3d/stages/${stageId}/stage.glb`;
 }
 
 /** Session-lived BYTE cache: scene restarts (rematch, round flow) skip the
