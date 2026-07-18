@@ -119,11 +119,19 @@ export const voiceLines = {
     hurt: ['Ugh!', 'Argh!', 'Tch!', 'Hnh!', 'Gah!', 'Nngh!'],
     victory: ['Balance restored.', 'The circuit is complete.', 'As it was written.', 'You were only noise.'],
   },
+  // Yulia's kiai/hurt/victory + throw/volga/braid/sickle move VO are the REAL
+  // recordings in assets/voice-inspo/yulia/{kiai,hurt,victory}/ (wired straight
+  // to public/assets/audio/voice/), NOT generated — do NOT `gen:audio --char
+  // yulia --force` or you clobber them with clone TTS. These texts are just the
+  // transcriptions kept in sync with the character JSON `vo` block. Only
+  // backbend-guillotine ("Take That!") is clone-generated. She carries MORE than
+  // 6/6/4 clips — the loader reads the count from the vo array lengths.
   yulia: {
     voice: VOICE_F,
-    kiai: ['Hyaaa!', 'Ha!', 'Yes!', 'Come on!', 'Davai!', 'Opa!'],
-    hurt: ['Agh!', 'Ah!', 'Ow!', 'Hmph!', 'Nyet!', 'Tss!'],
-    victory: ['Fantastic!', 'Too easy.', 'Breathe, and win.', 'Weakness is a choice.'],
+    kiai: ['Terrific.', 'Fantastic!', 'Oh yeah?', 'Hah!', 'Hyah!', 'Wee!', 'Ha!'],
+    hurt: ['What?', 'Ow!', 'Ugh.', 'Stop it.', 'No.', 'No, no, no!', 'Oh, stop it.', 'Boyna!', 'Ugh.', 'Boyna, boyna!', 'Bah!', 'Whee!'],
+    victory: ['Oi oi oi!', 'Oh, la la!', 'Chippies!', 'Ah, ah!', 'Oh yeah!'],
+    moves: { 'backbend-guillotine': 'Take That!' },
   },
   catherine: {
     voice: VOICE_CATH,

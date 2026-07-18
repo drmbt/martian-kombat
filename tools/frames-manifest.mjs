@@ -602,7 +602,7 @@ export const CHARACTERS = {
           active: 'driving forward, both arms fully extended toward the right frame edge, hands actively clutching the empty air in a collar grip, a small red impact flash obscuring her fists, hips loaded to throw',
           recovery: 're-settling her braid, straightening up, weight already back on both feet',
         },
-        'spinning-star-kick': {
+        'sickle-kick': {
           startup: 'dropping into a low coiled charge on one bent leg, fists guarding, red aura gathering around her feet',
           active: 'an inverted helicopter spinning kick — body tilted horizontal mid-spin, both legs whipping around in a flat circular arc, red aura star-trails streaking off both heels, braid flying',
           recovery: 'landing from the spin on one knee, braid whipping around her shoulder, red embers fading at her feet',

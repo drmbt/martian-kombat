@@ -35,10 +35,16 @@ const HAS = {
 // several numbered variants per category so combat/win-screen audio doesn't
 // loop the same clip every hit; missing files 404 harmlessly, so characters
 // with fewer generated lines than the count just degrade to repeats.
+// Default clip counts. A fighter can carry MORE (or fewer) via its `vo` array
+// lengths in the character JSON — real-recording fighters (yulia) have as many
+// kiai/hurt/victory clips as they have takes. voiceCount() is the source of truth.
 export const VOICE_COUNTS = { kiai: 6, hurt: 6, victory: 4 } as const;
+export function voiceCount(charId: string, cat: keyof typeof VOICE_COUNTS): number {
+  return characters[charId]?.vo?.[cat]?.length ?? VOICE_COUNTS[cat];
+}
 const VOICES = ROSTER.filter((r) => r.playable).flatMap((r) =>
   (Object.keys(VOICE_COUNTS) as (keyof typeof VOICE_COUNTS)[]).flatMap((cat) =>
-    Array.from({ length: VOICE_COUNTS[cat] }, (_, i) => `${r.id}-${cat}-${i + 1}`)
+    Array.from({ length: voiceCount(r.id, cat) }, (_, i) => `${r.id}-${cat}-${i + 1}`)
   )
 );
 // per-move VO call-outs (v-<char>-move-<moveId>) — only moves flagged `voice`
@@ -355,6 +361,6 @@ export function playVoice(
   category: keyof typeof VOICE_COUNTS,
   volume = 0.8
 ): void {
-  const n = Phaser.Math.Between(1, VOICE_COUNTS[category]);
+  const n = Phaser.Math.Between(1, voiceCount(charId, category));
   play(scene, `v-${charId}-${category}-${n}`, volume);
 }

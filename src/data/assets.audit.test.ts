@@ -16,9 +16,12 @@ import { characters } from './characters';
 import { STAGES } from './stages';
 import { CELL_H, CELL_W } from '../render/coords';
 
-// mirrors VOICE_COUNTS in BootScene (kept here so the audit doesn't import
-// Phaser); the loader requests this many numbered clips per category
-const VOICE_COUNTS = { kiai: 6, hurt: 6, victory: 4 } as const;
+// mirrors BootScene voiceCount(): the loader requests as many numbered clips
+// per category as the fighter's `vo` array declares, defaulting to these when
+// no vo block is present. (Real-recording fighters like yulia carry more.)
+const VOICE_COUNT_DEFAULT = { kiai: 6, hurt: 6, victory: 4 } as const;
+const voiceCount = (id: string, cat: keyof typeof VOICE_COUNT_DEFAULT): number =>
+  characters[id]?.vo?.[cat]?.length ?? VOICE_COUNT_DEFAULT[cat];
 
 const ASSETS = join(process.cwd(), 'public', 'assets');
 const has = (...p: string[]): boolean => existsSync(join(ASSETS, ...p));
@@ -32,7 +35,8 @@ function fighterGaps(id: string): string[] {
   if (!has('portraits', `${id}-bust.png`)) g.push('bust portrait'); // BootScene hard-loads bust-<id>
   if (!has('portraits', `${id}-ko.png`)) g.push('KO portrait');
   if (!has('audio', 'announcer', `${id}.mp3`)) g.push('name VO');
-  for (const [cat, n] of Object.entries(VOICE_COUNTS)) {
+  for (const cat of Object.keys(VOICE_COUNT_DEFAULT) as (keyof typeof VOICE_COUNT_DEFAULT)[]) {
+    const n = voiceCount(id, cat);
     const missing = Array.from({ length: n }, (_, i) => i + 1).filter((i) => !has('audio', 'voice', `${id}-${cat}-${i}.mp3`));
     if (missing.length) g.push(`${cat} VO ${missing.join('/')}`);
   }

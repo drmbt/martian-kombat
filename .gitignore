@@ -37,3 +37,5 @@ assets/frame-dumps/
 # Python tool cache
 __pycache__/
 *.pyc
+# Ableton sample-analysis sidecars (regenerated on load)
+*.asd

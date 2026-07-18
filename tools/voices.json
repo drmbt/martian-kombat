@@ -79,5 +79,14 @@
       "rj.mp3"
     ],
     "createdAt": "2026-07-14T19:08:37.938Z"
+  },
+  "yulia": {
+    "provider": "fish",
+    "modelId": "86804d35b1d146748a2d3d7dd550311d",
+    "title": "Martian Kombat — yulia",
+    "samples": [
+      "voice-clone-sample.wav"
+    ],
+    "createdAt": "2026-07-18T00:50:48.592Z"
   }
 }

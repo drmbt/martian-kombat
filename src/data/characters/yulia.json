@@ -4,7 +4,6 @@
   "color": "#ff5a48",
   "stage": "chiba-roof",
   "winQuotes": [
-    "Was that your rage? I did not feel it.",
     "Stand up. Or don't. It changes nothing.",
     "I have already forgotten your name.",
     "Я даже не вспотела.\n(I did not even sweat.)",
@@ -434,7 +433,9 @@
           "damage": 110,
           "knockback": 11
         }
-      }
+      },
+      "voiceText": "Take That!",
+      "voice": true
     },
     "volga-piledriver": {
       "name": "Volga Piledriver",
@@ -475,7 +476,9 @@
       "vfx": {
         "size": 240,
         "anchor": "ground"
-      }
+      },
+      "voiceText": "Hyah!",
+      "voice": true
     },
     "braid-lariat": {
       "name": "Braid Lariat",
@@ -496,10 +499,12 @@
         "h": 45
       },
       "height": "mid",
-      "projImmune": true
+      "projImmune": true,
+      "voiceText": "Oh yeah!",
+      "voice": true
     },
-    "spinning-star-kick": {
-      "name": "Spinning Star Kick",
+    "sickle-kick": {
+      "name": "Sickle Kick",
       "input": {
         "motion": "du",
         "button": "kick"
@@ -530,7 +535,9 @@
           "active": 30,
           "recovery": 22
         }
-      }
+      },
+      "voiceText": "Oh, la la!",
+      "voice": true
     },
     "throw": {
       "name": "Throw",
@@ -554,31 +561,41 @@
         "vy": -10.5,
         "knockbackMult": 1.5
       },
-      "techable": true
+      "techable": true,
+      "voiceText": "Hah!",
+      "voice": true
     }
   },
   "vo": {
     "kiai": [
+      "Terrific.",
+      "Fantastic!",
+      "Oh yeah?",
       "Hah!",
-      "Rrragh!",
-      "Take this!",
-      "Come on!",
       "Hyah!",
-      "Now!"
+      "Wee!",
+      "Ha!"
     ],
     "hurt": [
-      "Ugh!",
-      "Gah!",
-      "Nngh!",
-      "No!",
-      "Aagh!",
-      "Tch!"
+      "What?",
+      "Ow!",
+      "Ugh.",
+      "Stop it.",
+      "No.",
+      "No, no, no!",
+      "Oh, stop it.",
+      "Boyna!",
+      "Ugh.",
+      "Boyna, boyna!",
+      "Bah!",
+      "Whee!"
     ],
     "victory": [
-      "Too easy.",
-      "Next.",
-      "Predictable.",
-      "Done."
+      "Oi oi oi!",
+      "Oh, la la!",
+      "Chippies!",
+      "Ah, ah!",
+      "Oh yeah!"
     ]
   },
   "scale": 1.09,

@@ -167,8 +167,8 @@ export const MESHES = {
       'attack/volga-piledriver': { file: 'Illegal Headbutt.fbx' },
       // 'Hook Punch.fbx' bakes ~90° yaw-rotated (see tai-chi mp) → use 'Hook.fbx'
       'attack/braid-lariat': { file: 'Hook.fbx' },
-      'attack/spinning-star-kick': { file: 'Hurricane Kick.fbx', stripY: true },
-      'attack/spinning-star-kick#2': { file: 'Hurricane Kick (1).fbx', stripY: true },
+      'attack/sickle-kick': { file: 'Hurricane Kick.fbx', stripY: true },
+      'attack/sickle-kick#2': { file: 'Hurricane Kick (1).fbx', stripY: true },
     },
   },
   rapha: {
