@@ -374,19 +374,6 @@ export class SelectScene extends Phaser.Scene {
 
     if (this.online) this.setupOnline();
 
-    // Prefetch every playable fighter's sheet in the background so the select-
-    // grid idle animations reliably fill in (not just the two highlighted) and
-    // the versus hand-off is already warm — spreading the sprite payload across
-    // browse time instead of boot. Deferred a beat so the highlighted fighters
-    // (loaded on highlight) get the pipe first; deduped by AssetLoader. 3D mode
-    // renders meshes, so the 2D sheets aren't needed there.
-    if (!this.render3d) {
-      this.time.delayedCall(500, () => {
-        if (!this.scene.isActive()) return;
-        for (const r of ROSTER) if (r.playable) void AssetLoader.fighter(this, r.id);
-      });
-    }
-
     this.redraw();
   }
 

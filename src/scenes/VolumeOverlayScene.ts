@@ -9,6 +9,7 @@ import { STAGE_W } from '../engine';
 import { applyMusicVolume } from '../audio/volume';
 import { getSettings, updateSettings } from '../settings';
 import { play } from './BootScene';
+import { AssetLoader } from './assetLoader';
 
 const ICON_R = 17; // speaker button radius
 const ICON_X = STAGE_W - 14 - ICON_R; // button center
@@ -124,6 +125,14 @@ export class VolumeOverlayScene extends Phaser.Scene {
 
     this.redraw();
     this.setHitAreas(false); // hidden until the mouse moves
+
+    // This overlay is the one scene that NEVER shuts down (BootScene launches it
+    // once, above every scene), so it owns the background prefetch that streams
+    // the rest of the game in after the menu appears — idles, stage thumbnails,
+    // then in-fight audio/finisher art, in priority order. A player's selection
+    // preempts it (see AssetLoader.prefetchAll). Delayed a beat so the menu
+    // paints first.
+    this.time.delayedCall(600, () => AssetLoader.prefetchAll(this));
   }
 
   /** vertical track: top = 100%, bottom = 0% */

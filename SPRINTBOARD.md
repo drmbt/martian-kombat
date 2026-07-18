@@ -1488,6 +1488,24 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-18 · scenes · progressive background prefetch (load-everything,
+  prioritized)** — replaced the "load on select/versus" approach with a global
+  background sweep that streams the WHOLE game in after the menu appears, in
+  priority order, so by the time the player navigates it's already warm.
+  `AssetLoader.prefetchAll` runs on the PERSISTENT Volume overlay's loader (the
+  one scene that never shuts down, so it survives Boot→Menu→Select→Fight),
+  kicked off 600ms after that overlay mounts. Tiers, high→low: stage thumbnails
+  (small, fast) → fighter sheets (idles) → VO → fatality panels; each tier is
+  concurrency-limited (6/4/3/3) and every asset is capped by a 20s timeout so a
+  hung/404 download can't stall the sweep or block later tiers. On-demand
+  selection loads (highlight→sheet, picker→stage, lock→VO) run on the ACTIVE
+  scene's loader and, via the global dedupe, PREEMPT the sweep — a player's pick
+  always jumps ahead. Removed the now-redundant per-Select bulk prefetch.
+  Verified locally: the sweep starts from the menu (no nav) and loads all 18
+  sheets; tsc + prod build + 379 tests clean. (Full loop-driven progression is
+  only observable on a focused browser — a backgrounded tab pauses Phaser's
+  step, which pauses the loader's file processing.) — Claude
+
 - **2026-07-18 · scenes · lazy-load fixes (stage thumbnails, idle prefetch, VS
   never-hangs)** — deployed-build follow-ups to the lazy-load work, found by
   testing martiankombat.com: (1) the CHOOSE STAGE grid showed BLANK tiles —

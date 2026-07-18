@@ -9,6 +9,8 @@
 // calling ensureFighter('vincent') from both the select highlight AND the versus
 // screen costs one download.
 import Phaser from 'phaser';
+import { ROSTER } from '../data/roster';
+import { STAGES } from '../data/stages';
 import {
   queueFighterFatality,
   queueFighterSprite,
@@ -18,6 +20,7 @@ import {
 
 const done = new Set<string>();
 const inflight = new Map<string, Promise<void>>();
+let prefetchStarted = false;
 
 /**
  * Ensure a named group of files is in the global cache. `queue` adds the missing
@@ -65,4 +68,58 @@ export const AssetLoader = {
   /** already resolved (or resolvable without a download)? — lets callers avoid
    *  awaiting when everything's cached (e.g. reopening a fighter) */
   ready: (key: string): boolean => done.has(key),
+
+  /** Background prefetch of the WHOLE game, in priority order, kicked off once
+   *  from a PERSISTENT scene (the Volume overlay) right after boot. Runs on that
+   *  scene's own loader so it survives Boot→Menu→Select→Fight transitions.
+   *
+   *  On-demand selection loads (highlight → sheet, lock → VO, pick → stage) run
+   *  on the ACTIVE scene's loader instead, and because everything is deduped by
+   *  the global `done`/`inflight` maps, a selection that this background sweep
+   *  hasn't reached yet just loads immediately on the active loader — i.e. the
+   *  player's pick always preempts the bulk prefetch. Tiers load high-value
+   *  interactive art first (idles + thumbnails), fight-only art last. */
+  prefetchAll: (scene: Phaser.Scene): void => {
+    if (prefetchStarted) return;
+    prefetchStarted = true;
+    const playable = ROSTER.filter((r) => r.playable).map((r) => r.id);
+    const stages = STAGES.map((s) => s.id);
+    void (async () => {
+      // stage-picker thumbnails first — small (~1 MB each), so the CHOOSE STAGE
+      // grid fills fast without much delaying the sheets behind it
+      await tier(scene, stages, (s, id) => AssetLoader.stage(s, id), 6);
+      // idle sprites for the select sidebar — the heavy art (~7 MB each)
+      await tier(scene, playable, (s, id) => AssetLoader.fighter(s, id), 4);
+      // in-fight audio + finisher art — needed later, so lowest priority
+      await tier(scene, playable, (s, id) => AssetLoader.fighterVO(s, id), 3);
+      await tier(scene, playable, (s, id) => AssetLoader.fatality(s, id), 3);
+    })();
+  },
 };
+
+/** Load a list of ids through `load`, at most `concurrency` in flight. Errors are
+ *  swallowed and each load is capped by ASSET_TIMEOUT_MS, so neither a bad nor a
+ *  hung asset can stall the sweep (and thus block the lower-priority tiers). */
+const ASSET_TIMEOUT_MS = 20000;
+async function tier(
+  scene: Phaser.Scene,
+  ids: string[],
+  load: (scene: Phaser.Scene, id: string) => Promise<void>,
+  concurrency: number,
+): Promise<void> {
+  let i = 0;
+  const worker = async (): Promise<void> => {
+    while (i < ids.length) {
+      const id = ids[i++];
+      // bail if the host scene died (shouldn't — it's persistent — but be safe)
+      if (!scene.sys || !scene.sys.isActive()) return;
+      try {
+        await Promise.race([
+          load(scene, id),
+          new Promise<void>((res) => setTimeout(res, ASSET_TIMEOUT_MS)),
+        ]);
+      } catch { /* keep sweeping */ }
+    }
+  };
+  await Promise.all(Array.from({ length: concurrency }, worker));
+}
