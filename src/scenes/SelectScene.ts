@@ -374,6 +374,19 @@ export class SelectScene extends Phaser.Scene {
 
     if (this.online) this.setupOnline();
 
+    // Prefetch every playable fighter's sheet in the background so the select-
+    // grid idle animations reliably fill in (not just the two highlighted) and
+    // the versus hand-off is already warm — spreading the sprite payload across
+    // browse time instead of boot. Deferred a beat so the highlighted fighters
+    // (loaded on highlight) get the pipe first; deduped by AssetLoader. 3D mode
+    // renders meshes, so the 2D sheets aren't needed there.
+    if (!this.render3d) {
+      this.time.delayedCall(500, () => {
+        if (!this.scene.isActive()) return;
+        for (const r of ROSTER) if (r.playable) void AssetLoader.fighter(this, r.id);
+      });
+    }
+
     this.redraw();
   }
 
@@ -678,8 +691,17 @@ export class SelectScene extends Phaser.Scene {
       } else if (opt.id === 'test-room') {
         this.add.text(x, ty, '▦', { ...font, fontSize: `${Math.round(th * 0.5)}px`, fontStyle: 'bold', color: '#7fe3ff' })
           .setOrigin(0.5).setDepth(12);
-      } else if (this.textures.exists(`bg-stage-${opt.id}`)) {
-        this.add.image(x, ty, `bg-stage-${opt.id}`).setDisplaySize(tw, th).setDepth(12);
+      } else {
+        // Stage backgrounds are lazy-loaded now — pull this thumbnail's art and
+        // drop it into the (blank) tile the moment it streams in. Boot no longer
+        // preloads stages, so without this the whole grid shows empty boxes.
+        const key = `bg-stage-${opt.id}`;
+        const addThumb = (): void => {
+          if (!this.scene.isActive() || !this.stageMode || !this.textures.exists(key)) return;
+          this.add.image(x, ty, key).setDisplaySize(tw, th).setDepth(12);
+        };
+        if (this.textures.exists(key)) addThumb();
+        else void AssetLoader.stage(this, opt.id).then(addThumb);
       }
       const owner = opt.id === 'random' || opt.id === 'test-room' ? null : stageOwner(opt.id, picked, characters);
       const label = owner ? `${opt.name} · ${characters[owner].name}` : opt.name;

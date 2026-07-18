@@ -13,6 +13,11 @@ import { menuNav, navDefer } from '../input/menu-nav';
 
 const HOLD_MS = 3400; // hold when there's no versus clip to pace the screen
 const MAX_HOLD_MS = 20000; // safety net if audio is blocked and never ends
+// hard cap on how long the VS screen waits for the lazy fight assets before it
+// hands off ANYWAY — a stalled sheet/VO/stage download must never freeze the
+// screen forever (FightScene.preload is the real barrier; missing art degrades
+// to capsules, never a hang). Without this the fight would never start.
+const READY_CAP_MS = 12000;
 const PORTRAIT = 270;
 
 interface VersusData {
@@ -44,6 +49,8 @@ export class VersusScene extends Phaser.Scene {
    *  is the hard barrier, but gating here keeps the fight from starting on a
    *  black/capsule frame if the player skips the splash early) */
   private ready: Promise<unknown> = Promise.resolve();
+  private assetsReady = false;
+  private loadingText: Phaser.GameObjects.Text | null = null;
 
   constructor() {
     super('Versus');
@@ -82,6 +89,7 @@ export class VersusScene extends Phaser.Scene {
       jobs.push(AssetLoader.fighter(this, this.fight.p1), AssetLoader.fighter(this, this.fight.p2));
     }
     this.ready = Promise.all(jobs);
+    this.ready.then(() => { this.assetsReady = true; this.loadingText?.setVisible(false); });
     // 3D: start streaming the fight renderer (models/stage/pipelines) NOW so it
     // overlaps this VS screen instead of a black screen after it
     if (this.fight.render3d) {
@@ -135,6 +143,18 @@ export class VersusScene extends Phaser.Scene {
         .setDepth(3);
     }
 
+    // shown only while the lazy fight assets are still streaming — so a slow
+    // connection reads as "loading", not a frozen VS screen. Hidden the instant
+    // `ready` resolves (see above); if everything was already warmed in select,
+    // assetsReady is already true and this never shows.
+    this.loadingText = this.add
+      .text(STAGE_W / 2, STAGE_H - 40, 'STREAMING FIGHTERS…', {
+        fontFamily: 'monospace', fontSize: '13px', color: '#ffb347', stroke: '#000', strokeThickness: 3,
+      })
+      .setOrigin(0.5)
+      .setDepth(4)
+      .setVisible(!this.assetsReady);
+
     this.input.keyboard!.once('keydown', () => this.startFight());
     this.input.once('pointerdown', () => this.startFight());
   }
@@ -175,12 +195,19 @@ export class VersusScene extends Phaser.Scene {
     if (this.started) return;
     this.started = true;
     const { p1, p2, cpu, training, showcase, tuner, spriteEditor, studio, module, stage, render3d } = this.fight;
-    // wait for the lazy fight assets before handing off (usually already
-    // resolved — the VS clip outlasts the download; FightScene.preload is the
-    // final safety net if this races). scene.start is safe post-shutdown guard.
-    void this.ready.then(() => {
+    const go = (): void => {
       if (!this.scene.isActive()) return;
       this.scene.start(render3d ? 'Fight3D' : 'Fight', { p1, p2, cpu, training, showcase, tuner, spriteEditor, studio, module, stage });
-    });
+    };
+    // usual case: assets already warmed (during select + this VS screen) → go now.
+    if (this.assetsReady) { go(); return; }
+    // still streaming: wait for `ready`, BUT never longer than READY_CAP_MS — a
+    // stalled download must not freeze the VS screen forever. FightScene.preload
+    // re-queues anything still missing and degrades to capsules on a miss.
+    this.loadingText?.setVisible(true);
+    let handed = false;
+    const once = (): void => { if (handed) return; handed = true; go(); };
+    void this.ready.then(once);
+    this.time.delayedCall(READY_CAP_MS, once);
   }
 }

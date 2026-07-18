@@ -1488,6 +1488,23 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-18 · scenes · lazy-load fixes (stage thumbnails, idle prefetch, VS
+  never-hangs)** — deployed-build follow-ups to the lazy-load work, found by
+  testing martiankombat.com: (1) the CHOOSE STAGE grid showed BLANK tiles —
+  stage backgrounds weren't boot-loaded anymore and the picker never requested
+  them; now `openStagePick` lazy-loads each `bg-stage-*` and drops the thumbnail
+  in as it streams (verified: 27 tiles populate). (2) Sidebar idle animations
+  were slow/absent on a cold connection (stuck on the head-portrait placeholder
+  until the on-highlight sheet landed); Select now BACKGROUND-PREFETCHES every
+  playable fighter's sheet on open (deferred 500ms so the highlighted two get
+  the pipe first), so idles fill in and the versus hand-off is warm. (3) REAL
+  regression: `VersusScene.startFight` awaited `ready` unbounded, and the 20s
+  safety timer routed through it too — a stalled sheet/VO/stage download froze
+  the VS screen FOREVER. Now it races `ready` against a `READY_CAP_MS` (12s)
+  cap and shows a "STREAMING FIGHTERS…" line, so the fight always starts
+  (FightScene.preload re-queues misses, degrades to capsules). 379 tests green,
+  tsc + prod build clean. — Claude
+
 - **2026-07-18 · infra/scenes · lazy asset loading (small boot, stream on
   demand)** — boot no longer downloads the whole game. `BootScene.preload()`
   now loads only the light menu set (portraits/busts/KO, world map, salton
