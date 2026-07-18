@@ -17,6 +17,8 @@ import { getSettings } from '../settings';
 import { CpuDriver } from '../ai/bot';
 import { takeWarmRenderer } from '../renderer3d/warmup';
 import { play, playVoice, runCues } from './BootScene';
+import { AssetLoader } from './assetLoader';
+import { queueFighterVO } from './assetQueue';
 import { playMusic } from '../audio/music';
 import { diffTick, snapTick, type FightEvent } from '../presentation/tickEvents';
 import { soundCues } from '../presentation/soundDirector';
@@ -103,6 +105,13 @@ export class FightScene3D extends Phaser.Scene {
     this.botP1 = this.demo ? new CpuDriver(0, 1, this.showcase) : null;
   }
 
+  /** Hard barrier for lazy VO (the 3D renderer uses meshes for fighters + its
+   *  own 3D stage, but kiai/hurt/victory + move call-outs still route through
+   *  playVoice). VersusScene warms these; blocks create() on a cold entry. */
+  preload(): void {
+    for (const id of new Set(this.chars)) queueFighterVO(this, id);
+  }
+
   create(): void {
     // 3D arena is wider than the 2D 960px stage — symmetric around center so
     // the engine->Three mapping stays put (engine V: rules.stage). Online: both
@@ -171,6 +180,9 @@ export class FightScene3D extends Phaser.Scene {
     }
     this.hudModel = new HudModel(characters, this.chars);
     playMusic([`stages/${this.stageId}`, 'stages/default']);
+    // lazy fatality panels — pulled in the background during the fight (the
+    // FatalityOverlay needs them only at FINISH HIM / match end)
+    for (const id of new Set(this.chars)) void AssetLoader.fatality(this, id);
     // the DOM layer exists before the renderer so LOADING… can cover the boot
     this.uiLayer = new UiLayer(this);
     this.loading = new LoadingOverlay(this.uiLayer.root);

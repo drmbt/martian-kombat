@@ -176,6 +176,17 @@ SHIP       readiness audit · normalize+pack · write/register · ZIP · publish
            (later) offline/hide characters & stages
 ```
 
+**Lazy-load is automatic on SHIP.** A shipped character is registered in
+`roster.ts` (`playable: true`) with its assets on disk, which is the entire
+lazy-load contract — the runtime streams its sheet/VO/stage/fatality on demand
+(`src/scenes/assetLoader.ts`, keyed off `ROSTER` + the character JSON), no
+per-character loader code. In-studio, the WYSIWYG preview does NOT go through
+that loader: `setStudioSubject` builds the fighter texture from the editor's
+in-memory canvas (so a WIP draft with no packed sheet still renders as a ghost),
+and the VO loader gates on the playable roster (`VO_FIGHTERS`) so a draft's
+absent VO is never requested (a 404'd mp3 throws; a missing PNG is harmless).
+Nothing to wire per character — see CLAUDE.md → "Lazy asset loading".
+
 Move Tuner's fight sandbox and the Sprite Editor's grid don't get rewritten —
 they get *mounted* as the MOVES and SPRITES modules over the shared project
 (they are already panels over FightScene; the studio hosts the same panels).

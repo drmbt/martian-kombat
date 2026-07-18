@@ -32,6 +32,8 @@ import { StagesPanel } from '../ui/StagesPanel';
 import { StudioRail } from '../ui/StudioRail';
 import { SpriteSheetModel, type SheetMeta } from '../ui/spriteSheetModel';
 import { play, playVoice, runCues } from './BootScene';
+import { AssetLoader } from './assetLoader';
+import { queueFighterSprite, queueFighterVO, queueStage } from './assetQueue';
 import { playMusic } from '../audio/music';
 import { getSettings } from '../settings';
 import { diffTick, snapTick, type FightEvent, type TickSnap } from '../presentation/tickEvents';
@@ -326,6 +328,19 @@ export class FightScene extends Phaser.Scene {
     this.stageGuide = false;
   }
 
+  /** Hard barrier for the lazy fight assets: queue the two fighters' sheets/VO
+   *  and the stage. Phaser blocks create() until these load. On the normal
+   *  Select→Versus path the VS screen already warmed them, so nothing is queued
+   *  and this is instant; on cold entries (dev launch, Studio TEST, arcade,
+   *  online-direct) it's the safety net that keeps the fight off capsules. */
+  preload(): void {
+    for (const id of new Set(this.chars)) {
+      queueFighterSprite(this, id);
+      queueFighterVO(this, id);
+    }
+    queueStage(this, this.stageId);
+  }
+
   create(): void {
     const cfg = getSettings();
     // online: BOTH peers build the identical start state from the lobby's
@@ -435,6 +450,11 @@ export class FightScene extends Phaser.Scene {
 
     // per-stage fight music; a rematch on the same stage keeps the track going
     playMusic([`stages/${this.stageId}`, 'stages/default']);
+
+    // Lazy fatality panels: not needed until FINISH HIM at match end, so pull
+    // both fighters' cutscene art in the BACKGROUND now, during the fight — the
+    // download is done long before a KO. Missing panels degrade gracefully.
+    for (const id of new Set(this.chars)) void AssetLoader.fatality(this, id);
 
     // 'wireframe' is the studio's dev stage TEMPLATE: no art, a sparse
     // programmatic grid (horizon / floor plane / posts) so a character under

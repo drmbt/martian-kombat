@@ -8,6 +8,7 @@ import { ROSTER, type RosterEntry } from '../data/roster';
 import { characters } from '../data/characters';
 import { STAGES, stageById, stageOwner, type StageEntry } from '../data/stages';
 import { play, announce } from './BootScene';
+import { AssetLoader } from './assetLoader';
 import { playMusic } from '../audio/music';
 import { menuNav, navDefer } from '../input/menu-nav';
 import { BindAction, getSettings } from '../settings';
@@ -579,6 +580,9 @@ export class SelectScene extends Phaser.Scene {
     }
     this.confirmed[p] = true;
     announce(this, `ann-${entry.id}`);
+    // locked in — start pulling this fighter's VO (kiai/hurt/victory + move
+    // call-outs) in the background while the other player / stage is chosen
+    void AssetLoader.fighterVO(this, entry.id);
     this.redraw();
     if (this.online) {
       this.online.controller.lockChar(entry.id);
@@ -711,6 +715,9 @@ export class SelectScene extends Phaser.Scene {
       ? STAGES[Math.floor(Math.random() * STAGES.length)].id
       : pick.id;
     play(this, 's-blip', 0.8);
+    // head start on the chosen stage's background (VersusScene/FightScene also
+    // ensure it — this just overlaps the download with the VS screen)
+    void AssetLoader.stage(this, stage);
     // online: BOTH players vote for a stage. The host reconciles (agree → that,
     // disagree → coin flip) and sends the authoritative start, so both peers
     // launch on the identical stage/rules (V25). Never scene.start here.
@@ -916,10 +923,15 @@ export class SelectScene extends Phaser.Scene {
       const sx = p === 0 ? SIDE_P1_X : SIDE_P2_X;
       const spr = this.sideSprites[p];
       const sheetKey = `sheet-${entry.id}`;
+      const portraitKey = `portrait-${entry.id}`;
+      // Lazy-load: the heavy sheet is no longer boot-loaded — pull the
+      // highlighted fighter's sheet (deduped) so the idle animation streams in.
+      // redraw() runs every frame, so the moment it lands the idle branch below
+      // picks it up; until then we fall back to the head portrait (boot-loaded).
+      if (!(this.render3d && entry.mesh3d)) void AssetLoader.fighter(this, entry.id);
       // 3D mode, best-available preview: live GLB idle (SelectPreview3D) →
       // portrait bust while it streams / for sheet-only fighters → 2D sheet.
       this.preview3d?.setChar(p, this.render3d && entry.mesh3d ? entry.id : null);
-      const portraitKey = `portrait-${entry.id}`;
       if (spr && this.render3d && this.preview3d?.active(p)) {
         spr.setVisible(false);
         this.sideSheet[p] = ''; // force a re-texture when we fall back later
@@ -946,6 +958,18 @@ export class SelectScene extends Phaser.Scene {
         }
         const [ia, ib] = this.sideIdle[p];
         spr.setFrame(Math.floor(this.time.now / SIDE_IDLE_MS) % 2 ? ib : ia);
+      } else if (spr && this.textures.exists(portraitKey)) {
+        // sheet still streaming in — stand in with the head portrait so the
+        // pod isn't empty (swaps to the animated idle once the sheet lands)
+        spr.setVisible(true);
+        if (this.sideSheet[p] !== portraitKey) {
+          this.sideSheet[p] = portraitKey;
+          spr.setTexture(portraitKey);
+          spr.setDisplaySize(SIDE_SPRITE_H * 0.8, SIDE_SPRITE_H * 0.8);
+          spr.setFlipX(p === 1);
+          if (!this.pickable(entry)) spr.setAlpha(0.5).setTint(0x8a8aa0);
+          else spr.setAlpha(1).clearTint();
+        }
       } else if (spr) {
         spr.setVisible(false);
       }

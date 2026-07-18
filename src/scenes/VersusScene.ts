@@ -8,6 +8,7 @@ import { characters } from '../data/characters';
 import { ROSTER } from '../data/roster';
 import { stageById } from '../data/stages';
 import { hasTracks, playMusic } from '../audio/music';
+import { AssetLoader } from './assetLoader';
 import { menuNav, navDefer } from '../input/menu-nav';
 
 const HOLD_MS = 3400; // hold when there's no versus clip to pace the screen
@@ -38,6 +39,11 @@ export class VersusScene extends Phaser.Scene {
     tuner: false, spriteEditor: false, studio: false, stage: 'salton', render3d: false,
   };
   private started = false;
+  /** resolves once both fighters' sheets/VO + the stage are in cache — the VS
+   *  screen is the loading buffer for the lazy fight assets (FightScene.preload
+   *  is the hard barrier, but gating here keeps the fight from starting on a
+   *  black/capsule frame if the player skips the splash early) */
+  private ready: Promise<unknown> = Promise.resolve();
 
   constructor() {
     super('Versus');
@@ -63,6 +69,19 @@ export class VersusScene extends Phaser.Scene {
   }
 
   create(): void {
+    // Lazy fight assets: pull both fighters' sheets/VO + the stage now so the
+    // download overlaps this VS screen (≈3.4s) instead of stalling the fight.
+    // 2D sheets are skipped on the 3D path (the renderer uses meshes, warmed
+    // below); VO + stage are needed either way.
+    const jobs: Promise<unknown>[] = [
+      AssetLoader.fighterVO(this, this.fight.p1),
+      AssetLoader.fighterVO(this, this.fight.p2),
+      AssetLoader.stage(this, this.fight.stage),
+    ];
+    if (!this.fight.render3d) {
+      jobs.push(AssetLoader.fighter(this, this.fight.p1), AssetLoader.fighter(this, this.fight.p2));
+    }
+    this.ready = Promise.all(jobs);
     // 3D: start streaming the fight renderer (models/stage/pipelines) NOW so it
     // overlaps this VS screen instead of a black screen after it
     if (this.fight.render3d) {
@@ -156,6 +175,12 @@ export class VersusScene extends Phaser.Scene {
     if (this.started) return;
     this.started = true;
     const { p1, p2, cpu, training, showcase, tuner, spriteEditor, studio, module, stage, render3d } = this.fight;
-    this.scene.start(render3d ? 'Fight3D' : 'Fight', { p1, p2, cpu, training, showcase, tuner, spriteEditor, studio, module, stage });
+    // wait for the lazy fight assets before handing off (usually already
+    // resolved — the VS clip outlasts the download; FightScene.preload is the
+    // final safety net if this races). scene.start is safe post-shutdown guard.
+    void this.ready.then(() => {
+      if (!this.scene.isActive()) return;
+      this.scene.start(render3d ? 'Fight3D' : 'Fight', { p1, p2, cpu, training, showcase, tuner, spriteEditor, studio, module, stage });
+    });
   }
 }

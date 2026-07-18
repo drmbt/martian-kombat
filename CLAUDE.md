@@ -181,6 +181,41 @@ game-ready assets; (2) `npm run gen:assets`
 requests files that exist — a missing sprite never 404s, a missing mp3 never
 throws. Run both after any asset generation.
 
+### Lazy asset loading — the load contract (keep it data-driven)
+
+Boot does **not** download the whole game. `BootScene.preload()` loads only the
+light "you're in the menu" set — portraits/busts/KO, the world map, the salton
+fallback bg, spark VFX, announcer VO, and SFX (~10 MB). Everything heavy —
+per-fighter **sheets** (~7 MB each), per-stage **backgrounds**, per-fighter
+**VO**, and **fatality panels** (~180 MB total) — streams on demand through
+`src/scenes/assetLoader.ts` (`AssetLoader.fighter/fighterVO/stage/fatality`,
+promise-deduped) as the player moves select → versus → fight:
+
+- **Select**: highlighting a fighter streams its sheet (a head-portrait stands
+  in until the animated idle lands); locking in streams that fighter's VO;
+  picking a stage warms its background.
+- **Versus** is the loading buffer — it pre-warms both fighters + the stage
+  before handing off.
+- **FightScene / FightScene3D `preload()`** is the hard barrier: it queues the
+  two fighters + stage so EVERY entry path (dev launch, Studio TEST, arcade,
+  online-direct) is safe, instant when Versus already warmed it. **Fatality
+  panels load in the background DURING the fight** (not needed until FINISH HIM).
+
+The queue helpers live in `src/scenes/assetQueue.ts` and are **fully
+data-driven**: they read `ROSTER` (playable) for portraits, and each character
+JSON (`moves`, `vo`, `fatality`) for sheet/VO/fatality files. **So adding a
+character needs ZERO loader code** — register it in `roster.ts` as
+`playable: true`, ship its assets (the audit enforces the set), run
+`gen:assets`, and it lazy-loads automatically through both Claude-Code pipeline
+generation and the frontend Character Studio SHIP flow. Two invariants to keep:
+(1) VO is requested ONLY for playable-roster ids (`VO_FIGHTERS` gate in
+assetQueue) — a 404'd mp3 throws an uncaught EncodingError, so a WIP/Studio
+draft must never have its VO queued; a missing PNG is harmless. (2) Any NEW
+scene or UI that shows a fighter sprite, plays VO, or draws a stage must
+`await AssetLoader.*` (or add a `preload()` barrier) — never assume boot loaded
+it. The Studio's live subject mount (`setStudioSubject`) is exempt: it builds
+the texture from an in-memory canvas, not a disk sheet.
+
 Pipeline rules: scripts must be idempotent and resumable (skip files that exist,
 `--force` to regen). Raw output goes to `assets/raw/` (gitignored); only packed,
 game-ready files land in `public/assets/` (committed). Log prompts used into a

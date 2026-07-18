@@ -90,6 +90,15 @@ assets exist** (else `assets.audit` fails early). Then:
   class), plus all engine tests.
 - Verify in the preview: the character loads with no 404s / console errors.
 
+**No loader wiring is needed.** Assets lazy-load on demand (boot stays small;
+sheets/VO/stages/fatality stream via `src/scenes/assetLoader.ts`, keyed off
+`ROSTER` playable + the character JSON). Registering the fighter `playable: true`
+with its assets on disk is the whole contract — the sheet streams on select
+highlight, VO on lock-in, the fatality during the fight. Just confirm in the
+preview that highlighting the new fighter shows its animated idle (not a stuck
+head-portrait), and that a full match renders their sprite + plays their VO. See
+CLAUDE.md → "Lazy asset loading — the load contract".
+
 ## Home stage
 
 Each JSON may carry `stage:"<id>"` (badged on select, arcade ends there). A home

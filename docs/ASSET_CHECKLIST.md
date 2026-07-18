@@ -8,6 +8,16 @@ complete. (`npm run gen:assets` rescans `public/assets/` into
 `src/data/assetManifest.json` so the loader only requests files that exist — a
 missing sprite never 404s and a missing mp3 never throws.)
 
+**Loading is automatic — no wiring step.** The game lazy-loads assets on demand
+(boot stays small; sheets/VO/stages/fatality panels stream select → versus →
+fight via `src/scenes/assetLoader.ts`). The queue helpers are data-driven off
+`ROSTER` + the character JSON, so a fighter registered `playable: true` with its
+assets on disk is picked up with **zero loader code** — the same for characters
+made through Claude Code or shipped from the frontend Character Studio. You only
+touch the loader if you add a NEW asset *class* or a new UI surface that shows a
+fighter/stage (then it must `await AssetLoader.*`). See CLAUDE.md → "Lazy asset
+loading — the load contract".
+
 All `gen:*` scripts are idempotent (skip existing files; `--force` regens).
 Raw output lands in `assets/raw/` (gitignored); packed/game-ready files land in
 `public/assets/` (committed). Prompts are logged to a `.prompt.txt` sidecar.

@@ -3,7 +3,6 @@
 import Phaser from 'phaser';
 import { STAGE_H, STAGE_W } from '../engine';
 import { ROSTER } from '../data/roster';
-import { characters } from '../data/characters';
 import { STAGES } from '../data/stages';
 // which optional/drift-prone assets ACTUALLY exist on disk (generated at
 // predev/prebuild by tools/gen-asset-manifest.mjs) — the loader gates on this
@@ -13,7 +12,10 @@ import { initMusic, duckMusic, nextTrack, playMusic } from '../audio/music';
 import type { AudioCue } from '../presentation/soundDirector';
 import { applyMusicVolume, effectiveSfxVolume } from '../audio/volume';
 import { devBootTarget, rememberDevLaunch } from '../devLaunch';
-import { CELL_H, CELL_W } from '../render/coords';
+// the heavy per-fighter sheets/VO, per-stage backgrounds, and fatality panels
+// are NO LONGER loaded here — they stream on demand via assetLoader as the
+// player moves select → versus → fight. Boot loads only the light menu set.
+import { queueFighterPortraits, voiceCount, VOICE_COUNTS } from './assetQueue';
 
 const ANNOUNCER = [
   'round-1', 'round-2', 'final-round', 'fight', 'ko', 'time-up',
@@ -25,35 +27,8 @@ const ANNOUNCER = [
   // actually generated (the manifest; not every stage has one yet)
   ...STAGES.filter((s) => assetManifest.stageVo.includes(s.id)).map((s) => `stage-${s.id}`),
 ];
-/** membership sets for the per-move art gates below */
-const HAS = {
-  legacyProj: new Set<string>(assetManifest.legacyProj),
-  moveProj: new Set(assetManifest.moveProj),
-  moveBurst: new Set(assetManifest.moveBurst),
-  moveVfx: new Set(assetManifest.moveVfx),
-};
-// several numbered variants per category so combat/win-screen audio doesn't
-// loop the same clip every hit; missing files 404 harmlessly, so characters
-// with fewer generated lines than the count just degrade to repeats.
-// Default clip counts. A fighter can carry MORE (or fewer) via its `vo` array
-// lengths in the character JSON — real-recording fighters (yulia) have as many
-// kiai/hurt/victory clips as they have takes. voiceCount() is the source of truth.
-export const VOICE_COUNTS = { kiai: 6, hurt: 6, victory: 4 } as const;
-export function voiceCount(charId: string, cat: keyof typeof VOICE_COUNTS): number {
-  return characters[charId]?.vo?.[cat]?.length ?? VOICE_COUNTS[cat];
-}
-const VOICES = ROSTER.filter((r) => r.playable).flatMap((r) =>
-  (Object.keys(VOICE_COUNTS) as (keyof typeof VOICE_COUNTS)[]).flatMap((cat) =>
-    Array.from({ length: voiceCount(r.id, cat) }, (_, i) => `${r.id}-${cat}-${i + 1}`)
-  )
-);
-// per-move VO call-outs (v-<char>-move-<moveId>) — only moves flagged `voice`
-// in their JSON have a file, so this list never 404s (a missing mp3 throws)
-const MOVE_VOICES = ROSTER.filter((r) => r.playable).flatMap((r) =>
-  Object.entries(characters[r.id]?.moves ?? {})
-    .filter(([, m]) => m.voice)
-    .map(([moveId]) => `${r.id}-move-${moveId}`)
-);
+// SFX are small and universal — stay at boot. (Per-character VO clip counts
+// live in assetQueue's voiceCount(), the source of truth; playVoice uses it.)
 const SFX = ['hit', 'block', 'whoosh', 'jump', 'projectile', 'blip'];
 
 /** Map a loader key prefix to a human phase label for the preloader HUD. */
@@ -77,60 +52,28 @@ export class BootScene extends Phaser.Scene {
   preload(): void {
     this.buildPreloader();
 
-    this.load.image('bg-salton', 'assets/backgrounds/salton-shoreline.jpg');
-    this.load.image('ui-world-map', 'assets/ui/world-map.png');
-    for (const st of STAGES) {
-      this.load.image(`bg-stage-${st.id}`, st.file);
-      if (st.layers?.sky) this.load.image(`bg-stage-${st.id}-sky`, st.layers.sky.file);
-      if (st.layers?.far) this.load.image(`bg-stage-${st.id}-far`, st.layers.far.file);
-      if (st.layers?.near) this.load.image(`bg-stage-${st.id}-near`, st.layers.near.file);
-      if (st.layers?.floor) this.load.image(`bg-stage-${st.id}-floor`, st.layers.floor.file);
-    }
+    // ── Boot loads only the light "you're in the menu" set ──────────────────
+    // The heavy stuff — per-fighter sheets (~7 MB each), per-stage backgrounds,
+    // VO, and fatality panels — is deferred to assetLoader and streams in as the
+    // player moves select → versus → fight (see assetQueue / assetLoader). This
+    // is what keeps the initial download small.
+    this.load.image('bg-salton', 'assets/backgrounds/salton-shoreline.jpg'); // fallback stage
+    this.load.image('ui-world-map', 'assets/ui/world-map.png');              // select-screen map
+    // portraits: head icon + side bust + defeated bust — the select grid, VS
+    // card, health-bar mugshots and win screen. Small, and the select screen
+    // needs every fighter's icon up front, so they stay at boot.
     for (const { id, playable } of ROSTER) {
-      // 3D-only fighters (mesh but no packed 2D sheet) have none of these files
-      // — skip so their absence isn't a wall of 404s at boot
-      if (!playable) continue;
-      this.load.spritesheet(`sheet-${id}`, `assets/sprites/${id}/sheet.png`, {
-        frameWidth: CELL_W,
-        frameHeight: CELL_H,
-      });
-      this.load.json(`meta-${id}`, `assets/sprites/${id}/meta.json`);
-      // legacy single projectile — only a couple chars still have one
-      if (HAS.legacyProj.has(id)) this.load.image(`proj-${id}`, `assets/sprites/${id}/projectile.png`);
-      // front-facing head icon — select grid, health-bar mugshots, VS card
-      this.load.image(`portrait-${id}`, `assets/portraits/${id}.png`);
-      // side-profile bust — big per-player portrait on the select-screen edges
-      this.load.image(`bust-${id}`, `assets/portraits/${id}-bust.png`);
-      // beaten-and-bloodied portrait for the post-match win-quote screen
-      this.load.image(`portrait-ko-${id}`, `assets/portraits/${id}-ko.png`);
+      if (!playable) continue; // 3D-only fighters have no packed 2D portraits
+      queueFighterPortraits(this, id);
     }
     // generic impact sparks (greyscale, tinted per character at spawn)
     // + the circling dizzy-stars loop drawn over a dazed fighter's head
     for (const v of ['spark-hit', 'spark-heavy', 'spark-block', 'dizzy']) {
       this.load.image(`vfx-${v}`, `assets/vfx/${v}.png`);
     }
-    // fatality cutscene panels + per-special projectile art + per-move VFX
-    for (const [id, def] of Object.entries(characters)) {
-      for (const [moveId, mv] of Object.entries(def.moves)) {
-        const ref = `${id}/${moveId}`;
-        if (mv.projectile && HAS.moveProj.has(ref)) {
-          this.load.image(`proj-${id}-${moveId}`, `assets/sprites/${id}/projectile-${moveId}.png`);
-          if (mv.projectile.detonate && HAS.moveBurst.has(ref)) {
-            this.load.image(`proj-${id}-${moveId}-burst`, `assets/sprites/${id}/projectile-${moveId}-burst.png`);
-          }
-        }
-        if (mv.vfx && HAS.moveVfx.has(ref)) {
-          this.load.image(`vfx-${id}-${moveId}`, `assets/sprites/${id}/vfx-${moveId}.png`);
-        }
-      }
-      if (!def.fatality) continue;
-      for (let n = 1; n <= def.fatality.panels; n++) {
-        this.load.image(`fat-${id}-${def.fatality.id}-${n}`, `assets/fatalities/${id}/${def.fatality.id}-${n}.jpg`);
-      }
-    }
+    // announcer VO (round/fight/ko + name & stage call-outs) and universal SFX
+    // are small and wanted early (select-screen name calls, round start).
     for (const a of ANNOUNCER) this.load.audio(`ann-${a}`, `assets/audio/announcer/${a}.mp3`);
-    for (const v of VOICES) this.load.audio(`v-${v}`, `assets/audio/voice/${v}.mp3`);
-    for (const v of MOVE_VOICES) this.load.audio(`v-${v}`, `assets/audio/voice/${v}.mp3`);
     for (const s of SFX) this.load.audio(`s-${s}`, `assets/audio/sfx/${s}.mp3`);
 
     // now that the whole manifest is queued, publish the file count so the

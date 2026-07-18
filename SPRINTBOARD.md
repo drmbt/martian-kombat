@@ -1488,6 +1488,27 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-18 · infra/scenes · lazy asset loading (small boot, stream on
+  demand)** — boot no longer downloads the whole game. `BootScene.preload()`
+  now loads only the light menu set (portraits/busts/KO, world map, salton
+  fallback bg, spark VFX, announcer, SFX ≈ 10 MB); the ~180 MB of per-fighter
+  **sheets**, per-stage **backgrounds**, per-fighter **VO**, and **fatality
+  panels** stream on demand via new `src/scenes/assetLoader.ts` +
+  `assetQueue.ts` (promise-deduped, data-driven off `ROSTER` + character JSON).
+  Wiring: Select highlight → sheet (head-portrait placeholder until the idle
+  lands); lock-in → VO; stage-pick → bg. Versus pre-warms both fighters + stage;
+  `FightScene`/`FightScene3D.preload()` is the hard barrier for every entry path
+  (dev launch / Studio TEST / arcade / online-direct), instant when warmed.
+  **Fatality panels load in the background DURING the fight** (per Vincent).
+  VO requests gate on `VO_FIGHTERS` (playable roster) so a WIP/Studio draft's
+  absent VO never 404-throws. Verified in-browser: boot pulls 0 sheets/stages/
+  VO/fatalities; select streams only the highlighted fighter's sheet; a full
+  match renders real sprites + stage + all 8 fatality panels mid-fight. Docs:
+  new "Lazy asset loading — the load contract" in CLAUDE.md + notes in
+  ASSET_CHECKLIST, the new-character skill, and CHARACTER_STUDIO (adding a
+  character stays ZERO loader code, both pipeline + Studio SHIP). 379 tests
+  green, tsc clean. — Claude
+
 - **2026-07-14 · infra · Cloudflare Workers deploy (martiankombat.com) +
   asset diet** — moving hosting from GitHub Pages to **Cloudflare Workers
   Static Assets** (registrar + R2 all on Cloudflare; R2's zero egress is
