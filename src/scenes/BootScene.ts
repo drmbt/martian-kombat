@@ -52,6 +52,11 @@ export class BootScene extends Phaser.Scene {
   preload(): void {
     this.buildPreloader();
 
+    // Kick the music manifest fetch NOW (parallel to the Phaser boot loads, on
+    // its own HTMLAudio path) so the menu theme is pre-buffered by the time the
+    // title appears — a fresh load then plays it the instant autoplay unblocks.
+    initMusic();
+
     // ── Boot loads only the light "you're in the menu" set ──────────────────
     // The heavy stuff — per-fighter sheets (~7 MB each), per-stage backgrounds,
     // VO, and fatality panels — is deferred to assetLoader and streams in as the
@@ -228,8 +233,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
-    initMusic(); // fetches music/manifest.json; playback degrades to silence if absent
-    applyMusicVolume();
+    applyMusicVolume(); // music manifest fetch was kicked off in preload()
     this.scene.launch('Volume'); // persistent quick-volume overlay, above every scene
     const target = devBootTarget();
     if (target) {

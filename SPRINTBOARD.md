@@ -1488,6 +1488,18 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-18 · audio · pre-buffer the menu theme at boot** — the menu music is
+  HTMLAudio (separate from the Phaser loader) and only started fetching when
+  MenuScene first called `playMusic('menu')`, so a fresh load had a cold
+  buffering wait before the theme came in. Now `initMusic()` is kicked from
+  BootScene.preload() (parallel to the essential asset loads, not after), and
+  the moment the music manifest lands it `warmMusic('menu')` pre-buffers a menu
+  track WITHOUT playing it. `start()` reuses that warmed element when the
+  ctx+file match, so the theme plays the instant it's requested / autoplay
+  unblocks on the first gesture. Verified: `menu/title.mp3` now begins loading
+  at the very start of boot (before the announcer files). tsc + 379 tests clean.
+  — Claude
+
 - **2026-07-18 · scenes · pre-fight loading bar + asset-load inspector logging**
   — the VS screen now shows a real "STREAMING FIGHTERS… N%" progress bar
   (fraction of the fighter/VO/stage jobs resolved); on a warmed/repeat matchup

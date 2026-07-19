@@ -36,6 +36,10 @@ export interface PlayOpts {
 let manifest: MusicManifest | null = null;
 let current: { ctx: string; file: string; el: HTMLAudioElement } | null = null;
 let pending: { ctxs: string[]; opts: PlayOpts } | null = null;
+// A track pre-buffered at boot (the menu theme) so it plays the INSTANT it's
+// first requested — no fetch/decode wait after the title gesture. start() reuses
+// this element when the ctx+file match, then clears it.
+let warmed: { ctx: string; file: string; el: HTMLAudioElement } | null = null;
 let musicVolume = 0.6; // pre-boot fallback; BootScene applies the saved setting
 let unlockArmed = false;
 
@@ -69,12 +73,31 @@ export function initMusic(): void {
     .catch(() => ({}) as MusicManifest)
     .then((m) => {
       manifest = m;
+      // pre-buffer the menu theme the moment we know which tracks exist, so it's
+      // ready to play the instant the title/menu asks for it (or the first user
+      // gesture unblocks autoplay) — no cold fetch on a fresh load.
+      warmMusic('menu');
       if (pending) {
         const { ctxs, opts } = pending;
         pending = null;
         playMusic(ctxs, opts);
       }
     });
+}
+
+/** Pre-buffer one track for a context (the boot menu theme) WITHOUT playing it,
+ *  so the first playMusic() for that context starts instantly. No-op if the
+ *  manifest isn't in yet, the context has no tracks, or something's already
+ *  warmed. */
+export function warmMusic(ctx: string): void {
+  if (!manifest || warmed || typeof Audio === 'undefined') return;
+  const picked = pickTrack(manifest, [ctx], Math.random);
+  if (!picked) return;
+  const el = new Audio(`${MUSIC_BASE}${picked.ctx}/${picked.file}`);
+  el.preload = 'auto';
+  el.volume = 0;
+  el.load(); // begin fetching now, during boot
+  warmed = { ctx: picked.ctx, file: picked.file, el };
 }
 
 /** Whether a context has at least one track (false until the manifest loads). */
@@ -102,7 +125,10 @@ export function playMusic(ctx: string | string[], opts: PlayOpts = {}): void {
     return;
   }
   if (!opts.once && current && current.ctx === picked.ctx && !current.el.paused) return;
-  start(picked.ctx, picked.file, opts);
+  // if we pre-buffered a track for this context, play THAT one (it's already
+  // loaded) rather than a fresh random pick that would fetch from cold.
+  const file = warmed && warmed.ctx === picked.ctx ? warmed.file : picked.file;
+  start(picked.ctx, file, opts);
 }
 
 /**
@@ -172,8 +198,16 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
 
 function start(ctx: string, file: string, opts: PlayOpts): void {
   stopMusic();
-  const el = new Audio(`${MUSIC_BASE}${ctx}/${file}`);
-  el.preload = 'auto';
+  // reuse the boot-warmed element if it's this exact track (already buffered);
+  // otherwise stream a fresh one
+  let el: HTMLAudioElement;
+  if (warmed && warmed.ctx === ctx && warmed.file === file) {
+    el = warmed.el;
+    warmed = null; // consumed
+  } else {
+    el = new Audio(`${MUSIC_BASE}${ctx}/${file}`);
+    el.preload = 'auto';
+  }
   el.volume = 0;
   const tracks = manifest?.[ctx] ?? [];
   if (opts.once) {
