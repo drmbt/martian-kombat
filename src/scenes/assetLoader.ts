@@ -22,6 +22,31 @@ const done = new Set<string>();
 const inflight = new Map<string, Promise<void>>();
 let prefetchStarted = false;
 
+// ── dev/inspector visibility ────────────────────────────────────────────────
+// Every group logs when it starts a real download, when it lands (with elapsed
+// ms), and when it was already on disk (a "hit" — no bytes fetched). A repeat
+// fight with the same fighters should log ONLY hits: if you ever see "load" for
+// a fighter you already used this session, that's a genuine re-download bug.
+// `window.__mkAssets()` in the console prints what's been pulled locally.
+const now = (): number => (typeof performance !== 'undefined' ? performance.now() : 0);
+function logAsset(kind: 'load' | 'done' | 'hit', key: string, extra = ''): void {
+  const tag = kind === 'load' ? '↓ load ' : kind === 'done' ? '✓ ready' : '· cache';
+  // eslint-disable-next-line no-console
+  console.info(`[MK assets] ${tag} ${key}${extra ? '  ' + extra : ''}`);
+}
+if (typeof window !== 'undefined') {
+  (window as unknown as { __mkAssets?: () => Record<string, string[]> }).__mkAssets = () => {
+    const by: Record<string, string[]> = { sprite: [], vo: [], fat: [], stage: [] };
+    for (const k of done) {
+      const dash = k.indexOf('-');
+      const type = k.slice(0, dash);
+      const id = k.slice(dash + 1);
+      (by[type] ??= []).push(id);
+    }
+    return by;
+  };
+}
+
 /**
  * Ensure a named group of files is in the global cache. `queue` adds the missing
  * files to the scene loader and returns how many it queued; if none, we resolve
@@ -36,10 +61,13 @@ function ensure(scene: Phaser.Scene, key: string, queue: (s: Phaser.Scene) => nu
 
   const p = new Promise<void>((resolve) => {
     const queued = queue(scene);
-    if (queued === 0) { done.add(key); resolve(); return; }
+    if (queued === 0) { done.add(key); logAsset('hit', key); resolve(); return; }
+    const t0 = now();
+    logAsset('load', key, `(${queued} file${queued === 1 ? '' : 's'})`);
     scene.load.once(Phaser.Loader.Events.COMPLETE, () => {
       done.add(key);
       inflight.delete(key);
+      logAsset('done', key, `${Math.round(now() - t0)}ms`);
       resolve();
     });
     if (!scene.load.isLoading()) scene.load.start();

@@ -51,6 +51,9 @@ export class VersusScene extends Phaser.Scene {
   private ready: Promise<unknown> = Promise.resolve();
   private assetsReady = false;
   private loadingText: Phaser.GameObjects.Text | null = null;
+  private loadBar: Phaser.GameObjects.Graphics | null = null;
+  private loadTotal = 0;
+  private loadDone = 0;
 
   constructor() {
     super('Versus');
@@ -88,8 +91,15 @@ export class VersusScene extends Phaser.Scene {
     if (!this.fight.render3d) {
       jobs.push(AssetLoader.fighter(this, this.fight.p1), AssetLoader.fighter(this, this.fight.p2));
     }
+    // track per-job completion so the pre-fight bar reflects real progress. On a
+    // repeat matchup every job resolves instantly (cache hits) → the bar is full
+    // at once, making it obvious the wait that remains is the VS pacing, not a
+    // download.
+    this.loadTotal = jobs.length;
+    this.loadDone = 0;
+    for (const j of jobs) void j.then(() => { this.loadDone++; });
     this.ready = Promise.all(jobs);
-    this.ready.then(() => { this.assetsReady = true; this.loadingText?.setVisible(false); });
+    this.ready.then(() => { this.assetsReady = true; });
     // 3D: start streaming the fight renderer (models/stage/pipelines) NOW so it
     // overlaps this VS screen instead of a black screen after it
     if (this.fight.render3d) {
@@ -143,26 +153,48 @@ export class VersusScene extends Phaser.Scene {
         .setDepth(3);
     }
 
-    // shown only while the lazy fight assets are still streaming — so a slow
-    // connection reads as "loading", not a frozen VS screen. Hidden the instant
-    // `ready` resolves (see above); if everything was already warmed in select,
-    // assetsReady is already true and this never shows.
+    // A real progress bar for the lazy fight assets — so a slow connection reads
+    // as "loading N%", not a frozen VS screen. Hidden the instant everything is
+    // ready; on a warmed/repeat matchup it fills at once and vanishes.
     this.loadingText = this.add
-      .text(STAGE_W / 2, STAGE_H - 40, 'STREAMING FIGHTERS…', {
-        fontFamily: 'monospace', fontSize: '13px', color: '#ffb347', stroke: '#000', strokeThickness: 3,
+      .text(STAGE_W / 2, STAGE_H - 52, 'STREAMING FIGHTERS…', {
+        fontFamily: 'monospace', fontSize: '13px', fontStyle: 'bold', color: '#ffb347', stroke: '#000', strokeThickness: 3,
       })
       .setOrigin(0.5)
-      .setDepth(4)
+      .setDepth(5)
       .setVisible(!this.assetsReady);
+    this.loadBar = this.add.graphics().setDepth(5);
+    this.drawLoadBar();
 
     this.input.keyboard!.once('keydown', () => this.startFight());
     this.input.once('pointerdown', () => this.startFight());
   }
 
   update(): void {
+    this.drawLoadBar();
     // pad presses fire no DOM events — poll so the controller can skip the splash
     const n = menuNav.poll();
     if (n.confirm || n.start || n.menu) navDefer(this, () => this.startFight());
+  }
+
+  /** Pre-fight streaming bar: fraction of the fighter/VO/stage jobs resolved.
+   *  Clears itself once everything's ready (a warmed matchup shows nothing). */
+  private drawLoadBar(): void {
+    const g = this.loadBar;
+    if (!g) return;
+    const frac = this.loadTotal ? this.loadDone / this.loadTotal : 1;
+    const ready = this.assetsReady || frac >= 1;
+    this.loadingText?.setVisible(!ready);
+    if (ready) { g.clear(); return; }
+    const W = 320;
+    const H = 10;
+    const x = STAGE_W / 2 - W / 2;
+    const y = STAGE_H - 38;
+    g.clear();
+    g.fillStyle(0x000000, 0.5).fillRoundedRect(x - 2, y - 2, W + 4, H + 4, 4);
+    g.fillStyle(0x2a2233, 1).fillRoundedRect(x, y, W, H, 3);
+    g.fillStyle(0xffb347, 1).fillRoundedRect(x, y, Math.max(4, W * frac), H, 3);
+    this.loadingText?.setText(`STREAMING FIGHTERS…  ${Math.round(frac * 100)}%`);
   }
 
   /** Portrait in a framed box sliding in from its side, name plate below. */

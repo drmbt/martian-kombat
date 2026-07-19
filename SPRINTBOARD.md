@@ -1488,6 +1488,20 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-07-18 · scenes · pre-fight loading bar + asset-load inspector logging**
+  — the VS screen now shows a real "STREAMING FIGHTERS… N%" progress bar
+  (fraction of the fighter/VO/stage jobs resolved); on a warmed/repeat matchup
+  it's instantly full and vanishes, so the remaining wait reads clearly as VS
+  pacing, not a download. AssetLoader now logs to the console: `↓ load <group>
+  (N files)`, `✓ ready <group> <ms>`, `· cache <group>` (already on disk), and
+  exposes `window.__mkAssets()` → `{sprite, vo, fat, stage}` lists of what's been
+  pulled locally. Confirmed the persistence question: a repeat matchup logs ZERO
+  re-loads (the `done` set short-circuits before touching the loader) and the
+  fight boots instantly from cache — assets DO persist in-session (Phaser cache)
+  and across reloads (browser HTTP cache, `max-age=604800` per `_headers`); the
+  re-run wait is the versus-clip pacing, not re-downloading. tsc + 379 tests
+  clean. — Claude
+
 - **2026-07-18 · scenes · progressive background prefetch (load-everything,
   prioritized)** — replaced the "load on select/versus" approach with a global
   background sweep that streams the WHOLE game in after the menu appears, in
