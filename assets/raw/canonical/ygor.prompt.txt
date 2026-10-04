@@ -1,0 +1,6 @@
+Transform the person in the reference photo into a full-body 2D fighting game character.
+CRITICAL: preserve their real facial features, hairstyle, skin tone, body type and the outfit they are wearing in the photo — it must be recognizably the same person.
+Pose: dynamic side-on martial-arts fighting stance facing right, knees bent, hands up ready to fight, full body visible head to toe with a small margin, centered.
+Background: solid flat chroma-key green (#00B140), completely uniform, no shadows cast on the background, no floor, no text, no watermark, no border.
+Art style: hand-painted cel-shaded 2D anime fighter (modern Capcom / Arc System Works aesthetic). Bold clean line art, painterly cel shading, confident silhouette, slightly heroic proportions while keeping the person recognizable.
+Character flavor: "Suave" — a psychedelic projection artist. Keep the worn cap, yellow t-shirt with red leopard print, dark work pants and the vintage film camera on its neck strap from the photo. Playful grin; one open hand projects a beam of RAINBOW light with a small hand-drawn glowing MAGENTA-ORANGE cartoon creature leaping out of it (never green).
