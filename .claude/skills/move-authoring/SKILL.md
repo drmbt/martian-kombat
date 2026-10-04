@@ -90,8 +90,18 @@ right.** `worldBox`: `l = f.x + box.x`, `t = f.y + box.y`. Every move has
 - **Vault / launch** — `vault:{vx,vy}` (launch airborne at first active).
 - **Yoga float** — `float:{vy,gravity,vx?}`.
 - **Short-range flame/cone** — a straight `projectile` with small `ttl`.
+- **Per-move contact tuning (MUGEN parity, any move/variant)** — `hitstop: N`
+  or `[attacker, victim]` (MUGEN `pausetime`; defaults 4/6/9/10 by strength),
+  `chip: N` (guard damage; default 0 lights / 10%), `blockKnockback: N`
+  (block push; default 0.8 × knockback). Frame-data identities for tuning:
+  measured on hit = `hitstun − active − recovery`, on block =
+  `blockstun − active − recovery`, startup = `startup + 1` (SF convention).
 
 ## NOT yet built (❌ — needs engine work; do not author as if present)
+
+(The MUGEN/IKEMEN parity roadmap — juggle points, per-phase hurtboxes,
+multi-hitbox moves, priority, invuln classes, meter/supers, `ff`, air tech —
+is `docs/FIGHTING_STANDARDS.md` §10 Phase C.)
 
 - **Install / buff / stance** (empower next special, timed speed/armor buff).
 - **Rekka** (chainable multi-part special).
@@ -139,5 +149,13 @@ determinism rules) — never fake it in JSON.
    guesses.
 4. After frames generate, run sprite-qa and snap the active-cell hitboxes to the
    pose-measured values (confidence-gated).
-5. `npm run test` — every engine behavior a move relies on must already be
-   covered; if you touched the engine, ship a vitest.
+5. **Bench it against MKS-1** (the **fighting-game-standards** skill):
+   `npm run bench -- --char <id>` measures every move in the real engine —
+   startup / on-hit / on-block / reach / best combo / chain loops — and lists
+   errors (never connects, throw out of range, unreachable, infinite…) and
+   out-of-band warnings. Pose-measured hitboxes are a START: a box that sits
+   behind the push box (`x + w` ≤ body front + opponent hurtbox back) can
+   never connect, and the bench is what catches it.
+6. `npm run test` — every engine behavior a move relies on must already be
+   covered; if you touched the engine, ship a vitest. The MKS-1 ratchet
+   (`src/bench/balance.audit.test.ts`) fails on any NEW error.
