@@ -9,7 +9,9 @@ audio assets are AI-generated from real inspiration photos via scripted pipeline
 1. **Read `SPRINTBOARD.md` before doing anything.** It is the single source of truth
    for what's done, what's in flight, and what's next. Update its checkboxes and
    append to its changelog **before every commit**. It doubles as the agent handoff
-   sheet — if you stop mid-task, write a handoff note there.
+   sheet — if you stop mid-task, write a handoff note there. **(Since
+   2026-10-04 the active backlog is `docs/handoff/02-PLAN.md`; it supersedes
+   SPRINTBOARD's "Current"/handoff sections until its P1.1 slims the board.)**
 2. **Never commit `.env`** or print key values. Keys available (see `.env.example`):
    `GEMINI_API_KEY` (nano-banana image gen + Veo video), `OPENAI_API_KEY`
    (GPT Image), `ELEVENLABS_API_KEY` (SFX/voice), `FAL_KEY` (fal.ai fallback route
@@ -47,7 +49,12 @@ src/
   data/
     characters/  # one JSON per character (frame data, moves, asset refs)
     stages.ts    # stage registry — the game's stage index
+  bench/         # MKS-1 frame-data lab: measures moves/physics/combos by running
+                 # the real engine; standards bands, audit, CI ratchet, parity
+    reference/   # bench-only ported references (KFM) — never in ROSTER
+  compat/mugen/  # MUGEN / IKEMEN GO parsers (DEF/CNS/CMD/AIR/SFF/stage) + porter
 tools/           # asset generation scripts (Node, hit the APIs in .env)
+  fg/            # fighting-game standards CLIs: bench, mugen:fetch, mugen:import
 assets/
   character-inspo/  # source photos of real people (committed, the ground truth)
   raw/              # gen intermediates: veo clips, frame dumps (GITIGNORED)
@@ -252,6 +259,10 @@ npm run gen:vfx                        # impact sparks + per-move overlays (--co
 npm run gen:music                      # rescan music folders -> manifest.json
 npm run gen:key -- --char vincent      # CorridorKey neural re-key -> assets/raw/keyed/ (--setup-only, --backend, --force)
 npm run gen:voice -- --char gene       # Fish Audio voice clone from assets/voice-inspo/<name>/ (--say "test", --list)
+npm run bench                          # MKS-1 roster audit (engine-measured frame data, bands, errors)
+npm run bench -- --char vincent        # one fighter's measured table + findings (--md, --parity kfm, --update-baseline)
+npm run mugen:fetch                    # reference content (KFM, stages, IKEMEN data) → gitignored assets/raw/mugen/
+npm run mugen:import -- --def <char.def> --id <id> --fit   # port + auto-fit a MUGEN/IKEMEN char → src/bench/reference/
 ```
 
 All gen scripts are idempotent (skip existing files; `--force` regens,
@@ -364,6 +375,22 @@ state: SPRINTBOARD Sprint 27 + Agent handoff notes. Do not expose any
 dev-editor UI in the shipped build (everything is `apply:'serve'` +
 `import.meta.env.DEV`).
 
+## Fighting-game standards — MKS-1 (adopted 2026-10-04)
+
+Benchmarked against M.U.G.E.N / IKEMEN GO via their reference fighter Kung Fu
+Man, ported into our engine at 100% measured parity (bench-only, never in
+`ROSTER`; raw files stay in gitignored `assets/raw/mugen/`). Full write-up:
+`docs/FIGHTING_STANDARDS.md`; measured tables: `docs/FRAME_DATA.md`
+(generated); workflows: the **fighting-game-standards** + **mugen-import**
+skills. Essentials:
+- **Measure, never read** — frame data is what `step()` does (`src/bench/`).
+  Measured startup = `startup + 1`; on hit = `hitstun − active − recovery`;
+  on block = `blockstun − active − recovery`.
+- `npm run test` ratchets MKS-1 errors (`src/bench/baseline.json`) and keeps
+  the KFM port at 100% parity (an engine-semantics change fails it by name).
+- Optional per-move MUGEN-parity fields: `hitstop` (N or [attacker, victim]),
+  `chip`, `blockKnockback`.
+
 ## Conventions
 
 - TypeScript strict mode. No `any` in `src/engine/`.
@@ -375,6 +402,11 @@ dev-editor UI in the shipped build (everything is `apply:'serve'` +
   **sprite-generation** (pose-prompt craft), **sprite-qa** (deterministic
   DWPose/alpha validation), **move-authoring** (kit design + the archetype→
   plumbing catalog — the source of truth for which move mechanics are buildable),
-  **new-character** (end-to-end orchestrator), and **hit-spark-generator**
-  (single-pass NxN VFX grids + the anti-samey playback spec). Invoke them for
+  **new-character** (end-to-end orchestrator), **hit-spark-generator**
+  (single-pass NxN VFX grids + the anti-samey playback spec),
+  **fighting-game-standards** (MKS-1 bands, the bench, tuning recipes) and
+  **mugen-import** (port/benchmark MUGEN & IKEMEN GO content). Invoke them for
   that work.
+- Any change to a move's frame data, hitbox or damage, or a fighter's
+  movement: `npm run bench -- --char <id>` before committing (zero new MKS-1
+  errors — the ratchet in `npm run test` enforces it).

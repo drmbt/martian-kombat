@@ -6,6 +6,13 @@
 > Unchecked boxes in the active sprint = the backlog. Do not silently add scope;
 > new ideas go to the Icebox.
 
+**Latest (2026-10-04): the ACTIVE BACKLOG is `docs/handoff/02-PLAN.md`**
+(full-repo audit + MKS-1 merged; it supersedes this file's "Current" and
+handoff sections until its P1.1 slims this board). Machine move in progress:
+`docs/handoff/01-OLD-MACHINE-PASSOFF.md` → `03-NEW-MACHINE-RESUME.md`, all on
+branch `feat/mks1-rescue-handoff`. Sprint 28 Phase A (MKS-1: bench lab, KFM
+port at 100% parity, CI ratchet) shipped — see `docs/FIGHTING_STANDARDS.md`.
+
 **Current: Sprint 22 (renderer parity + shared presentation shell) SHIPPED —
 roster now 13 playable (Rapha added, 4 with 3D meshes)** · MVP shipped
 2026-07-02 (8/8 fighters playable, 19 stages, full music loop, fatalities,
@@ -1459,6 +1466,36 @@ implementation, many doors; only the standalone scene implementations
       (`hidden` flag + guided delete); docs + CLAUDE.md consolidation
       (roster count, creator status, studio pointers) + final skills sweep.
 
+### Sprint 28 — Fighting-game standards (MKS-1) + MUGEN/IKEMEN parity (user-directed 2026-10-04)
+Goal: compare against the long-running community standard (M.U.G.E.N /
+IKEMEN GO), adopt its worthwhile standards, and build a benchmark that ports
+a gold-standard character (Kung Fu Man) into our engine and proves it plays
+the same. Full write-up + roadmap: `docs/FIGHTING_STANDARDS.md`; skills
+**fighting-game-standards** + **mugen-import**.
+
+**Phase A — standards foundation ✅ (2026-10-04)**
+- [x] `src/bench/` frame-data lab — measures every move/physics by running
+      `step()` (SF convention): startup, total, recovery, on hit/block,
+      hitstop, pushback (CH), connect range; combo-route finder (verified
+      best meterless combo) + chain-loop/infinite verifier
+- [x] MKS-1 bands + hard rules (`src/bench/standards.ts`), audit, CLI
+      (`npm run bench`, `--char`, `--md`, `--parity`, `--update-baseline`),
+      generated `docs/FRAME_DATA.md`
+- [x] CI ratchet `src/bench/balance.audit.test.ts` + `baseline.json`
+      (14 known errors grandfathered)
+- [x] `src/compat/mugen/` parsers (DEF/CNS/CMD/AIR/SFF header/stage DEF) +
+      porter; `npm run mugen:fetch` / `mugen:import --fit`
+- [x] Kung Fu Man ported at **100% parity** (90% raw → 100% fitted; HD
+      `kfm720` also 100%); `parity.test.ts` guards engine semantics
+- [x] Engine: per-move `hitstop` (number | [attacker, victim]), `chip`,
+      `blockKnockback` (MUGEN pausetime / guard damage / guard.velocity) + vitests
+- [x] Docs/skills: FIGHTING_STANDARDS.md, CLAUDE.md section, 2 new skills,
+      move-authoring + new-character bench gates
+
+**Phases B–E** (compliance fixes, engine parity primitives, content
+import, tooling) are tracked in **`docs/handoff/02-PLAN.md`** — P3.5, P3.8,
+P3.11, P4.0–P4.4, P10.7–P10.9 and decisions D8–D10 — not here.
+
 ### Icebox (do not start)
 - **Attract-mode gag reels (3D)**: occasionally, instead of a demo fight, the
   attract rotation holds on a stage with one or two fighters doing weird
@@ -1487,6 +1524,36 @@ fixed-screen SF2 framing is intentional).
 ## Changelog
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
+
+- **2026-10-04 · docs/handoff · unified plan + machine-move pass-off** —
+  merged the parallel full-repo audit (P0–P11) and the MKS-1 roadmap into
+  `docs/handoff/02-PLAN.md` (one backlog; MKS-1 B–E mapped onto P3/P4/P10,
+  new decisions D8–D10); wrote `01-OLD-MACHINE-PASSOFF.md` (canonical-anchor
+  list incl. ben/tao/rj with no git fallback, verified `.gitignore` rules,
+  private R2 `martiankombat-raw` contents spec, raw-sync contract, MKS-1
+  determinism cross-check) and `03-NEW-MACHINE-RESUME.md`; archived the
+  audit's original three docs in `docs/archive/handoff-2026-10-04-audit/`.
+  Branch `feat/mks1-rescue-handoff`. — Claude (Opus 5.5)
+
+- **2026-10-04 · bench/compat/engine/docs · Sprint 28 Phase A — MKS-1
+  standards + MUGEN/IKEMEN parity** — researched M.U.G.E.N / IKEMEN GO
+  (verified semantics against IKEMEN's MIT source) and built: the
+  `src/bench/` frame-data lab (engine-measured startup/advantage/pushback/
+  physics, verified combo finder, infinite verifier), MKS-1 bands + hard
+  rules + CI ratchet (`balance.audit.test.ts`, 14 known errors in
+  `baseline.json`), `src/compat/mugen/` parsers + porter, `npm run bench` /
+  `mugen:fetch` / `mugen:import`, and a Kung Fu Man port at 100% measured
+  parity (`src/bench/reference/`, bench-only, attributed CC BY-NC) guarded
+  by `parity.test.ts`. Engine: optional per-move `hitstop`
+  ([attacker, victim]), `chip`, `blockKnockback` (+ vitests; defaults
+  unchanged). Findings: 4 never-connecting normals, 2 unperformable throws
+  (earl/ben: no `input`), 6 throws that can't reach some opponents, vincent + ben infinite
+  light loops (vincent's lk/clp/cmk drifted to 2f/12-active), and engine
+  quirks (takeoff friction, charge needs 43 ticks, buffer expires in
+  hitstop ≥ 9). Docs: `docs/FIGHTING_STANDARDS.md`, generated
+  `docs/FRAME_DATA.md`, CLAUDE.md section, skills fighting-game-standards +
+  mugen-import, bench gates in move-authoring/new-character. No roster data
+  changed. — Claude (Opus 5.5)
 
 - **2026-07-18 · audio · pre-buffer the menu theme at boot** — the menu music is
   HTMLAudio (separate from the Phaser loader) and only started fetching when
@@ -3503,6 +3570,19 @@ fixed-screen SF2 framing is intentional).
 
 ---
 ## Agent handoff notes
+
+**2026-10-04 — MKS-1 Phase A done + unified plan, on branch
+`feat/mks1-rescue-handoff` (pushed).** The backlog is
+`docs/handoff/02-PLAN.md` (audit + MKS-1 merged). Next: the old machine runs
+`docs/handoff/01-OLD-MACHINE-PASSOFF.md` (R2 rescue + canonical anchors,
+pushed to the same branch), then this machine runs
+`03-NEW-MACHINE-RESUME.md`. The MKS-1 data fixes are plan P4.0–P4.4
+(14 ratcheted errors) — each fix must be
+followed by `npm run bench -- --update-baseline` or the ratchet test fails
+(it rejects fixed-but-still-listed errors). Raw MUGEN content is gitignored:
+`npm run mugen:fetch` before any `mugen:import`. Landmines: vite-node can't
+load scripts outside the repo root (put throwaway scripts in `tools/fg/`
+and delete them); don't raise global hitstop before C1 (cancels drop).
 
 *(rewritten 2026-07-08 end-of-session — the previous notes were Sprint-20 era)*
 
