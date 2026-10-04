@@ -1,0 +1,4761 @@
+{
+  "version": 1,
+  "bucket": "martiankombat-raw",
+  "prefix": "repo/",
+  "generatedAt": "2026-10-04T08:48:39.236Z",
+  "sourceHost": "Vincents-MacBook-Air.local",
+  "ignored": [
+    {
+      "path": "assets/raw/creator/ben/img/00-idle-a.png",
+      "bytes": 65109,
+      "sha256": "843f91ccb09765b865e5b5045e051f8e14cbac6d9faa3c1957554e1a8ccff1d0"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/01-idle-b.png",
+      "bytes": 68390,
+      "sha256": "14e6953f114f64937b53ee10be6463e3a441a333753edb4ade237d19e05b89aa"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/02-walk-a.png",
+      "bytes": 75318,
+      "sha256": "1ec6929b9b82424522535c465e27292953e3e87136a2b8cf563146f80359cdd6"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/03-walk-b.png",
+      "bytes": 71620,
+      "sha256": "d81c2ef9cf863caa5559b5953526f2256c792738b1e739c6adb638cee701a680"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/05-jump.png",
+      "bytes": 61179,
+      "sha256": "7460bbaf8ed85bb92900426b7d5b8dcb870e674a93eff950668c1c39e950ddc0"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/06-block.png",
+      "bytes": 93596,
+      "sha256": "4095e7398b4b35fe03364f7ae445d0013cac4398d32a0a6154ff810c169604da"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/07-block-crouch.png",
+      "bytes": 84264,
+      "sha256": "474e236d95749fb8d132fe57096e124afc99e6d75301a96bf8ebba2b968e093a"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/08-hit.png",
+      "bytes": 92400,
+      "sha256": "811d97cfd55d06c555acae5e8edbc62bfd5b97755ae0dc35289876ae6f4de06f"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/09-fall.png",
+      "bytes": 88636,
+      "sha256": "fd3f74129faa4ef246bda062bca940f1cab8e3de2b0db0b209cb9f043c11a0fe"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/10-down.png",
+      "bytes": 55650,
+      "sha256": "6cc7b8b11cc00bd5f99cc00343ec505e210a2cfc63ab8500f45cf2e8cbf90676"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/12-lp-active.png",
+      "bytes": 76549,
+      "sha256": "19e2d49b3a639d6f1a3feba478872b3a4a4db565aade12f98739848434cd0f48"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/14-mp-startup.png",
+      "bytes": 67007,
+      "sha256": "3531c841fd0c1dab4cd81d1f24de444b72345601b74a3d75498405d23ea0235f"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/15-mp-active.png",
+      "bytes": 83404,
+      "sha256": "33c835c68f250d6937ef92a0d20c6d9600f8c132180ef031e5e45db0be885d84"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/17-hp-startup.png",
+      "bytes": 92752,
+      "sha256": "a63c772e8831f10e08fb0a134bc219413dbc1266b561e056f0f759343f15f3cc"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/19-hp-recovery.png",
+      "bytes": 87606,
+      "sha256": "706dbf6c41d8f3ef8058e4638dc808a565143f8fc331b457d61930d345cbb268"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/20-lk-startup.png",
+      "bytes": 89853,
+      "sha256": "2de971987ba1bba89c0975f3c9d0d74b394adfc9520fd40cdd15892cbee3d1c5"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/22-lk-recovery.png",
+      "bytes": 76743,
+      "sha256": "e9c3faccd8a26ff9b1b684bc9ccd994de0e912598fc5d2079f8ae9c68bf1fad7"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/23-mk-startup.png",
+      "bytes": 84178,
+      "sha256": "fca99eec8d0ed18f4a2972ac8ca4029923c8ffb4b17043c8f6727a9d90f79649"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/24-mk-active.png",
+      "bytes": 84738,
+      "sha256": "9d01f92cb1a9ab01e5b0a73921b2b8dd41620dc40fb9925ceb343314f2977732"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/25-mk-recovery.png",
+      "bytes": 88796,
+      "sha256": "2eb476627a95efccafecbaf45f5669a71e9f34abc544eea4478b1523c28899f8"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/26-hk-startup.png",
+      "bytes": 72732,
+      "sha256": "3259489bcc943777ffeb844ae0ecaefaff9bb879f5c618b25c4cd46a89ebe91f"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/27-hk-active.png",
+      "bytes": 91530,
+      "sha256": "98ccb5398ca2f403a9a5808e104d28c722e18874ca7fb01a511446eb23b6e565"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/28-hk-recovery.png",
+      "bytes": 96061,
+      "sha256": "35c32c7770aaacbe91105b16d8e610eb085f15c60f4b55713511758eaf836c56"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/32-cmp-recovery.png",
+      "bytes": 81650,
+      "sha256": "6fd8de3e25b2d1a6e6dfd0aa355c96aae5e5d0a2b28ca6e7039d1d8ed3389f2f"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/33-chp-active.png",
+      "bytes": 83291,
+      "sha256": "ae0b13b11ef7d650b9ae9d825eec21af3a0bab0d44a9b4fedc12ed40ef44ec2a"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/37-cmk-active.png",
+      "bytes": 88885,
+      "sha256": "2c3d07e266399254b770d0ee62b25b51b9ac0d5087b394470d95c6c54516ac90"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/38-cmk-recovery.png",
+      "bytes": 77801,
+      "sha256": "8353641e79a91b56c90200bcafdaee0e6d8a3241af286a972f3bc08d0dc15556"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/39-chk-active.png",
+      "bytes": 91848,
+      "sha256": "539c5d0b50b92194697e9b98042fd5e1a57e8e3c6be78c2c82b0384cee8e403f"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/40-chk-recovery.png",
+      "bytes": 79878,
+      "sha256": "ed1862a6e21a0d6246e75a4d0d43742d50476bbefd3ed9307e9fd5eca761ac06"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/41-jlp.png",
+      "bytes": 83631,
+      "sha256": "e734621864d182530be622a76b9f023c05628b83c5625deda527a2dee5bf5858"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/42-jmp.png",
+      "bytes": 84675,
+      "sha256": "708bf2e45abe5e2d076050f538ddc00b6e79dfa39756d56c19dece430ddfc130"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/43-jhp.png",
+      "bytes": 96892,
+      "sha256": "f38c8964fd3cdbd48ceea87ae315a98f5a6394ca262d1d8b3978bece6be591eb"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/44-jlk.png",
+      "bytes": 78367,
+      "sha256": "1fac118dec96078586134f210c65c681da9621eee77f2b73159ee29882ac0f1a"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/45-jmk.png",
+      "bytes": 89331,
+      "sha256": "40b0871f353e773aa5af5df07f3712b53e7cc8548e2ee23f94bc628c3b131415"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/46-jhk.png",
+      "bytes": 82597,
+      "sha256": "3e5d924b0308457631f3378b60ccc77a7b2d765b9fc1b8cd440d5fc33e952e92"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/47-throw-startup.png",
+      "bytes": 80712,
+      "sha256": "9ab30845f4ac76ff1fb9069cfff7150a5764b672ec518258782d442a7db15e43"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/48-throw-active.png",
+      "bytes": 93226,
+      "sha256": "3779611c2876d2f2eeb99cda19c52d53e8fa8294e2f7fc0f1ff0d9c2915d63c0"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/49-throw-recovery.png",
+      "bytes": 68551,
+      "sha256": "6df46dee935580e9098316af02f648a349b39cb6890dde1954537a494a35e2ed"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/50-quesadilla-startup.png",
+      "bytes": 110762,
+      "sha256": "f83290ce39d754cae0728100323ceb974a395bfe668f455d7cf0a1380b278539"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/51-quesadilla-active.png",
+      "bytes": 88623,
+      "sha256": "6ba9458e080fc52ce15e08c237a163f2bcd4d04585cd8a1775dae66259ac5810"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/53-hot-coffee-startup.png",
+      "bytes": 68180,
+      "sha256": "2e6f180fff5ca705a88b7c4ca239eeec93c0e58b484de59b733261598d611ce6"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/54-hot-coffee-active.png",
+      "bytes": 81849,
+      "sha256": "09f24003e065f62477a21472f6a03de98d80c61b9191f9be719ab7f1b74d9b7c"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/55-hot-coffee-recovery.png",
+      "bytes": 70096,
+      "sha256": "9eaf7bf5e3a0c5156c0fefcec139c3a4b804b8b2de38f58ed885b8a5a834dcbc"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/56-kitchen-grandma-startup.png",
+      "bytes": 114138,
+      "sha256": "960cb4cc40ecc64c5e696ec1258b4f69862bc1026c67e3c8d099e5d2402ed1ef"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/57-kitchen-grandma-active.png",
+      "bytes": 107590,
+      "sha256": "4928954cd86af16c6b0dcb5848b8e9587c64bbcca9b8a0d7434230d948109d3c"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/58-kitchen-grandma-recovery.png",
+      "bytes": 74194,
+      "sha256": "2351a16ae46356a90a51491906b1866925990a661ef99c31b89aa1e311d972c5"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/59-midnight-munchies-startup.png",
+      "bytes": 63330,
+      "sha256": "d985265ddd4a2079e8dbe5c91854e9213ca3665e82d1fc84667d8806191a09de"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/60-midnight-munchies-active.png",
+      "bytes": 84739,
+      "sha256": "9c0a3de70287d09018b42307426850c378f38a7607aaee7684e13a03c3a63d4a"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/61-midnight-munchies-recovery.png",
+      "bytes": 82867,
+      "sha256": "3f2e53c87d3a6c559d4ca57b3198f32e63ed22fc11a6dea935bb2ac6648da455"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/ko.png",
+      "bytes": 387688,
+      "sha256": "19f2a9e7573b5a17cc47a7ea055dc3fab639c461ca5665d0e0d7e66663a3dbae"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/portrait.png",
+      "bytes": 299619,
+      "sha256": "cb833c39f3d0ffad0f6b9b845d74451219172fd3fb47929b124d38ae464c29b0"
+    },
+    {
+      "path": "assets/raw/creator/ben/img/projectile-quesadilla.png",
+      "bytes": 38360,
+      "sha256": "6d6942125650099159c05ea693e5206212eeba6a035f1b8257d0bf4d55320547"
+    },
+    {
+      "path": "assets/raw/creator/ben/state.json",
+      "bytes": 1585949,
+      "sha256": "2de3bcc975a91efafd8de0ff5986d432795da617cbbf5fe7bb230125e2b66c49"
+    },
+    {
+      "path": "assets/raw/creator/catherine/state.json",
+      "bytes": 1362428,
+      "sha256": "c19858ee84cd0787517cb0f4c9f3002c6d6256960367355c10b353886f9fde86"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/00-idle-a.png",
+      "bytes": 78767,
+      "sha256": "b286509e0e68b7c344237e4989c07b59d641f058efc7dd5b1a6e7447eab9dbf8"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/01-idle-b.png",
+      "bytes": 73297,
+      "sha256": "98d744a149ff0e97f3a7f3abe335b98b6b96cd0d065631453ff5b31c16048f57"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/02-walk-a.png",
+      "bytes": 81609,
+      "sha256": "33874c03fae0b281e2aa5a5729e5c935026f022a80776af80c90fad807aa08e0"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/03-walk-b.png",
+      "bytes": 90268,
+      "sha256": "2410c5788f3ce73c8dc33cf6db563861d56e1044ec7a3d918d2788b8dbdbb3c8"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/04-crouch.png",
+      "bytes": 72717,
+      "sha256": "e8d4659c8bf2f5ef5892c939853cd51f3d8dd6abb3be35ca67e80dec76025460"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/05-jump.png",
+      "bytes": 70278,
+      "sha256": "387b7fbae3d688e69010e8f48c38a341bd1926ccd427f5710c2fadb6fd5c577e"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/06-block.png",
+      "bytes": 79037,
+      "sha256": "0da0caacd23190fb5404d34441bbbf94420eb9b21e826e534919436f010d876a"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/07-block-crouch.png",
+      "bytes": 103650,
+      "sha256": "3b06537a5a3dfbc0245793e9f2b56823e405fc627a929be2304982abc94419d2"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/08-hit.png",
+      "bytes": 92065,
+      "sha256": "dc63b882f7ffd3bbbd26837f2714dabb44f874b0ad2bf2e9d99d2f740ed3a9b1"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/09-fall.png",
+      "bytes": 91437,
+      "sha256": "93fb479a08aa142e55022352aaf75dddaf56d9d3ea90ede8c01d8177f390248c"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/10-down.png",
+      "bytes": 69839,
+      "sha256": "eb54c370f91dd3c7e4257e9d3afae760baec7b33cdc4f2548a23fb9959fe6b79"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/11-lp-startup.png",
+      "bytes": 78767,
+      "sha256": "b286509e0e68b7c344237e4989c07b59d641f058efc7dd5b1a6e7447eab9dbf8"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/12-lp-active.png",
+      "bytes": 82677,
+      "sha256": "f024a5a40e2c2fd76ad12e26ebf327e5c2696edf92ec3054498172b02ba7178b"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/13-lp-recovery.png",
+      "bytes": 80306,
+      "sha256": "4bf568b7eed88dd2c64c94ba868d04a01ccb4931f532551b0f94822b681d650d"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/14-mp-startup.png",
+      "bytes": 90090,
+      "sha256": "fabcd9f2216faeb03fca644c73190904ef8d374049ff414a2701f99256aaa44f"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/15-mp-active.png",
+      "bytes": 74387,
+      "sha256": "ed17aa6905bf9f45959ffbca7548e7110f9e1a9cd02c8ca97e5b99887e101caf"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/16-mp-recovery.png",
+      "bytes": 80306,
+      "sha256": "4bf568b7eed88dd2c64c94ba868d04a01ccb4931f532551b0f94822b681d650d"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/17-hp-startup.png",
+      "bytes": 73405,
+      "sha256": "e07bada7792167cfeead4acef26bea09605531d07ff9aa2224cbca1b338ff456"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/18-hp-active.png",
+      "bytes": 84884,
+      "sha256": "3609c792db71b43360ca9026ccf72d9ee832d01958ed354278f2c40f6cb8fec3"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/19-hp-recovery.png",
+      "bytes": 80306,
+      "sha256": "4bf568b7eed88dd2c64c94ba868d04a01ccb4931f532551b0f94822b681d650d"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/20-lk-startup.png",
+      "bytes": 77075,
+      "sha256": "9859dfaa99d138344e46a6783c6bbbea487a7e36ca1a2dc5e294e715a6188e99"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/21-lk-active.png",
+      "bytes": 81980,
+      "sha256": "b73a4f029820336d7b0ff0ee69323e14cbe38390617c6479ecdd604216cd733c"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/22-lk-recovery.png",
+      "bytes": 73877,
+      "sha256": "5132fe0819b00449c13d08a79569ee1dedd6c200d06138d70aa0b42615ea6973"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/23-mk-startup.png",
+      "bytes": 86695,
+      "sha256": "5c5eca2f19b1464bd98eeca9be86c2ba8b408ceeac23020098ad19382e8ebb52"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/24-mk-active.png",
+      "bytes": 81260,
+      "sha256": "3dcf436df61638bf834960fbbb5fb691694ba559b146b2ab21885078b9c2bdeb"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/25-mk-recovery.png",
+      "bytes": 86237,
+      "sha256": "27549a00065da641beb91a9d9964efdc43f67222d8732062afe7991b06268237"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/26-hk-startup.png",
+      "bytes": 82822,
+      "sha256": "b1963d39d32912c30a930706a8bbdc22c8948a4c9d902321b1739f1d824d0ead"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/27-hk-active.png",
+      "bytes": 84235,
+      "sha256": "369738f736cb6ad2dcb94599f0b153990f08fcff4cbad1dc7a28507da50549c5"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/28-hk-recovery.png",
+      "bytes": 73112,
+      "sha256": "30ae285cd8075c10ee98426d3b8c262bc4d1375c4b81957d6f0a8877c10d0a7e"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/29-clp-active.png",
+      "bytes": 77970,
+      "sha256": "9956a950adad5294f38ed265a349384fb6083e927671e1d9aaf582865b1fed7f"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/30-clp-recovery.png",
+      "bytes": 87033,
+      "sha256": "4176dbd347025e0b018be1ea76adbb41ddca0617abe9f3c14b4360b9b49e13c4"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/31-cmp-active.png",
+      "bytes": 74356,
+      "sha256": "e30e71fb38f6ac7ed3666ec1e0ffdba73618f921444a526fcf1e127bc1a626b7"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/32-cmp-recovery.png",
+      "bytes": 87033,
+      "sha256": "4176dbd347025e0b018be1ea76adbb41ddca0617abe9f3c14b4360b9b49e13c4"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/33-chp-active.png",
+      "bytes": 83081,
+      "sha256": "428006f85ebc4d020ff3a8f00c3f3c5b0f6abdc9386092201a416b44be1728b9"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/34-chp-recovery.png",
+      "bytes": 79560,
+      "sha256": "000f0a2e9bde28c08afa57f0743492c4533fba941197adf212077a3358ba4f83"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/35-clk-active.png",
+      "bytes": 71391,
+      "sha256": "b7f7688f9e675537ffa4024cbfe1bd425bb53886ab653b11b0ba90f880cd599f"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/36-clk-recovery.png",
+      "bytes": 78359,
+      "sha256": "7c00e608405edc0e3bb1094f6d1ab2470a628b6f68628d8b759067fdd7623b4c"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/37-cmk-active.png",
+      "bytes": 77440,
+      "sha256": "afbc89b8d48dcbe2b1a894fbd855ff43787ed9e91f8bc382cd8fd61c6bcd2d3d"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/38-cmk-recovery.png",
+      "bytes": 77707,
+      "sha256": "c1e9f154b259789f0b715a92652039bafecaa5b5962765c04a9ee16fd3e2a999"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/39-chk-active.png",
+      "bytes": 82029,
+      "sha256": "8c5488c5e10978069ed54d0a40c375daf0438702b75aaf52e6c9771195f6704b"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/40-chk-recovery.png",
+      "bytes": 79560,
+      "sha256": "000f0a2e9bde28c08afa57f0743492c4533fba941197adf212077a3358ba4f83"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/41-jlp.png",
+      "bytes": 68478,
+      "sha256": "a0316e019eebb07e2909083de10eeb182a4a18e3de40b4cc478c268d81e618f7"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/42-jmp.png",
+      "bytes": 82047,
+      "sha256": "3428feb7c9dd2b6d6d06dd96d137610e2f9917d8a0fae43537dbf90fc17767eb"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/43-jhp.png",
+      "bytes": 80561,
+      "sha256": "b53970a968e66af7dd16b5b99e123f97a7e60c234fd45991d660801fef3a4157"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/44-jlk.png",
+      "bytes": 92450,
+      "sha256": "d1acdf51e99fdc1df04ced83b9408c92f07ee036f8b686a0118987979d99ac2b"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/45-jmk.png",
+      "bytes": 73879,
+      "sha256": "71022ecbb7f0375d3b6b8fcde9e03308befcb5690c39001f2e70e1dc75e31547"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/46-jhk.png",
+      "bytes": 91422,
+      "sha256": "cd677b9de382526e98f596928f3904ee0ab187ee2b60ffc7081ac74fa8852cf4"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/50-bolt-startup.png",
+      "bytes": 72560,
+      "sha256": "8097402142b19ae9fda2b0ed9aa4c4398083be7fe3b2602d040496bebb7a34f7"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/51-bolt-active.png",
+      "bytes": 92472,
+      "sha256": "4e1f7d745b5ace0bf0bea49121e47d1f1a31c3320df29f1f70851c3b4a4f12f0"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/52-bolt-recovery.png",
+      "bytes": 76271,
+      "sha256": "b7289266994f0e9bb7da82e76ff57c5ef71858d3233145136af19f65c916b155"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/53-step-startup.png",
+      "bytes": 118010,
+      "sha256": "73dc7aaa3d2727c2c8fa2fb305b2ff9d421e9c84ea3ffd0ec480758808ff0dc0"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/54-step-active.png",
+      "bytes": 100719,
+      "sha256": "fb144404a3cd7117a7cc7407615d7e9e7586f9909a36de8870cd669bcb1dd086"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/55-step-recovery.png",
+      "bytes": 70490,
+      "sha256": "1fe3fb31d8e51edc5e5435a181fdb785817190c85df9ad54b8825b936fd9a44b"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/56-pillar-startup.png",
+      "bytes": 140404,
+      "sha256": "f75a269181ee69c65d9a25ae2da0b1d630ec597a55d9c95a0f0dd2efa1677f45"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/57-pillar-active.png",
+      "bytes": 108605,
+      "sha256": "0b57d00d971ce2f433c1251be678a6e1e8f3ebfd5388eabb10e98a2271612d92"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/58-pillar-recovery.png",
+      "bytes": 86915,
+      "sha256": "fb3218a12ac171751c2262220a23ef4e8b4062184e80eb6365a2045ea180afde"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/59-double-startup.png",
+      "bytes": 115015,
+      "sha256": "db8acb4ee564efb15822562a25e74bc68526e10f0875a4a21d112881970edf3f"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/60-double-active.png",
+      "bytes": 109430,
+      "sha256": "95f6abe1f60ff43af9844523c7990f83acb5c6ed150218b9504104d983d3f7e3"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/61-double-recovery.png",
+      "bytes": 68645,
+      "sha256": "b499049385ddba3cc54267fe605d335598e020954ec99a04f75501b0836001d8"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/portrait.png",
+      "bytes": 465968,
+      "sha256": "b698ff9d7b4ab495859771f5eb4e9ad24daffc65edb0212a726a72eada0aab86"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/projectile-bolt.png",
+      "bytes": 51817,
+      "sha256": "fb084bf8f6aaa2c3a48f4222d3f61425d2dd5c207e45ea861825d5c8202ea911"
+    },
+    {
+      "path": "assets/raw/creator/earl/img/stage.jpg",
+      "bytes": 154442,
+      "sha256": "99a2b86203bcc3d6b6ea56606a887cf6e2a54ee093f24b8d883154dba68ae00f"
+    },
+    {
+      "path": "assets/raw/creator/earl/state.json",
+      "bytes": 1324338,
+      "sha256": "5b7505a256b0d0fd454c6cb7542b8ee3d71ceda98b3017fabf023c3aab5136c2"
+    },
+    {
+      "path": "assets/raw/creator/flo/state.json",
+      "bytes": 1779078,
+      "sha256": "fa41ecb473cb3b4772cec8e54fda7d75c07711bd270a1753a24b7eb3c9c94f5a"
+    },
+    {
+      "path": "assets/raw/creator/gale/img/01-idle-b.png",
+      "bytes": 15916,
+      "sha256": "697bcd8b581adeecae069212014b58821cc42ddf9e2a35f6a247fee344cc967a"
+    },
+    {
+      "path": "assets/raw/creator/gale/img/02-walk-a.png",
+      "bytes": 16228,
+      "sha256": "bb7b0fbb1dc183bf72fcf18eb17767f9b7349dcc31f619a22000427fdbdf0898"
+    },
+    {
+      "path": "assets/raw/creator/gale/img/03-walk-b.png",
+      "bytes": 16213,
+      "sha256": "b8b7961ef002b8bc3efb6b1d2766e0fc1715905848118a8e317b95e53e4b32f2"
+    },
+    {
+      "path": "assets/raw/creator/gene/state.json",
+      "bytes": 1720995,
+      "sha256": "3d1192f21f03a93172a0b6b1782109ec3860dd839b40cb3615ae44c00081daba"
+    },
+    {
+      "path": "assets/raw/creator/rapha/state.json",
+      "bytes": 1413609,
+      "sha256": "0b5f98a5e9e864af91c81ef2cd648f2aa902f9027d07cc68f1f009a1d73bd7b4"
+    },
+    {
+      "path": "assets/raw/creator/tao/design-raw.json",
+      "bytes": 7304,
+      "sha256": "aa3bc018ce9286704ac0896f3fddf54045d4225259c2b0f805945b342faf2c57"
+    },
+    {
+      "path": "assets/raw/creator/tao/img/canonical.png",
+      "bytes": 451127,
+      "sha256": "e68f4ab1dc6922ff6d102584d850edeb0bede742c9668e9f3c29cd68deacef21"
+    },
+    {
+      "path": "assets/raw/creator/tao/img/ko.png",
+      "bytes": 41865,
+      "sha256": "ab5d18c2fb831c23a1cbfc8bf1b6ef74e94cd6e13ab7fec868c255f75f5df2cd"
+    },
+    {
+      "path": "assets/raw/creator/tao/img/portrait.png",
+      "bytes": 39146,
+      "sha256": "fbe95829f16c0116d81c22181461a159afa19d3cefa7029f1d900d0d82a764f9"
+    },
+    {
+      "path": "assets/raw/creator/vincent/img/projectile-sigil-bolt.png",
+      "bytes": 36483,
+      "sha256": "1f46d4bc1975aa8c3d673929286986ffde598b3dcdb262a839cdbc60b76f963b"
+    },
+    {
+      "path": "assets/raw/creator/vincent/state.json",
+      "bytes": 1769019,
+      "sha256": "f7d3172aaf6f29f5a647487471b24793e87382590948b088e5863a6d0c1e17d6"
+    },
+    {
+      "path": "assets/raw/creator/yulia/state.json",
+      "bytes": 1679130,
+      "sha256": "30644b609334b95426d4152cd505207fb8729e2f9d1284a5dbaf89839c061481"
+    },
+    {
+      "path": "assets/raw/fatalities/rj/for-the-birds-1.png",
+      "bytes": 782024,
+      "sha256": "eb259bad067c84432513fb54ccfc0aea9b976ba1260a96d27838941cea34f839"
+    },
+    {
+      "path": "assets/raw/fatalities/rj/for-the-birds-1.prompt.txt",
+      "bytes": 1011,
+      "sha256": "c72bc19208c23c565a9433e9ca3c7b5b0030ba4d465cfca8b00e2644e6d8596e"
+    },
+    {
+      "path": "assets/raw/fatalities/rj/for-the-birds-2.png",
+      "bytes": 760836,
+      "sha256": "9f31dae1f8a56b2308592f888baee058588684d2f3af1472ed3b9f7f1d8ff2fd"
+    },
+    {
+      "path": "assets/raw/fatalities/rj/for-the-birds-2.prompt.txt",
+      "bytes": 892,
+      "sha256": "30d1f7e2e2cd4e49e39598b22035c44432a960dee4d84875a15d04f4b001a593"
+    },
+    {
+      "path": "assets/raw/fatalities/rj/for-the-birds-3.png",
+      "bytes": 938305,
+      "sha256": "cb455224cad1f94bcca38dfeeaf3b1247030d1cf36567329cea533a0256f3c82"
+    },
+    {
+      "path": "assets/raw/fatalities/rj/for-the-birds-3.prompt.txt",
+      "bytes": 983,
+      "sha256": "dcb1878a6ca9ab8548ef975cfc036a8056332b134db01de8bf598b870d6d42d2"
+    },
+    {
+      "path": "assets/raw/fatalities/rj/for-the-birds-4.png",
+      "bytes": 801680,
+      "sha256": "f61266bf7636059725169d1234208f29c675ec4bd1140e0a32885c892fba236a"
+    },
+    {
+      "path": "assets/raw/fatalities/rj/for-the-birds-4.prompt.txt",
+      "bytes": 903,
+      "sha256": "29d62724c7ad36122e27e7c4f06d1d56a30d4a3e46b4542d1f32a0e2b4485719"
+    },
+    {
+      "path": "assets/raw/fatalities/rj/tallest-ghost-1.png",
+      "bytes": 796450,
+      "sha256": "26f431fe3e02be0335f14f05e5deb3458f5966067401c7672e17aba81b164bcf"
+    },
+    {
+      "path": "assets/raw/fatalities/rj/tallest-ghost-1.prompt.txt",
+      "bytes": 847,
+      "sha256": "416c933f150468f16237e03addea054b79943e7ff39872fbf577a3ba92c8c324"
+    },
+    {
+      "path": "assets/raw/fatalities/rj/tallest-ghost-2.png",
+      "bytes": 795889,
+      "sha256": "9d7d6f40a9bb3ca5c97c47e968feec35765b4bbb8caf88384d123ce00d61ede2"
+    },
+    {
+      "path": "assets/raw/fatalities/rj/tallest-ghost-2.prompt.txt",
+      "bytes": 627,
+      "sha256": "a06c3de353274b3856e5bb41504def6d8fa292ab00ab7816c4d96b33e831b445"
+    },
+    {
+      "path": "assets/raw/fatalities/rj/tallest-ghost-3.png",
+      "bytes": 833745,
+      "sha256": "4a2eebae3c1c5f1ca2a247714f3a7395921ab1503bc61c83667c9482926d814f"
+    },
+    {
+      "path": "assets/raw/fatalities/rj/tallest-ghost-3.prompt.txt",
+      "bytes": 643,
+      "sha256": "76e64b98e45d171d630030126740749ae142c00a99c4100e7f569fd18abd34eb"
+    },
+    {
+      "path": "assets/raw/fatalities/rj/tallest-ghost-4.png",
+      "bytes": 824004,
+      "sha256": "5a1480606d138c792f42457efc166cb7b9d3f8fe0d09ef9ac9ed000616e05c6a"
+    },
+    {
+      "path": "assets/raw/fatalities/rj/tallest-ghost-4.prompt.txt",
+      "bytes": 638,
+      "sha256": "a799b2c5d7fdee9602e3cbf63389888537d11a2682e6575e5b88287f3748a38f"
+    },
+    {
+      "path": "assets/raw/fatalities/tao/final-critique-1.png",
+      "bytes": 826679,
+      "sha256": "ae9e7b6732e20d811d59290d12307b5976d2247f848bd1376488386055f17f51"
+    },
+    {
+      "path": "assets/raw/fatalities/tao/final-critique-1.prompt.txt",
+      "bytes": 972,
+      "sha256": "5a8ad89230edc5a109f4c6c5bde9c82952232186f0d3d4b35199a8f9ad6e44f9"
+    },
+    {
+      "path": "assets/raw/fatalities/tao/final-critique-2.png",
+      "bytes": 845227,
+      "sha256": "fbad995f2d34c687858f46a7c144a2ff5af44675bde96b05f1077e2aa2d50142"
+    },
+    {
+      "path": "assets/raw/fatalities/tao/final-critique-2.prompt.txt",
+      "bytes": 882,
+      "sha256": "e075aca4500214891b6aa274dcfa6c2eb09bf6c5393d5160f7c881a95a932fdd"
+    },
+    {
+      "path": "assets/raw/fatalities/tao/final-critique-3.png",
+      "bytes": 801806,
+      "sha256": "fb2f8b0274d3c0bac8bff7b38eca8196d31cb0e20fdb3c04b06d2d582b434022"
+    },
+    {
+      "path": "assets/raw/fatalities/tao/final-critique-3.prompt.txt",
+      "bytes": 878,
+      "sha256": "87aeb0be06d6e98c99334b6866a3d6ae54366caac8cafc663ac5069c85ed72a4"
+    },
+    {
+      "path": "assets/raw/fatalities/tao/final-critique-4.png",
+      "bytes": 785675,
+      "sha256": "600cf95be3c97224b318a1574dbfa9ad5974b2b34d4451f18355f4d7b79a61d1"
+    },
+    {
+      "path": "assets/raw/fatalities/tao/final-critique-4.prompt.txt",
+      "bytes": 644,
+      "sha256": "355d3a4ee7236881bdd59ed52b9ec83f5f71e1b385fafbde0e9f18b39fe99a6c"
+    },
+    {
+      "path": "assets/raw/favicon/favicon-grid.png",
+      "bytes": 562109,
+      "sha256": "be6d22764b30478723c589c2a90a42ccaaa5351c3317b788fe62144da25a1d2c"
+    },
+    {
+      "path": "assets/raw/favicon/favicon-grid.prompt.txt",
+      "bytes": 1493,
+      "sha256": "b4c7ae7ffa83c04ac68ab7af0d9d34ee9706a44ad0ba89bf71aaabcfa71b51af"
+    },
+    {
+      "path": "assets/raw/favicon/mk-grid7-keyed.png",
+      "bytes": 73595,
+      "sha256": "2f3db0770522f0287dcc1941a59982219b69bb7148939f9c084e5674a07fc070"
+    },
+    {
+      "path": "assets/raw/favicon/mk-pixel.png",
+      "bytes": 360662,
+      "sha256": "d1d8cb03c2274174fa25aa686d3756fe873429b550002c035f7364e44492a69e"
+    },
+    {
+      "path": "assets/raw/favicon/mk-pixel.prompt.txt",
+      "bytes": 787,
+      "sha256": "c72ccb4fdad7e7dfc70f61949a4850c92ed0bc318beff1bc34a10ad60dfa43fd"
+    },
+    {
+      "path": "assets/raw/icons/rj.png",
+      "bytes": 674238,
+      "sha256": "b160f809c9c6a32144297203e76deb482d428b80b383c1bb0e78c36da228baa2"
+    },
+    {
+      "path": "assets/raw/icons/rj.prompt.txt",
+      "bytes": 834,
+      "sha256": "3dc3b74f59b6250ad1ee6772a1ffea7c4f0cfc59533e8ca5117ed5e189120952"
+    },
+    {
+      "path": "assets/raw/icons/tao.png",
+      "bytes": 628189,
+      "sha256": "f0ec3f3a088ec1927b128c8f53a8050af5f38616d27eff7cef5256af8e664383"
+    },
+    {
+      "path": "assets/raw/icons/tao.prompt.txt",
+      "bytes": 775,
+      "sha256": "5efd31ef89c15ccc62a6b5994187bf3940200c17ac776f551706016065c8f62c"
+    },
+    {
+      "path": "assets/raw/qa/bodhi/montage.png",
+      "bytes": 148381,
+      "sha256": "4d1c3c4762bff4b37aa8a87d286d9a457cea3806c4f1c148077b8215bce8b46c"
+    },
+    {
+      "path": "assets/raw/qa/bodhi/report.json",
+      "bytes": 58755,
+      "sha256": "979c95d6ae04b0a139af72070f8b53f30e9bc07ca3560a710ddfbd85ccb439a2"
+    },
+    {
+      "path": "assets/raw/qa/cat/montage.png",
+      "bytes": 704837,
+      "sha256": "40e8feb5d100b3a8cc2a750cf804aa0c1ee095ddfcc7151e9ab6752246310c90"
+    },
+    {
+      "path": "assets/raw/qa/cat/report.json",
+      "bytes": 59825,
+      "sha256": "92a9e138854f653bb0bfdf28303d03895be6ba01c0e16c7f828276eafb4ae7b5"
+    },
+    {
+      "path": "assets/raw/qa/catherine/montage.png",
+      "bytes": 331676,
+      "sha256": "ea6e3054a7824bfd85863c8c307f92be7e3f181570abb3314069b19583aa3f29"
+    },
+    {
+      "path": "assets/raw/qa/catherine/report.json",
+      "bytes": 59328,
+      "sha256": "fbc518efd389480f1c936a4877fdd1e8e24cce4d12509b029138b594f0ecf4af"
+    },
+    {
+      "path": "assets/raw/qa/chebel/montage.png",
+      "bytes": 216274,
+      "sha256": "deb2903d8cc7189c010fbd1d6fdfb4ee4861859acb2485d6bfa180861a3c1654"
+    },
+    {
+      "path": "assets/raw/qa/chebel/report.json",
+      "bytes": 59145,
+      "sha256": "4a9f7ba69181632ce6f88980f0b398a6b7aabd2427d58a98a49004a95670c71d"
+    },
+    {
+      "path": "assets/raw/qa/flo/montage.png",
+      "bytes": 539011,
+      "sha256": "b5b62d132fb2250accac36497a9f833dbbddadca1034de597a5e07e34ff9ce6f"
+    },
+    {
+      "path": "assets/raw/qa/flo/report.json",
+      "bytes": 62405,
+      "sha256": "3854c8275a40774ca6c2f3681cbad60d37c99bdf6fc6eb5c18eb951f912f203c"
+    },
+    {
+      "path": "assets/raw/qa/freeman/montage.png",
+      "bytes": 544135,
+      "sha256": "8f7fbe938e45ca979e83e0426b5affd2eb540b98ef6b9b206e823a0d135569a2"
+    },
+    {
+      "path": "assets/raw/qa/freeman/report.json",
+      "bytes": 59461,
+      "sha256": "da3d995ce71b50c30870327cac37be1da935f6f6c95b99eb25da5cb0f02b2572"
+    },
+    {
+      "path": "assets/raw/qa/kirby/montage.png",
+      "bytes": 655357,
+      "sha256": "aa4afd18d4967e6208209504d8b783be83e465dc4683454bf9ef9a70a2235143"
+    },
+    {
+      "path": "assets/raw/qa/kirby/report.json",
+      "bytes": 59705,
+      "sha256": "cbaeb1ae7b4b6aecf2362d8e59d46ef1aede1ece685ea4a727bd3472cd427d97"
+    },
+    {
+      "path": "assets/raw/qa/marzipan/montage.png",
+      "bytes": 470610,
+      "sha256": "d4e382ea99879e7f2b231195e6dccc6193fae292829e5f63c9dfa9d8e227e636"
+    },
+    {
+      "path": "assets/raw/qa/marzipan/report.json",
+      "bytes": 59905,
+      "sha256": "d9060976390245f4568bb1ae49d79d588e1cc50c0f16e9f39e6578644a8a9fd0"
+    },
+    {
+      "path": "assets/raw/qa/rapha/montage.png",
+      "bytes": 485055,
+      "sha256": "0fdb1233a70d7d5298be799edc14f71b974d7f207fd54f53576db3174762885b"
+    },
+    {
+      "path": "assets/raw/qa/rapha/report.json",
+      "bytes": 59262,
+      "sha256": "045f1d180459cd00bbb23df57333832fcfad9c859af86c5fb9b93f042789ec20"
+    },
+    {
+      "path": "assets/raw/qa/rj/montage.png",
+      "bytes": 555588,
+      "sha256": "ba913da623fe17e1ef490a314360aa916203fb03d17a8d885afa310e18b81cad"
+    },
+    {
+      "path": "assets/raw/qa/rj/report.json",
+      "bytes": 257609,
+      "sha256": "038af4cc2a632d8c51c538007ef705fa133956159c2ea474df9d19c7a3623809"
+    },
+    {
+      "path": "assets/raw/qa/vincent/hitbox-grid.png",
+      "bytes": 4183868,
+      "sha256": "281c2f69a6aff4983f3b85647b8b39ecc27f7bfaf67aa076e4a7867d6345cdaa"
+    },
+    {
+      "path": "assets/raw/qa/vincent/montage.png",
+      "bytes": 206958,
+      "sha256": "ab09c37fa0cc28b3e688c7e8c784f6e1d5334559c8193d263f04022e150e69b1"
+    },
+    {
+      "path": "assets/raw/qa/vincent/report.json",
+      "bytes": 519580,
+      "sha256": "c3024e5898a394045d1628bcacd8bb5ef0a42a60d10b7044c725681e2677d24e"
+    },
+    {
+      "path": "assets/raw/qa/ygor/montage.png",
+      "bytes": 280748,
+      "sha256": "5181e49d185476fc99aa9ae4739d81922185c755d826862f1e958e014804099e"
+    },
+    {
+      "path": "assets/raw/qa/ygor/report.json",
+      "bytes": 59141,
+      "sha256": "8547246f889f90c0c453db79697f19047043b6d91aa9df0886183ea397952462"
+    },
+    {
+      "path": "assets/raw/qa/yulia/montage.png",
+      "bytes": 412534,
+      "sha256": "3ec72b7b2fee403fb7508e2de59a04971ef23abc6c1d6a77b327f5826ccd74e3"
+    },
+    {
+      "path": "assets/raw/qa/yulia/report.json",
+      "bytes": 62569,
+      "sha256": "cb58717ff82cdd43209af5a7e2dda6c5ebac706c87d161add0b76e0d1a9d75f8"
+    },
+    {
+      "path": "assets/raw/rescue-exports/ben.zip",
+      "bytes": 20528909,
+      "sha256": "7223070575f8edb6d54dd16cf7eaa363727d9b5ffe964558c5dc1e5694cc81f1"
+    },
+    {
+      "path": "assets/raw/rescue-exports/earl (4).zip",
+      "bytes": 25257949,
+      "sha256": "bc909fbb5777b5259635697a1603299977bf7cef21e117e84b081419b1e388e5"
+    },
+    {
+      "path": "assets/raw/rescue-exports/martian-kombat-assets-raw-frames.zip",
+      "bytes": 34123858,
+      "sha256": "b6a6e2c2dd7167fdf89c582eaeb638913d6f83ae9e4af3b71d5a1803f5135a64"
+    },
+    {
+      "path": "assets/raw/rescue-exports/martian-kombat-assets-raw.zip",
+      "bytes": 31792495,
+      "sha256": "7b53064198206c3adfdb978e4f174e9e6662f0782453f6b3f5279fc5ea885516"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/README.txt",
+      "bytes": 348,
+      "sha256": "d056dcffb99de368f2e185bcf1e1320c319fcedba5b316202f70bca8edb923b6"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/audio/voice/vincent-hurt-1.mp3",
+      "bytes": 17553,
+      "sha256": "9a883942f3a86e9e923511bf3befe380f6ab0360b9516f620810d5f9b0377da2"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/audio/voice/vincent-hurt-2.mp3",
+      "bytes": 14209,
+      "sha256": "c46b7b3c29b4cc7aa1ec58d031b8772b97a5ec40c4f8309fed0ad83e87ac9c1b"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/audio/voice/vincent-hurt-3.mp3",
+      "bytes": 13791,
+      "sha256": "67eeffc81a6047b90d8cac064e07271ce7642e42fbe22a2e560fb9adfe50367f"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/audio/voice/vincent-hurt-4.mp3",
+      "bytes": 13791,
+      "sha256": "7f749e99fdecf0e264ff7f2f5492683ce2d4f1d9567709e11091a930b2c60690"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/audio/voice/vincent-hurt-5.mp3",
+      "bytes": 19643,
+      "sha256": "c0305b3d0962b8157a5b14e7488aeba4dd501b686ee51bfbe0cff0eb7eaa635e"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/audio/voice/vincent-hurt-6.mp3",
+      "bytes": 20897,
+      "sha256": "0e583947df120722d2c63d5e58e98e3696dd686df647bd68934189a94dcc80e9"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/audio/voice/vincent-kiai-1.mp3",
+      "bytes": 13791,
+      "sha256": "ffc44a34f4e09b57a52b20ec91cc86a0062d1e3b002a0c470a579838cbbff53c"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/audio/voice/vincent-kiai-2.mp3",
+      "bytes": 17553,
+      "sha256": "36c99206a382a511d1c3abaab46b21daeefd9e13d73012993cdb579b30d0c292"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/audio/voice/vincent-kiai-3.mp3",
+      "bytes": 14209,
+      "sha256": "e3a89577cdc09e316748b0d079866136d05f908b61f9530b97e9c3b9810cb9a1"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/audio/voice/vincent-kiai-4.mp3",
+      "bytes": 17553,
+      "sha256": "a46074cb726d9ec2a46524c0167ff845350eb9551b105d0b7dc9b1dc8822ebd3"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/audio/voice/vincent-kiai-5.mp3",
+      "bytes": 18807,
+      "sha256": "c788e53a4e8c532ce81a257b4ed27984c24d484c035adb9e817f7fced430e1ef"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/audio/voice/vincent-kiai-6.mp3",
+      "bytes": 16717,
+      "sha256": "69cfcff3e57dc28294c05c2de90dea85d0ce0024790d0f3b45f4c4247a510b1a"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/audio/voice/vincent-move-matrix-teleport.mp3",
+      "bytes": 33062,
+      "sha256": "ac28b2fe3f50840a23ae2ae4f2a3aba1498df2966cbd2ce196e2aced4bb36cd4"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/audio/voice/vincent-move-redirect.mp3",
+      "bytes": 17971,
+      "sha256": "59b621a3a6bea7d19efec69255e0c2581d9eaf7af830c823d9bcd46342582b15"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/audio/voice/vincent-move-rising-glyph.mp3",
+      "bytes": 33062,
+      "sha256": "7855e10b5d1fdafb41cc6b4e8f7f6478fa0ce395800c6b0d49f935f854aa7f3b"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/audio/voice/vincent-move-throw.mp3",
+      "bytes": 12955,
+      "sha256": "ac720bdab54c1c232becb31b41a462b133315f8d95c77d1ed2166b40d3d81c50"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/backgrounds/stages/vincent-home.jpg",
+      "bytes": 303739,
+      "sha256": "646b2537d38f2b1d004533f04fd8198a0947347312ac3fc0f7745bea6fdd478d"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/fatalities/vincent/blue-screen-1.jpg",
+      "bytes": 209520,
+      "sha256": "c36aeaad3ed01a9525757157b96a0689617c76341af4d26b4c539bf8b82b84f2"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/fatalities/vincent/blue-screen-2.jpg",
+      "bytes": 172042,
+      "sha256": "9f430062d3c021f1a7ab5b9ea643fcbe4004d1e234090e673f83049eef4f7e32"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/fatalities/vincent/blue-screen-3.jpg",
+      "bytes": 202490,
+      "sha256": "ed7fa5bf5a66c26884e80059c530a958ab134c21d2a6fe240e402b34e0436840"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/fatalities/vincent/blue-screen-4.jpg",
+      "bytes": 192223,
+      "sha256": "25dac615e8b523b4876b1bbf400b4ba1bd7d68553a44bb30b2a863d8192ae943"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/portraits/vincent-bust.png",
+      "bytes": 50764,
+      "sha256": "a8c955b0ff6c89625d5b2aab7c0fde593fbd2a9e14702881d50c752e3c8a4afa"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/portraits/vincent-ko.png",
+      "bytes": 40947,
+      "sha256": "3695e90687f27fdc288be047808b16b5f73070940caf6a468564b46c0e75cc32"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/portraits/vincent.png",
+      "bytes": 31686,
+      "sha256": "43348ebe8491cbf7035de1f7595f0cd07dbaa6a7436af873ae2a50e173cd4839"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/00-idle-a.png",
+      "bytes": 65757,
+      "sha256": "cb08d1b272dbc8b65d1740758a76c5e0047d73973a9b724b281281c4bf91901d"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/01-idle-b.png",
+      "bytes": 68086,
+      "sha256": "421a662e12e58dec2e85c71e0d8f10b4579e50b21e3e8374e5a1aaf1f703d600"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/02-walk-a.png",
+      "bytes": 66484,
+      "sha256": "d53c6bb59d8fea1afbb3fe076e3c612a8a2886addf34a8b4da5c5c24446e7fe2"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/03-walk-b.png",
+      "bytes": 58059,
+      "sha256": "fb9958e28af1d6d366b19bb09eb36d94f2c30ab8450db719d598b8397372345d"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/04-crouch.png",
+      "bytes": 78399,
+      "sha256": "8155832e65ea49d9d4fa9e9490572020039dd5a1be601131ad4ff07ee603a695"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/05-jump.png",
+      "bytes": 64806,
+      "sha256": "668b59bbe3c0d1befec41c368cc702e20ee8ba32befb053607b513104d92b253"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/06-block.png",
+      "bytes": 61796,
+      "sha256": "cc86f08a9ea0aa26384c39b78801f05807547e373a6b758b967f703604d4ae7b"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/07-block-crouch.png",
+      "bytes": 46631,
+      "sha256": "e142b7925485c2ecec28008081b165cfb7b283847a07fd0b84027080216b6eb2"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/08-hit.png",
+      "bytes": 68205,
+      "sha256": "7caa0ba3275dbd05ef41f0ea71a5412b8060ef8eda18f9ba74387d13ef0c33b5"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/09-fall.png",
+      "bytes": 60015,
+      "sha256": "b5706d092859ace8090c07c5b15e4c7d5fdea42cd623d930db243a4704fff38a"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/10-down.png",
+      "bytes": 36239,
+      "sha256": "b558be4912a093e99ba8ccb103bae98936435f9b0e5e56aaded8ec55f5101e4e"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/11-lp-startup.png",
+      "bytes": 71959,
+      "sha256": "b2558b86fe5a71d34350f376539e969eae218db1e72be233894bac2dcd9a3577"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/12-lp-active.png",
+      "bytes": 69784,
+      "sha256": "3629d7a3543c298b758648329e4ccd8d42a45c1b655feddf06f9e7d7a47d4517"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/13-lp-recovery.png",
+      "bytes": 66879,
+      "sha256": "12a331d1dd9cd77ad90bc8280b63855691ee3bf178aa619e2c706b6a61c85da2"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/14-mp-startup.png",
+      "bytes": 67860,
+      "sha256": "a8bf5ded28a5cb4347002ca44bf2e7c99127a0d5eff5b5055f0c7f0062915220"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/15-mp-active.png",
+      "bytes": 70421,
+      "sha256": "9d37f1e97d7818f317fa3eafcde7473ecae8c505eebdce39e0aad09a22a77629"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/16-mp-recovery.png",
+      "bytes": 66756,
+      "sha256": "dcb7c0c9927176b632498fb97836dc22c40430140930b510a2096e69d0f23873"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/17-hp-startup.png",
+      "bytes": 70085,
+      "sha256": "5ae8946c4c61fa69cb51e9a589812118bd110406ce5314685dde6df64511315e"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/18-hp-active.png",
+      "bytes": 71655,
+      "sha256": "a6145f03ea8d04f87dc214035addde7c5ff7cdb2613f171544487c40461e8d1d"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/19-hp-recovery.png",
+      "bytes": 66547,
+      "sha256": "dd254c79a99b2cefa566e5c82afb5add58b2b35cf24e6cc0d11131611e7f0b08"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/20-lk-startup.png",
+      "bytes": 69187,
+      "sha256": "f44b967a7f1178b90032610f4be625e55bbd8d664e9f2176f2b9586c51c3d5f5"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/21-lk-active.png",
+      "bytes": 62061,
+      "sha256": "43afc8d136833552e7c382ab73e71eb5f9714f51dae86e8f6787c89574003f84"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/22-lk-recovery.png",
+      "bytes": 57028,
+      "sha256": "2fe8f6754c10bad06cacef2eabb384b19131e15fe9e09694937e3c92e68155f6"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/23-mk-startup.png",
+      "bytes": 67832,
+      "sha256": "1ce927489789d5c6a1b02e858badc71d46123495b075b26c3ce42019554531fe"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/24-mk-active.png",
+      "bytes": 85943,
+      "sha256": "d820b53ec27ef7f015b7b28423e56024cc38c9c3b72ba7a121357d479eb1cd05"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/25-mk-recovery.png",
+      "bytes": 65132,
+      "sha256": "22b3b7318275c245b89106c4e71a8f24d8b0588b27195daf1112f87a0029fa36"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/26-hk-startup.png",
+      "bytes": 56166,
+      "sha256": "b606d5a4bd5c082bef5a2056e7c4c3f4286155ca7bd2c28c03c8d34f9ef91907"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/27-hk-active.png",
+      "bytes": 82198,
+      "sha256": "0378397533ec67dadf2892ae9a7dd1654969ec92dc376819538d73c25d71b7e7"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/28-hk-recovery.png",
+      "bytes": 61041,
+      "sha256": "9a39ab5e74066a79b00fde7838f3b5dd949081ff4efabaf1a49708946d5103cc"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/29-clp-active.png",
+      "bytes": 84512,
+      "sha256": "94054de1d69bb3dcc8bf6eb0a35349c0b3b93f0a653462b309ac10f90d42b5dc"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/30-clp-recovery.png",
+      "bytes": 58724,
+      "sha256": "ba95bc882e70910da63be12c5396cd8276ffeb1d233bb5c05a7a1bc6f0afd787"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/31-cmp-active.png",
+      "bytes": 82585,
+      "sha256": "394555cf8f4a4152fea8ce0c9672003c02df07c3f9ea66f6dea00b29d5ec2bf0"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/32-cmp-recovery.png",
+      "bytes": 90551,
+      "sha256": "acaf34d2e5954825d13b0920e7bcf1846856b34ff02712f28a248b5ec5c1a1f2"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/33-chp-active.png",
+      "bytes": 82964,
+      "sha256": "e37eec30d8ba90243f37201fbc7a8d74ec37e2ff21679d2d514f093c1407a584"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/34-chp-recovery.png",
+      "bytes": 56894,
+      "sha256": "518f9a5218abfcb08c69e8cf8147ceed735450589e23acb34b7cf09e6f0512e5"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/35-clk-active.png",
+      "bytes": 55953,
+      "sha256": "4911638a1fad6f78ae14459f2905f0e2550486b73388b282fa61d0f088375a3b"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/36-clk-recovery.png",
+      "bytes": 58043,
+      "sha256": "3262a967c0c05561176e6ca0ef66c8ae1dbff29d8349b72d1ed6e158fafdd363"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/37-cmk-active.png",
+      "bytes": 49237,
+      "sha256": "27b5051a69ae851dc6d9fff3c74643ccb3e6b942d81bfb4f162af97e54a4bd4a"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/38-cmk-recovery.png",
+      "bytes": 50094,
+      "sha256": "1f664c2e9c60133bcf1cf8d1871e2c0a6c6d3b8164829ef800a3c971644a06f6"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/39-chk-active.png",
+      "bytes": 64591,
+      "sha256": "61a6c6cbd5d425bebfc06e134a6d868419ca57f80d2ee38ff397282d65b18f70"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/40-chk-recovery.png",
+      "bytes": 60290,
+      "sha256": "cd9f21a3314657716e990e5005df302b3c4af4e7e1504b2afa2ada37379ae4b0"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/41-jlp.png",
+      "bytes": 62570,
+      "sha256": "ac219695067a03a5ea4921f0fc34c76a339fcf6d40403af0a557d00c0d052702"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/42-jmp.png",
+      "bytes": 75945,
+      "sha256": "d44752655189676f770e75fc97214a350169ac4faaf667a75fc6920fe51d16cd"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/43-jhp.png",
+      "bytes": 77622,
+      "sha256": "8db91107b3c27d0f0127f20904fb588beaa6872b50bf5db7b5a1d110f29680b3"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/44-jlk.png",
+      "bytes": 71237,
+      "sha256": "3114410187b5815a4aa5fd6b11f58dfbed6dce42065a20347dba5bd49f4bb358"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/45-jmk.png",
+      "bytes": 60622,
+      "sha256": "c41b7fa58b4029ac0bf6ee0c2358dba7771a8816d8ddb03db074f55387b200d0"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/46-jhk.png",
+      "bytes": 82761,
+      "sha256": "3641bb23c0d3785322c2a4e6e81f6701c2c4f6fd5e0c93728b650ab44326ee76"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/47-throw-startup.png",
+      "bytes": 67491,
+      "sha256": "662f227d8c7572f192bcc2e74b77c17d85b165275d3dd1a6b7a2db0a0fe89396"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/48-throw-active.png",
+      "bytes": 73122,
+      "sha256": "e843bdc9267f6a32bfa52bbf9e8ceffa281081f82bcb2308a17503094c793c07"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/49-throw-recovery.png",
+      "bytes": 66004,
+      "sha256": "22647560f406e81fcea694558bad2ac6e4e6b7ca52b8aca599281bdffa950514"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/50-sigil-bolt-startup.png",
+      "bytes": 75500,
+      "sha256": "3e96bba2721d48492e97a4e78630d6b45a6732ce4cf089fb2b2c686ed98e23e8"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/51-sigil-bolt-active.png",
+      "bytes": 69571,
+      "sha256": "85998822bf1a626ac7f24b2add35f5f2f65ffe35ca2e4e01aa86451c1926ca09"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/52-sigil-bolt-recovery.png",
+      "bytes": 67456,
+      "sha256": "9e161785937892cd75a01b50c5df2aff6e3eccf2f1cde9f8dcde4ac775912ff8"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/53-cloud-hands-startup.png",
+      "bytes": 76343,
+      "sha256": "b5e4752ee86b20849e4bff6e8853785354fd6732da366c976e48ae0e9699c6d7"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/54-cloud-hands-active.png",
+      "bytes": 74158,
+      "sha256": "b197e03837123f510b907a475ba00e6324b472c53351d363b34b4fc487e45666"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/55-cloud-hands-recovery.png",
+      "bytes": 67505,
+      "sha256": "6989101ee27c358564ff30d67282584c532aae4b018c1154afb79f30631847a4"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/56-rising-glyph-startup.png",
+      "bytes": 96587,
+      "sha256": "2013ea3c352eedecc07ed3bf5aab4757dff3a19bac62600e1722f40084aac5c5"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/57-rising-glyph-active.png",
+      "bytes": 125858,
+      "sha256": "4f5ccc57e193d0cdd9825a672d1931bf4fea59a4b10f5994164b7bb4fe40d5bb"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/58-rising-glyph-recovery.png",
+      "bytes": 103208,
+      "sha256": "75f75413f8a2a59fb77610368fb1ced736f95aef5535e256d7171a7d88e53559"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/59-redirect-startup.png",
+      "bytes": 73057,
+      "sha256": "1f4dd320c02c6f718dfe22cb8a296c50db1565d5b262b83bdc2749ac9aa20281"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/60-redirect-active.png",
+      "bytes": 85603,
+      "sha256": "248ed7838395a54f33874927f9a71230f9962012407d2db95e039a1545bee720"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/61-redirect-recovery.png",
+      "bytes": 67877,
+      "sha256": "7922ba5d4adfe5a5c648662c184207c6f62ff9aa263909cb834015ed4d9db01a"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/62-matrix-teleport-startup.png",
+      "bytes": 87697,
+      "sha256": "592fbf9be38eaf4ade671b7814411d977ac4eb1646d7d4053eb2da90503550eb"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/63-matrix-teleport-active.png",
+      "bytes": 88139,
+      "sha256": "a56bdff513c2cea686ff4e35d721cbaf37c23d0a46be418f26ae218e48634367"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/64-matrix-teleport-recovery.png",
+      "bytes": 65953,
+      "sha256": "70f21f1c63acb46befb6b3cdb07086cc0b12572734ed5788e18ca1c8a986de39"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/raw/frames/vincent/projectile-sigil-bolt.png",
+      "bytes": 36483,
+      "sha256": "1f46d4bc1975aa8c3d673929286986ffde598b3dcdb262a839cdbc60b76f963b"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/sprites/vincent/meta.json",
+      "bytes": 632999,
+      "sha256": "e201f492f56cf2e550e7825daf650d94d3b641ac84fce3f8f03b6fea7f5e4939"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/sprites/vincent/projectile-sigil-bolt.png",
+      "bytes": 36483,
+      "sha256": "1f46d4bc1975aa8c3d673929286986ffde598b3dcdb262a839cdbc60b76f963b"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/assets/sprites/vincent/sheet.png",
+      "bytes": 4644708,
+      "sha256": "5899d0413aa76eac1c05d401c43d441d73a3dbfe59a5aa2e71d705b8d37602ad"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/raw/img/projectile-sigil-bolt.png",
+      "bytes": 36483,
+      "sha256": "1f46d4bc1975aa8c3d673929286986ffde598b3dcdb262a839cdbc60b76f963b"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/raw/state.json",
+      "bytes": 2073584,
+      "sha256": "53cd1a03b92644b55992ef715c0bb65452b8f683a103707115f7393b50685ec2"
+    },
+    {
+      "path": "assets/raw/rescue-exports/vincent/vincent.json",
+      "bytes": 11108,
+      "sha256": "98af45d952fa9baf68a2b25314b97d06f43707a3ffdc288df93bca98286594c7"
+    },
+    {
+      "path": "assets/raw/retired/haidai-canonical.png",
+      "bytes": 420060,
+      "sha256": "dae02280233b15fad90ac43a8aad815100b2c93ed187d305a783e8b3831d6f1d"
+    },
+    {
+      "path": "assets/raw/retired/haidai-ko.png",
+      "bytes": 612315,
+      "sha256": "921be564fcecd63e522cdf8315d5d8eba18e12cd6c866bf3b4d6a8d3f47eb143"
+    },
+    {
+      "path": "assets/raw/sprite-edits/ben/2026-07-08T05-59-10-663Z/manifest.json",
+      "bytes": 27152,
+      "sha256": "e48c66e9a43e97bca47abff3522bbf2e08a1052cb1bbab4c40f173155d54a92e"
+    },
+    {
+      "path": "assets/raw/sprite-edits/ben/2026-07-08T05-59-10-663Z/meta.json",
+      "bytes": 296159,
+      "sha256": "0531eb839b3d04e4d141bd10efe9c0f3213a7c239d20fde82fccc035c945fa96"
+    },
+    {
+      "path": "assets/raw/sprite-edits/ben/2026-07-08T05-59-10-663Z/sheet.png",
+      "bytes": 3573455,
+      "sha256": "9758bf13bdba46736934660fba22457ce848585f1755ed9122115a723e146eb4"
+    },
+    {
+      "path": "assets/raw/sprite-edits/ben/2026-07-08T06-00-25-401Z/manifest.json",
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "assets/raw/sprite-edits/ben/2026-07-08T06-00-25-401Z/meta.json",
+      "bytes": 301586,
+      "sha256": "649ed84ed46db0a02b6428be8c3dadd80c493d6a34f697694f34c123900064cb"
+    },
+    {
+      "path": "assets/raw/sprite-edits/ben/2026-07-08T06-00-25-401Z/sheet.png",
+      "bytes": 3558642,
+      "sha256": "0b23d484eb56ebc560a829e19aa7f83f4d0c6ec9c01771059c5ccd6617ff3c8f"
+    },
+    {
+      "path": "assets/raw/sprite-edits/ben/2026-07-15T01-22-52-950Z/manifest.json",
+      "bytes": 38991,
+      "sha256": "784bb8fa2f9750ef22602576418012f58bd58b45587cf67090d71679817e641a"
+    },
+    {
+      "path": "assets/raw/sprite-edits/ben/2026-07-15T01-22-52-950Z/meta.json",
+      "bytes": 283933,
+      "sha256": "e42867a4c833bd287cbb57c4d864d2e33997b2705b8339f759249baca23b85af"
+    },
+    {
+      "path": "assets/raw/sprite-edits/ben/2026-07-15T01-22-52-950Z/sheet.png",
+      "bytes": 5309093,
+      "sha256": "9e512860c54172646d24e8765bc9defc35b887dda4e5e869eef25bbbfbd8a933"
+    },
+    {
+      "path": "assets/raw/sprite-edits/ben/2026-07-15T01-38-33-532Z/meta.json",
+      "bytes": 331660,
+      "sha256": "525921ec07bbcb98cc9b5cb8ced7dcc92a6c12abfb5ecc6fc3c34696355907c1"
+    },
+    {
+      "path": "assets/raw/sprite-edits/ben/2026-07-15T01-38-33-532Z/sheet.png",
+      "bytes": 3283346,
+      "sha256": "9b4b4219d96c4d560ca697b79c255a1581e06b64abe1c091a817ef97e5857606"
+    },
+    {
+      "path": "assets/raw/sprite-edits/ben/2026-07-15T02-36-11-614Z/meta.json",
+      "bytes": 331660,
+      "sha256": "525921ec07bbcb98cc9b5cb8ced7dcc92a6c12abfb5ecc6fc3c34696355907c1"
+    },
+    {
+      "path": "assets/raw/sprite-edits/ben/2026-07-15T02-36-11-614Z/sheet.png",
+      "bytes": 3283346,
+      "sha256": "9b4b4219d96c4d560ca697b79c255a1581e06b64abe1c091a817ef97e5857606"
+    },
+    {
+      "path": "assets/raw/sprite-edits/ben/2026-07-15T03-37-08-856Z/manifest.json",
+      "bytes": 1337,
+      "sha256": "d9b76148f568a822bdee7791e6519f76b25961174c990b964df1a1217218ce5b"
+    },
+    {
+      "path": "assets/raw/sprite-edits/ben/2026-07-15T03-37-08-856Z/meta.json",
+      "bytes": 240253,
+      "sha256": "7a7ed9d846946dfb1df8fd7a104a48b2e125e924b7278597052703a5a87ee024"
+    },
+    {
+      "path": "assets/raw/sprite-edits/ben/2026-07-15T03-37-08-856Z/sheet.png",
+      "bytes": 2895124,
+      "sha256": "5aaad71706ef5ea3616fa2fa693a070379b4fb445b7c7ee47666e1e123d22229"
+    },
+    {
+      "path": "assets/raw/sprite-edits/ben/2026-07-15T03-45-03-300Z/manifest.json",
+      "bytes": 23183,
+      "sha256": "e756e4edf54f777050764b35cc4707a9e0e635d8c5feb1a64e6b818ddeca0116"
+    },
+    {
+      "path": "assets/raw/sprite-edits/ben/2026-07-15T03-45-03-300Z/meta.json",
+      "bytes": 240893,
+      "sha256": "32b3d51effe829699543541c699183224ec958cd12bb14e70883ecf00e627574"
+    },
+    {
+      "path": "assets/raw/sprite-edits/ben/2026-07-15T03-45-03-300Z/sheet.png",
+      "bytes": 3254177,
+      "sha256": "69a1622c5461539c539d646b22b2b1c06d17acdfdbf014c3fca2d1c2764f6814"
+    },
+    {
+      "path": "assets/raw/sprite-edits/bodhi/2026-07-15T01-00-22-701Z/manifest.json",
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "assets/raw/sprite-edits/bodhi/2026-07-15T01-00-22-701Z/meta.json",
+      "bytes": 284077,
+      "sha256": "74ac58ddbda815dc775d76aaca02312f0f2fcc5d71395cd5de9da5dd6f3b524f"
+    },
+    {
+      "path": "assets/raw/sprite-edits/bodhi/2026-07-15T01-00-22-701Z/sheet.png",
+      "bytes": 7911579,
+      "sha256": "ec91ecfbe08f35e781233f286e97eca4790865cad24ae2bdd2f4764ab876b1df"
+    },
+    {
+      "path": "assets/raw/sprite-edits/catherine/2026-07-09T09-40-40-256Z/manifest.json",
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "assets/raw/sprite-edits/catherine/2026-07-09T09-40-40-256Z/meta.json",
+      "bytes": 283860,
+      "sha256": "221b101af3da466de15da5b16a21594a0504729cb0347627dbb5a1bfd63b8066"
+    },
+    {
+      "path": "assets/raw/sprite-edits/catherine/2026-07-09T09-40-40-256Z/sheet.png",
+      "bytes": 8361833,
+      "sha256": "c24f981ff1a34d224d8b1395b3b5c2f0a194c81cf8274c8c4fd8af6c9339b71e"
+    },
+    {
+      "path": "assets/raw/sprite-edits/catherine/2026-07-09T09-41-03-414Z/manifest.json",
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "assets/raw/sprite-edits/catherine/2026-07-09T09-41-03-414Z/meta.json",
+      "bytes": 283784,
+      "sha256": "056f1588ba5c3b9aacb4adbb1a39a4ce9eb87319e98b1a38eb8c187235b1f76c"
+    },
+    {
+      "path": "assets/raw/sprite-edits/catherine/2026-07-09T09-41-03-414Z/sheet.png",
+      "bytes": 4016217,
+      "sha256": "19f7166dbec150470f755cb1757bde05e87d99757c7bea55c358ac3c74878da0"
+    },
+    {
+      "path": "assets/raw/sprite-edits/chebel/2026-07-08T19-04-44-540Z/meta.json",
+      "bytes": 1236,
+      "sha256": "d317c85281c382cbb50d3cd288dd0e545f2021d435e2ef93faf8215b7b6720e1"
+    },
+    {
+      "path": "assets/raw/sprite-edits/chebel/2026-07-08T19-04-44-540Z/sheet.png",
+      "bytes": 9172613,
+      "sha256": "ab2087964bd769941a9025a9d8c724d71fd999428ad384359dd9b0289cb99344"
+    },
+    {
+      "path": "assets/raw/sprite-edits/earl/2026-07-08T01-50-19-308Z/manifest.json",
+      "bytes": 15375,
+      "sha256": "4fea771a79037f845dc41adbb3e6efa06574bc72df64f49b56fadf22047242d6"
+    },
+    {
+      "path": "assets/raw/sprite-edits/earl/2026-07-08T01-50-19-308Z/meta.json",
+      "bytes": 266735,
+      "sha256": "b2b4086c589d4a16eb5e4fa507a767a4edd0bd3051d6e112d81ffb16ce7e41fc"
+    },
+    {
+      "path": "assets/raw/sprite-edits/earl/2026-07-08T01-50-19-308Z/sheet.png",
+      "bytes": 3417064,
+      "sha256": "b3824d9919d6f331fa16080c841afc83eb26653820bb9d6f4d41c42053cb681d"
+    },
+    {
+      "path": "assets/raw/sprite-edits/earl/2026-07-08T01-52-55-310Z/manifest.json",
+      "bytes": 5625,
+      "sha256": "c0d74a5adc954c1bbab8d5c04c2d3816715e217c38e61f0d5b0c7a42f71b800d"
+    },
+    {
+      "path": "assets/raw/sprite-edits/earl/2026-07-08T01-52-55-310Z/meta.json",
+      "bytes": 271646,
+      "sha256": "37b5097aaa0b5739b5e44c67c48bdd052cbbb378e05300ec5ab01fee73f13acb"
+    },
+    {
+      "path": "assets/raw/sprite-edits/earl/2026-07-08T01-52-55-310Z/sheet.png",
+      "bytes": 3410458,
+      "sha256": "fb216bae90bde6385762708245809ae457b01437c2052e9a4e563e3f403a2072"
+    },
+    {
+      "path": "assets/raw/sprite-edits/earl/2026-07-08T05-59-44-788Z/manifest.json",
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "assets/raw/sprite-edits/earl/2026-07-08T05-59-44-788Z/meta.json",
+      "bytes": 272850,
+      "sha256": "baab24b97c8db637b032e245714f45442a2edb596c3bae8badb03aab197dc797"
+    },
+    {
+      "path": "assets/raw/sprite-edits/earl/2026-07-08T05-59-44-788Z/sheet.png",
+      "bytes": 3410231,
+      "sha256": "b97f700980deec61dd2e6b2f8fb9269417d66e475e6c0c959137b93d15b26287"
+    },
+    {
+      "path": "assets/raw/sprite-edits/vanessa/2026-07-08T02-17-44-772Z/manifest.json",
+      "bytes": 8433,
+      "sha256": "822ca183cb66b7ffd9b47be8113d307fc5b360c83f31375fdf9c8f37bc6929c9"
+    },
+    {
+      "path": "assets/raw/sprite-edits/vanessa/2026-07-08T02-17-44-772Z/meta.json",
+      "bytes": 1260,
+      "sha256": "3bb5efffe64a50baa20a00842d01522c296123adb609fab982be345f4bea1264"
+    },
+    {
+      "path": "assets/raw/sprite-edits/vanessa/2026-07-08T02-17-44-772Z/sheet.png",
+      "bytes": 10984324,
+      "sha256": "8b38bdc782ba20938acec14061e531da4478560d44bdd9fe835afa15c23a4053"
+    },
+    {
+      "path": "assets/raw/sprite-edits/vincent/2026-07-08T01-00-24-341Z/manifest.json",
+      "bytes": 8096,
+      "sha256": "52e361b37fda79b35f6677ecdcece9bed4d28a079978f05b1f4902ce67d965c8"
+    },
+    {
+      "path": "assets/raw/sprite-edits/vincent/2026-07-08T01-00-24-341Z/meta.json",
+      "bytes": 605218,
+      "sha256": "fab0e1f73c949205987c70d759919b92ddf8123eaddea05faf8866b4da765928"
+    },
+    {
+      "path": "assets/raw/sprite-edits/vincent/2026-07-08T01-00-24-341Z/sheet.png",
+      "bytes": 7951958,
+      "sha256": "070149c360d688203cd610ab568e0b0b70f2fed0ae32d47e10dd9dbfbbdab966"
+    },
+    {
+      "path": "assets/raw/sprite-edits/vincent/2026-07-08T01-53-49-356Z/manifest.json",
+      "bytes": 6603,
+      "sha256": "75af453fe65d5f80555cafca8a229f36890532a841b25528543a82c367e345a3"
+    },
+    {
+      "path": "assets/raw/sprite-edits/vincent/2026-07-08T01-53-49-356Z/meta.json",
+      "bytes": 634761,
+      "sha256": "3c8247ed6f67e5fc49fcb6fecffbd66e1ae30da10ac3f7ad78a1b03012f6761c"
+    },
+    {
+      "path": "assets/raw/sprite-edits/vincent/2026-07-08T01-53-49-356Z/sheet.png",
+      "bytes": 4624740,
+      "sha256": "6b9450b34bf4dbb6ab7d92c74d7ea7081fbbb767c07ba1eecadf2ee53eb4b23d"
+    },
+    {
+      "path": "assets/raw/sprite-edits/vincent/2026-07-08T01-54-23-278Z/manifest.json",
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "assets/raw/sprite-edits/vincent/2026-07-08T01-54-23-278Z/meta.json",
+      "bytes": 625621,
+      "sha256": "623b9e188f5e9fb5ed694aea4b830bbdc89e55563b31900e61c59eb15c27add7"
+    },
+    {
+      "path": "assets/raw/sprite-edits/vincent/2026-07-08T01-54-23-278Z/sheet.png",
+      "bytes": 4630897,
+      "sha256": "0dca7482a30df4a82cf048e8aeb5f5dd4933334e199e86df4d6b199f1d376ccf"
+    },
+    {
+      "path": "assets/raw/sprite-edits/yulia/2026-07-08T00-10-45-671Z/manifest.json",
+      "bytes": 7450,
+      "sha256": "3eb52512d5f60d1c7ab8dc26a3bfe66894b57d19297fcac07a3c6cb2d75677c0"
+    },
+    {
+      "path": "assets/raw/sprite-edits/yulia/2026-07-08T00-10-45-671Z/meta.json",
+      "bytes": 1386,
+      "sha256": "b11d43031357d52b5ad67dc91c640c5db7ad4d1a9ed99e4738a0a3d92cddf19e"
+    },
+    {
+      "path": "assets/raw/sprite-edits/yulia/2026-07-08T00-10-45-671Z/sheet.png",
+      "bytes": 11846425,
+      "sha256": "7046e1d9bfa48007e69ee4b370cbdf0aa661a4f90dd013b02ca1f2dd68642f39"
+    },
+    {
+      "path": "assets/raw/sprite-edits/yulia/2026-07-08T00-13-04-590Z/manifest.json",
+      "bytes": 12629,
+      "sha256": "fd9ab286bf40f1f67baa636a089059a9127b84fe8c50c15332913c9679c3cab3"
+    },
+    {
+      "path": "assets/raw/sprite-edits/yulia/2026-07-08T00-13-04-590Z/meta.json",
+      "bytes": 1575,
+      "sha256": "d4a49651708de893c0faa1e04e0998c190e4ae554e16e6421f7edc09c7d44491"
+    },
+    {
+      "path": "assets/raw/sprite-edits/yulia/2026-07-08T00-13-04-590Z/sheet.png",
+      "bytes": 5047145,
+      "sha256": "65b89cb1e88bea9bc46bf7d449db3fab6b13377806204fab26b0da94a1606970"
+    },
+    {
+      "path": "assets/raw/sprite-edits/yulia/2026-07-09T09-38-36-215Z/manifest.json",
+      "bytes": 3,
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "assets/raw/sprite-edits/yulia/2026-07-09T09-38-36-215Z/meta.json",
+      "bytes": 298411,
+      "sha256": "f7abd394602df1ff067c322aaa07531a677f4ee3b13259fd6d13211bdf340e61"
+    },
+    {
+      "path": "assets/raw/sprite-edits/yulia/2026-07-09T09-38-36-215Z/sheet.png",
+      "bytes": 9108987,
+      "sha256": "b5f844cd334066cf1ad4869e97c56f494b31ca411e98e5e26ecc1cf63524a3f0"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/Back Flip To Uppercut.fbx",
+      "bytes": 736880,
+      "sha256": "88ce2b111e79858255bbbe692545872a24dcf2bc41a8c482e0c92c2f7189f5c8"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/Fallen Idle.fbx",
+      "bytes": 344928,
+      "sha256": "5c8fa8898d33acb2087417d29b39a20c90d97298f97254f92b863f3466f4e1bb"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/Falling Idle.fbx",
+      "bytes": 297408,
+      "sha256": "4eef0ac807bff28a3e9fc20e4b3d712e06352b53d48c4c687c3f4374e6c9f861"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/Female Action Pose.fbx",
+      "bytes": 238224,
+      "sha256": "3d091a18517e28b3657d15d0bbb9f1d21b9fda651280afc05b8b6f0c05978b93"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/Fireball.fbx",
+      "bytes": 423040,
+      "sha256": "f6bc1165ef53d4c99c8a75de02cf07e3e4930f0964d778648b17cd2c97621465"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/Illegal Headbutt.fbx",
+      "bytes": 399584,
+      "sha256": "729af4bbd784d024b5d6b9c2f4b96d4e295d5d498638fbfc060e35438fa8b19f"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/Livershot Knockdown.fbx",
+      "bytes": 440288,
+      "sha256": "4df0b255882a8de40f4f71edebb2c9f4c850c33c8ac5e920feb1a6544d73b55e"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/Mutant Jump Attack.fbx",
+      "bytes": 484384,
+      "sha256": "0e1afd142eaa43406d15ac3a7bae17bf2ab5174e4570279a48ed1f44da09966e"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/Taunt Gesture.fbx",
+      "bytes": 411520,
+      "sha256": "74bffa5c83537fa1fce6754750a5a850de739984a35f07201741d62fe139d626"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/action-adventure-pack/cover to stand (2).fbx",
+      "bytes": 361681,
+      "sha256": "d78c4a39d6c906f2fe6def2588961d066f85767c87abb237193d6948758f4a78"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/action-adventure-pack/cover to stand.fbx",
+      "bytes": 370849,
+      "sha256": "abeec7b89469a2596aedd4ac440f7f7d66144e832ee18f3ff8f25fefd05bf94d"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/action-adventure-pack/crouched sneaking left.fbx",
+      "bytes": 349441,
+      "sha256": "8fdc7d04f225ff5114c79751e5cdbaf8b55ee973f7f099702b92639d2ea644f1"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/action-adventure-pack/crouched sneaking right.fbx",
+      "bytes": 334129,
+      "sha256": "c29976a4afaccbe65c1febb4a28800adf24af9d32f295f82d097e18f04679608"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/action-adventure-pack/falling to roll.fbx",
+      "bytes": 398401,
+      "sha256": "fb25841b750b104269d69919b071b434d12b291c1fa6b17fa86108fe62157c1f"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/action-adventure-pack/hard landing.fbx",
+      "bytes": 416753,
+      "sha256": "1fde1a1c43206f715db44a1cd3c4d5a42ffe4aedc88ebe9764037ac43a94c1a9"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/action-adventure-pack/idle (2).fbx",
+      "bytes": 897489,
+      "sha256": "15bb5fc537a1d212cca1354b82048ce7a3cd3ba67c1c2190fdbe7d6d182c7306"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/action-adventure-pack/idle (3).fbx",
+      "bytes": 529505,
+      "sha256": "41aabd53310381e1dd177b172e37d34d6849c18c572c376ec3c2057bec099a48"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/action-adventure-pack/idle (4).fbx",
+      "bytes": 446593,
+      "sha256": "93a42531b5e90625e63a66bdca1e51bddd48266deea1eee6d3cfd26e211cfda1"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/action-adventure-pack/idle (5).fbx",
+      "bytes": 438785,
+      "sha256": "9d54f498bf2f4487543fc7d025884c9b26edfc121ffd8f33189c8f1a34b94dd9"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/action-adventure-pack/left cover sneak.fbx",
+      "bytes": 332305,
+      "sha256": "cfb8d4fa0caac32981fedf69674e7481e528096f2527feddbe95f0fd9a729690"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/action-adventure-pack/left turn.fbx",
+      "bytes": 323553,
+      "sha256": "5d0c82be0b32540affa7f8bb3e2ad048440f2a3c8460c7fd87d59710552270c2"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/action-adventure-pack/right cover sneak.fbx",
+      "bytes": 332305,
+      "sha256": "fe5606c8bba881aa9f2e9224c5e08be7fafb19aed9bc44ba8c8d962dd3b81d4c"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/action-adventure-pack/right turn.fbx",
+      "bytes": 328017,
+      "sha256": "bbac9881074ec293129d35ee497ea7e4e7495cc7060d579f6b28c20344584613"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/action-adventure-pack/run to stop.fbx",
+      "bytes": 315777,
+      "sha256": "3bd6d848f858bfeed0ec5a0c57c34ae949a35dd4b8923a44455b8938efabf652"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/action-adventure-pack/running.fbx",
+      "bytes": 295905,
+      "sha256": "a4a7482c454e8f9c6d11d8f317a5a5a1a3e19d511ac8dbfb1181a3965eec9405"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/action-adventure-pack/stand to cover (2).fbx",
+      "bytes": 349441,
+      "sha256": "0c14b9f7883bb0f7511a970dd0ac25563363439b82160328c3ed2c0c39183a54"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/action-adventure-pack/stand to cover.fbx",
+      "bytes": 337201,
+      "sha256": "c70df81dad4ad5712d7af2117e816f51452bef190c096c349879234da9df8b37"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/action-adventure-pack/walking.fbx",
+      "bytes": 325777,
+      "sha256": "fc3e03e6eeaec4c17cef1717aae0adf7a9ff59c129d077455a518de2e3545a68"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/block/Blocking.fbx",
+      "bytes": 307664,
+      "sha256": "116e7dc17c554e489df39522b8b6e8dbea3609555d7ab44647d388eaa2c0f5e0"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/block/Center Block.fbx",
+      "bytes": 372256,
+      "sha256": "61f50b8377d146030c4f97cbea9ca6150a273d7949b334c40ad01a23cabe8a9f"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/block/Inward Block (1).fbx",
+      "bytes": 315120,
+      "sha256": "68e3719f4fd1259e459fd279b3029093e05e13015a6afe2df6be8f359119061c"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/block/Inward Block (2).fbx",
+      "bytes": 310160,
+      "sha256": "30d740a95b4d1d583a58f6e201cafc2a194a86ea9465da45ccdfb5c434a2d135"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/block/Inward Block (3).fbx",
+      "bytes": 305184,
+      "sha256": "eb494990df86280d97a73ab4fa006b970bbc719c15214ef5008062ee8979afec"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/block/Inward Block.fbx",
+      "bytes": 340864,
+      "sha256": "8878022168f0b51ae1467a7d5d0051d79803bf8d4ae06b85c5a52efb7498096f"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/block/Left Block.fbx",
+      "bytes": 321280,
+      "sha256": "2b83defaa09ad1c867c7d96ec9769a4de9512ac372a1498ec1d0c806977f666a"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/block/Outward Block (1).fbx",
+      "bytes": 392128,
+      "sha256": "4ec6d1c0e47d94516b989c67beae8db6cc79a0d95fa4309b680ef9abf384ae69"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/block/Outward Block.fbx",
+      "bytes": 352384,
+      "sha256": "ae6fa62b61ef69bd942619c387d9b93785330bef21ae799b8eaf90f0dc37b66f"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/block/Right Block.fbx",
+      "bytes": 303104,
+      "sha256": "0ec69c3b153ac6e2d594eed97c37f87a9a557e8f1306e086c3608809cfdba0b4"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/block/Standing Block End.fbx",
+      "bytes": 320192,
+      "sha256": "2865cfe843063e8c4912ed3ea286fb8ec3d8d1b92f61dfb6dd715bb7fa35ac13"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/block/Standing Block Idle.fbx",
+      "bytes": 436832,
+      "sha256": "e3c8cc87eb6bc236397c7180065136c2dc29dab09825305029c56c9b0ce6547f"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/block/Standing Block Start.fbx",
+      "bytes": 353680,
+      "sha256": "f938e4e071cc7d92398ae41e1f2ce7dbfe0d7263b9ac101a55b0edd60053303a"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/crouch/Crouch Walk Back (2).fbx",
+      "bytes": 324160,
+      "sha256": "93624681dd6378a96da09840fedb98d906ff297cf368d019c90cd956a18d6939"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/crouch/Crouch Walk Back.fbx",
+      "bytes": 326896,
+      "sha256": "12fb5d0e30c062c6b5d0e2c39673495b31e964e4930cf8caed116153376aae46"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/crouch/Crouch Walk Forward.fbx",
+      "bytes": 339712,
+      "sha256": "28119d41828f34cd58f8349da42aaef5a06ed673bc64bec57e164950feffb10e"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/crouch/Female Crouch Pose (1).fbx",
+      "bytes": 238224,
+      "sha256": "ce69bf369664c2557b80cb28bc70fdfba6627ab5bc18caff1231c3fb554b0734"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/crouch/Female Crouch Pose.fbx",
+      "bytes": 238224,
+      "sha256": "b0fff166a0a1fbc68e480c667930203fd3401a44ec00da78bded23595a8a11ca"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/crouch/Male Crouch Pose (1).fbx",
+      "bytes": 238224,
+      "sha256": "a22c979a8d1d981fba387cd6d220c6f9f722553e13cb79c36255c2278221ec10"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/crouch/Male Crouch Pose.fbx",
+      "bytes": 238224,
+      "sha256": "fbd08ab23b27ac1315d20fda9d9463d040de7520fe97a7bea50d135db3fe0bce"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/dances/Hip Hop Dancing.fbx",
+      "bytes": 791488,
+      "sha256": "bb92632ad077e0bcc1436530781f54bd4e72baaab543ec16e305a5cbae6da45e"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/dances/Thriller Part 2.fbx",
+      "bytes": 1238080,
+      "sha256": "44bf9d53ff9b67219407ec1d22bba48f772f87899b1e00a1d12a475c90a4a71c"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/dances/Thriller Part 3.fbx",
+      "bytes": 1601232,
+      "sha256": "8f29b620f79b5e6b9dcdc38761297018e4ef4504bacef96258e77fe738d45853"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/dances/Thriller Part 4.fbx",
+      "bytes": 2270976,
+      "sha256": "b73ba046d41b9ad2a8cdc34d10aceeab633873f4805319220aa02ad1a536203b"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/dances/Twist Dance.fbx",
+      "bytes": 678256,
+      "sha256": "c640262de25cb536092ea7258eddc96d7e454bb5b2107d95e1540ac1b9f8ac91"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/dances/Wave Hip Hop Dance.fbx",
+      "bytes": 245712,
+      "sha256": "ce0cff607650e32fbd96ac632af92ee1081aa646eba6fe37cbdef504bdef1549"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/gestures/Charge.fbx",
+      "bytes": 774592,
+      "sha256": "a5206005abed231f15639909c72b6debd765eeeda5d6c10fb2ba5602c26808f6"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/gestures/Quick Informal Bow.fbx",
+      "bytes": 572048,
+      "sha256": "0ca521665f184ea4246e37cb7d05bcab294c758585b1c1b7bf36ccbce8cc006b"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/gestures/Victory.fbx",
+      "bytes": 548464,
+      "sha256": "e8ed05044a380435996d6d6447bc748a09f3b1b92484e7b55d830e6ab7cc1133"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/gestures/Whatever Gesture.fbx",
+      "bytes": 402704,
+      "sha256": "8930e6c712aecdfeb7544d2e517b61362d4fc809b21fd0e7fce8d950e875258f"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/gestures/Yawn.fbx",
+      "bytes": 991552,
+      "sha256": "d1aaca933e44b74cc7a869923c269b1e0418025e24515809186291fb274b69a4"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/hits/Big Hit To Head 2.fbx",
+      "bytes": 354864,
+      "sha256": "a58e176f6c7c01a5f878ecb2abd59dbf1abc097071bc1d2730d018c5e35348cc"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/hits/Big Hit To Head.fbx",
+      "bytes": 319984,
+      "sha256": "2e49a6ac31f55931f428fb30f254602bb8c45150bbe19ecf16c25fdeb361832a"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/hits/Big Stomach Hit.fbx",
+      "bytes": 376384,
+      "sha256": "fa1cd4dfef0bcc10b42e8b6326b875a1e337bd7e9341fe30c4c72921e854f4f9"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/hits/Head Hit (1).fbx",
+      "bytes": 317568,
+      "sha256": "a7a446e8305fb48b453753a9a33c4f5ce3254f3bf9e617fdc35cdb03b9a339e7"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/hits/Head Hit (2).fbx",
+      "bytes": 311488,
+      "sha256": "d8e27bc8f2e27070a2de68471186ee3015cd59805999536b7be5bed1cc44e535"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/hits/Head Hit (3).fbx",
+      "bytes": 355552,
+      "sha256": "2e2f6d08b2e085beeb9850a88baecf2969bf79200f65f181a1ebcdce1f5d6810"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/hits/Head Hit.fbx",
+      "bytes": 338416,
+      "sha256": "b886bc412e4e02e8c7425da325c2a4b9d7de834d02085a22541b6cfaea24d046"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/hits/Hit To Body.fbx",
+      "bytes": 370096,
+      "sha256": "a663e70c343206cad2b6de0b7fb5d62cecb02d9c98e642fb6ba7ac886993d43f"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/hits/Light Hit To Head.fbx",
+      "bytes": 341696,
+      "sha256": "88e01d4386c2000144cc17a40afc438a819c5dfabdfa69007562c8e38200cbae"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/hits/Receive Uppercut To The Face.fbx",
+      "bytes": 328160,
+      "sha256": "d24667c6027b62cf238913d0c87110c367a25b5037c714c6147204c92e99c33a"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/hits/Receiving A Big Uppercut.fbx",
+      "bytes": 459184,
+      "sha256": "d0af38f58f53ed19caf6fc17333b796ddb31dd74247a95890a5c11ed44c3a706"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/hits/Rib Hit.fbx",
+      "bytes": 343088,
+      "sha256": "5623e09935f5876483574aef12945a07039b5c021307c849772fdc62f97ec5d4"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/idle/Bouncing Fight Idle (1).fbx",
+      "bytes": 454224,
+      "sha256": "ce61ddd44feea9248613c4cf8b790216935496340cd6920ffffee2725c904262"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/idle/Bouncing Fight Idle.fbx",
+      "bytes": 498944,
+      "sha256": "0b20170669c1decda52d1c313f678665a83a731879b9902b23f234e98c05b2d5"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/idle/Fight Idle (1).fbx",
+      "bytes": 564144,
+      "sha256": "4fb24962e87b9a84d234370f68ffddd6a4b95cd28191366c2ff0ca894846ee08"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/idle/Fight Idle (2).fbx",
+      "bytes": 615360,
+      "sha256": "0cbc2ef4867fe6f925b6aba119241bba1341791a35521a7c980c1604e21f1869"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/idle/Fight Idle (3).fbx",
+      "bytes": 669184,
+      "sha256": "77754e5d396aa997f6dbae6993d748c269bdbe56e630b2bb7471a3d62950f49d"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/idle/Fight Idle.fbx",
+      "bytes": 511424,
+      "sha256": "cf1ab4ae1fbe1dc2388d96be8d7425d9489fa87935d584828c0be0612357faa6"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/idle/Fighting Idle (1).fbx",
+      "bytes": 543648,
+      "sha256": "6c07aecc3940f46480e2d19c734e4ea91a6459778079c26e94302d3e7ccef71a"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/idle/Fighting Idle (2).fbx",
+      "bytes": 507840,
+      "sha256": "24f00094394f588bb5054eaa0456cca1cd593efdbe00200b56d4a8ef6c19661f"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/idle/Fighting Idle.fbx",
+      "bytes": 479072,
+      "sha256": "f4967d1422108b44117d0c75c2e04de06f9dc223a334d1f8097b00bc440d28a8"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/idle/Idle (1).fbx",
+      "bytes": 414480,
+      "sha256": "9b8093b4dbe03aa55aa9c1678313459e219bc576c0bc9f2ffc0329dd047aca63"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/idle/Idle Transition.fbx",
+      "bytes": 521088,
+      "sha256": "cd1acdcc09f816c7ba646f98ea8402de80181f03ce9a0e4ece5770b886aa44b5"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/idle/Idle.fbx",
+      "bytes": 499984,
+      "sha256": "84cf2b18c2fbfceadd0da57e640604d3012d025e6ad3e8a80603695d9fc41134"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/idle/Mma Idle.fbx",
+      "bytes": 530608,
+      "sha256": "21b0658dc47085e1e7357c90b5c85df726dcd900dd9dcdb51c6e96cbb41bbece"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/jump/Cross Jumps Rotation.fbx",
+      "bytes": 432992,
+      "sha256": "88529b28e784f95b7251e84777303e9d48eed3f1581449a44ad283607d88fae9"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/jump/Jumping Up (1).fbx",
+      "bytes": 291296,
+      "sha256": "72e14d745a845d92593845b883615b1711e3ee34400700ebafc7148ccdb51f6b"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/jump/Jumping Up (2).fbx",
+      "bytes": 297408,
+      "sha256": "8fbf9cf2d3e1d0bcffd57a5098a8a1daf15a87c3d9ec5f48a4a55afe75fc1eab"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/jump/Jumping Up.fbx",
+      "bytes": 309648,
+      "sha256": "7554c052bc858eb197485da0fe978f5b24a624bb95d88671469de27f2a4795fa"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/kicks/Flying Bicycle Kick.fbx",
+      "bytes": 205360,
+      "sha256": "fd6b8d56b88e80f27105175a2f6a72b80b1404bfa49fa4c18919ca0433c15e20"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/kicks/Hurricane Kick (1).fbx",
+      "bytes": 239296,
+      "sha256": "e428a4fe387b7bae392dd83921ecbc89542d94d28003f5fbc6e8d3cee95fe56d"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/kicks/Hurricane Kick (2).fbx",
+      "bytes": 239296,
+      "sha256": "e939a5d7d9489c190f8a410dc2d0fbbde537d75478ab79913ce3ab88bd544b60"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/kicks/Hurricane Kick.fbx",
+      "bytes": 239264,
+      "sha256": "0c4673cb38288022e6e7594d50b27e4df34da6696b6236feb3190402fdc362a2"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/kicks/Illegal Knee.fbx",
+      "bytes": 445696,
+      "sha256": "215fcdd36bd2fbb924f683f3c4d4f4e2d66e27409cec6c358bd5934df53ad9c1"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/kicks/Inside Crescent Kick.fbx",
+      "bytes": 301456,
+      "sha256": "ae2202bbeccb86ab909291cca11ecb9336a876dd2f81587f2115e46d47791f2d"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/kicks/Mma Kick (1).fbx",
+      "bytes": 269792,
+      "sha256": "bcc81b26b351895637eb31cbeeda00e16467dd0a5661ef0496e06547b4d764c7"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/kicks/Mma Kick (2).fbx",
+      "bytes": 262336,
+      "sha256": "7240cd84252163d671fd55639a97bb0ceb693b24211a032a18d699d927019314"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/kicks/Mma Kick.fbx",
+      "bytes": 267312,
+      "sha256": "6157d50c5e6ba06a5a5fafc4263f57ecfccdd27d94c6daa36d3fa9862642c224"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/kicks/Roundhouse Kick.fbx",
+      "bytes": 316992,
+      "sha256": "a250ab0c9249061f028d7f057a07e4a992da7d9ae852bb659d31e11031c295db"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/knockout/Falling Back Death (1).fbx",
+      "bytes": 427984,
+      "sha256": "c8c34c7cee7bd4a97a2b82da83e60ed165b3a6721b66fcac748468c65fa3b055"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/knockout/Falling Back Death.fbx",
+      "bytes": 460592,
+      "sha256": "e105d00c5ca1ca542691b9453758eec8b106fdaaee0ad279825a2ae150bffc90"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/knockout/Flying Back Death.fbx",
+      "bytes": 491952,
+      "sha256": "ec447d84f86748fb0de37c770880ab61fe42e7061cf3b36e92b60b3c2222f669"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/knockout/Knocked Out (1).fbx",
+      "bytes": 679264,
+      "sha256": "a810fd9f35eb438f58274162d8e32e77c6a35f73f1e455c00dc6f8f632bd8305"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/knockout/Knocked Out.fbx",
+      "bytes": 629328,
+      "sha256": "37eafa01908258faba3b84608a10ad1e6be22c4e5deb3843f4e6d2d3e6c11d25"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/knockout/Standing Death Forward 02 (1).fbx",
+      "bytes": 450416,
+      "sha256": "aa6927887d4a5f5a1621dbe78615026510dcbeaddcb34bfa1059e663e13e0e20"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/knockout/Standing Death Forward 02.fbx",
+      "bytes": 450416,
+      "sha256": "3b99122e4089555bfd1e89f625bd0fced938ab02ec7a6bd0aece0343cf5db309"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/knockout/Standing Death Left 01.fbx",
+      "bytes": 430784,
+      "sha256": "1748df709dc2a66fde04fb0024a7667b80b01627de9821c89f67dc664c5c08b4"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/knockout/Standing Death Left 02.fbx",
+      "bytes": 432768,
+      "sha256": "3cc90243e97a113a3dfa3d29c25e0472c6c340c00b841dd1d7148223f44d79dd"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/knockout/Standing Death Right 02.fbx",
+      "bytes": 451328,
+      "sha256": "0cabdc1ba32c7ae0e69b43045030d135de63c5c47a818d84127dbd7c757eab30"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/knockout/Standing React Death Backward.fbx",
+      "bytes": 598080,
+      "sha256": "9c9b5eb4a125e5edfd112835b761d47cfe6ddafb0fe3b0a9708226adf28e4046"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/knockout/Standing React Death Forward.fbx",
+      "bytes": 601424,
+      "sha256": "f05e8b5b3a6a841fc43d5a023f03838e39862e1241fece3d72bf6d1ad439ecdc"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/knockout/Standing React Death Left.fbx",
+      "bytes": 594736,
+      "sha256": "8a961d84bed98d56a80298a441b07772e905331694abe5f0fdf070b5779f8e7d"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/knockout/Standing React Death Right.fbx",
+      "bytes": 585936,
+      "sha256": "2fa190148125c90ad2adaa49d0e6845e1280a19e4642e96f40e8597a5d247af9"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/knockout/Stunned.fbx",
+      "bytes": 397200,
+      "sha256": "9c5d53d1fe518728dc520743393aed0bc276fbe1c692baac2f940da0abbf1c56"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Crouch Idle.fbx",
+      "bytes": 368945,
+      "sha256": "b01be17c9d5025f280e632dece5b4564ef55b9f4c1b7fcde1513cacc5624905d"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Crouch To Standing Idle.fbx",
+      "bytes": 332513,
+      "sha256": "9d54236df39b3143e5e74b0eac810984ba637534b5bce36dbbf773fc67dea5d3"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Crouch Turn Left 90.fbx",
+      "bytes": 415313,
+      "sha256": "2395200ade4f752ba76f40dab7cc57a1fbd1f26e1efb570bbd29954c6ffc0a0f"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Crouch Turn Right 90.fbx",
+      "bytes": 393681,
+      "sha256": "bc1b8f2d95625aa6038cde6415256a6c922f6dbb392f7baee848eae0f7eab6e8"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Crouch Walk Left.fbx",
+      "bytes": 350337,
+      "sha256": "e89e7cf902022a471947c1ef5050592fec0c72b68869891c6ecf8c0729e59dd3"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Crouch Walk Right.fbx",
+      "bytes": 360369,
+      "sha256": "5831c57a824a59a946d164999e2bf10fc5d236dbb3463151a61103cc917e048b"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing 1H Magic Attack 01.fbx",
+      "bytes": 462913,
+      "sha256": "507b915ccee3ff5f84aba27d1cf0ec513bf39124cfff3bff322f3b324677d2ca"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing 1H Magic Attack 02.fbx",
+      "bytes": 455601,
+      "sha256": "8b4992ff35ea29d803cb7fad78aa9de0b59dffd867ee810461689f41c656be05"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing 1H Magic Attack 03.fbx",
+      "bytes": 460337,
+      "sha256": "9af6d22ab6b5a0ebdc870466f8cb7af39b469abba0cb304a5436528a870b81a5"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing 2H Cast Spell 01.fbx",
+      "bytes": 457297,
+      "sha256": "cadb7a7f55e744c482b3112e9d263e8c562886d1afba253b96c8cd62345caef9"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing 2H Magic Area Attack 01.fbx",
+      "bytes": 532257,
+      "sha256": "932efebca7e028020ceabc7a8692b73bd36738cc1a481ab15e526cdd2a05cf3c"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing 2H Magic Area Attack 02.fbx",
+      "bytes": 561249,
+      "sha256": "9d8a157dd26e4000ccb6ae43d0b5398dd816488693d95ed20e4e8268e3d098ac"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing 2H Magic Attack 01.fbx",
+      "bytes": 504337,
+      "sha256": "983f0d59f775fd47d1487c0f7e0e7fe8f8891c762b7a3662254e1d03750379d1"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing 2H Magic Attack 02.fbx",
+      "bytes": 499601,
+      "sha256": "d0cbb5e172f6911cf6d8398249ea307ae5eb2a8e05412af1cc338641da147bb0"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing 2H Magic Attack 03.fbx",
+      "bytes": 578545,
+      "sha256": "0f9b4230c461fed2e99835501b89e121ccc052e06e1eed5dfd018e7e7409d969"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing 2H Magic Attack 04.fbx",
+      "bytes": 560753,
+      "sha256": "6275bd9679e50d0710d0b72e106474f92f2c7bcc76f52afde0d7897fa0a89c7d"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing 2H Magic Attack 05.fbx",
+      "bytes": 589233,
+      "sha256": "9b61b0ef571998caf3e52d4d9d38d6764402beb89450542d2efffd4da85bba7d"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing Block React Large.fbx",
+      "bytes": 367073,
+      "sha256": "107b77640b70cc8df5f01f14e216c4c163b5a20d84ecb6fac67a1c8c6f5bb97e"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing Idle 03.fbx",
+      "bytes": 1085841,
+      "sha256": "78775dfe793b9037b172018c0b9cf2cbab52e1f6d85ce1bf1b055d2a630d07b3"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing Idle 04.fbx",
+      "bytes": 820529,
+      "sha256": "d6ad8930826ac3536794a03ee1cfe36a5598a18d62ef2236e9be19fb1f34ce72"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing Idle To Crouch.fbx",
+      "bytes": 332513,
+      "sha256": "83043e63a372fbbc2798053e72523b00524c8821440a5ea2d4258fe5a9f256b6"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing Jump Running Landing.fbx",
+      "bytes": 370417,
+      "sha256": "23bd2bf38fb9f4746d4f5df2bf810c6654108c0bbfaef120fb00cb2ff0fc869a"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing Jump Running.fbx",
+      "bytes": 339137,
+      "sha256": "49742e687503ee44818248358d56f53790dfe8ef67be1da392a139aae9c6e33c"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing Jump.fbx",
+      "bytes": 468305,
+      "sha256": "4bf0fec5a1471c70a7338ad6b369c2de6814ee007fac6afbdb31e2ca1acdae7f"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing Land To Standing Idle.fbx",
+      "bytes": 343633,
+      "sha256": "9fbdc009e7bf062ef62499363f3c5b8582a22ac027df709340cc47b37cbcbd74"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing React Large From Back.fbx",
+      "bytes": 402209,
+      "sha256": "7df231b6ebd0b087c3c01d865779a833f5a4c347ecc342967e25547d4e3763b6"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing React Large From Front.fbx",
+      "bytes": 370417,
+      "sha256": "81dba1225ce0f9da6dfe7b7d6d810be792b81398af8a6c0e5c94fd7bea3adc08"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing React Large From Left.fbx",
+      "bytes": 390513,
+      "sha256": "8bb6e80110487057e37957461bd376d605e057c08802ad26c20eb6f1d360623f"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing React Large From Right.fbx",
+      "bytes": 397201,
+      "sha256": "693bf92f897b9708224333ed716d2a204f630f81902e2e7dedd3b822011ce2bf"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing React Small From Back.fbx",
+      "bytes": 360369,
+      "sha256": "9d15b753613e9608eaada16e5246e2f8df0165e1ab43e600f8531b3332636fdf"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing React Small From Front.fbx",
+      "bytes": 353681,
+      "sha256": "423b56b46c01e08ef13083092e1787e27f3783493a73c1d210248ddbdbed585e"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing React Small From Left.fbx",
+      "bytes": 353681,
+      "sha256": "932f58320364f9b4f9ef24449471d0f2c389ece4fb8505f673859d1f0e41bbf2"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing React Small From Right.fbx",
+      "bytes": 333585,
+      "sha256": "ec80cd11a1729e98e94a6377ce66841e6b559b81761b57ef7286cdf0aa5ff440"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing Run Back.fbx",
+      "bytes": 296769,
+      "sha256": "cca04c384e6df0a9b709205504ff312dbf4998b39db24eceecb6bd6e647b3b56"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing Run Forward.fbx",
+      "bytes": 306017,
+      "sha256": "3cf4c700cc9af3ba00cf966692ef05d78e2ce72c551062521012caae3f43cb7e"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing Run Left.fbx",
+      "bytes": 307665,
+      "sha256": "f9b5f712c80a4742594ca538050b893e5d4a9f77c80b41774f547d2d72519c3b"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing Run Right.fbx",
+      "bytes": 309329,
+      "sha256": "b0edee47ffb4b448696f6954ba0f74653b7604a46faf2913d14e2c8e3a7d82a7"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing Sprint Forward.fbx",
+      "bytes": 288225,
+      "sha256": "396787eae2c1450ce085ff3371f8267cdc3263e9b11aad81aa5ac52e153d43d4"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing Turn Left 90.fbx",
+      "bytes": 418625,
+      "sha256": "cdf3908134b79b4147992983c1d2671baef490740ce95875624b28db511d9e65"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing Turn Right 90.fbx",
+      "bytes": 397201,
+      "sha256": "89cf22596c2f18be5777a592f5a252d8a4b6cf267afd325e77a470d5f797e2ee"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing Walk Forward.fbx",
+      "bytes": 346977,
+      "sha256": "1f703be3db820155d659191f23f9145c1fcb9e215b1a881b9a0d260c5d7bfd2a"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing Walk Left.fbx",
+      "bytes": 350337,
+      "sha256": "c0b525244e70cc84d966e0a80388c93533dfdcafcc521bd77f46577d4584b233"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/Standing Walk Right.fbx",
+      "bytes": 353681,
+      "sha256": "9797aacd40562bee1812452dec2e61766965363ae5a893413290ca4e5558863d"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/standing 1H cast spell 01.fbx",
+      "bytes": 460817,
+      "sha256": "d680cec43c58ca0df00b284af263bd2c6494938bbefac9854826c22b677fed3a"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/standing idle 02.fbx",
+      "bytes": 649601,
+      "sha256": "596bcfa98685741f9576d43eaa7ef57ad5a2b9864dffa56e5a8cada7ef018520"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/pro-magic-pack/standing idle.fbx",
+      "bytes": 420641,
+      "sha256": "8a8a39b338fd061d9cadd50413c2d7f35b0956aaf4511f6bfb6ea6ef2b7e7ed4"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/punch/Body Jab Cross.fbx",
+      "bytes": 372784,
+      "sha256": "abe87c71ff6035ef24be0890a8da021d145a07069bf29b925e82cca0abf6bb88"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/punch/Hook Punch.fbx",
+      "bytes": 3837424,
+      "sha256": "949fe2b903dbb89de6006c64fab275d81f942243366b965d4e859e85d62a0915"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/punch/Hook.fbx",
+      "bytes": 297728,
+      "sha256": "33b6e550cadf0458d76c76cefedea3412673db9f889dae868285b5e5bcdd01a9"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/punch/Illegal Elbow Punch (1).fbx",
+      "bytes": 332512,
+      "sha256": "ac984130140afb9b9c20cc99581757e05f45b66ae8d765ec3aef130f4e5c7765"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/punch/Illegal Elbow Punch.fbx",
+      "bytes": 402064,
+      "sha256": "3f0ef148c883f130543720314773c19ae87445e5e3d18034e883b6955a5d9ad2"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/punch/Jab Cross.fbx",
+      "bytes": 421392,
+      "sha256": "b04e29c557205a77568e8da3daaa3a21a87caa5e796731c0c82397833cbce9d6"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/punch/Lead Jab (1).fbx",
+      "bytes": 290288,
+      "sha256": "4010a24a7014312fe21d53deae50355ac9ecaa29209f0ed10c7c5967e99c74e9"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/punch/Lead Jab (2).fbx",
+      "bytes": 367280,
+      "sha256": "524491f6149e041033690b2484d365d62aff8ea2aac5f85388e9ee8956596abf"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/punch/Lead Jab (3).fbx",
+      "bytes": 369776,
+      "sha256": "6f01aa8d76a58ba902fc31e437110236c8f250ce5087da9aacd768f056cbf6a9"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/punch/Lead Jab.fbx",
+      "bytes": 325056,
+      "sha256": "353efabb88b3f1eacd4f8e4ae47d87b4a2c7a68ca8c22fc6b3656807e1f1fc96"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/punch/Punching.fbx",
+      "bytes": 309040,
+      "sha256": "b5971323cec9d9076e543afa3964b586d1b15cff59f8db63c4ae100edc60db5f"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/punch/Uppercut.fbx",
+      "bytes": 373760,
+      "sha256": "2a6a84f99f16f4de5aa55dcbfd17b530f901f68cf8078da54940f09e2e382193"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/walk/Drunk Walk Backwards.fbx",
+      "bytes": 387120,
+      "sha256": "111ac46650da02d53d539f66c4c4154ba61de311abeb4eccf3de9f7c1bfe58be"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/walk/Medium Step Forward.fbx",
+      "bytes": 337696,
+      "sha256": "9b6d584ac0b390903ab96e378bb35a1d2f0cc3bc0b7291ad31c9e7a4338f25ca"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/walk/Short Step Forward.fbx",
+      "bytes": 343088,
+      "sha256": "3b2445dfce604407c1c3c07c59d7ebaf0951ae1a37cba5057361427f0676df97"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/walk/Standing Walk Back.fbx",
+      "bytes": 317392,
+      "sha256": "625637b360ed069761a0ea5e03a10d48940029f5dfd42c9f5de2407e30646a35"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/animations/walk/Walk Backwards.fbx",
+      "bytes": 441808,
+      "sha256": "8da3792b84905ff3e0c1b53b62943295842b822fd75f715bfba12ae13ed4ac71"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/flo/Character_T-pose_white_background_2K_202607041640.jpeg",
+      "bytes": 1505874,
+      "sha256": "9649aa6811432742d9da9c6544e0c783dc4d5966f6ff488ad3d108a1761c5f3a"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/flo/Character_T-pose_white_background_2K_202607041648.jpeg",
+      "bytes": 1477470,
+      "sha256": "a48ac1873ae38177cb0ffb7eab55ac4857f8e7b3f6f5bd83d4d06da861bae355"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/flo/Man_in_cargo_pants_T-pose_202607041646.png",
+      "bytes": 3700285,
+      "sha256": "a069b090606b669bbf17332308b8b6f3e9ed6a94ce161f16ab071ff92509f97e"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/flo/flo-20k-tripo-mixamo-base-rig.fbx",
+      "bytes": 23918432,
+      "sha256": "83ca36613a5e623e068944ca73ceca51b553cadfefcd9d40d09e1a214452674e"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/flo/flo-20k-tripo-unrigged-fbx.zip",
+      "bytes": 46110494,
+      "sha256": "0c08a3f5e88b2213196ba56fb76058af446d628c337e6d8901b2d4662e4093d5"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/flo/flo-20k-tripo-unrigged-obj.zip",
+      "bytes": 23066835,
+      "sha256": "0d06406b983f2e3295d0ca8d38642b3119cca2dcb695d1636d298cb72fbd621d"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/flo/flo-20k-tripo-unrigged/flo-20k-tripo-unrigged_basecolor.PNG",
+      "bytes": 22702615,
+      "sha256": "e9cdcae527598d2f497e481d01dfac5d8e22a64dfc51809fb39070f9b9e5dbbc"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/flo/flo-20k-tripo-unrigged/tripo_convert_93e13fb5-30c8-4bce-8721-fd6bcc82b046.mtl",
+      "bytes": 285,
+      "sha256": "d3292f47331581b81d76b576e0569bf910525b69305ff18f63513633790ef37d"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/flo/flo-20k-tripo-unrigged/tripo_convert_93e13fb5-30c8-4bce-8721-fd6bcc82b046.obj",
+      "bytes": 1518458,
+      "sha256": "3f3923aa6df80637ffcae772c9d7ee392a7d4cdbb6c9cf234b5bd3ad416afd43"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/flo/tripo_convert_ae41a37c-baaf-4cc6-b9f8-15f44575777e.fbx",
+      "bytes": 24220704,
+      "sha256": "d812d9e6698542efab1bd5a9a8368bd719c6fec96aba707eacf8792212d75613"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/rapha/Character_T-pose_on_white_backgr…_202607042314.png",
+      "bytes": 2090395,
+      "sha256": "8c31fda2d8572b610501245d5f12f4d6290f2c190f0670f06de8b5fbc046b8de"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/rapha/TabBastard_in_T-pose_2K_202607042315.jpeg",
+      "bytes": 1365731,
+      "sha256": "9e7cb8c21b7ef382f8ea81aab4ac6a7877ed5ad91018c748a6eea48ea6b224c3"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/rapha/rapha-20k-tripo-mixamo-base-rig.fbx",
+      "bytes": 23730576,
+      "sha256": "4549780e9efe4dd734369089d74b741df652ccf7b5bfd1c1b7b358e7aa2c9014"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/rapha/rapha-20k-tripo-unrigged/rapha-20k-tripo-unrigged_basecolor.PNG",
+      "bytes": 22563724,
+      "sha256": "c677a796004c7ed691889a38b4a193d0e490a62513637cb3376b3c01338bf964"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/rapha/rapha-20k-tripo-unrigged/tripo_convert_8dfa7577-9aa2-4595-9a5a-593d3b04e953.mtl",
+      "bytes": 286,
+      "sha256": "e28920af5507c164e4d6586b8b97bedfd7743734ccb362ef68280414d7ed6d68"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/rapha/rapha-20k-tripo-unrigged/tripo_convert_8dfa7577-9aa2-4595-9a5a-593d3b04e953.obj",
+      "bytes": 1559458,
+      "sha256": "5500b09190cb9ef9e6cfae3c41bd56d189b771b09e78473f74d0a1eada1a2859"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/vincent/Character_in_t-pose_white_backgr…_202607032127.jpeg",
+      "bytes": 1602946,
+      "sha256": "b5489adc040403b986b3a0912dd5fdeae1570874e1e4f86ac8e563431a4e76a7"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/vincent/Character_t-pose_white_background_2K_202607032127 (1).jpeg",
+      "bytes": 1453457,
+      "sha256": "8e88a689b9d54a58c129cf4507934428f2010c2002387a491f6d0cd5eb8f2211"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/vincent/Character_t-pose_white_background_2K_202607032127.jpeg",
+      "bytes": 1502046,
+      "sha256": "cc1222191ba901c7615dc25f655d19ed6f0252ee5aec8be09d9ad7f8968817fd"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/vincent/Character_t-pose_white_background_2K_202607032127.png",
+      "bytes": 3725604,
+      "sha256": "5ea73874ee29725b1a3be91ab5004761a8838faa1863190cff5575f923d58970"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/vincent/vince-20k-tripo-unrigged.zip",
+      "bytes": 3408307,
+      "sha256": "bf770a3460dc332389ed978c93f548edd62192e018047f2829f03f7f0fc66cdb"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/vincent/vince-20k-tripo-unrigged/stylized+human+character+3d+model.mtl",
+      "bytes": 181,
+      "sha256": "137243e4d2fc1bead7e7e07249b35819aaac2b8b8017077007d6e038c61861aa"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/vincent/vince-20k-tripo-unrigged/stylized+human+character+3d+model.obj",
+      "bytes": 2266792,
+      "sha256": "5edc67aac595baf5647d2183cbce4f47628f1b66d6b763f09f4582c0bcac50e0"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/vincent/vince-20k-tripo-unrigged/stylized+human+character+3d+model_basecolor.jpg",
+      "bytes": 2823665,
+      "sha256": "5139bcdc3461fb760e2231a3edc02878b202e4a62046a84e357946b205f0378c"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/vincent/vincent-20k-tripo-mixamo-base-rig.fbx",
+      "bytes": 3828176,
+      "sha256": "2249f0612e3358715d89f03ecac2ae4978936768ddd70c1fdf93bca40980cbbe"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/yulia/Character_T-pose_white_background_2K_202607041712.png",
+      "bytes": 3285011,
+      "sha256": "60e3652a9b9a76758900aae9be8f49dd2522276692249d892e316155e2db8e0e"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/yulia/Character_in_T-pose_2K_202607041710 (1).jpeg",
+      "bytes": 1233673,
+      "sha256": "9c6f9d19976dff8457d4b6ceb5f7eaedb9216da03174227587e3f8d1ce86b38d"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/yulia/Character_in_T-pose_2K_202607041710.jpeg",
+      "bytes": 1309893,
+      "sha256": "dbb9faeab32a28c431bf73602dc83a2d48fbe327b268ed5ba42e91cdecb0c9b9"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/yulia/Character_in_T-pose_2K_202607041710.png",
+      "bytes": 2996994,
+      "sha256": "47267a57bab89d607832c4706d4aebea13a3e6591dbf25bfe539cd71a3cf25e1"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/yulia/yulia-20k-tripo-unrigged-fbx.zip",
+      "bytes": 47221972,
+      "sha256": "4f2d6533b8785d1465b63f11fde788940b4334e0906a7645773724236347a64a"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/yulia/yulia-20k-tripo-unrigged.zip",
+      "bytes": 23604248,
+      "sha256": "58a09461ea3dfa75a1c45878037150da0ebf743280b3059cf1196d45f67c7c50"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/yulia/yulia-20k-tripo-unrigged/tripo_convert_55b2a3e5-bee8-4188-bbec-5e88e093173f.mtl",
+      "bytes": 286,
+      "sha256": "d38381d13a7eaa12c1eea279c790e67c13745de0df97b2d966814ea5e39da8d8"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/yulia/yulia-20k-tripo-unrigged/tripo_convert_55b2a3e5-bee8-4188-bbec-5e88e093173f.obj",
+      "bytes": 1528977,
+      "sha256": "6886c346a07288cbea0a95978f29795e425d07065dfc6f25d465ac9eb1ced376"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/yulia/yulia-20k-tripo-unrigged/yulia-20k-tripo-unrigged_basecolor.PNG",
+      "bytes": 23240519,
+      "sha256": "c6c88660227a3c76dd444ab9c0de492fa35df6f13e16afa0fab7d2809f240ccf"
+    },
+    {
+      "path": "assets/raw/unused-3d-sources/meshes/yulia/yulia-v2.fbx",
+      "bytes": 24628800,
+      "sha256": "2b25543365100e7a0a5c906a03ce9c31206ce27471f61d617ba9bcb1c6764430"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/claw-rake.png",
+      "bytes": 681456,
+      "sha256": "f777d816fa802acb63b60c5abe4605968f99a0cdaa5d3957c51bb65e3ad1d57b"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/claw-rake.prompt.txt",
+      "bytes": 1220,
+      "sha256": "092e50292076d01221ec817cdcef039ec7d05e73f4ab5c6136d2d6f91f64d5a1"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/cross-slash.png",
+      "bytes": 592252,
+      "sha256": "2921a48ee0e0edb13a7e21201172a328894a4729cae90e84ada27bea63368e83"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/cross-slash.prompt.txt",
+      "bytes": 1229,
+      "sha256": "8cca7288474edef4c1fdfa25eeffb82be3de65be3eed9713285e38ebee25b64d"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/diag-slash.png",
+      "bytes": 499559,
+      "sha256": "a74071e370dc20572cb95e7276be6c87c7d0969a5dbfea23ee310b91e78b9291"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/diag-slash.prompt.txt",
+      "bytes": 1259,
+      "sha256": "16d649331d5c143b92fe735ccf095b974f6cb54b275818500849266a8e51379f"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/double-shockstar.png",
+      "bytes": 604280,
+      "sha256": "a249950753346ee973d9325ba24c31060ff8f33365d9cb7c427d50b05cb76ddc"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/double-shockstar.prompt.txt",
+      "bytes": 1256,
+      "sha256": "d9994660dfc3b6564b75cf45d71200f9cfb1ff051e0eba23301f946e51c9cdc3"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/dust-puff.png",
+      "bytes": 571279,
+      "sha256": "67b2a92bc022d59a707b7615c5c6db69060b017faafd0de868274d7921c21058"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/dust-puff.prompt.txt",
+      "bytes": 992,
+      "sha256": "e4dbcecba75308c0f8b980dc683c4ea72eabed05d4a495df9ee53082b3fbf533"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/ember-flick.png",
+      "bytes": 469734,
+      "sha256": "76d931df78d38c4ad6cf6d070688151a11984159686a4c7f95ecf27912527f70"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/ember-flick.prompt.txt",
+      "bytes": 1240,
+      "sha256": "6e3ce4637cad0f80bea3faf5e279c8a56f7c66456db20ca54949d33bce33d9b2"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/energy-flare.png",
+      "bytes": 695646,
+      "sha256": "67a1203d6048886d03aa7277452306e9b401578a3a0b66107c7418cf28300d3a"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/energy-flare.prompt.txt",
+      "bytes": 1268,
+      "sha256": "b0a0c9810378cf4a9178e28478e9838ab9af811c9ee2c6b4e679f0d828220db1"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/grit-debris.png",
+      "bytes": 735016,
+      "sha256": "0bbb8e1f8d8a0ebd803dece71a52d983cece11966d8f97e8a705b44ffabefae0"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/grit-debris.prompt.txt",
+      "bytes": 1262,
+      "sha256": "f770282b913d84a7a37a7f91e014426c7c7efff642884840ef6cc6cc42c7a82e"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/ki-lightning.png",
+      "bytes": 679791,
+      "sha256": "5206f33356d0129c2ae274b9caeee292059bdde23c11d7c18c4c9fa1dc5fdb76"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/ki-lightning.prompt.txt",
+      "bytes": 1267,
+      "sha256": "e5670c8158dd4ebdb843a59b92dcf325c5b931250aa29a768916f6fe5ec3a584"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/ki-scatter.png",
+      "bytes": 624240,
+      "sha256": "27ba2564015205fbcee8d52bdf22e538f11cac30b1eecfe8bcc631768465076b"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/ki-scatter.prompt.txt",
+      "bytes": 1304,
+      "sha256": "d967f3f20745353367184280a82a97c4da10926c178f9612001c6d00b8f54077"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/noise-fizz.png",
+      "bytes": 676381,
+      "sha256": "400e07a710b467308feb32051db6489268688267f7cff105134ea6d7f5b3004a"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/noise-fizz.prompt.txt",
+      "bytes": 1245,
+      "sha256": "569976555e1948358bbe8bc62a7b20038698b1643966c83c88d41fd60d86a595"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/slash-arc.png",
+      "bytes": 520247,
+      "sha256": "a0ae2b0c4db9be54d10749750363d213214b4f4dd121beee60fde5b2519332eb"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/slash-arc.prompt.txt",
+      "bytes": 1004,
+      "sha256": "3ebb9236817f56c37f486cdc63574ec1f2230cd518ddb27eddbb1c5ece117a8c"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/spark-scatter.png",
+      "bytes": 743718,
+      "sha256": "dde4a35e1e5717cc95d2c14e10fb5b9bb32d896efe59ed1ae2ee255c897138df"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/spark-scatter.prompt.txt",
+      "bytes": 990,
+      "sha256": "9bbf7e171e36ff56e2bdc8a9133fd2895842bd5585a6b0aacb42167d9e1dcee0"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/spark-spit.png",
+      "bytes": 586188,
+      "sha256": "5fbdddf97e9572ffdc1025b144340fcc817fef4dcf1199b2f952f9fa32b44541"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/spark-spit.prompt.txt",
+      "bytes": 1249,
+      "sha256": "e2088cfa44236424a81aa28bf0bdb827e14ee95e542bdec844b809cf7eaf7d41"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/splinter-shard.png",
+      "bytes": 684780,
+      "sha256": "9fecd274639b3d33dc7b74e03ea221800dbaaa9271bd08ece78e0666a676fb08"
+    },
+    {
+      "path": "assets/raw/vfx/grid-tests/splinter-shard.prompt.txt",
+      "bytes": 1216,
+      "sha256": "2e70db7cfc126806813a29861f66fcdfa24251a45feb01df0e5c3166287f9b15"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-hurt-1.mp3",
+      "bytes": 13791,
+      "sha256": "07e3782c04334fd56d60ff3017f003b854a80a0647b23f6bee5ee1c05b8a8b62"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-hurt-1.prompt.txt",
+      "bytes": 13,
+      "sha256": "4c1920a411b30298c3e8af09cbf0669b541d158cd72e725d44a6ceb287f90a5d"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-hurt-2.mp3",
+      "bytes": 11283,
+      "sha256": "c612141dda56dada2dbcae62b1deba86a97a8487757de8f5b002f5e194a81ffe"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-hurt-2.prompt.txt",
+      "bytes": 14,
+      "sha256": "f1c3e52c6fd258c26c214fd341cbbd26f0e51d3d446cca40c5ceb276ead013a0"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-hurt-3.mp3",
+      "bytes": 20897,
+      "sha256": "fb0f4eee680a2511e553b6b6fd6cb5d110e0634a5c533e8b6350794b4e7e1dfc"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-hurt-3.prompt.txt",
+      "bytes": 3,
+      "sha256": "9760c1d33a16305c51e0123dfdcbbc5209a331c1f7fe41b480dbe1baf206b919"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-hurt-4.mp3",
+      "bytes": 20479,
+      "sha256": "8bb19495faab689661b1564ea62e4a50e400ad78cdec948ce7d0785801010f1c"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-hurt-4.prompt.txt",
+      "bytes": 5,
+      "sha256": "6b95426e41f140e4023ca925a65f7b99b58727fffd331ef61cac9a8388701e7d"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-hurt-5.mp3",
+      "bytes": 17553,
+      "sha256": "82c8332b2638f54ac3b28f29e1ac8d89f66e5ed45cd3263b25f1a3eb2d2eccf8"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-hurt-5.prompt.txt",
+      "bytes": 14,
+      "sha256": "87b5ed4fdc0e9341366d85c7741a99e7d972ae07fab528ce6a887489f0dc0824"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-hurt-6.mp3",
+      "bytes": 17971,
+      "sha256": "fc30612773e79c64ca7e7ef93beb0f6746b0eb32ce96b82c5304f704bc725417"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-hurt-6.prompt.txt",
+      "bytes": 13,
+      "sha256": "49330cb51a9baeb5d2cbeb527757d8de7004b00f2c9e3152e689d0d67b5f7f7f"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-kiai-1.mp3",
+      "bytes": 16717,
+      "sha256": "cb5d956d6dbcb5a1039902eb1bb9295093db5e1a223ba343df953d43a95cea5e"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-kiai-1.prompt.txt",
+      "bytes": 17,
+      "sha256": "903454025c80766985454c64626952ca59a549e640f3e85d5af88d942cea36f0"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-kiai-2.mp3",
+      "bytes": 16717,
+      "sha256": "9f599dc4c7c9aa9facb0b2e109588ff77fa5d9d994fb544ac8c722c4835a7c3e"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-kiai-2.prompt.txt",
+      "bytes": 16,
+      "sha256": "653d2c5ba4fa8d983db2b58443cb4d75fd18ccd493a02aa4d67417ebfb188f49"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-kiai-3.mp3",
+      "bytes": 17971,
+      "sha256": "19f06e6bd1649785da49cbf78758edb3bc3cfe99296ccfca61fcfb1f92dd9687"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-kiai-3.prompt.txt",
+      "bytes": 17,
+      "sha256": "883af4defb7da6274867ab1bda147194f88dd3b3cb4be1fe2600103b69b0d741"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-kiai-4.mp3",
+      "bytes": 14209,
+      "sha256": "07ff2edd54ec8033a3597036e40d4650bbe16055e5d97d8bcfd4930f23921046"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-kiai-4.prompt.txt",
+      "bytes": 15,
+      "sha256": "81a3774f75ffa2cea47b3383cbec97d4509a3fdada2a5dcdac920d759d7db033"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-kiai-5.mp3",
+      "bytes": 13791,
+      "sha256": "158f19a98d84fbff4a960d5e10d062fc2c34f8f0f63bdfec8d6bbebd2e14a3fe"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-kiai-5.prompt.txt",
+      "bytes": 16,
+      "sha256": "cc0f36465d6a134cf1a90086be967bce5ed6054664607e86e9ad998746afebc5"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-kiai-6.mp3",
+      "bytes": 15045,
+      "sha256": "501ea812b0535c89415934864fcba2b352baa1902ab9194288e7964ca41eb818"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-kiai-6.prompt.txt",
+      "bytes": 14,
+      "sha256": "8da508ec89c2d22afc73324bc1e251697e7e84522a9b9c57fb9504016449b294"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-move-ceremony.mp3",
+      "bytes": 30092,
+      "sha256": "ef738e389dc2d2c49a831d1fc9c41ad4de378de42c4f6e05802f431d9a233c90"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-move-ceremony.prompt.txt",
+      "bytes": 32,
+      "sha256": "949ed18dab44f0a05b0c81bf2a7bbbf199cc5804752e9628ff7d00bf036a1633"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-move-crescent-moon.mp3",
+      "bytes": 23404,
+      "sha256": "84d4259f8cbb125cde693fdc36090fa35cbcc26af427b050cc5264e9ff002e19"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-move-crescent-moon.prompt.txt",
+      "bytes": 26,
+      "sha256": "fbc9cc657dcb8c199fb760a95924281971c3de6a45f11ee7fdfb06367e478e63"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-move-spirit-draw.mp3",
+      "bytes": 24240,
+      "sha256": "4b02f1d34f5ded03110fb2c6f95e1b9226987f62a20034fb560e0c16e63604fd"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-move-spirit-draw.prompt.txt",
+      "bytes": 25,
+      "sha256": "d4ba9d1a15d0082cde3c1832077081382c43815ba0f3790a3366c6e4a519e067"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-move-throw.mp3",
+      "bytes": 23404,
+      "sha256": "37c7fb7fd5795c7d550403c947d29d764579406d71729e76563dcf15a146c0ad"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-move-throw.prompt.txt",
+      "bytes": 21,
+      "sha256": "150281251998a63c257d897be0574081da8a635e93bc2426b0b428f671efdd60"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-move-unicycle-rush.mp3",
+      "bytes": 19643,
+      "sha256": "1ef6102b8868b01b58735387543d7d66c7b685f8d5bb56f8c447f6917deca4d9"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-move-unicycle-rush.prompt.txt",
+      "bytes": 20,
+      "sha256": "380ad20c79514b9547044a1088040aa3c9b4ab7fbbe333e92ed7c2983aa34c1e"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-victory-1.mp3",
+      "bytes": 33017,
+      "sha256": "dad778580d4841d78133d1c80a1355e026bc26873671926228afc73d1f542956"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-victory-1.prompt.txt",
+      "bytes": 32,
+      "sha256": "316032756f4d903420ec60288f85b6004398d887d0307f08930ad86b156c1dd7"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-victory-2.mp3",
+      "bytes": 32181,
+      "sha256": "4df459112c43adcba95e0819a692ffcfcd9bdff820e1b7da64a8f68d46bd2b20"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-victory-2.prompt.txt",
+      "bytes": 38,
+      "sha256": "49fefae9460c52937e6ff7399be8a87c6e38793fa6fbebd13ebe269c7cb711a3"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-victory-3.mp3",
+      "bytes": 50154,
+      "sha256": "4feea03b2c872ed3401eb98a4c5efc02ed5536212235ca801a5e5aa4f831ba1d"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-victory-3.prompt.txt",
+      "bytes": 35,
+      "sha256": "fe80f0b8e25d5a2f60da7edb8ae472a9af28bc4d7735245535eb5d8b75bc445a"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-victory-4.mp3",
+      "bytes": 33017,
+      "sha256": "2b32f1c55126563423765e5ca0fe6467a0c748d6dc4c078fd7149984f0311ede"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/chebel-victory-4.prompt.txt",
+      "bytes": 26,
+      "sha256": "31a03c54926632772a8454e2dc63d44e81b873fa83ec38d11372a62823037163"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-hurt-1.mp3",
+      "bytes": 7522,
+      "sha256": "29da466b0382d3bdf306d069041259233ffae8e09f3b7dfdf95740888abc7131"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-hurt-1.prompt.txt",
+      "bytes": 4,
+      "sha256": "3feb30875508ceead0ee8269376f719e911f8e1cce76db1f84bd0a0f338e95be"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-hurt-2.mp3",
+      "bytes": 10030,
+      "sha256": "14d772ebcda7d69e90035cecd903aff17410d54ac0408260d923a4de2eed18dd"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-hurt-2.prompt.txt",
+      "bytes": 14,
+      "sha256": "82cecb91fe570eaec29c86d28eaa901d149c61b41d8291ff7441569ab9b8d6ae"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-hurt-3.mp3",
+      "bytes": 8358,
+      "sha256": "893b28a12ea0cab3f5230a0788f1728b8bde7b119cd9457880f7b346d5b80fb6"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-hurt-3.prompt.txt",
+      "bytes": 16,
+      "sha256": "0f844335024c13d9214fc12f3aeadbe3f9939e8d48a7496553e6ce3bf34006e2"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-hurt-4.mp3",
+      "bytes": 16717,
+      "sha256": "bded6fce2b2b2f1d29aa09a41c50181257a48d04210ea1b607e32f3463bf8f70"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-hurt-4.prompt.txt",
+      "bytes": 15,
+      "sha256": "17ff5cdc2a86bddcfd17299a3efc835b640104e1b01b330382d5ce5c8f526fa8"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-hurt-5.mp3",
+      "bytes": 9194,
+      "sha256": "810291b6d686fe07f2328e93ec0efd3f9f4466e3798f42f6b8b0b04d93d0deac"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-hurt-5.prompt.txt",
+      "bytes": 15,
+      "sha256": "a5416a0dc8cf1a7ca3e5c66804d2f1db77aac347227eb32ab7aad802beed9dcc"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-hurt-6.mp3",
+      "bytes": 17971,
+      "sha256": "3078cb2d1a371ab72b137b00ffef12f871049c7c5f2b98e73fd569e10e903e7d"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-hurt-6.prompt.txt",
+      "bytes": 20,
+      "sha256": "c51957a6ead2040d6e95474de3035c11cafbdc610d1610cef5ca8f2147ee4a9f"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-kiai-1.mp3",
+      "bytes": 10866,
+      "sha256": "b993a1034a3b105f74b73b8d916cefbb73b186b14f678cf2b2c6f19076a97f29"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-kiai-1.prompt.txt",
+      "bytes": 11,
+      "sha256": "1a0a7797c3bada1f1341ed71e85c8e0ed9411c23986cc9b6fdc66b0378a70502"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-kiai-2.mp3",
+      "bytes": 12119,
+      "sha256": "056770bcf3df9859471a7e31b00fe0dd2216099f022526f222fc905ad28ab31c"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-kiai-2.prompt.txt",
+      "bytes": 5,
+      "sha256": "c34da054db33421f7221d32975777e2591520a3b0ba67e140b303ec5d0f128cb"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-kiai-3.mp3",
+      "bytes": 16717,
+      "sha256": "8feeb99c076c8e2bb4f39d5e16ac2df14d14cbed99849f7eb8548b3434e33fc1"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-kiai-3.prompt.txt",
+      "bytes": 9,
+      "sha256": "ff034ff8521e61c3e694b92a2217f811d84c6cd2e2cef398d2f683a7720b87bf"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-kiai-4.mp3",
+      "bytes": 10030,
+      "sha256": "96aeafcac396fe7e61d06b59fbc2f420c709a706d997f910a20352709596a467"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-kiai-4.prompt.txt",
+      "bytes": 8,
+      "sha256": "e376347913d7aabbd7aecc5634a1f69164580b963e1002fc0a15cd902f571149"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-kiai-5.mp3",
+      "bytes": 10030,
+      "sha256": "0c310008539eabd7e43b34ff1cd4787ba6c827b4db89909b95e462fcf51b0e8e"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-kiai-5.prompt.txt",
+      "bytes": 15,
+      "sha256": "d2882a0fabae13c3d83df60f6a5bf381fddb25c379212235b5ca48623bc8cfbe"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-kiai-6.mp3",
+      "bytes": 12119,
+      "sha256": "af60db911c2ab76ea859352543258ed959ecd3d287bc23fbd314bbd68bc749cb"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-kiai-6.prompt.txt",
+      "bytes": 10,
+      "sha256": "4162e588b4666c1c4bb00bfdbb1aaba4489f0182629294ca151edc1bcba2d2cb"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-move-breathwork-a.mp3",
+      "bytes": 10030,
+      "sha256": "a9d3f4cd5372d65df05b18ce18eca68d81110bcc7d221e4374ec59b26cc6048c"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-move-breathwork-a.prompt.txt",
+      "bytes": 14,
+      "sha256": "239f950c8930133d5ffdbea5475bae9e3aa5a63a9b181c598767993726f113a1"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-move-breathwork-b.mp3",
+      "bytes": 15045,
+      "sha256": "fb759413490e2ef626a6badafca836f626df9d07f7820c0be4b5cb80e416dfd0"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-move-breathwork-b.prompt.txt",
+      "bytes": 20,
+      "sha256": "d16451ee8364b797632454b5c95574afcf15bc5b359738d1aebbe1898d303853"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-move-breathwork-c.mp3",
+      "bytes": 16717,
+      "sha256": "f58190aa6090ca84e76c5fc8051ba557b054872e5373203e7f455ba9b257701b"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-move-breathwork-c.prompt.txt",
+      "bytes": 16,
+      "sha256": "cb976d3a9215a65876d99f85fafc8a26feb99e624225247df1c2ef374967405d"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-move-breathwork-d.mp3",
+      "bytes": 19643,
+      "sha256": "310dbb82311891ea0a327864a9a2166b6fb3f15e5c0360ff4ae3e4c1eaf85e92"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-move-breathwork-d.prompt.txt",
+      "bytes": 18,
+      "sha256": "3a1054801a9f769f0c78c5f248eeab991e809aedf26f08151c4c654eee5aa2bc"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-move-breathwork.mp3",
+      "bytes": 16717,
+      "sha256": "f58190aa6090ca84e76c5fc8051ba557b054872e5373203e7f455ba9b257701b"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-move-breathwork.prompt.txt",
+      "bytes": 14,
+      "sha256": "239f950c8930133d5ffdbea5475bae9e3aa5a63a9b181c598767993726f113a1"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-move-presence.mp3",
+      "bytes": 15045,
+      "sha256": "9ada93088186e8a1a045ac7c714f7e9e34a34de0a93a7dc2a71a276a71875f2e"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-move-presence.prompt.txt",
+      "bytes": 18,
+      "sha256": "750376c63cf7de85d1f80807f2be2a2f892ecde1a5aa8db7217a6aab90b3fc4e"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-move-sun-salutation.mp3",
+      "bytes": 18807,
+      "sha256": "ba7b3ece397febe57f226ec84c364181318d1d850fa1f985c4e504b1f62b2e79"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-move-sun-salutation.prompt.txt",
+      "bytes": 15,
+      "sha256": "dcc04c60b0537c1db0450b19d40fbf81c6e9b9fa4fcc5e0caadfb1972c221056"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-move-throw.mp3",
+      "bytes": 15045,
+      "sha256": "4db350fef0e7d1f0d664536c7111be7ba62ab257c6689de4b15475b2af587bfd"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-move-throw.prompt.txt",
+      "bytes": 12,
+      "sha256": "c898613e429f8935a07ec15fceecd9890aeb738ee24f5abebee60122e6676613"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-move-yoga-float.mp3",
+      "bytes": 12119,
+      "sha256": "f9f8a36043c453451bf41802f178cf283fd7847725251643f6fb342ee22b49be"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-move-yoga-float.prompt.txt",
+      "bytes": 5,
+      "sha256": "b5824c57026153701004b7926d74a087612c352edf1a59ab58cbab7c6a988f01"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-victory-1.mp3",
+      "bytes": 21732,
+      "sha256": "aeb3bf681b39ba82ffc3390fe90c5900262d1f9eb07bab0673fc8d22dfe8dcb3"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-victory-1.prompt.txt",
+      "bytes": 16,
+      "sha256": "e6decf169513875ee5930ce101846cc863760c5a6cfd6c08ad86c4927a1766af"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-victory-2.mp3",
+      "bytes": 27166,
+      "sha256": "ae33de9ce80f26f76b9766ef9bc35907c2ba522a06875ea4da4db8cd71a25581"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-victory-2.prompt.txt",
+      "bytes": 31,
+      "sha256": "044dc6dd83dee10dc2442aa2e272a48ebeb245064ae4d7791a8b361ee8b1d265"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-victory-3.mp3",
+      "bytes": 32181,
+      "sha256": "bb90c964d2986b5be1ddedc4024e5bec78db3b9a682bb334c750fd76c95e07ab"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-victory-3.prompt.txt",
+      "bytes": 28,
+      "sha256": "56ba57bfd1664dc131a4fdb710709fd2111041bd72ea4a98008005ee0f813440"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-victory-4.mp3",
+      "bytes": 24240,
+      "sha256": "afbebbec0efd3d22645886f8ef8e395682b61da6f1da9ca0b7b240d86762eb92"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/freeman-victory-4.prompt.txt",
+      "bytes": 19,
+      "sha256": "5365af30ed3db72b8d63eeb6fe1301e3d2143ef7c034e30ce9e9bc8379ca16ba"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-hurt-1.mp3",
+      "bytes": 12119,
+      "sha256": "f6ff001ba3a80081cc4760f42f85f453f9ab1e1fa0d2c0e4f0f3cfb8b44523c9"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-hurt-1.prompt.txt",
+      "bytes": 16,
+      "sha256": "fcde24e19fd9a8c45ee4b85c872c5df99288ee4f61c2613df332a643db18c423"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-hurt-2.mp3",
+      "bytes": 12955,
+      "sha256": "2c5ce5645f73d7fa83612eb11e05b115e06d463ff145deb1e94f902f594523e1"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-hurt-2.prompt.txt",
+      "bytes": 17,
+      "sha256": "e7be3d4c87b691eac2977893876f60d4106f9cff907869ff6af972ed910277c5"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-hurt-3.mp3",
+      "bytes": 15045,
+      "sha256": "6810fd1b2d4da511c88c6adaccc0914dde41cd7615b106fe2199d3452e1e1d8f"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-hurt-3.prompt.txt",
+      "bytes": 9,
+      "sha256": "f5d7675651a87b363c876902574a29d305bf66a2f4a4af13a9318e5f3da8e28a"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-hurt-4.mp3",
+      "bytes": 19643,
+      "sha256": "a982f2d3ef75f7151b079fc27bc5073a38ecd67d89d8ea848a85a268d26ef68b"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-hurt-4.prompt.txt",
+      "bytes": 25,
+      "sha256": "8560eea1ca56d5ae23145eea0959e38e7d522564e6e222883fe7a91699badf2a"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-hurt-5.mp3",
+      "bytes": 13791,
+      "sha256": "d79ef41707263d77c40301735b455c32afd0f6f9b6b7ef6545c3507e519366b5"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-hurt-5.prompt.txt",
+      "bytes": 22,
+      "sha256": "8c705217f2232677054a0a552276edf237f97ac312e930d88f663b79bcde43b2"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-hurt-6.mp3",
+      "bytes": 16717,
+      "sha256": "caf525afa38942cd2bd372759ed1c59a52c6a294f692cfa44075155540480b4d"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-hurt-6.prompt.txt",
+      "bytes": 24,
+      "sha256": "0c4fd893d25525bd54077a7f50753fc1c36b0ad04818b8b8593401ae949a5d99"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-kiai-1.mp3",
+      "bytes": 10030,
+      "sha256": "9de224564a9fa13d584b3d221f802ce0ff0d0fb1a6eb03b6571e76bd70faaf3e"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-kiai-1.prompt.txt",
+      "bytes": 8,
+      "sha256": "92fc0ceea39682285c9222a0fbaac4308e7b3f677dc976e2c290dda30420fbb9"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-kiai-2.mp3",
+      "bytes": 16717,
+      "sha256": "e126d2599137399e978b4daf0c28d80b73d2e68de78fbb38374e30fbb8cd8c4f"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-kiai-2.prompt.txt",
+      "bytes": 11,
+      "sha256": "27421f9db0c89ad6139c33ba25a0831cb3ce2b2bd646b3d2977c7852c3c48e59"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-kiai-3.mp3",
+      "bytes": 7522,
+      "sha256": "90d70a4406fcde7680b12fecf91ee16af94bb58d697bb745a0d9b26aa3cd2a8e"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-kiai-3.prompt.txt",
+      "bytes": 14,
+      "sha256": "b1ac63784c2c3f4bd3b29050c571e0bcb739b8b169ff29c91484a0a3627300b4"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-kiai-4.mp3",
+      "bytes": 15045,
+      "sha256": "25cbde7dc0067cb691435128cb8764d92843053d25b7e3e984fa5fb1150b184c"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-kiai-4.prompt.txt",
+      "bytes": 7,
+      "sha256": "b70f21885f52d466c59783f827728d5f5eb071c9cdb0ead183b8bf69c123fcff"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-kiai-5.mp3",
+      "bytes": 14209,
+      "sha256": "d31163e00e6da712f1070ca1e8f5db6ebd4f7ccefc7b9725f6556c2e6ab6bb1b"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-kiai-5.prompt.txt",
+      "bytes": 10,
+      "sha256": "e0e4390f2a962b9ccf1eae381a65ef9679dd3b45ef223ca812676a03f2afb1df"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-kiai-6.mp3",
+      "bytes": 9194,
+      "sha256": "6d4fb4ee8513a782861147df645e39f87bbaf5a8f8092c542d99d9a59246c9e6"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-kiai-6.prompt.txt",
+      "bytes": 4,
+      "sha256": "bbdbd15c053fc08ae0273e8da5d4dc997f4fc51962015f15ae80bf1a707ab3db"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-move-diffusion-escape.mp3",
+      "bytes": 16717,
+      "sha256": "eaf670253fb5bf7ae64692173417a8c6631b36d2c10f41bf6c2905fba81ec22c"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-move-diffusion-escape.prompt.txt",
+      "bytes": 24,
+      "sha256": "0a68f34c67997b48753a1f3f51fa570a6f65f53faa74f568f5f4417ea6cea2f2"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-move-diffusion-strike.mp3",
+      "bytes": 18807,
+      "sha256": "f33577fcad6250710f16093b77068b2467a2cdb58bd8c121b875c4b878afa9b6"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-move-diffusion-strike.prompt.txt",
+      "bytes": 11,
+      "sha256": "8a548cd09e8e23a764c87660d18cc711af3a101a50b27c6373d77b7ef9951a8c"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-move-hallucination.mp3",
+      "bytes": 15045,
+      "sha256": "bb055bafa1092fbdfef2f202ca4916b9535607fcd9afa4e81f8ff8ed27e3e6c4"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-move-hallucination.prompt.txt",
+      "bytes": 16,
+      "sha256": "a228de1750773243294e95297ef26a04b5d5f55031d0ccaa04a3912dbd7eebd2"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-move-mana-burst.mp3",
+      "bytes": 15881,
+      "sha256": "975cfd1c6be9e234347f105bccf31c2054bbdbf82f8e463594d894a02f868d24"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-move-mana-burst.prompt.txt",
+      "bytes": 11,
+      "sha256": "d5af0785ae485bcb9ed049f2f7a9e49d8960e012c2a7825d4b6dd200610283e0"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-move-rate-limit.mp3",
+      "bytes": 18807,
+      "sha256": "1b477a73b268bb922760520e8a93039a32c494befcd82f9a71921a9623b9bdc2"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-move-rate-limit.prompt.txt",
+      "bytes": 13,
+      "sha256": "c4a847d7d48118e19701e22f803be650b89c3174dd1171842de35db42afabfd6"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-move-throw.mp3",
+      "bytes": 13791,
+      "sha256": "ce98a732e3696527d73f5ce67c11323c3df8497a34ccbf74e9d03f8e9ac4255c"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-move-throw.prompt.txt",
+      "bytes": 13,
+      "sha256": "a89588f44ba825b705ec71a98ff937f095a065d1d163f7bba5b83295b635cd27"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-victory-1.mp3",
+      "bytes": 19643,
+      "sha256": "5032362af00131ecf4f138259926362c7b6c1571cd8ece2a8933b5f746d31cf0"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-victory-1.prompt.txt",
+      "bytes": 25,
+      "sha256": "d6b13d853d85c8ea171d5ccfd271ed92205b38592017f39bca41f365b624b70d"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-victory-2.mp3",
+      "bytes": 17971,
+      "sha256": "ec41adba7089b894af93e56007814d0ebd44e3bfcd7f19d1a9ba11b96e6fb72a"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-victory-2.prompt.txt",
+      "bytes": 35,
+      "sha256": "a263fb7bd624b5a4ab6a266f3c9fb0fe43a195d76cfc8bf7bd835ae61e7a2683"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-victory-3.mp3",
+      "bytes": 24658,
+      "sha256": "8b36a82a966f37368786b1ea938f452618e621b100c49eb9263a22777206dc2d"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-victory-3.prompt.txt",
+      "bytes": 34,
+      "sha256": "886a58daad2324353a844477373f3b1ae38ea7705b4921f236e95a11278130b4"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-victory-4.mp3",
+      "bytes": 26330,
+      "sha256": "f9a5282d3ce6142277183d768bebcf604fc0dcb5243f87d0c86b77b40da4263c"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/gene-victory-4.prompt.txt",
+      "bytes": 32,
+      "sha256": "1090b8ad8e2901574a9472bae1942d5ea8207295d9eae95799f8021a364ededc"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-hurt-1.mp3",
+      "bytes": 10866,
+      "sha256": "ee3dd243bc3b7ae9b9b7755441f146c0f0aa387be2a07ab7257cf2150e4e3264"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-hurt-1.prompt.txt",
+      "bytes": 4,
+      "sha256": "71d40ae4d5313623a7aeb08fc486e7d56daa4e1ab44c367eba04026c754db685"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-hurt-2.mp3",
+      "bytes": 10866,
+      "sha256": "67d9a43774794ad3bc26c8fa9fdff3cc07d0efab1f33c38a4bc84ea369322221"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-hurt-2.prompt.txt",
+      "bytes": 16,
+      "sha256": "6e05fc3904cc0609bd8bb2afb6a739c0b8af91f12a50812f82c4aeff359fa7bb"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-hurt-3.mp3",
+      "bytes": 15045,
+      "sha256": "9d5d835f92ef9656b0c5a1d5cee66012d71d948f901d1da45495ba25a504d3df"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-hurt-3.prompt.txt",
+      "bytes": 16,
+      "sha256": "6e4daebd4f65ddd8d1d693b15a071446f581669393ed17ca16625f7a2b7d3fc5"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-hurt-4.mp3",
+      "bytes": 15045,
+      "sha256": "639fe15211715fdf856b840eceb751f5f2fe73aea910741401aaa13af5301001"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-hurt-4.prompt.txt",
+      "bytes": 20,
+      "sha256": "5dd095a62038c36af85fa5642beedb3c2c9a6efbe6a96835508fd8fd53be1652"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-hurt-5.mp3",
+      "bytes": 34271,
+      "sha256": "4ccda7aa3b8d6cfb4ad1c3537f6f1783022623e969175940d8f86962432dcb43"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-hurt-5.prompt.txt",
+      "bytes": 15,
+      "sha256": "5554c90852d71cbb5e13f3e0877486144636186974849fdf293044e600e9a7ba"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-hurt-6.mp3",
+      "bytes": 12955,
+      "sha256": "e2627958e054a6c62422db97b202bd6658ae0a43545c5c1b72514f65d3f7c7ef"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-hurt-6.prompt.txt",
+      "bytes": 21,
+      "sha256": "82fa51bf92e3a724e200d04de54582ba15b178db5d20533d7f3687680666815e"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-1.mp3",
+      "bytes": 16717,
+      "sha256": "24288134acd0f2e46e0b812ab0654ebbd0349d9efe4b90411f25321dbee6618d"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-1.prompt.txt",
+      "bytes": 24,
+      "sha256": "a952c57935549bebab02cedc73e13b24db5b99124a7df74d2cb5df47a601998b"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-2.mp3",
+      "bytes": 10030,
+      "sha256": "1aabd4983c1fc57cd8754e0e469a9f8840b88d35b845ac7e1295ed6d38e23235"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-2.prompt.txt",
+      "bytes": 16,
+      "sha256": "5099e2ab781ad72fbe2c002096332b3800f1fd1554bb9f5e6ca027e34ad8e6c6"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-3.mp3",
+      "bytes": 17553,
+      "sha256": "b65bc0be7f024133030c85779ecaa644942806a17257f2405477f3acba8886b9"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-3.prompt.txt",
+      "bytes": 17,
+      "sha256": "bad197811e583193ba811360d592be15cb9bd2cf88b459c2e5b79f0807935db3"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-4-a.mp3",
+      "bytes": 18807,
+      "sha256": "5dd7df9e62c4af07c48eff544d45d17972443e1ae5d0565d1d8711ede0f6be51"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-4-a.prompt.txt",
+      "bytes": 8,
+      "sha256": "a900b61716bfb74d424c45c988bf3c2ce617376576d854c05972d49cbe517e6b"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-4-b.mp3",
+      "bytes": 16717,
+      "sha256": "63bba4600006317810ddf860db9f3ed40aca01ac150ab6beece98fdb274ba2f5"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-4-b.prompt.txt",
+      "bytes": 19,
+      "sha256": "1daec18f3abb647c875a1ec688c19e2691d7d431e7574a7ea644c3008c64c87e"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-4-c.mp3",
+      "bytes": 10866,
+      "sha256": "87ff3c593ce3c2e0b2412e92e50ca87981e3931ea6246c697b697506ab8d398f"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-4-c.prompt.txt",
+      "bytes": 5,
+      "sha256": "c34da054db33421f7221d32975777e2591520a3b0ba67e140b303ec5d0f128cb"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-4.mp3",
+      "bytes": 10866,
+      "sha256": "87ff3c593ce3c2e0b2412e92e50ca87981e3931ea6246c697b697506ab8d398f"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-4.prompt.txt",
+      "bytes": 16,
+      "sha256": "7486b0dee35f5263700dc01fd936c146fdf15ea1b20a6999aa754663d5bf56ea"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-5-a.mp3",
+      "bytes": 16717,
+      "sha256": "d57cb8d99e463c4d663bd48251769b0e50350c9d5ed24b34ff6bd91e893d4d23"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-5-a.prompt.txt",
+      "bytes": 9,
+      "sha256": "50c5c1347c0799ec186ff1904a811ec3a1a392f1eded63d3446d3bcabdc556e3"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-5-b.mp3",
+      "bytes": 17553,
+      "sha256": "f449bd5fa5683f7c66f89d00dc7d1a7a4a18643d3985947ba4b066ac7753e8b9"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-5-b.prompt.txt",
+      "bytes": 17,
+      "sha256": "89ebf0c0e26808f5de1892ff6d247edddf942c00ef147849d7702f02763e47bb"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-5-c.mp3",
+      "bytes": 16717,
+      "sha256": "792257d305ffdffc38c2da7afc04e9066f5ef6ccf31e31b6fbd95f324f454ae9"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-5-c.prompt.txt",
+      "bytes": 18,
+      "sha256": "a99d02f3b3de181589505485cbe07702f81c334a9acc89c1172b65bd1e36df5a"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-5.mp3",
+      "bytes": 16717,
+      "sha256": "d57cb8d99e463c4d663bd48251769b0e50350c9d5ed24b34ff6bd91e893d4d23"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-5.prompt.txt",
+      "bytes": 9,
+      "sha256": "50c5c1347c0799ec186ff1904a811ec3a1a392f1eded63d3446d3bcabdc556e3"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-a.mp3",
+      "bytes": 24240,
+      "sha256": "acf2fcccb55d883a472555e723e47c4e60e92b6daccbd2dfb8c8e3a78e2253c3"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-a.prompt.txt",
+      "bytes": 18,
+      "sha256": "83c2e194c00b202337986ce756b4a071280c013a18ef2f6bfc116bc5f417e6b3"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-a2.mp3",
+      "bytes": 16717,
+      "sha256": "31427257a510cc41fa82086559c2961d4231780e4df4333cbb20306b830db04e"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-a2.prompt.txt",
+      "bytes": 9,
+      "sha256": "a2d4b64278013755e80b4019ea1eb96a790eb3402438da215b7afad62c77a3a5"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-b.mp3",
+      "bytes": 27166,
+      "sha256": "df6ecdf68678b31fe98a2044756306ab20e600a1122adea66e1d54dfd9f32f78"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-b.prompt.txt",
+      "bytes": 11,
+      "sha256": "373b3c233a1a1ebd0298762ed8237f172ea64875c37cfbe780337c72a3c7c1fd"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-b2.mp3",
+      "bytes": 15045,
+      "sha256": "748997e7c760e648443670dc889be7d2f53cf71263b0bcda14112a3c863898ce"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-b2.prompt.txt",
+      "bytes": 22,
+      "sha256": "ec340d60c8ea426bc873c2ffb497a527f041e1d63844ab8fd195dab59335cb23"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-c.mp3",
+      "bytes": 30092,
+      "sha256": "2f02c3f06e43dd2eb130c7b97336f8ba80372d434035a449a28c457f26c927da"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-c.prompt.txt",
+      "bytes": 23,
+      "sha256": "28729e0bfb68926577e05a7121bbb9cfdbfbc48fe19c0bfbf40d61596903f135"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-c2.mp3",
+      "bytes": 28420,
+      "sha256": "7e179073579584341cd2a64dd4aa5450e4234bf57146f8d7c63aedce6663fb55"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-c2.prompt.txt",
+      "bytes": 13,
+      "sha256": "558095dd48bdd279d58fb6c5952a371b3f6999e78709e70bcbcb75148053dbe6"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-d2.mp3",
+      "bytes": 49318,
+      "sha256": "7ae2e336885d30e798f9180463250c58520a84cd48b855a8a67698347bd18049"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-d2.prompt.txt",
+      "bytes": 23,
+      "sha256": "ecf4e9c2d1563a4f39bfed9e3c76a79b99df45e464dbffc5c3da40c25a3498e0"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-e2.mp3",
+      "bytes": 14209,
+      "sha256": "c3f757efc5ea637a6f6d28aee9f85b27a89eed7460d647420498a363ad7707b6"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-e2.prompt.txt",
+      "bytes": 11,
+      "sha256": "00f7421ec392083a34847e7cf468743e6694ee9e4ed426b78756189ffffa4638"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-f2.mp3",
+      "bytes": 27166,
+      "sha256": "064fc02223c92f2647d7342c017b1f8e3ba9672045d115cde925d1cc9ff2cc45"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-f2.prompt.txt",
+      "bytes": 23,
+      "sha256": "098cd50d5cd567dfd87a6b69f2a8338d27043f0f0196af758bff21dafeb202ba"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-w1.mp3",
+      "bytes": 13791,
+      "sha256": "3b24c91a1d01b7ccdeacfc0277eec8bafdd13219656c13cc59f101a2701332c1"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-w1.prompt.txt",
+      "bytes": 8,
+      "sha256": "9118f3b69b722a88e8307405f7277d678a3f18251cf5b792b8c0b4b8550fea14"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-w2.mp3",
+      "bytes": 28420,
+      "sha256": "188b4ecd35fb61d3fa8d9937050d930238616168c9ae2a6f764fe71a63cc5bde"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-w2.prompt.txt",
+      "bytes": 18,
+      "sha256": "012baf02d86613a42df5f96777af326e9dbe1fbb293085973013cc02dc416aa4"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-w3.mp3",
+      "bytes": 14209,
+      "sha256": "288b56ea448017e8fc9256c789aa64e091b649512cf5b4551520bc014a5a96b7"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-w3.prompt.txt",
+      "bytes": 12,
+      "sha256": "16e23fb7a0d02b4d43bc9f29116bb87f376cffbbb738eff6df5271fe3be5ac82"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-w4.mp3",
+      "bytes": 12955,
+      "sha256": "49d1a3a1aba54ff5c1ba12422a3724df37b55d9bcb321748fc7180a8feaaab62"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6-w4.prompt.txt",
+      "bytes": 8,
+      "sha256": "9528007a6a58bac2b94b6dad751168b9b07f243bc1748052d3dc73fde953adc7"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6.mp3",
+      "bytes": 13791,
+      "sha256": "3b24c91a1d01b7ccdeacfc0277eec8bafdd13219656c13cc59f101a2701332c1"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-kiai-6.prompt.txt",
+      "bytes": 23,
+      "sha256": "302bd51aacbad4376b69df43d17d8e2ce189dda980c2c80a37ffe8d862066bd2"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-move-bb-gun.mp3",
+      "bytes": 12955,
+      "sha256": "fe756ec8fece7884e675ebbf1820320e00c1e2c1c440400fe9dd7d9aade08f20"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-move-bb-gun.prompt.txt",
+      "bytes": 18,
+      "sha256": "c786901f54ee22c07cf252e176952987f68fbdd0eb83b1e4f253712e8d6a48d7"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-move-excavator-charge.mp3",
+      "bytes": 12955,
+      "sha256": "54968eb235a657f99bedf1193813660cb17484b6098030365f40c6a934e76e7a"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-move-excavator-charge.prompt.txt",
+      "bytes": 19,
+      "sha256": "cab58fa5d5d87853eeb0a1c10be777423e81109a6072d47afa981009bcb201e6"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-move-rattlebones.mp3",
+      "bytes": 14209,
+      "sha256": "c413a62070bf37736d5cad1b5ac4bce953e00f4a35d08b805ef6a5a51af854f0"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-move-rattlebones.prompt.txt",
+      "bytes": 19,
+      "sha256": "7b64ce360f3356d0a1788bfc0bce1fc7a2c601219a6ff4f9c0115793707d7942"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-move-tallest-ghost.mp3",
+      "bytes": 17553,
+      "sha256": "fa238da2f489423adf44db6d13053cbf3911f643335c11b3b5e386025b68aa93"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-move-tallest-ghost.prompt.txt",
+      "bytes": 16,
+      "sha256": "353490a54da49962bf18bf1b145ebd4c8814684dcc6583a151384b8936b9872d"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-move-throw.mp3",
+      "bytes": 13791,
+      "sha256": "313aa77d207a9d78787a1d37d7221538a84a79022ff1aa076f23f37a218bf1ff"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-move-throw.prompt.txt",
+      "bytes": 20,
+      "sha256": "2b0862d6a6dd33bf71fca651c6149fef72f71ed58b1cde244675fafd2a5ed346"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-victory-1.mp3",
+      "bytes": 27166,
+      "sha256": "c9f8ecfddc5bc6537de6504aa12edf97c5ef2e1b96bab827cc6c629824cca29f"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-victory-1.prompt.txt",
+      "bytes": 26,
+      "sha256": "821dcd0c237ab8b6833cb82d6b598c700677af14716d000200dbb29752aa2714"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-victory-2.mp3",
+      "bytes": 26330,
+      "sha256": "483f253eec230386c1fa7f4c0b1f676c9ead69bbf90810587d0b366d1f1852b4"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-victory-2.prompt.txt",
+      "bytes": 41,
+      "sha256": "648ae1c44ab977f9118ad74d27bae9c381da0c6f42cedd282f8418cf89e86502"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-victory-3.mp3",
+      "bytes": 22568,
+      "sha256": "38e3bdf5402b32b0d94c49ad1b959ab3cec872d0293deb2a74c137a36e547772"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-victory-3.prompt.txt",
+      "bytes": 38,
+      "sha256": "a008399e4249021483356a5b8f442d67def69e49b6c05a6c96a8b10ce8998042"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-victory-4.mp3",
+      "bytes": 33017,
+      "sha256": "14e5d60f505e5c8a0fbf582a0f1a501789c8642a0734e4c00c7f02a86894540b"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/rj-victory-4.prompt.txt",
+      "bytes": 48,
+      "sha256": "a323e9109961877ec213185163f15e7d9b68e2488645018250710a552767e23b"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/chebel-hurt-1.mp3",
+      "bytes": 7358,
+      "sha256": "c4935f63ca3a2cb71b45e0c1fe64221e26fd9b356f0aab655c633c3a8b96a72d"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/chebel-hurt-2.mp3",
+      "bytes": 6104,
+      "sha256": "b7d87a4ec8e1292da6e8777bd782cad12ef8e879a42e978ce3776440b15617fb"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/chebel-hurt-3.mp3",
+      "bytes": 10910,
+      "sha256": "464847851ea82a117117cae9e12c12eec3899eaf27f29a59a26c1307c95e713c"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/chebel-hurt-4.mp3",
+      "bytes": 10701,
+      "sha256": "cd26bd1dccd8520de1ec787b5e8ab67dfe621c6231fb01762002baaa22424524"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/chebel-hurt-5.mp3",
+      "bytes": 9239,
+      "sha256": "cf689da02a1429f496c2a8ac8d116d47bf31614a2e4d8d1fae20736b19bc1a52"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/chebel-hurt-6.mp3",
+      "bytes": 9448,
+      "sha256": "58b068126c33d732111b9d2e968d0c8e227d8c5e6b2e282f93baaf173236732c"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/chebel-kiai-1.mp3",
+      "bytes": 8821,
+      "sha256": "f8764d6a1b7eb730430dd3101e4e189989a74dea57184d1313f41a534a6fa76a"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/chebel-kiai-2.mp3",
+      "bytes": 8821,
+      "sha256": "0b8f53db0882bb5253fa2cdc500b4d0bb084a32fe83294229c8313d7f018e8ea"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/chebel-kiai-3.mp3",
+      "bytes": 9448,
+      "sha256": "6fc15fc36f0205f45180d5dfafaed0a7bf470faa7216f5a48c220516cb1642fb"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/chebel-kiai-4.mp3",
+      "bytes": 7567,
+      "sha256": "0856fbfc7395a98e309977774383bc1dd59d2e80d5c56c01805e45bf4c1b9754"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/chebel-kiai-5.mp3",
+      "bytes": 7358,
+      "sha256": "13541167573a6f7f79a4b92266fa562a32de26512916f8463f01ee72a74c3333"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/chebel-kiai-6.mp3",
+      "bytes": 7985,
+      "sha256": "a285c73666e2abcf270baaf38c249455bbb09e28a7d0e7cb8e14397f1399e1ba"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/chebel-move-ceremony.mp3",
+      "bytes": 15508,
+      "sha256": "271ce5f1f84c68a71e52960885b8b107033141c4aebc0ce273bc638a4a48e364"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/chebel-move-crescent-moon.mp3",
+      "bytes": 12164,
+      "sha256": "2a09efd8b77101d26c944b15fc6335ae62e03145d1cedce5ea27d0f55ed1eef3"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/chebel-move-spirit-draw.mp3",
+      "bytes": 12582,
+      "sha256": "46325b2a55e389cc764085dc9b1a293f105640434c22f4ae9cc20466a7fdb864"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/chebel-move-throw.mp3",
+      "bytes": 12164,
+      "sha256": "042c8c0eb0396999ceba7f6e69d50b614bc702a26fdbb825fe8b6f34a811ef4f"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/chebel-move-unicycle-rush.mp3",
+      "bytes": 10284,
+      "sha256": "4a1bbeeff0fdb8703482a20669fc15ce9d5cf9b8697ccdfd5ab595dd4109649f"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/chebel-victory-1.mp3",
+      "bytes": 16971,
+      "sha256": "a5672d9ae01fa7b8371e7da8f47904a8c038b6722817e7c006466e4af5a62ee5"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/chebel-victory-2.mp3",
+      "bytes": 16553,
+      "sha256": "3591efbf4e089019bd37fdefb20460833286b32005cda906570b12200ade3009"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/chebel-victory-3.mp3",
+      "bytes": 25539,
+      "sha256": "63efa09357cad83ca31eab364ed23d89722f9a8d555ede02b69cdd64ad92a8d3"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/chebel-victory-4.mp3",
+      "bytes": 16971,
+      "sha256": "5fe7f54b6b052e6ea7c30de426b91a91943606160fcd726f5e56208c8109abd9"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-hurt-1.mp3",
+      "bytes": 4223,
+      "sha256": "c56a5565cb0cec246b5bdb9cdaaca346afa64a3c9faa0ab9e1587c5edd72cd8c"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-hurt-2.mp3",
+      "bytes": 5477,
+      "sha256": "ab87e91cecbcb380ec07aa8284e4a6ef1f3f010b1b806e70e10c364f602fdca6"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-hurt-3.mp3",
+      "bytes": 4641,
+      "sha256": "164b450f4f1333175d1a136d5c1cb71de58a70b8fe2ee61453e25c61e0f0b1b4"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-hurt-4.mp3",
+      "bytes": 8821,
+      "sha256": "7d3f8c2a6ab10f98969dd3a78221a899b8bc854998e69bbdb75fc34e1ad8fcca"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-hurt-5.mp3",
+      "bytes": 5059,
+      "sha256": "916de2130f7a9fd077ad86255c988a26ba87c36a1c74ccc415159ed8350c1412"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-hurt-6.mp3",
+      "bytes": 9448,
+      "sha256": "812565629eb4ba2926efe34d8893fbcbf8d6f4a77c6c63ec72624685a3671711"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-kiai-1.mp3",
+      "bytes": 5895,
+      "sha256": "976739cd8cdb4feae503f81a99cf283538ef51c51c5527d1cc84c3a7f28da935"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-kiai-2.mp3",
+      "bytes": 6522,
+      "sha256": "6a9744cd968536ef9567693047474e1b8211adfe017061de3da6e80931e2e4b6"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-kiai-3.mp3",
+      "bytes": 8821,
+      "sha256": "3cae351393850720cddda2bf2b84e7960507239c9dd131d4afa80844db17386b"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-kiai-4.mp3",
+      "bytes": 5477,
+      "sha256": "6f0dadf5bec1056ba5312c8741a7e641882ab8be703d6aa91e6a2342adc1694b"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-kiai-5.mp3",
+      "bytes": 5477,
+      "sha256": "f16622fbf1424c83af2b5b4ff511aa1a6bb44f459a9da1c6de6dd9d0520129da"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-kiai-6.mp3",
+      "bytes": 6522,
+      "sha256": "059a3a6303883af16fae57dc762fe57a5a56c04dc94de3df59cc87869050d34c"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-move-breathwork-a.mp3",
+      "bytes": 5477,
+      "sha256": "ca98d16bb695eb2e55d749dc16f4b1b16c7c1eff69baa62536f48d3c2392c8e5"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-move-breathwork-b.mp3",
+      "bytes": 7985,
+      "sha256": "16715c2a9ef18e07facad09ba229c166eb2a7655322e8e916d278c1ea8e6ec38"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-move-breathwork-c.mp3",
+      "bytes": 8821,
+      "sha256": "1fc2b4ddc5a2b460c325375bfdc07e33371d838d019ac9274f1e77b7510b57a5"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-move-breathwork-d.mp3",
+      "bytes": 10284,
+      "sha256": "6d6e61667b8d42522a1249f6569b5ca925d1e53e08ede60f38398b15d33a9b58"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-move-breathwork.mp3",
+      "bytes": 7567,
+      "sha256": "abe5aabd2117b787f268f95aae32368d30aaf84832327f35ae19bb20a76e6488"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-move-presence.mp3",
+      "bytes": 7985,
+      "sha256": "9be513cab7800c7dfaa3237de0bfbfeab989eea819178a0d12851364712ee046"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-move-sun-salutation.mp3",
+      "bytes": 9866,
+      "sha256": "ddfb560a32a287b2e0d8ccf8d6419a4f723443213a6af9b0a211ea756df3c2b2"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-move-throw.mp3",
+      "bytes": 7985,
+      "sha256": "6846c3990ce45cb717d496b63b5dc6a2e88e31c21583cebe9adaa8d4f2ef6adb"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-move-yoga-float.mp3",
+      "bytes": 6522,
+      "sha256": "ec2bbde55e87a2cff3005cb206c5aa157e7463b4eaca437ea60e7d9a55eedfc0"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-victory-1.mp3",
+      "bytes": 11328,
+      "sha256": "5e93beee3f13679c4303cc8b0d838cb4bc1fbc1fe9ffff1e7c4a4e9b4f5ce8d0"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-victory-2.mp3",
+      "bytes": 14045,
+      "sha256": "70ac9852ad4c862ba0ca5d69eb7462c686dad9739c6bc4ad11a6b79224dba5a9"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-victory-3.mp3",
+      "bytes": 16553,
+      "sha256": "9fb670c017f9f61a3393588bc71132d84af49ac3a64bd877e696832019e4bbfe"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/freeman-victory-4.mp3",
+      "bytes": 12582,
+      "sha256": "b6073916d43971aec958b078d03cde06c3edbd28f27c6bba3d81d7247558248f"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/gene-hurt-1.mp3",
+      "bytes": 6522,
+      "sha256": "128767749ae58f9ca50e36e3e325346e268e3e7b70b786caacd79383df52056e"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/gene-hurt-2.mp3",
+      "bytes": 6940,
+      "sha256": "80574817ba0c2e99aebd21d01bde37b889864f9b5c3a262817c280886bdc3438"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/gene-hurt-3.mp3",
+      "bytes": 7985,
+      "sha256": "2cd0345ad21e85a42c967fab1af47f8ec1f7cf90c9e9ba4be5a52a7dbde4c400"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/gene-hurt-4.mp3",
+      "bytes": 10284,
+      "sha256": "4e3941a0278182d8d3a418553f19164c8fe65535767185987d70885adf6cfc29"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/gene-hurt-5.mp3",
+      "bytes": 7358,
+      "sha256": "e58ab50f67c8428927b34ca439cda69f2affd3fbaa16477259e1f5e567e5eb86"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/gene-hurt-6.mp3",
+      "bytes": 8821,
+      "sha256": "fde6fe8b51751a28f8157072f2197e3c1b48a78517b110e17dde4791bc295ded"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/gene-kiai-1.mp3",
+      "bytes": 5477,
+      "sha256": "7b993d718bf781e90458cabdb19e835af098ea5e6065d89d95215a57527bd194"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/gene-kiai-2.mp3",
+      "bytes": 8821,
+      "sha256": "d20ef2f30f7c08949f124d1e7d0a3056711e8db321e1dc4cce3c1b2ad7d6c16b"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/gene-kiai-3.mp3",
+      "bytes": 4223,
+      "sha256": "45c8dfe1c579da853a1f2d51b62149174ecedc521f4459f874f0e873f887af11"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/gene-kiai-4.mp3",
+      "bytes": 7985,
+      "sha256": "d86d7349a548c5981efb2bdc4fa41a4a03b12bb301f31597ea2e15068b94a2e3"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/gene-kiai-5.mp3",
+      "bytes": 7567,
+      "sha256": "ff19cc7e938ca486111ff4c59dfdaa086bb7e98a73d79f9871cea0fda45be5a5"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/gene-kiai-6.mp3",
+      "bytes": 5059,
+      "sha256": "d259fdea6d6c2e5f460e0bdb1fc335bd9c4937274e14ed19333c101fd851e369"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/gene-move-diffusion-escape.mp3",
+      "bytes": 8821,
+      "sha256": "d1d92b9db13b77a0f7ae9ae16c2798bb474e14ec72a77d31ef41f64166b93170"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/gene-move-diffusion-strike.mp3",
+      "bytes": 9866,
+      "sha256": "4805a03cdf3085b094174e2358508a5154e6e84f5e1300cd47a71dfa605200cd"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/gene-move-hallucination.mp3",
+      "bytes": 7985,
+      "sha256": "afec16a4962526a2df9d567a9cc9a5169091ffb18fbb2ff266c082e8d1f72414"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/gene-move-mana-burst.mp3",
+      "bytes": 8403,
+      "sha256": "71d13bb3c6297e56df5b229bedeb461d15308d3ce3ee767fb898eefa7ce0d55e"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/gene-move-rate-limit.mp3",
+      "bytes": 9866,
+      "sha256": "c637150fbc57b2d06633f92f657eccac54452d17f645a87cc0727fb7959424c3"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/gene-move-throw.mp3",
+      "bytes": 7358,
+      "sha256": "6a1ded9e80855a00f29fbf94c00cbe4932f6fc2230b0b01ea5325f96a90fd7c3"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/gene-victory-1.mp3",
+      "bytes": 10284,
+      "sha256": "4c7c4aa7077c81ea9dc8b42b1dacb5414a1011640890a0c083a7b46d2e181582"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/gene-victory-2.mp3",
+      "bytes": 9448,
+      "sha256": "8253148180d92cf15cf6c9e5367458ee8d584270bb5b7d82a7b4967be90a291d"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/gene-victory-3.mp3",
+      "bytes": 12791,
+      "sha256": "75cbfea2b303cb015ea59fffeb54027a4137043319ab4e6c05b62a2aad1120a6"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/gene-victory-4.mp3",
+      "bytes": 13627,
+      "sha256": "840c1be50fbed5af8c05a3f4f533133626a5419574b56d2c6662fc54e04b240e"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-hurt-1.mp3",
+      "bytes": 5895,
+      "sha256": "2bb32f48f9943540f13d094b7ad15b3c766184fc91d5accec09e7196f3f5471d"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-hurt-2.mp3",
+      "bytes": 5895,
+      "sha256": "014764d45de292a58cadeb833f1e2e80a535f2a72046f9066f0a43abc773bbee"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-hurt-3.mp3",
+      "bytes": 7985,
+      "sha256": "60c47a9498bbb4211e621f596f828da22abf4b53fc3b6418fcabf54fd5742a70"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-hurt-4.mp3",
+      "bytes": 7985,
+      "sha256": "630edd62834d3e0e18f81a64f9d9d5e7ab8f4d382eb1100fb98f99056cf0cfac"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-hurt-5.mp3",
+      "bytes": 17598,
+      "sha256": "a85d9a3bad55222c5449b7d2ee821f7fb58a37a9d679ea8e2cd53c2c7137c160"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-hurt-6.mp3",
+      "bytes": 6940,
+      "sha256": "2e79d65af1951e2220473c3fcad426d1050a834d405af220b79240c67d2410a3"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-1.mp3",
+      "bytes": 8821,
+      "sha256": "fcd7a06e6732a4d77cb60c07c3830d71aedde4833fb1da90704286c48ab74413"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-2.mp3",
+      "bytes": 5477,
+      "sha256": "b15cc9136f8c0abed24fc0133fd6afec7400bcb3a00a73e325f10303bc0a2113"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-3.mp3",
+      "bytes": 9239,
+      "sha256": "cf78ffe4bb95b1c7bf8b2cc8c519370e0eee34824b4f98993aacbf964eaf8a6f"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-4-a.mp3",
+      "bytes": 9866,
+      "sha256": "45b4b49feee71b7a162a4065784760893691d754de1b33b6b4707091b3865542"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-4-b.mp3",
+      "bytes": 8821,
+      "sha256": "056c0de52ebca82d5ac652902f8afe168c074ad925d0a37f5391e4bbb0926953"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-4-c.mp3",
+      "bytes": 5895,
+      "sha256": "7d026604592727cdf0b934641b6299e2fc6766e106b98fde41e0c70ca68d069d"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-4.mp3",
+      "bytes": 9448,
+      "sha256": "0f3b4498add21a7128f9f347f2a8f3f0de5bc39d14f7bd86ea811b7f8a3178c0"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-5-a.mp3",
+      "bytes": 8821,
+      "sha256": "abb4dbcbcbf9bb82767a1a49505dfbf903a5b68dfa6ee98c7c3e9f8694caa809"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-5-b.mp3",
+      "bytes": 9239,
+      "sha256": "fe2d6a31f16e0e937911ef6f7c91255821af7a8aa057e42b60b0bbf94b8c75db"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-5-c.mp3",
+      "bytes": 8821,
+      "sha256": "781d65e34ca33aa591387905168366b8c01cb7d88ce616d2aca1630efe5e03b8"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-5.mp3",
+      "bytes": 10910,
+      "sha256": "11deddad9bf40549f26181f8687397b6532d51b13673c9096909829cf5aa380f"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-6-a.mp3",
+      "bytes": 12582,
+      "sha256": "65e4e5d4cfa5eb676bf737a358af6a3e34911cd90f5f0ec496a71c0b078e2bac"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-6-a2.mp3",
+      "bytes": 8821,
+      "sha256": "803df85a7d23a58a6c1749ceb83bb91ee5704eb4a2d9856d7b8609fd4eb65e4c"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-6-b.mp3",
+      "bytes": 14045,
+      "sha256": "c9b995d887ca3556e337489dd08c103d5405da57ba2297b94c04f33a4ea21de3"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-6-b2.mp3",
+      "bytes": 7985,
+      "sha256": "63b6d98a88910d11a5df02ab570dfdc1287e6a443a7fc30b3e8092d323ff30d1"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-6-c.mp3",
+      "bytes": 15508,
+      "sha256": "b59edb9b8a5f307209f9e1f03b30b492bf8426d26a8f2b631f230c7c2d55d306"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-6-c2.mp3",
+      "bytes": 14672,
+      "sha256": "38a57ddabfad039dadf21370a8f27e3b44349c41d6889d2235af4c82bbba9042"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-6-d2.mp3",
+      "bytes": 25121,
+      "sha256": "934387a2225d7f1fb7092beb782b1e378a7ec5915cba58158cd24777f388a86d"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-6-e2.mp3",
+      "bytes": 7567,
+      "sha256": "ac7583a55f4af430068dfee53292ff1eb158b78ff5fff2d94ca45ecdaecbfa27"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-6-f2.mp3",
+      "bytes": 14045,
+      "sha256": "29446e4f401a9daf04c5a9c97e7bacf83b52ce5ae8369f4f2cac010ec92c5992"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-6-w1.mp3",
+      "bytes": 7358,
+      "sha256": "ed4aa685171077ac8883be54ab7d66b5d494de855265d5aea65f53d339c1387c"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-6-w2.mp3",
+      "bytes": 14672,
+      "sha256": "73631350a8084504d521dc30a1ce68216fb018d78fb9a766809ee4387b52fa0b"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-6-w3.mp3",
+      "bytes": 7567,
+      "sha256": "8c5fcebe6f07f668c584ae685f5d7c73d9e79f73339b7df748791f8c1963342f"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-6-w4.mp3",
+      "bytes": 6940,
+      "sha256": "2c96f964e4a65d8c5287e6013c1bfac22d298500bd8aedb0e961ea352701f14e"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-kiai-6.mp3",
+      "bytes": 13627,
+      "sha256": "56368ffbc9b8058afecf70e3da7d4a26baf5d8a766ca5a3226384d7bf1465e6d"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-move-bb-gun.mp3",
+      "bytes": 6940,
+      "sha256": "6cc094871497aeb1dd221128af8cf65fb7f1777127c66086f742904ced5bd12c"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-move-excavator-charge.mp3",
+      "bytes": 6940,
+      "sha256": "85e5cc9107b287c04dc66dab9524efe4d90dd5bf1760d71df1c58ef2609d3928"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-move-rattlebones.mp3",
+      "bytes": 7567,
+      "sha256": "51d52bca1526e6cc4a8f0afaf930ea944ed2c287e126c0a173af0093dae347d4"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-move-tallest-ghost.mp3",
+      "bytes": 9239,
+      "sha256": "893ba3c9ea23f9b323e4b946b3380df4b85b6701769918208fe16a96c2969620"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-move-throw.mp3",
+      "bytes": 7358,
+      "sha256": "6760ea40ebf1e10520d026a5ef45314fdea697d8e68f81bd9aebe901bdb9186e"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-victory-1.mp3",
+      "bytes": 14045,
+      "sha256": "cb25e30b3ec5fc7c6ca17ef476b6cee7f65792a95231050cab3b52837cc314ec"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-victory-2.mp3",
+      "bytes": 13627,
+      "sha256": "2dd5c9938c6efc9cf86f491e05929f16e92abcf855dcd3d5190a4dc723a1e8d2"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-victory-3.mp3",
+      "bytes": 11746,
+      "sha256": "a47099b922790ea3caa91b40dcbe570794df4d8ece4e6129f6b8d524faf64a47"
+    },
+    {
+      "path": "assets/raw/voice-tests/soundboard/widget/rj-victory-4.mp3",
+      "bytes": 16971,
+      "sha256": "6bed64cc8cdf96872e04ffd72740ac23727f405ae82c8a271a4bc875f8276fee"
+    },
+    {
+      "path": "assets/raw/voice-tests/tao-1783559712962.mp3",
+      "bytes": 73977,
+      "sha256": "6c01a3836ad057298ed89479f1479948cd63590963eacbc216f0980d1dd7312e"
+    },
+    {
+      "path": "assets/raw/voice-tests/tao-1783559712962.prompt.txt",
+      "bytes": 66,
+      "sha256": "a7d98c62548153f8ccd030cc9828a8b325bfcb87507365e9f7bd18dbbfe4df63"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-hurt-1.mp3",
+      "bytes": 8493,
+      "sha256": "5292565aedc4c6acd3e2093aa1ae1c0e344b31fcedc74697bc573dde07828064"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-hurt-10.mp3",
+      "bytes": 16557,
+      "sha256": "1a6b3e3cd875348115531ac2c29de33c25b01d49224c02b0c20b7de68f183f8a"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-hurt-11.mp3",
+      "bytes": 7533,
+      "sha256": "c877fb46e99e824ad99dc10e9b7171b38b60daa2fa69d776f0caa00a569039ce"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-hurt-12.mp3",
+      "bytes": 6573,
+      "sha256": "952ef4d507ae1fc025edb73187927a355bb94427cb42548d713ba8f9a0270b2b"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-hurt-2.mp3",
+      "bytes": 8493,
+      "sha256": "4b175ad4ee8949c8679acdc92aa6d1b6988ac7fe125bcb9b0dab4a24b67d018f"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-hurt-3.mp3",
+      "bytes": 8109,
+      "sha256": "95a700a2e0714efd47afd70d36c627cdbd19d23409f2ca0f6208094d507f727e"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-hurt-4.mp3",
+      "bytes": 11949,
+      "sha256": "9645063ca83ae8a781e2843792c6e56908acd8b6118961589b6d52241d87f669"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-hurt-5.mp3",
+      "bytes": 8109,
+      "sha256": "eea12926fe487aefb23872692f3b92daf0f3a844befa5994175d1df5e21e6659"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-hurt-6.mp3",
+      "bytes": 9069,
+      "sha256": "85c4eda7f291388d2bd929c8b0028adfedad40544fae4802e2776a9b092e6da4"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-hurt-7.mp3",
+      "bytes": 19437,
+      "sha256": "cf5483a8f5b089dc2f72d48c43edc0f8fd111a4194ec4dba019ec81b9e5ebc43"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-hurt-8.mp3",
+      "bytes": 9453,
+      "sha256": "68a954bbffd5ac8388d1faa0adfadcce6b98ef2bd90c8f5c7ec30df5eb1e8cf2"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-hurt-9.mp3",
+      "bytes": 6573,
+      "sha256": "d93bfca89ffa5b81679415434c656fec7f30a82e8e4faca8804bdeacc1adf11c"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-kiai-1.mp3",
+      "bytes": 13485,
+      "sha256": "e9c31b90a06c2d42951b4dcdad96d54eac6b2d72d0bc72add3a51f4bc1762557"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-kiai-2.mp3",
+      "bytes": 14445,
+      "sha256": "340846b7d84c3a395450b6c908a33aed7b54349240f54583eb6a7d3bb6fcd8ae"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-kiai-3.mp3",
+      "bytes": 7533,
+      "sha256": "ba10f2052140e2c4831693657be940ae769fdd16f0722de95100c6f9c69738f5"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-kiai-4.mp3",
+      "bytes": 6573,
+      "sha256": "495825206a71999e68ec5f9ca1abc4c9544da0ebf446f92247a978b4599c88a5"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-kiai-5.mp3",
+      "bytes": 13485,
+      "sha256": "89c14dd5618c554c123df92e7fe05d5148b29cca97073eaca5b66b3bd00080c9"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-kiai-6.mp3",
+      "bytes": 7533,
+      "sha256": "94cd6b946dae4bdae6c5dcecb6526ca82c2506a6b2e043baa054b78fe68a0fce"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-kiai-7.mp3",
+      "bytes": 4461,
+      "sha256": "0bf95770002c498ccd90e6f8e5c9a7248710864c0e5f769726bf0415e6cbcd4b"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-move-backbend-guillotine.mp3",
+      "bytes": 10910,
+      "sha256": "d71b4809d05df36bd82ad9f31cd55aa486aa0aa441be8afe3681e67c50e582ae"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-move-braid-lariat.mp3",
+      "bytes": 7533,
+      "sha256": "ba10f2052140e2c4831693657be940ae769fdd16f0722de95100c6f9c69738f5"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-move-sickle-kick.mp3",
+      "bytes": 12525,
+      "sha256": "c1b5f3a46c1a2a75528f1d2a90d57a4479239ce749d430c579d440cddad95ee5"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-move-throw.mp3",
+      "bytes": 6573,
+      "sha256": "495825206a71999e68ec5f9ca1abc4c9544da0ebf446f92247a978b4599c88a5"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-move-volga-piledriver.mp3",
+      "bytes": 13485,
+      "sha256": "89c14dd5618c554c123df92e7fe05d5148b29cca97073eaca5b66b3bd00080c9"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-victory-1.mp3",
+      "bytes": 19437,
+      "sha256": "2c9fc1c510f9883b4fac7054d8b4103e442df9518a553f9e84bead2218dcf179"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-victory-2.mp3",
+      "bytes": 12525,
+      "sha256": "c1b5f3a46c1a2a75528f1d2a90d57a4479239ce749d430c579d440cddad95ee5"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-victory-3.mp3",
+      "bytes": 28461,
+      "sha256": "4447fc6f2b4d5c218e5737a43534cefed716b8e3acbed605bede4ef0fb35ba0c"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-victory-4.mp3",
+      "bytes": 8493,
+      "sha256": "b70b06e740a9ebeb901b93097b4b132f69bbf2576e921686cf61c09d3c276041"
+    },
+    {
+      "path": "assets/raw/voice-tests/yulia-board/yulia-victory-5.mp3",
+      "bytes": 7533,
+      "sha256": "ba10f2052140e2c4831693657be940ae769fdd16f0722de95100c6f9c69738f5"
+    }
+  ],
+  "trackedMirrored": {
+    "files": 2469,
+    "bytes": 1022325182
+  },
+  "snapshots": [
+    "snapshots/2026-10-rescue-Vincents-MacBook-Air/"
+  ]
+}
