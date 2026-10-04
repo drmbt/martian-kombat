@@ -869,8 +869,13 @@ interface HitPayload {
   knockdown: boolean;
   /** damage dealt through block (heavies/specials); can never KO */
   chip: number;
-  /** freeze ticks this contact buys (L short, H long, specials most) */
+  /** freeze ticks this contact buys the VICTIM (L short, H long, specials most) */
   hitstop: number;
+  /** attacker-side freeze when it differs (asymmetric MUGEN pausetime);
+   *  omit to freeze the attacker for `hitstop` */
+  attackerHitstop?: number;
+  /** block pushback impulse; omit for 80% of knockback */
+  blockKnockback?: number;
   /** melee freezes both fighters; projectiles freeze the victim only */
   freezeAttacker: boolean;
   /** defender was clipped during their own attack's startup or recovery:
@@ -905,12 +910,24 @@ function scaleForCombo(damage: number, comboHits: number): number {
   return Math.max(1, Math.floor((damage * pct) / 100));
 }
 
-/** Freeze frames for a connecting move: specials hit hardest, otherwise the
- *  button strength embedded in the move id ('lp'/'cmk'/'jhk') decides. */
-function hitstopFor(moveId: string, m: MoveDef): number {
-  if (m.input) return HITSTOP_SPECIAL;
+/** Freeze frames for a connecting move: a per-move `hitstop` wins; otherwise
+ *  specials hit hardest and the button strength embedded in the move id
+ *  ('lp'/'cmk'/'jhk') decides. Returns [attacker, victim]. */
+function hitstopFor(moveId: string, m: MoveDef): [number, number] {
+  if (m.hitstop !== undefined) {
+    return typeof m.hitstop === 'number' ? [m.hitstop, m.hitstop] : m.hitstop;
+  }
+  if (m.input) return [HITSTOP_SPECIAL, HITSTOP_SPECIAL];
   const strength = moveId.match(/([lmh])[pk]$/)?.[1];
-  return strength === 'h' ? HITSTOP_HEAVY : strength === 'm' ? HITSTOP_MEDIUM : HITSTOP_LIGHT;
+  const h = strength === 'h' ? HITSTOP_HEAVY : strength === 'm' ? HITSTOP_MEDIUM : HITSTOP_LIGHT;
+  return [h, h];
+}
+
+/** Damage through block: per-move `chip` wins; lights are chipless; anything
+ *  meatier shaves 10%. */
+function chipFor(moveId: string, m: MoveDef): number {
+  if (m.chip !== undefined) return m.chip;
+  return CHIPLESS.has(moveId) ? 0 : Math.floor(m.damage * 0.1);
 }
 
 /** Apply a connected hit or block. attackerFacing pushes the defender. */
@@ -929,13 +946,13 @@ function applyHit(
   d.hitstop = Math.max(d.hitstop, hit.hitstop + (hit.counter ? COUNTER_HITSTOP_BONUS : 0));
   if (hit.freezeAttacker) {
     const atk = s.fighters[atkSlot];
-    atk.hitstop = Math.max(atk.hitstop, hit.hitstop);
+    atk.hitstop = Math.max(atk.hitstop, hit.attackerHitstop ?? hit.hitstop);
   }
 
   if (!hit.unblockable && isBlocking(d, defInput, hit.height)) {
     const guard = d.action.kind === 'crouch' || defInput.down ? 'crouch' : 'stand';
     d.action = { kind: 'blockstun', frame: hit.blockstun, guard };
-    d.vx = attackerFacing * hit.knockback * 0.8;
+    d.vx = attackerFacing * (hit.blockKnockback ?? hit.knockback * 0.8);
     if (hit.chip > 0) d.health = Math.max(1, d.health - hit.chip); // chip can't KO
   } else {
     // combo bookkeeping: a hit on an already-reeling victim extends the combo,
@@ -1039,7 +1056,8 @@ function resolveAttacks(
           height: m.height,
           knockdown: true,
           chip: 0,
-          hitstop: hitstopFor(a.moveId!, m),
+          hitstop: hitstopFor(a.moveId!, m)[1],
+          attackerHitstop: hitstopFor(a.moveId!, m)[0],
           freezeAttacker: true,
           counter: false, // grabs land clean, never as counters
           unblockable: true,
@@ -1062,8 +1080,10 @@ function resolveAttacks(
         knockback: m.knockback,
         height: m.height,
         knockdown: !!m.knockdown,
-        chip: CHIPLESS.has(a.moveId!) ? 0 : Math.floor(m.damage * 0.1),
-        hitstop: hitstopFor(a.moveId!, m),
+        chip: chipFor(a.moveId!, m),
+        hitstop: hitstopFor(a.moveId!, m)[1],
+        attackerHitstop: hitstopFor(a.moveId!, m)[0],
+        blockKnockback: m.blockKnockback,
         freezeAttacker: true,
         counter: isCounterhit(d, defs),
       }, inputs[defSlot]);
@@ -1453,7 +1473,8 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
         height: m.height,
         knockdown: true,
         chip: 0,
-        hitstop: hitstopFor(pt.moveId, m),
+        hitstop: hitstopFor(pt.moveId, m)[1],
+        attackerHitstop: hitstopFor(pt.moveId, m)[0],
         freezeAttacker: true,
         counter: false,
         unblockable: true,

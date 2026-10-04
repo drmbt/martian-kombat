@@ -147,6 +147,9 @@ export interface VariantPatch {
   vault?: { vx: number; vy: number };
   leap?: { vx: number; vy: number };
   projectile?: Partial<ProjectileDef>;
+  hitstop?: number | [number, number];
+  chip?: number;
+  blockKnockback?: number;
 }
 
 export interface MoveDef {
@@ -160,6 +163,17 @@ export interface MoveDef {
   /** null for pure projectile moves (the projectile carries its own box) */
   hitbox: Box | null;
   height: MoveHeight;
+  /** freeze ticks on contact (MUGEN `pausetime`). Omit for the strength
+   *  default (HITSTOP_LIGHT/MEDIUM/HEAVY/SPECIAL); a number freezes both
+   *  sides equally; `[attacker, victim]` is asymmetric like `pausetime = p1, p2`
+   *  (the victim side still gets the counterhit bonus) */
+  hitstop?: number | [number, number];
+  /** damage dealt through block (MUGEN HitDef `damage = hit, guard`). Omit for
+   *  the default: 0 on lights, floor(10% of damage) otherwise. Chip never KOs */
+  chip?: number;
+  /** pushback impulse on BLOCK (MUGEN `guard.velocity`). Omit for the
+   *  default 80% of `knockback` */
+  blockKnockback?: number;
   knockdown?: boolean;
   /** forward drift per tick during startup+active (advancing specials) */
   forwardVel?: number;
