@@ -26,7 +26,10 @@
     "gen:voice": "node tools/gen-voice.mjs",
     "gen:qa": "node tools/qa/run.mjs pose_qa.py",
     "gen:busts": "node tools/qa/run.mjs portrait_crop.py --all",
-    "studio:run": "node tools/studio-run.mjs"
+    "studio:run": "node tools/studio-run.mjs",
+    "bench": "vite-node tools/fg/bench.ts --",
+    "mugen:fetch": "node tools/fg/fetch-mugen.mjs",
+    "mugen:import": "vite-node tools/fg/import-mugen.ts --"
   },
   "dependencies": {
     "peerjs": "^1.5.5",
