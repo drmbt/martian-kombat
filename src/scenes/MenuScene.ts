@@ -5,7 +5,7 @@ import { playMusic } from '../audio/music';
 import { ROSTER } from '../data/roster';
 import { STAGES } from '../data/stages';
 import { menuNav, navDefer, attackKeyCodes } from '../input/menu-nav';
-import { getSettings, updateSettings } from '../settings';
+import { getSettings, render3dAllowed, updateSettings } from '../settings';
 
 /** idle this long on the title -> CPU-vs-CPU attract-mode demo */
 const ATTRACT_AFTER_MS = 20_000;
@@ -81,8 +81,10 @@ export class MenuScene extends Phaser.Scene {
       .setOrigin(0, 1)
       .setInteractive({ useHandCursor: true })
       .on('pointerdown', () => { if (this.canChoose()) this.toggleRender(); });
-    this.menuItems.push(this.renderChip);
     this.refreshRenderChip();
+    // P2.1: 3D is frozen (D5) — the chip only exists in DEV / ?3d=1
+    if (render3dAllowed()) this.menuItems.push(this.renderChip);
+    else this.renderChip.setVisible(false);
 
     // Fullscreen toggle chip, bottom-right corner. Always visible (independent
     // of the coin drop) so it's reachable the moment the title loads.
@@ -213,6 +215,7 @@ export class MenuScene extends Phaser.Scene {
 
   private toggleRender(): void {
     this.idleMs = 0;
+    if (!render3dAllowed()) return; // P2.1: L/R on the title does nothing in a player build
     this.render3d = !this.render3d;
     updateSettings({ render3d: this.render3d }); // persist the choice
     this.refreshRenderChip();

@@ -449,7 +449,7 @@ export class FightScene extends Phaser.Scene {
     });
     this.winOverlay = new WinOverlay(this.uiLayer.root, characters, {
       revealFrame: WIN_REVEAL_FRAME, // the "<NAME> WINS" beat lands + breathes first
-      prompt: this.online ? 'R  REMATCH   ·   ESC  QUIT' : 'R  REMATCH   ·   ENTER  SELECT',
+      prompt: this.online ? 'SPACE  REMATCH   ·   ESC  QUIT' : 'SPACE  REMATCH   ·   ENTER  SELECT',
       onFirstShow: (id) => playVoice(this, id, 'victory', 0.85),
     });
     this.tunerPanel = null;

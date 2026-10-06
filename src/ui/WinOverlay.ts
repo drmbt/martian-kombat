@@ -6,7 +6,7 @@
 import type { Defs, GameState } from '../engine';
 
 export interface WinOverlayOpts {
-  /** bottom prompt, e.g. 'R  REMATCH   ·   ENTER  SELECT' */
+  /** bottom prompt, e.g. 'SPACE  REMATCH   ·   ENTER  SELECT' */
   prompt?: string;
   /** fired once when the screen first appears (2D plays the victory voice) */
   onFirstShow?: (winnerCharId: string) => void;
@@ -66,7 +66,7 @@ export class WinOverlay {
       `<img src="${base}assets/portraits/${loser.charId}-ko.png" onerror="this.src='${base}assets/portraits/${loser.charId}.png';this.style.filter='grayscale(1) drop-shadow(0 6px 10px rgba(0,0,0,.6))'" style="${bust}transform:scaleX(-1);">` +
       `</div>` +
       `<div style="max-width:74%;font-size:3cqh;font-style:italic;color:#ffd24a;text-shadow:0 2px 5px #000;">“${quote}”</div>` +
-      `<div style="font-size:2cqh;letter-spacing:0.2cqh;opacity:.55;">${this.opts.prompt ?? 'R  REMATCH   ·   ENTER  SELECT   ·   ESC  MENU'}</div>`;
+      `<div style="font-size:2cqh;letter-spacing:0.2cqh;opacity:.55;">${this.opts.prompt ?? 'SPACE  REMATCH   ·   ENTER  SELECT   ·   ESC  MENU'}</div>`;
     this.host.appendChild(el);
     this.el = el;
     this.opts.onFirstShow?.(winner.charId);

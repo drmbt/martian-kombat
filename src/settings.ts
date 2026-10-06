@@ -88,7 +88,20 @@ function sanitizeBindings(raw: unknown): [PlayerBindings, PlayerBindings] {
   }) as [PlayerBindings, PlayerBindings];
 }
 
-function sanitize(raw: Partial<Settings>): Settings {
+/** 3D mode is frozen (D5): no roster entry has a mesh, so in a player build
+ *  it locks every fighter. Reachable only in DEV or with `?3d=1`. */
+export function render3dAllowed(): boolean {
+  if (import.meta.env.DEV) return true;
+  try {
+    return new URLSearchParams(globalThis.location?.search ?? '').get('3d') === '1';
+  } catch {
+    return false;
+  }
+}
+
+/** Exported for tests. A persisted `render3d: true` is migrated to 2D when
+ *  3D isn't allowed (P2.1 — it used to strand players with no pickable fighter). */
+export function sanitize(raw: Partial<Settings>, allow3d = render3dAllowed()): Settings {
   const pickFrom = (choices: readonly number[], v: unknown, fallback: number): number =>
     typeof v === 'number' && choices.includes(v) ? v : fallback;
   return {
@@ -99,7 +112,7 @@ function sanitize(raw: Partial<Settings>): Settings {
     roundSeconds: pickFrom(ROUND_SECONDS_CHOICES, raw.roundSeconds, DEFAULT_SETTINGS.roundSeconds),
     winsNeeded: pickFrom(WINS_NEEDED_CHOICES, raw.winsNeeded, DEFAULT_SETTINGS.winsNeeded),
     bindings: sanitizeBindings(raw.bindings),
-    render3d: typeof raw.render3d === 'boolean' ? raw.render3d : DEFAULT_SETTINGS.render3d,
+    render3d: allow3d && typeof raw.render3d === 'boolean' ? raw.render3d : DEFAULT_SETTINGS.render3d,
   };
 }
 
