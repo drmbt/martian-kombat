@@ -8,6 +8,8 @@ export {
   unpackInput,
   resolveMove,
   mirrorTeleportPhases,
+  cameraX,
+  arenaBounds,
   type Defs,
 } from './step';
 export { hashState } from './hash';

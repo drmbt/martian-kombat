@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EMPTY_INPUT, GameState, InputFrame, initialState, step } from './index';
+import { CHARGE_TICKS, EMPTY_INPUT, GameState, InputFrame, initialState, step } from './index';
 import type { CharacterDef, Defs } from './index';
 import { characters } from '../data/characters';
 
@@ -56,7 +56,7 @@ describe('charge motions', () => {
     const s = fresh(boomChars);
     s.fighters[0].x = 400;
     s.fighters[1].x = 1120; // stays to the right so P1 keeps facing right (back = left)
-    run(s, boomChars, 50, inp({ left: true })); // bank the back-charge
+    run(s, boomChars, CHARGE_TICKS + 2, inp({ left: true })); // bank the back-charge
     run(s, boomChars, 6, inp({ right: true, lp: true })); // release → forward + punch
     run(s, boomChars, 20); // let it reach the active frame + spawn
     expect(s.projectiles.some((p) => p.owner === 0 && p.moveId === 'boom')).toBe(true);

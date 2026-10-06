@@ -13,23 +13,23 @@
 |---|--:|--:|--:|--:|--:|--:|--:|--:|--:|
 | vincent | 1000 | 1.06 | 43 | 1.08 | 2 | 23.2% | 16 ∞ | 2 | 13 |
 | yulia | 1080 | 0.99 | 43 | 1.02 | 3 | 24.0% | 8 | 0 | 20 |
-| catherine | 1000 | 1.03 | 43 | 1.05 | 6 | 28.4% | 9 | 0 | 13 |
+| catherine | 1000 | 1.03 | 43 | 1.06 | 6 | 28.4% | 9 | 0 | 13 |
 | flo | 1020 | 0.87 | 43 | 0.89 | 6 | 19.4% | 5 | 1 | 18 |
 | freeman | 1050 | 0.75 | 43 | 0.77 | 5 | 19.4% | 6 | 0 | 13 |
 | gene | 960 | 1.00 | 42 | 1.00 | 5 | 19.8% | 5 | 0 | 10 |
 | kirby | 950 | 1.16 | 45 | 1.24 | 4 | 23.5% | 7 | 1 | 4 |
-| marzipan | 1050 | 0.80 | 56 | 1.06 | 6 | 15.8% | 5 | 1 | 22 |
+| marzipan | 1050 | 0.80 | 56 | 1.07 | 6 | 15.8% | 5 | 1 | 22 |
 | bodhi | 1120 | 1.16 | 41 | 1.14 | 5 | 16.8% | 6 | 2 | 11 |
 | cat | 980 | 1.30 | 41 | 1.27 | 4 | 26.4% | 6 | 0 | 5 |
 | chebel | 1050 | 1.22 | 41 | 1.19 | 5 | 17.9% | 5 | 0 | 6 |
 | ygor | 1080 | 1.05 | 41 | 1.03 | 5 | 16.1% | 5 | 1 | 7 |
 | rapha | 1020 | 0.90 | 43 | 0.93 | 6 | 16.7% | 5 | 1 | 24 |
-| vanessa | 950 | 1.00 | 41 | 0.97 | 5 | 18.7% | 5 | 1 | 18 |
+| vanessa | 950 | 1.00 | 41 | 0.98 | 5 | 18.7% | 5 | 1 | 18 |
 | earl | 1000 | 0.77 | 43 | 0.79 | 5 | 14.4% | 13 | 1 | 10 |
-| ben | 1000 | 0.65 | 43 | 0.66 | 5 | 14.9% | 16 ∞ | 2 | 16 |
-| tao | 1050 | 0.78 | 43 | 0.80 | 5 | 17.1% | 10 | 1 | 14 |
+| ben | 1000 | 0.65 | 43 | 0.67 | 5 | 14.9% | 16 ∞ | 2 | 16 |
+| tao | 1050 | 0.78 | 43 | 0.80 | 5 | 17.1% | 10 | 1 | 13 |
 | rj | 1020 | 0.75 | 41 | 0.73 | 6 | 18.2% | 11 | 0 | 19 |
-| *kfm (reference)* | 1000 | 1.55 | 37 | 1.03 | 4 | 18.5% | 1 | 0 | 9 |
+| *kfm (reference)* | 1000 | 1.55 | 37 | 1.02 | 4 | 18.5% | 1 | 0 | 9 |
 
 ## Roster vs reference (class medians)
 
@@ -41,7 +41,7 @@
 | air | 7 / 6 | — / — | — / — | — / — | 6.6 / 4.8 |
 | special | 12 / 10 | -6 / -5 | -15 / -12 | 10 / 12 | 8.8 / 9.5 |
 | reversal | 6 / — | — / — | -25 / — | 10 / — | 9.1 / — |
-| projectile | 14 / — | 4 / — | -2 / — | 10 / — | 7.4 / — |
+| projectile | 14 / — | 3 / — | -3 / — | 10 / — | 7.4 / — |
 | throw | 7 / 1 | — / — | — / — | 10 / 4 | 10.5 / 7.8 |
 
 ## VINCENT
@@ -617,9 +617,9 @@ Best meterless combo: **18.7%** (2 hits) — `mk > spoken-word(h)`
 | jmk | air | 7 | 6 | 8 | 20 | — | — | 52 | — | — / — |
 | jhk | air | 10 | 6 | 10 | 25 | — | — | 76 | — | — / — |
 | throw ⚠ | throw | — | 2 | — | — | — | — | 0 | — | — / — |
-| Trumpet Blast (bolt) L | projectile | 18 | 2 | 19 | 38 | +8 | +4 | 52 | 10 | 0.23 / 0.19 |
-| Trumpet Blast (bolt) M | projectile | 19 | 2 | 20 | 40 | +7 | +1 | 60 | 10 | 0.23 / 0.19 |
-| Trumpet Blast (bolt) H | projectile | 20 | 2 | 21 | 42 | +6 | 0 | 70 | 10 | 0.23 / 0.19 |
+| Trumpet Blast (bolt) L | projectile | 12 | 2 | 25 | 38 | +2 | -4 | 52 | 10 | 0.23 / 0.19 |
+| Trumpet Blast (bolt) M | projectile | 14 | 2 | 25 | 40 | +2 | -4 | 60 | 10 | 0.23 / 0.19 |
+| Trumpet Blast (bolt) H | projectile | 16 | 2 | 25 | 42 | +2 | -4 | 70 | 10 | 0.23 / 0.19 |
 | Step (step) L | utility | 11 | 1 | 19 | 30 | — | — | 0 | — | — / — |
 | Pillar (pillar) L | reversal | 5 | 8 | 30 | 42 | KD | -25 | 66 | 10 | — / 0.01 |
 | Pillar (pillar) M | reversal | 6 | 8 | 30 | 43 | KD | -25 | 80 | 10 | — / 0.01 |
@@ -696,9 +696,9 @@ Best meterless combo: **14.9%** (7 hits) — `mk > hot-coffee(h)`
 | jmk | air | 7 | 6 | 8 | 20 | — | — | 66 | — | — / — |
 | jhk | air | 10 | 6 | 10 | 25 | — | — | 96 | — | — / — |
 | The Dismissal (throw) | throw | 5 | 2 | 21 | 27 | KD | — | 90 | 4 | — / — |
-| Paparazzi Flash (paparazzi-flash) L | projectile | 20 | 2 | 16 | 37 | +12 | +8 | 61 | 10 | 0.23 / 0.19 |
-| Paparazzi Flash (paparazzi-flash) M | projectile | 20 | 2 | 18 | 39 | +10 | +5 | 72 | 10 | 0.23 / 0.19 |
-| Paparazzi Flash (paparazzi-flash) H | projectile | 22 | 2 | 19 | 42 | +9 | +4 | 83 | 10 | 0.23 / 0.19 |
+| Paparazzi Flash (paparazzi-flash) L | projectile | 11 | 2 | 25 | 37 | +3 | -3 | 61 | 10 | 0.23 / 0.19 |
+| Paparazzi Flash (paparazzi-flash) M | projectile | 13 | 2 | 25 | 39 | +3 | -3 | 72 | 10 | 0.23 / 0.19 |
+| Paparazzi Flash (paparazzi-flash) H | projectile | 16 | 2 | 25 | 42 | +3 | -3 | 83 | 10 | 0.23 / 0.19 |
 | Director's Cut (directors-cut) L | projectile | 17 | 2 | 28 | 46 | -13 | -16 | 132 | 4 | -0.22 / -0.22 |
 | Director's Cut (directors-cut) M | projectile | 19 | 2 | 28 | 48 | -13 | -16 | 182 | 4 | -0.25 / -0.29 |
 | Director's Cut (directors-cut) H | projectile | 22 | 2 | 28 | 51 | -13 | -16 | 210 | 4 | -0.25 / -0.29 |

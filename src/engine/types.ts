@@ -387,6 +387,10 @@ export interface FighterState {
   charge: number;
   /** same, holding BACK (facing-relative) — fuels the 'cbf' sonic-boom charge */
   backCharge: number;
+  /** ticks left to cash a released ≥CHARGE_TICKS down-hold ('du'); 0 = none */
+  chargeWindow: number;
+  /** same for the back-hold ('cbf') */
+  backChargeWindow: number;
   /** dizzy accumulator: connecting hits add their damage, decays every tick,
    *  crossing STUN_THRESHOLD forces 'dazed' when the current reel ends */
   stun: number;
@@ -462,6 +466,13 @@ export interface MatchRules {
   /** walkable x range — wider arenas (3D stage) widen it symmetrically
    *  around STAGE_W/2 so renderer centering stays put */
   stage: { minX: number; maxX: number };
+  /** optional MUGEN / SF2-style horizontal camera (no zoom). The ENGINE owns
+   *  it because it bounds the fighters: the view's centre follows their
+   *  midpoint, clamped so the `width`-wide view never shows past
+   *  `stage` ± `margin`, and fighters can't leave the view minus `margin`
+   *  (MUGEN `screenleft/right`). Projectiles die outside the view. Omit for
+   *  the classic fixed screen (the stage IS the screen). */
+  camera?: { width: number; margin: number };
   /** ROUND 1 intro length in ticks (later rounds keep INTRO_TICKS) — longer
    *  first intros give entry gestures + a READY? 3-2-1 countdown room */
   introTicks: number;

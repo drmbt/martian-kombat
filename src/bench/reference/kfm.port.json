@@ -7,7 +7,7 @@
   "walkSpeed": 7.329,
   "backSpeed": 6.718,
   "jumpVel": 22.9032,
-  "jumpSpeedX": 8.754,
+  "jumpSpeedX": 7.634,
   "gravity": 1.3437,
   "prejumpFrames": 2,
   "bodyBox": {

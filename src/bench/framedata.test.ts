@@ -59,14 +59,13 @@ describe('physics measurement', () => {
     expect(measurePhysics(one(testMove(), { prejumpFrames: 3 }), 't').prejump).toBe(4);
   });
 
-  it('documents the takeoff-friction quirk: fwd jump vx = jumpSpeedX × GROUND_FRICTION after tick 1', () => {
+  it('MUGEN jump physics: a forward jump travels at exactly jumpSpeedX (no takeoff-tick friction)', () => {
     const p = measurePhysics(one(testMove(), { jumpSpeedX: 10 }), 't');
     const v0 = 18 * JUMP_VEL_MULT;
     expect(p.airtime).toBeGreaterThan((2 * v0) / 0.9 - 2);
-    // the takeoff tick (still on the floor) moves the full 10 and then runs
-    // ground friction on it; every airborne tick incl. the landing one moves
-    // 10 × 0.85 — so a 'jumpSpeedX: 10' jump really travels at 8.5
-    expect(p.jumpDist).toBeCloseTo(10 + 10 * GROUND_FRICTION * (p.airtime + 1), 0);
+    // every airborne tick, incl. the landing one, moves the full 10
+    // (before 2026-10-06 the takeoff tick ran ground friction → 8.5/tick)
+    expect(p.jumpDist).toBeCloseTo(10 * (p.airtime + 1), 5);
   });
 });
 

@@ -3,6 +3,7 @@
 // what step() actually does, never what the JSON claims. Pure TS (no Phaser,
 // no Math.random), so it runs in vitest, the bench CLI and the browser alike.
 import {
+  CHARGE_TICKS,
   EMPTY_INPUT,
   STAGE_MAX_X,
   STAGE_MIN_X,
@@ -69,7 +70,7 @@ export function buttonsFor(inp: SpecialInput, s: Strength): Partial6 {
 }
 
 /** Frame-by-frame inputs that perform a special (motion + button), ending on
- *  the press frame (mash: a sustained mash). Charges hold for 50 ticks. */
+ *  the press frame (mash: a sustained mash). Charges hold CHARGE_TICKS + 2. */
 export function specialFrames(inp: SpecialInput, s: Strength, facing: 1 | -1): Partial6[] {
   const { fwd, back } = dirs(facing);
   const b = buttonsFor(inp, s);
@@ -89,10 +90,12 @@ export function specialFrames(inp: SpecialInput, s: Strength, facing: 1 | -1): P
     case 'hcf': return [{ [back]: true }, { [back]: true, down: true }, { down: true }, { down: true, [fwd]: true }, { [fwd]: true, ...b }];
     case 'hcb': return [{ [fwd]: true }, { [fwd]: true, down: true }, { down: true }, { down: true, [back]: true }, { [back]: true, ...b }];
     case 'bf': return [{ [back]: true }, { [fwd]: true, ...b }];
-    // the charge bleeds 8 on the release tick, so a successful charge needs
-    // CHARGE_TICKS + 8 of hold (engine quirk — docs/FIGHTING_STANDARDS.md §6)
-    case 'cbf': return [...hold({ [back]: true }, 50), { [fwd]: true, ...b }];
-    case 'du': return [...hold({ down: true }, 50), { up: true, ...b }];
+    // MUGEN charge: hold ≥ CHARGE_TICKS, then the opposite direction + button.
+    // Back-charge is held as DOWN-back (4-way `$B`) so the shooter crouches in
+    // place instead of walking away — how players charge, and it keeps the
+    // measured distance at point blank
+    case 'cbf': return [...hold({ [back]: true, down: true }, CHARGE_TICKS + 2), { [fwd]: true, ...b }];
+    case 'du': return [...hold({ down: true }, CHARGE_TICKS + 2), { up: true, ...b }];
     case '360': return [{ [back]: true }, { down: true }, { [fwd]: true, ...b }];
     default: return [b];
   }
