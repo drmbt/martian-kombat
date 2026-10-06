@@ -37,3 +37,18 @@ describe('loop driver fires every roster motion special', () => {
     }
   }
 });
+
+// the secret unlockable is pickable in VS CPU on either side: a ported MUGEN
+// kit (4 buttons, no heavies) must still be driven sanely by the CPU
+describe('CPU plays the secret fighters', () => {
+  it('kfm vs yulia, CPU on both sides: no crash, both land hits', () => {
+    let s = initialState('kfm', 'yulia', characters, { roundTicks: 0, winsNeeded: 3 });
+    const bots = [new CpuDriver(0), new CpuDriver(1)];
+    const hp = [s.fighters[0].health, s.fighters[1].health];
+    for (let i = 0; i < 3600 && s.phase !== 'matchEnd'; i++) {
+      s = step(s, [bots[0].poll(s), bots[1].poll(s)], characters);
+    }
+    expect(s.fighters[0].health < hp[0] || s.wins[1] > 0).toBe(true);
+    expect(s.fighters[1].health < hp[1] || s.wins[0] > 0).toBe(true);
+  });
+});

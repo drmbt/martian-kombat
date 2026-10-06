@@ -4,8 +4,11 @@
 // semantics). Numbers are measured facts about the source character; the
 // source files themselves stay in the gitignored assets/raw/mugen/.
 //
-// Reference fighters are DEV/BENCH ONLY — never registered in ROSTER, never
-// shipped as playable (KFM is CC BY-NC, Elecbyte).
+// Reference fighters are bench fixtures first. Since 2026-10-06 (user
+// decision) KFM also ships as a SECRET roster entry with his real sprites —
+// a generated copy in src/data/characters/kfm.json (npm run mugen:sprites),
+// pinned to this port by parity.test.ts. KFM is CC BY-NC (Elecbyte): the
+// game must stay non-commercial while he ships.
 import type { CharacterDef } from '../../engine';
 import type { RefTable } from '../../compat/mugen/port';
 import kfmPort from './kfm.port.json';

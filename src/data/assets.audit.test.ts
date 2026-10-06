@@ -59,6 +59,20 @@ describe('asset completeness audit', () => {
     });
   }
 
+  // secret unlockables (roster `secret`) ship art only: sheet + portraits —
+  // no VO (never requested) and no fatality (none offered)
+  for (const r of ROSTER.filter((x) => x.secret)) {
+    it(`secret ${r.id} has its sheet and portraits`, () => {
+      const need = [['sprites', r.id, 'sheet.png'], ['sprites', r.id, 'meta.json'], ['portraits', `${r.id}.png`],
+        ['portraits', `${r.id}-bust.png`], ['portraits', `${r.id}-ko.png`]];
+      const gaps = need.filter((p) => !has(...p)).map((p) => p.join('/'));
+      expect(gaps, `${r.id} is missing: ${gaps.join(', ')}`).toEqual([]);
+      const meta = JSON.parse(readFileSync(join(ASSETS, 'sprites', r.id, 'meta.json'), 'utf8')) as { cellW: number; cellH: number };
+      expect(meta.cellW, 'meta.cellW must match the character cellW (wide MUGEN cells)').toBe(characters[r.id].cellW ?? CELL_W);
+      expect(meta.cellH).toBe(CELL_H);
+    });
+  }
+
   it('every stage has a name-call VO', () => {
     const missing = STAGES.filter((s) => !has('audio', 'announcer', `stage-${s.id}.mp3`)).map((s) => s.id);
     expect(missing, `stages missing a name VO: ${missing.join(', ')}`).toEqual([]);

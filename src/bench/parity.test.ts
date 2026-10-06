@@ -17,8 +17,26 @@ describe('benchmark references', () => {
     });
   }
 
-  it('references are bench-only: never registered as playable', async () => {
+  // 2026-10-06: Kung Fu Man ships as a SECRET unlockable with his real art.
+  // A reference may sit in ROSTER only as `secret` (never `playable`: no VO,
+  // no CPU/attract pools, no roster bench), and its playable copy must fight
+  // exactly like the measured port — regenerate it with npm run mugen:sprites.
+  it('references reach the roster only as secrets', async () => {
     const { ROSTER } = await import('../data/roster');
-    for (const id of Object.keys(REFERENCES)) expect(ROSTER.some((r) => r.id === id)).toBe(false);
+    for (const id of Object.keys(REFERENCES)) {
+      const r = ROSTER.find((e) => e.id === id);
+      if (r) expect({ id, playable: r.playable, secret: r.secret }).toEqual({ id, playable: false, secret: true });
+    }
+  });
+
+  it('a secret reference fights exactly like its bench port', async () => {
+    const { ROSTER } = await import('../data/roster');
+    const { characters } = await import('../data/characters');
+    const PRESENTATION = new Set(['name', 'color', 'winQuotes', 'cellW', '_source']);
+    const sim = (d: object) => Object.fromEntries(Object.entries(d).filter(([k]) => !PRESENTATION.has(k)));
+    for (const [id, refc] of Object.entries(REFERENCES)) {
+      if (!ROSTER.some((e) => e.id === id)) continue;
+      expect(sim(characters[id]), `${id}.json drifted from ${id}.port.json — re-run npm run mugen:sprites`).toEqual(sim(refc.def));
+    }
   });
 });
