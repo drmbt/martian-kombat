@@ -1525,6 +1525,12 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-10-06 · data · Kung Fu Man scaled into the roster's height band** —
+  his port mapped MUGEN's 93-px stand height to our tallest hurtbox (284), so
+  his idle art stood 323 world px vs the roster's 201–279 (median 246);
+  `scale: 0.79` (in `kfm.unlock.json`) resizes art + boxes + reach together →
+  ~255. Parity test compares the unscaled JSON to the port. — Claude (Opus 5.5)
+
 - **2026-10-06 · compat/tools/data/scenes/net · Kung Fu Man secret
   unlockable (D-KFM)** — SFF v2 sprite decoder + `npm run mugen:sprites`
   convert KFM's real MUGEN art (kfm720) into our sheet (wide 592-px cells via

@@ -29,14 +29,16 @@ describe('benchmark references', () => {
     }
   });
 
-  it('a secret reference fights exactly like its bench port', async () => {
+  // ...up to ONE allowed difference: a uniform `scale` (art + boxes + reach
+  // together, so he stands in the roster's height band) — compared unscaled
+  it('a secret reference fights exactly like its bench port (before its uniform scale)', async () => {
     const { ROSTER } = await import('../data/roster');
-    const { characters } = await import('../data/characters');
-    const PRESENTATION = new Set(['name', 'color', 'winQuotes', 'cellW', '_source']);
-    const sim = (d: object) => Object.fromEntries(Object.entries(d).filter(([k]) => !PRESENTATION.has(k)));
+    const ALLOWED = new Set(['name', 'color', 'winQuotes', 'cellW', '_source', 'scale', '_scaleNote']);
+    const sim = (d: object) => Object.fromEntries(Object.entries(d).filter(([k]) => !ALLOWED.has(k)));
     for (const [id, refc] of Object.entries(REFERENCES)) {
       if (!ROSTER.some((e) => e.id === id)) continue;
-      expect(sim(characters[id]), `${id}.json drifted from ${id}.port.json — re-run npm run mugen:sprites`).toEqual(sim(refc.def));
+      const raw = (await import(`../data/characters/${id}.json`)).default as object;
+      expect(sim(raw), `${id}.json drifted from ${id}.port.json — re-run npm run mugen:sprites`).toEqual(sim(refc.def));
     }
   });
 });

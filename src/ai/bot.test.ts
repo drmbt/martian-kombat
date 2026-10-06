@@ -45,10 +45,12 @@ describe('CPU plays the secret fighters', () => {
     let s = initialState('kfm', 'yulia', characters, { roundTicks: 0, winsNeeded: 3 });
     const bots = [new CpuDriver(0), new CpuDriver(1)];
     const hp = [s.fighters[0].health, s.fighters[1].health];
+    const low = [...hp]; // lowest seen — health refills between rounds
     for (let i = 0; i < 3600 && s.phase !== 'matchEnd'; i++) {
       s = step(s, [bots[0].poll(s), bots[1].poll(s)], characters);
+      for (const k of [0, 1]) low[k] = Math.min(low[k], s.fighters[k].health);
     }
-    expect(s.fighters[0].health < hp[0] || s.wins[1] > 0).toBe(true);
-    expect(s.fighters[1].health < hp[1] || s.wins[0] > 0).toBe(true);
+    expect(low[0]).toBeLessThan(hp[0]);
+    expect(low[1]).toBeLessThan(hp[1]);
   });
 });

@@ -437,6 +437,8 @@
       "blockKnockback": 15.55
     }
   },
+  "scale": 0.79,
+  "_scaleNote": "uniform resize (art + boxes + reach) so his idle art (~255 world px with hair) sits in the roster band (201-279, median 246); the bench port stays unscaled",
   "winQuotes": [
     "Every engine starts with me. Did you think yours would be different?",
     "Four buttons. That is all I have ever needed.",
