@@ -147,6 +147,9 @@ export interface VariantPatch {
   vault?: { vx: number; vy: number };
   leap?: { vx: number; vy: number };
   projectile?: Partial<ProjectileDef>;
+  hitstop?: number | [number, number];
+  chip?: number;
+  blockKnockback?: number;
 }
 
 export interface MoveDef {
@@ -160,6 +163,17 @@ export interface MoveDef {
   /** null for pure projectile moves (the projectile carries its own box) */
   hitbox: Box | null;
   height: MoveHeight;
+  /** freeze ticks on contact (MUGEN `pausetime`). Omit for the strength
+   *  default (HITSTOP_LIGHT/MEDIUM/HEAVY/SPECIAL); a number freezes both
+   *  sides equally; `[attacker, victim]` is asymmetric like `pausetime = p1, p2`
+   *  (the victim side still gets the counterhit bonus) */
+  hitstop?: number | [number, number];
+  /** damage dealt through block (MUGEN HitDef `damage = hit, guard`). Omit for
+   *  the default: 0 on lights, floor(10% of damage) otherwise. Chip never KOs */
+  chip?: number;
+  /** pushback impulse on BLOCK (MUGEN `guard.velocity`). Omit for the
+   *  default 80% of `knockback` */
+  blockKnockback?: number;
   knockdown?: boolean;
   /** forward drift per tick during startup+active (advancing specials) */
   forwardVel?: number;
@@ -256,6 +270,9 @@ export interface CharacterDef {
   color: string;
   /** home-stage id (src/data/stages.ts) — UI hint only, engine never reads it */
   stage?: string;
+  /** render hint only: sheet cell width when wider than the standard
+   *  CELL_W (body still centred — ported MUGEN art with long reach) */
+  cellW?: number;
   /** SFII-style victory taunts; the win screen picks one at random. Presentation
    *  only, engine never reads it. */
   winQuotes?: string[];
@@ -373,6 +390,10 @@ export interface FighterState {
   charge: number;
   /** same, holding BACK (facing-relative) — fuels the 'cbf' sonic-boom charge */
   backCharge: number;
+  /** ticks left to cash a released ≥CHARGE_TICKS down-hold ('du'); 0 = none */
+  chargeWindow: number;
+  /** same for the back-hold ('cbf') */
+  backChargeWindow: number;
   /** dizzy accumulator: connecting hits add their damage, decays every tick,
    *  crossing STUN_THRESHOLD forces 'dazed' when the current reel ends */
   stun: number;
@@ -448,6 +469,13 @@ export interface MatchRules {
   /** walkable x range — wider arenas (3D stage) widen it symmetrically
    *  around STAGE_W/2 so renderer centering stays put */
   stage: { minX: number; maxX: number };
+  /** optional MUGEN / SF2-style horizontal camera (no zoom). The ENGINE owns
+   *  it because it bounds the fighters: the view's centre follows their
+   *  midpoint, clamped so the `width`-wide view never shows past
+   *  `stage` ± `margin`, and fighters can't leave the view minus `margin`
+   *  (MUGEN `screenleft/right`). Projectiles die outside the view. Omit for
+   *  the classic fixed screen (the stage IS the screen). */
+  camera?: { width: number; margin: number };
   /** ROUND 1 intro length in ticks (later rounds keep INTRO_TICKS) — longer
    *  first intros give entry gestures + a READY? 3-2-1 countdown room */
   introTicks: number;

@@ -11,6 +11,18 @@
 export const LIGHT_CHAIN = ['lp', 'lk', 'clp', 'clk'];
 export const CANCEL_MOVES = ['mp', 'mk', 'cmp', 'cmk'];
 
+/** the widest push-box front (bodyBox.x + w, after `scale`) in the roster —
+ *  vincent's 51 px. src/data/kit.test.ts fails if a fighter outgrows it. */
+export const ROSTER_MAX_FRONT = 51;
+
+/** the shortest grab range that can reach every roster opponent: own push-box
+ *  front + the widest opponent front + 10 px slack (MKS-1 throw-out-of-range,
+ *  P4.2). Unknown body → assume the widest. */
+export function grabFloor(bodyBox) {
+  const own = bodyBox ? bodyBox.x + bodyBox.w : ROSTER_MAX_FRONT;
+  return Math.ceil(own + ROSTER_MAX_FRONT + 10);
+}
+
 /** archetypes with no natural L/M/H axis — no variants generated */
 const NO_VARIANT_ARCHETYPES = new Set(['teleport', 'mirror-teleport', 'reversal', 'reflector', 'techable-throw']);
 
@@ -56,10 +68,14 @@ export function variantsFor(archetypeKey, move) {
  *  - lights chain into the light family
  *  - mediums gain special-cancel windows
  *  - each special gains L/H variants when its archetype has a strength axis
+ *  - every grab (and grab variant) reaches at least grabFloor(bodyBox) — the
+ *    one correction that IS applied to existing values (a shorter grab can
+ *    never connect)
  * @param {Record<string, object>} moves  the kit (button normals + specials)
  * @param {{id: string, archetype: string}[]} specials  the draft specials
+ * @param {{bodyBox?: {x: number, w: number}}} [opts]
  */
-export function applyKitGrammar(moves, specials = []) {
+export function applyKitGrammar(moves, specials = [], opts = {}) {
   for (const id of LIGHT_CHAIN) {
     const m = moves[id];
     if (m && m.chains == null) m.chains = [...LIGHT_CHAIN];
@@ -73,6 +89,13 @@ export function applyKitGrammar(moves, specials = []) {
     if (!m || m.variants != null) continue;
     const v = variantsFor(s.archetype, m);
     if (v) m.variants = v;
+  }
+  const floor = grabFloor(opts.bodyBox);
+  for (const m of Object.values(moves)) {
+    if (!m || typeof m !== 'object') continue;
+    for (const g of [m.grab, ...Object.values(m.variants ?? {}).map((v) => v?.grab)]) {
+      if (g && typeof g.range === 'number' && g.range < floor) g.range = floor;
+    }
   }
   return moves;
 }

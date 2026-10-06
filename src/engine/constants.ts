@@ -25,7 +25,13 @@ export const FATALITY_RANGE = 280; // default max distance to the dazed loser
 
 export const GROUND_FRICTION = 0.85; // knockback slide decay per tick
 export const INPUT_BUFFER_LEN = 15;
-export const CHARGE_TICKS = 35; // hold ↓ this long to bank a charge motion
+// MUGEN charge (`~60$B, F, x` with `time = 10`, its reference command): hold
+// the charge direction (4-way: down-back / up-back count as back, down-left /
+// down-right as down) for CHARGE_TICKS, release, then the opposite direction
+// + button within CHARGE_RELEASE_TICKS of the release. No bleed: a streak
+// either reached the threshold or it didn't.
+export const CHARGE_TICKS = 60;
+export const CHARGE_RELEASE_TICKS = 10;
 
 // universal throw (LP+LK): the victim is held for the tech window; their own
 // LP+LK inside it escapes the throw and bounces both fighters apart
@@ -93,7 +99,10 @@ export const TOSS_BOUNCE_VY = 5.4; // the slam rebound (vs BOUNCE_VY 3.2)
 // floaty and vertical), and the whole roster jumps a touch higher so aerials
 // have air time. Both are global defaults; a character can override its
 // jump-forward speed with `jumpSpeedX` (acrobats get more) in its JSON.
-export const JUMP_SPEED_MULT = 1.6; // jump-forward vx = walkSpeed × this
+// MUGEN jump physics: the takeoff tick runs NO ground friction, so a jump's
+// air speed is exactly jumpSpeedX. 1.4 (was 1.6 with the old takeoff-friction
+// quirk) keeps every fighter's measured jump distance where it was (~±1px).
+export const JUMP_SPEED_MULT = 1.4; // jump-forward vx = walkSpeed × this
 export const JUMP_VEL_MULT = 1.12; // launch height = jumpVel × this
 
 // dash (double-tap ←/→): a friction-bled impulse, limited by a stock pool so

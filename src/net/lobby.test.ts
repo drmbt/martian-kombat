@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import { characters } from '../data/characters';
 import { createLoopbackPair } from './transport';
-import { charDataHash, LobbyController, type StartConfig } from './lobby';
+import { charDataHash, LobbyController, simFingerprint, type StartConfig } from './lobby';
 import { PROTO, type NetMsg, type Transport } from './transport';
 
 interface Captured {
@@ -17,6 +17,7 @@ interface Captured {
   bothLocked: boolean;
   start: StartConfig | null;
   adoptedRender3d: boolean | null;
+  unlocked: string[];
 }
 
 function mount(transport: Transport, isHost: boolean, name: string, extra: Record<string, unknown> = {}): Captured {
@@ -28,6 +29,7 @@ function mount(transport: Transport, isHost: boolean, name: string, extra: Recor
     bothLocked: false,
     start: null,
     adoptedRender3d: null,
+    unlocked: [],
   };
   cap.ctrl = new LobbyController(
     {
@@ -37,6 +39,7 @@ function mount(transport: Transport, isHost: boolean, name: string, extra: Recor
       onBothLocked: () => (cap.bothLocked = true),
       onStart: (c) => (cap.start = c),
       onRenderMode: (r) => (cap.adoptedRender3d = r),
+      onRemoteUnlock: (id) => cap.unlocked.push(id),
     },
     { transport, isHost, defs: characters, localName: name, ...extra },
   );
@@ -62,6 +65,17 @@ describe('LobbyController handshake', () => {
     expect(host.ready).toEqual({ remoteName: 'Yulia', render3d: true });
     expect(guest.ready).toEqual({ remoteName: 'Flo', render3d: true });
     expect(guest.adoptedRender3d).toBe(true); // guest auto-adopted host's 3D
+  });
+
+  it('a secret unlock on one side reaches the other (both players get it)', () => {
+    const wire = createLoopbackPair({ latency: 1 });
+    const host = mount(wire.a, true, 'Flo');
+    const guest = mount(wire.b, false, 'Yulia');
+    wire.run(3);
+    guest.ctrl.sendUnlock('kfm');
+    wire.run(2);
+    expect(host.unlocked).toEqual(['kfm']);
+    expect(guest.unlocked).toEqual([]);
   });
 
   it('exchanges picks, both vote the same stage, and starts on it', () => {
@@ -147,7 +161,7 @@ describe('LobbyController handshake', () => {
     wire.a.send(badHello);
     wire.run(2);
     expect(guest.ready).toBeNull();
-    expect(guest.phases.some(([p, d]) => p === 'error' && /character data/.test(d ?? ''))).toBe(true);
+    expect(guest.phases.some(([p, d]) => p === 'error' && /version mismatch/.test(d ?? ''))).toBe(true);
   });
 
   it('a peer bye during the lobby surfaces as an error', () => {
@@ -158,5 +172,32 @@ describe('LobbyController handshake', () => {
     wire.a.send({ t: 'bye', reason: 'host bailed' });
     wire.run(2);
     expect(guest.phases.some(([p, d]) => p === 'error' && d === 'host bailed')).toBe(true);
+  });
+
+  // P3.10 — the compatibility hash covers exactly what the sim reads
+  describe('compatibility hash (P3.10)', () => {
+    const clone = () => structuredClone(characters);
+    it('ignores presentation-only text (win quotes, VO lines, names)', () => {
+      const d = clone();
+      d.vincent.winQuotes = ['a typo fix'];
+      d.vincent.moves.lp.name = 'Renamed Jab';
+      expect(charDataHash(d)).toBe(charDataHash(characters));
+    });
+    it('changes when frame data changes', () => {
+      const d = clone();
+      d.vincent.moves.lp.startup += 1;
+      expect(charDataHash(d)).not.toBe(charDataHash(characters));
+    });
+    it('changes when the stage arena table differs (wide-stage art, D9)', () => {
+      expect(charDataHash(characters, [['dojo', { stage: { minX: -415, maxX: 1375 } }]]))
+        .not.toBe(charDataHash(characters, [['dojo', { stage: { minX: -100, maxX: 1060 } }]]));
+    });
+    it('the engine fingerprint is deterministic and sees behaviour changes', () => {
+      expect(simFingerprint(characters)).toBe(simFingerprint(characters));
+      const d = clone();
+      const first = Object.keys(d).sort()[0];
+      d[first].walkSpeed += 1;
+      expect(simFingerprint(d)).not.toBe(simFingerprint(characters));
+    });
   });
 });

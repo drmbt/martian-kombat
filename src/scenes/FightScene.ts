@@ -16,12 +16,13 @@ import {
   mirrorTeleportPhases,
   resolveMove,
   worldBox,
+  cameraX,
 } from '../engine';
 import { FightSession, type Session } from '../session/FightSession';
 import { NetSession, type NetIssue } from '../session/NetSession';
 import type { OnlineFightData } from '../net/lobby';
 import { characters } from '../data/characters';
-import { stageById } from '../data/stages';
+import { stageById, stageArena, stageArtWidth, wideStage } from '../data/stages';
 import { KeyboardSource } from '../input/keyboard';
 import { CpuDriver } from '../ai/bot';
 import { DIFFICULTIES, DIFFICULTY_AGGRESSION, type Difficulty } from '../ai/difficulty';
@@ -233,6 +234,13 @@ export class FightScene extends Phaser.Scene {
   private spriteEditor = false;
   /** dev-only Character Studio: module rail over the live fight (WYSIWYG) */
   private studio = false;
+  /** SF2/MUGEN scrolling camera (MatchRules.camera): on for every real fight,
+   *  off for the dev editors (studio / tuner / sprite editor / wireframe),
+   *  whose overlays assume the fixed 960px screen */
+  private camOn = false;
+  /** screen-fixed HUD layer (health bars, portraits frame, F5 guide); the
+   *  world-space overlays (sparks, debug boxes) stay on gfxHud */
+  private gfxScreen!: Phaser.GameObjects.Graphics;
   private studioModule: string | undefined;
   private studioRail: StudioRail | null = null;
   /** sprite-editor working sheet model (edits mirror onto the fighter live) */
@@ -343,6 +351,12 @@ export class FightScene extends Phaser.Scene {
 
   create(): void {
     const cfg = getSettings();
+    // SF2 scrolling camera for every real fight. The arena is a pure function
+    // of the stage id + build (stageArena), so online peers that agreed on the
+    // stage derive identical rules even though the lobby baked its rules
+    // before the stage vote (V25).
+    this.camOn = !this.studio && !this.tuner && !this.spriteEditor && this.stageId !== 'wireframe';
+    const arena = this.camOn ? stageArena(this.stageId) : {};
     // online: BOTH peers build the identical start state from the lobby's
     // agreed rules — V25 replay-equivalence depends on this being deterministic
     this.state = initialState(
@@ -350,11 +364,12 @@ export class FightScene extends Phaser.Scene {
       this.chars[1],
       characters,
       this.online
-        ? this.online.rules
+        ? { ...this.online.rules, ...arena }
         : {
             roundTicks: cfg.roundSeconds * 60,
             // showcase is a single round that ends in the fatality
             winsNeeded: this.showcase ? 1 : cfg.winsNeeded,
+            ...arena,
           },
     );
     this.inputs = new KeyboardSource(this);
@@ -434,7 +449,7 @@ export class FightScene extends Phaser.Scene {
     });
     this.winOverlay = new WinOverlay(this.uiLayer.root, characters, {
       revealFrame: WIN_REVEAL_FRAME, // the "<NAME> WINS" beat lands + breathes first
-      prompt: this.online ? 'R  REMATCH   ·   ESC  QUIT' : 'R  REMATCH   ·   ENTER  SELECT',
+      prompt: this.online ? 'SPACE  REMATCH   ·   ESC  QUIT' : 'SPACE  REMATCH   ·   ENTER  SELECT',
       onFirstShow: (id) => playVoice(this, id, 'victory', 0.85),
     });
     this.tunerPanel = null;
@@ -461,8 +476,12 @@ export class FightScene extends Phaser.Scene {
     // construction stands in a neutral, honest space. Never in the registry.
     if (this.stageId === 'wireframe') this.drawWireframeStage();
 
-    // Stage art keeps its native aspect at full screen height; anything wider
-    // than the screen (ultra-wide 21:9 stages) becomes parallax travel.
+    // Stage art keeps its native aspect at full screen height. With the
+    // scrolling camera it is a WORLD object centred on STAGE_W/2 that the view
+    // pans across; the ultra-wide outpainted art (stages-wide/, when present)
+    // wins over everything else. Fixed screen (editors): the old slide.
+    const wide = this.camOn ? wideStage(this.stageId) : undefined;
+    const wideKey = wide && this.textures.exists(`bg-stage-wide-${this.stageId}`) ? `bg-stage-wide-${this.stageId}` : null;
     const bgKey = this.stageId === 'wireframe'
       ? null
       : this.textures.exists(`bg-stage-${this.stageId}`)
@@ -475,7 +494,14 @@ export class FightScene extends Phaser.Scene {
     this.bgLayers = [];
     this.bgOverhang = 0;
     const stageDef = stageById(this.stageId);
-    const layerDefs = stageDef?.layers;
+    const layerDefs = wideKey ? undefined : stageDef?.layers;
+    if (wideKey && wide) {
+      // tall art (MvC-style headroom) is anchored by its BOTTOM: only the
+      // bottom WIDE_ASPECT band shows until a vertical camera exists
+      const w = stageArtWidth(this.stageId);
+      this.bg = this.add.image(STAGE_W / 2, STAGE_H, wideKey).setOrigin(0.5, 1).setDisplaySize(w, (w * wide.h) / wide.w).setDepth(0);
+      this.hasBg = true;
+    }
     if (layerDefs) {
       const ordered = [
         ['sky', layerDefs.sky],
@@ -490,6 +516,8 @@ export class FightScene extends Phaser.Scene {
         const src = this.textures.get(key).getSourceImage();
         const bgW = Math.max(STAGE_W, (STAGE_H * src.width) / src.height);
         const img = this.add.image(STAGE_W / 2, STAGE_H / 2, key).setDisplaySize(bgW, STAGE_H).setDepth(0);
+        // scrolling camera: real parallax — farther layers pan slower
+        if (this.camOn) img.setScrollFactor(layer.factor ?? DEFAULT_LAYER_FACTORS[name]);
         this.bgLayers.push({
           img,
           overhang: (bgW - STAGE_W) / 2,
@@ -498,14 +526,15 @@ export class FightScene extends Phaser.Scene {
       }
       this.hasBg = this.bgLayers.length > 0;
     }
-    if (bgKey && this.bgLayers.length === 0) {
+    if (!wideKey && bgKey && this.bgLayers.length === 0) {
       const src = this.textures.get(bgKey).getSourceImage();
       const bgW = Math.max(STAGE_W, (STAGE_H * src.width) / src.height);
       this.bg = this.add.image(STAGE_W / 2, STAGE_H / 2, bgKey).setDisplaySize(bgW, STAGE_H).setDepth(0);
-      this.bgOverhang = (bgW - STAGE_W) / 2;
+      this.bgOverhang = this.camOn ? 0 : (bgW - STAGE_W) / 2;
     }
     this.gfxUnder = this.add.graphics().setDepth(1);
     this.gfxHud = this.add.graphics().setDepth(5);
+    this.gfxScreen = this.add.graphics().setDepth(5).setScrollFactor(0);
 
     for (const slot of [0, 1] as const) {
       const id = this.chars[slot];
@@ -612,6 +641,12 @@ export class FightScene extends Phaser.Scene {
       })
       .setDepth(50)
       .setVisible(false);
+    // HUD lives in screen space; the world (stage, fighters, projectiles,
+    // sparks, debug boxes, combo counter) scrolls under it
+    for (const o of [this.msgText, this.timerText, this.perfText, ...this.stageGuideTexts, ...this.hudPortraitShadows, ...this.hudEls]) {
+      (o as unknown as Phaser.GameObjects.Components.ScrollFactor).setScrollFactor(0);
+    }
+    this.netText?.setScrollFactor(0);
 
     if (this.training) {
       this.add
@@ -619,7 +654,8 @@ export class FightScene extends Phaser.Scene {
           fontFamily: 'monospace', fontSize: '13px', color: '#ffd24a', stroke: '#000', strokeThickness: 3,
         })
         .setOrigin(0.5)
-        .setDepth(6);
+        .setDepth(6)
+        .setScrollFactor(0);
     }
 
     this.input.keyboard!.on('keydown', (e: KeyboardEvent) => {
@@ -1027,8 +1063,11 @@ export class FightScene extends Phaser.Scene {
     const src = sheet.getSourceImage() as HTMLImageElement | HTMLCanvasElement | undefined;
     if (!src) return null;
 
-    const cols = Math.max(1, Math.floor(src.width / CELL_W));
-    const sx0 = (frame % cols) * CELL_W;
+    // wide-cell sheets (cellW > CELL_W): the shadow samples the centred
+    // standard-width band, so every fighter's shadow is built the same way
+    const cw = geom.cellWidth(characters[charId]);
+    const cols = Math.max(1, Math.floor(src.width / cw));
+    const sx0 = (frame % cols) * cw + (cw - CELL_W) / 2;
     const sy0 = Math.floor(frame / cols) * CELL_H;
 
     const srcCanvas = document.createElement('canvas');
@@ -1165,6 +1204,11 @@ export class FightScene extends Phaser.Scene {
     const gU = this.gfxUnder;
     gU.clear();
     this.gfxHud.clear();
+    this.gfxScreen.clear();
+    // the view follows the engine's camera (pure function of state, so the
+    // fighters' arena and what's on screen can never disagree)
+    this.cameras.main.setScroll(this.camOn ? cameraX(s) - STAGE_W / 2 : 0, 0);
+    const viewX = this.cameras.main.scrollX;
 
     // animate impact overlays first (runs even during fatality/win screens so
     // stragglers finish fading instead of freezing under the cutscene)
@@ -1208,14 +1252,16 @@ export class FightScene extends Phaser.Scene {
     }
 
     if (!this.hasBg) {
-      gU.fillStyle(0x241b2e, 1).fillRect(0, 0, STAGE_W, STAGE_H);
-      gU.fillStyle(0x3a2b40, 1).fillRect(0, FLOOR_Y, STAGE_W, STAGE_H - FLOOR_Y);
-      gU.lineStyle(2, 0x594566, 1).lineBetween(0, FLOOR_Y, STAGE_W, FLOOR_Y);
+      gU.fillStyle(0x241b2e, 1).fillRect(viewX, 0, STAGE_W, STAGE_H);
+      gU.fillStyle(0x3a2b40, 1).fillRect(viewX, FLOOR_Y, STAGE_W, STAGE_H - FLOOR_Y);
+      gU.lineStyle(2, 0x594566, 1).lineBetween(viewX, FLOOR_Y, viewX + STAGE_W, FLOOR_Y);
     }
 
-    // SF2-style parallax: backgrounds slide opposite the fighters' midpoint.
-    // Layered stages use smaller factors for farther art.
-    if (this.bgLayers.length > 0) {
+    // fixed screen only (editors): backgrounds slide opposite the fighters'
+    // midpoint to fake depth. The scrolling camera does real parallax instead.
+    if (this.camOn) {
+      // nothing: the camera pans the world, layers carry their scroll factors
+    } else if (this.bgLayers.length > 0) {
       const mid = (s.fighters[0].x + s.fighters[1].x) / 2;
       const t = Phaser.Math.Clamp((mid - STAGE_W / 2) / (STAGE_W / 2), -1, 1);
       for (const layer of this.bgLayers) {
@@ -1274,7 +1320,7 @@ export class FightScene extends Phaser.Scene {
         const flash = this.hitFlashSprites[slot];
         sprite.setVisible(true);
         const h = def.hurtStand.h * ART_MARGIN; // art has margin around the body
-        sprite.setDisplaySize((h * CELL_W) / CELL_H, h);
+        sprite.setDisplaySize((h * geom.cellWidth(def)) / CELL_H, h);
         sprite.setPosition(f.x, f.y + geom.footOffset(def));
         sprite.setFlipX(f.facing === -1);
         sprite.setRotation(0);
@@ -1422,7 +1468,7 @@ export class FightScene extends Phaser.Scene {
     for (const img of this.projSprites) img.setVisible(false);
 
     if (!this.fatalityPanel) {
-      this.fatalityPanel = this.add.image(STAGE_W / 2, STAGE_H / 2, '__DEFAULT').setDepth(8);
+      this.fatalityPanel = this.add.image(STAGE_W / 2, STAGE_H / 2, '__DEFAULT').setDepth(8).setScrollFactor(0);
     }
     const img = this.fatalityPanel;
     if (this.textures.exists(key)) {
@@ -1435,7 +1481,7 @@ export class FightScene extends Phaser.Scene {
     } else {
       // no art: dramatic red blackout fallback so the flow still works
       img.setVisible(false);
-      this.gfxUnder.fillStyle(0x1a0508, 1).fillRect(0, 0, STAGE_W, STAGE_H);
+      this.gfxScreen.fillStyle(0x1a0508, 1).fillRect(0, 0, STAGE_W, STAGE_H);
     }
     this.msgText.setText('');
     this.timerText.setText('');
@@ -1987,7 +2033,7 @@ export class FightScene extends Phaser.Scene {
   }
 
   private drawStageGuide(): void {
-    const g = this.gfxHud;
+    const g = this.gfxScreen;
     const y = (stageY: number) => (stageY / 720) * STAGE_H;
     const horizon = y(260);
     const horizonMax = y(310);
@@ -2018,7 +2064,7 @@ export class FightScene extends Phaser.Scene {
   }
 
   private drawHud(): void {
-    const g = this.gfxHud;
+    const g = this.gfxScreen;
     const s = this.state;
     for (const slot of [0, 1] as const) {
       const f = s.fighters[slot];

@@ -1,0 +1,280 @@
+{
+  "version": 1,
+  "step": 1,
+  "inputs": {
+    "name": "Gale",
+    "description": "a storm monk",
+    "referencePhotos": [],
+    "stagePhotos": [],
+    "voiceSamples": [],
+    "kiaiClips": [],
+    "musicTracks": []
+  },
+  "draft": {
+    "color": "hsl(16 55% 62%)",
+    "archetype": "all-rounder",
+    "lore": {
+      "tagline": "They call GALE.",
+      "personality": "a storm monk",
+      "backstory": "A Martian of Bombay Beach — a storm monk. (edit me: arcade backstory)"
+    },
+    "winQuotes": [
+      "GALE wins. Obviously.",
+      "You fought well. You still lost.",
+      "The desert always collects."
+    ],
+    "vo": {
+      "kiai": [
+        "Hah!",
+        "Rrragh!",
+        "Take this!",
+        "Come on!",
+        "Hyah!",
+        "Now!"
+      ],
+      "hurt": [
+        "Ugh!",
+        "Gah!",
+        "Nngh!",
+        "No!",
+        "Aagh!",
+        "Tch!"
+      ],
+      "victory": [
+        "Too easy.",
+        "Next.",
+        "Predictable.",
+        "Done."
+      ]
+    },
+    "specials": [
+      {
+        "name": "Bolt",
+        "controls": "qcf+P",
+        "archetype": "projectile",
+        "description": "ranged projectile",
+        "id": "bolt"
+      },
+      {
+        "name": "Rise",
+        "controls": "dp+P",
+        "archetype": "anti-air-dp",
+        "description": "rising anti-air",
+        "id": "rise"
+      },
+      {
+        "name": "Dash",
+        "controls": "qcf+K",
+        "archetype": "advancing-rush",
+        "description": "advancing strike",
+        "id": "dash"
+      },
+      {
+        "name": "Clinch",
+        "controls": "hcb+P",
+        "archetype": "command-grab",
+        "description": "command grab",
+        "id": "clinch"
+      }
+    ],
+    "specialPool": [
+      {
+        "name": "Overdrive",
+        "controls": "qcb+P",
+        "archetype": "reversal",
+        "description": "an invincible reversal",
+        "id": "overdrive"
+      },
+      {
+        "name": "Vortex",
+        "controls": "hcf+P",
+        "archetype": "projectile",
+        "description": "a spiralling projectile",
+        "id": "vortex"
+      },
+      {
+        "name": "Lunge",
+        "controls": "qcf+K",
+        "archetype": "advancing-rush",
+        "description": "a long-range lunge",
+        "id": "lunge"
+      },
+      {
+        "name": "Snare",
+        "controls": "hcb+P",
+        "archetype": "command-grab",
+        "description": "a close-range grab",
+        "id": "snare"
+      },
+      {
+        "name": "Uppercut",
+        "controls": "dp+P",
+        "archetype": "anti-air-dp",
+        "description": "a rising anti-air",
+        "id": "uppercut"
+      },
+      {
+        "name": "Fade",
+        "controls": "qcb+K",
+        "archetype": "teleport",
+        "description": "a teleport to reposition",
+        "id": "fade"
+      },
+      {
+        "name": "Barrage",
+        "controls": "mash+P",
+        "archetype": "mash",
+        "description": "a rapid multi-hit flurry",
+        "id": "barrage"
+      },
+      {
+        "name": "Comet",
+        "controls": "qcf+P",
+        "archetype": "projectile",
+        "description": "a fast straight projectile",
+        "id": "comet"
+      }
+    ],
+    "physics": {
+      "health": 1000,
+      "walkSpeed": 3.3,
+      "backSpeed": 3.4,
+      "jumpVel": 18,
+      "gravity": 0.9,
+      "prejumpFrames": 4
+    },
+    "fatality": {
+      "id": "finish",
+      "name": "GALE Finish",
+      "input": "hcb+P"
+    },
+    "stagePrompt": "A Bombay Beach / Mars College desert locale, redraw as gritty 16-bit retro pixel-art anchored on the salton style reference. 21:9. The bottom quarter is a continuous textured walkable ground plane, edge to edge, touching the bottom of the frame; no props or people in the fighter strip.",
+    "musicPrompt": "A loopable ~75s instrumental battle theme for GALE's desert stage. Gritty desert dub-techno, mid-tempo ~92 BPM, strong rhythmic loop, no vocals, clean loop point, mixed to sit under SFX."
+  },
+  "generatedVo": {},
+  "generatedFatality": [],
+  "skeletons": {},
+  "autoHitboxes": {},
+  "jobs": [
+    {
+      "key": "canonical",
+      "kind": "canonical",
+      "label": "Canonical",
+      "status": "done",
+      "prompt": "Full-body fighting-game character sheet of a storm monk. Neutral confident standing pose, arms relaxed, facing right. Art style: hand-painted cel-shaded 2D anime fighter, bold clean line art, painterly cel shading. Full body head to toe at the SAME scale and camera distance as the reference image — the top of the head near the top edge and the soles of the feet on an invisible ground line just above the bottom edge, the figure filling the frame vertically the same amount as the reference, centered horizontally, facing right. Background: solid flat chroma-key green (#00B140), completely uniform, no shadow, no floor, no text, no border.",
+      "mock": true,
+      "approved": true,
+      "mime": "image/png"
+    },
+    {
+      "key": "portrait",
+      "kind": "portrait",
+      "label": "Portrait",
+      "status": "done",
+      "prompt": "Tight head-and-shoulders BUST portrait of Gale (a storm monk) for a fighting-game character-select icon. ONLY the head and shoulders fill the frame — face straight-on toward the viewer, direct gaze, neutral confident expression, top of the head near the top edge, shoulders cropped at the bottom edge. This is a close-up: do NOT show a full body, do NOT show the torso below the chest, hands, legs or feet, do NOT zoom out. Art style: hand-painted cel-shaded 2D anime fighter, bold clean line art, painterly cel shading. Background: solid flat chroma-key green (#00B140), completely uniform, no shadow, no floor, no text, no border.",
+      "mock": true,
+      "approved": true,
+      "mime": "image/png"
+    },
+    {
+      "key": "sprite:idle-a",
+      "kind": "sprite",
+      "label": "idle-a",
+      "status": "done",
+      "prompt": "Same character as the reference — identical face, hair, outfit, colors and proportions, drawn at EXACTLY the same size, height and framing as the reference image (do NOT zoom in or out, do NOT resize the character between frames — the head and feet reach the same edges every frame). Gale, relaxed fighting idle, weight settled, BOTH feet flat, guard loosely up. NOT an attack — no raised knee, kick or lunge. Art style: hand-painted cel-shaded 2D anime fighter, bold clean line art, painterly cel shading. Full body head to toe at the SAME scale and camera distance as the reference image — the top of the head near the top edge and the soles of the feet on an invisible ground line just above the bottom edge, the figure filling the frame vertically the same amount as the reference, centered horizontally, facing right. Background: solid flat chroma-key green (#00B140), completely uniform, no shadow, no floor, no text, no border.",
+      "mock": true,
+      "approved": false,
+      "mime": "image/png"
+    },
+    {
+      "key": "sprite:idle-b",
+      "kind": "sprite",
+      "label": "idle-b",
+      "status": "done",
+      "prompt": "Same character as the reference — identical face, hair, outfit, colors and proportions, drawn at EXACTLY the same size, height and framing as the reference image (do NOT zoom in or out, do NOT resize the character between frames — the head and feet reach the same edges every frame). Gale, relaxed fighting idle, chest risen on the breath, BOTH feet flat. NOT an attack. Art style: hand-painted cel-shaded 2D anime fighter, bold clean line art, painterly cel shading. Full body head to toe at the SAME scale and camera distance as the reference image — the top of the head near the top edge and the soles of the feet on an invisible ground line just above the bottom edge, the figure filling the frame vertically the same amount as the reference, centered horizontally, facing right. Background: solid flat chroma-key green (#00B140), completely uniform, no shadow, no floor, no text, no border.",
+      "mock": true,
+      "approved": false,
+      "mime": "image/png"
+    },
+    {
+      "key": "sprite:walk-a",
+      "kind": "sprite",
+      "label": "walk-a",
+      "status": "done",
+      "prompt": "Same character as the reference — identical face, hair, outfit, colors and proportions, drawn at EXACTLY the same size, height and framing as the reference image (do NOT zoom in or out, do NOT resize the character between frames — the head and feet reach the same edges every frame). Gale, walking forward, mid-stride: the LEFT leg lifted and striding FORWARD with a bent knee, the RIGHT leg trailing BEHIND and extended, weight shifting onto the front foot, arms swinging in opposition. A clear exaggerated walk-cycle step — NOT a neutral standing pose. Art style: hand-painted cel-shaded 2D anime fighter, bold clean line art, painterly cel shading. Full body head to toe at the SAME scale and camera distance as the reference image — the top of the head near the top edge and the soles of the feet on an invisible ground line just above the bottom edge, the figure filling the frame vertically the same amount as the reference, centered horizontally, facing right. Background: solid flat chroma-key green (#00B140), completely uniform, no shadow, no floor, no text, no border.",
+      "mock": true,
+      "approved": false,
+      "mime": "image/png"
+    },
+    {
+      "key": "sprite:walk-b",
+      "kind": "sprite",
+      "label": "walk-b",
+      "status": "done",
+      "prompt": "Same character as the reference — identical face, hair, outfit, colors and proportions, drawn at EXACTLY the same size, height and framing as the reference image (do NOT zoom in or out, do NOT resize the character between frames — the head and feet reach the same edges every frame). Gale, walking forward, the OPPOSITE step of the other walk frame: the RIGHT leg lifted and striding FORWARD with a bent knee, the LEFT leg trailing BEHIND and extended, opposite arm swing. Legs clearly in a DIFFERENT position from the first walk frame. Art style: hand-painted cel-shaded 2D anime fighter, bold clean line art, painterly cel shading. Full body head to toe at the SAME scale and camera distance as the reference image — the top of the head near the top edge and the soles of the feet on an invisible ground line just above the bottom edge, the figure filling the frame vertically the same amount as the reference, centered horizontally, facing right. Background: solid flat chroma-key green (#00B140), completely uniform, no shadow, no floor, no text, no border.",
+      "mock": true,
+      "approved": false,
+      "mime": "image/png"
+    },
+    {
+      "key": "sprite:crouch",
+      "kind": "sprite",
+      "label": "crouch",
+      "status": "done",
+      "prompt": "Same character as the reference — identical face, hair, outfit, colors and proportions, drawn at EXACTLY the same size, height and framing as the reference image (do NOT zoom in or out, do NOT resize the character between frames — the head and feet reach the same edges every frame). Gale, squatting EXTREMELY low, knees folded, hips at heel height — the whole figure occupies ONLY the BOTTOM HALF of the frame. Art style: hand-painted cel-shaded 2D anime fighter, bold clean line art, painterly cel shading. Full body head to toe at the SAME scale and camera distance as the reference image — the top of the head near the top edge and the soles of the feet on an invisible ground line just above the bottom edge, the figure filling the frame vertically the same amount as the reference, centered horizontally, facing right. Background: solid flat chroma-key green (#00B140), completely uniform, no shadow, no floor, no text, no border.",
+      "mock": true,
+      "approved": false,
+      "mime": "image/png"
+    },
+    {
+      "key": "sprite:jump",
+      "kind": "sprite",
+      "label": "jump",
+      "status": "done",
+      "prompt": "Same character as the reference — identical face, hair, outfit, colors and proportions, drawn at EXACTLY the same size, height and framing as the reference image (do NOT zoom in or out, do NOT resize the character between frames — the head and feet reach the same edges every frame). Gale, airborne, knees tucked, the whole figure lifted off the ground. Art style: hand-painted cel-shaded 2D anime fighter, bold clean line art, painterly cel shading. Full body head to toe at the SAME scale and camera distance as the reference image — the top of the head near the top edge and the soles of the feet on an invisible ground line just above the bottom edge, the figure filling the frame vertically the same amount as the reference, centered horizontally, facing right. Background: solid flat chroma-key green (#00B140), completely uniform, no shadow, no floor, no text, no border.",
+      "mock": true,
+      "approved": false,
+      "mime": "image/png"
+    },
+    {
+      "key": "sprite:block",
+      "kind": "sprite",
+      "label": "block",
+      "status": "done",
+      "prompt": "Same character as the reference — identical face, hair, outfit, colors and proportions, drawn at EXACTLY the same size, height and framing as the reference image (do NOT zoom in or out, do NOT resize the character between frames — the head and feet reach the same edges every frame). Gale, guard up, forearms shielding the face and body, braced. Art style: hand-painted cel-shaded 2D anime fighter, bold clean line art, painterly cel shading. Full body head to toe at the SAME scale and camera distance as the reference image — the top of the head near the top edge and the soles of the feet on an invisible ground line just above the bottom edge, the figure filling the frame vertically the same amount as the reference, centered horizontally, facing right. Background: solid flat chroma-key green (#00B140), completely uniform, no shadow, no floor, no text, no border.",
+      "mock": true,
+      "approved": false,
+      "mime": "image/png"
+    },
+    {
+      "key": "sprite:hit",
+      "kind": "sprite",
+      "label": "hit",
+      "status": "done",
+      "prompt": "Same character as the reference — identical face, hair, outfit, colors and proportions, drawn at EXACTLY the same size, height and framing as the reference image (do NOT zoom in or out, do NOT resize the character between frames — the head and feet reach the same edges every frame). Gale, a HIT reaction — recoiling from a blow, head snapped back, torso twisted away, off balance, one arm flailing up. NOT an attack, NOT a block. Art style: hand-painted cel-shaded 2D anime fighter, bold clean line art, painterly cel shading. Full body head to toe at the SAME scale and camera distance as the reference image — the top of the head near the top edge and the soles of the feet on an invisible ground line just above the bottom edge, the figure filling the frame vertically the same amount as the reference, centered horizontally, facing right. Background: solid flat chroma-key green (#00B140), completely uniform, no shadow, no floor, no text, no border.",
+      "mock": true,
+      "approved": false,
+      "mime": "image/png"
+    },
+    {
+      "key": "sprite:fall",
+      "kind": "sprite",
+      "label": "fall",
+      "status": "done",
+      "prompt": "Same character as the reference — identical face, hair, outfit, colors and proportions, drawn at EXACTLY the same size, height and framing as the reference image (do NOT zoom in or out, do NOT resize the character between frames — the head and feet reach the same edges every frame). Gale, knocked backward off balance, mid-air, arms flailing. Art style: hand-painted cel-shaded 2D anime fighter, bold clean line art, painterly cel shading. Full body head to toe at the SAME scale and camera distance as the reference image — the top of the head near the top edge and the soles of the feet on an invisible ground line just above the bottom edge, the figure filling the frame vertically the same amount as the reference, centered horizontally, facing right. Background: solid flat chroma-key green (#00B140), completely uniform, no shadow, no floor, no text, no border.",
+      "mock": true,
+      "approved": false,
+      "mime": "image/png"
+    },
+    {
+      "key": "sprite:down",
+      "kind": "sprite",
+      "label": "down",
+      "status": "done",
+      "prompt": "Same character as the reference — identical face, hair, outfit, colors and proportions, drawn at EXACTLY the same size, height and framing as the reference image (do NOT zoom in or out, do NOT resize the character between frames — the head and feet reach the same edges every frame). Gale, lying flat on the back on the ground — a HORIZONTAL shape along the BOTTOM QUARTER of the frame. Art style: hand-painted cel-shaded 2D anime fighter, bold clean line art, painterly cel shading. Full body head to toe at the SAME scale and camera distance as the reference image — the top of the head near the top edge and the soles of the feet on an invisible ground line just above the bottom edge, the figure filling the frame vertically the same amount as the reference, centered horizontally, facing right. Background: solid flat chroma-key green (#00B140), completely uniform, no shadow, no floor, no text, no border.",
+      "mock": true,
+      "approved": false,
+      "mime": "image/png"
+    }
+  ]
+}

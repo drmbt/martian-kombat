@@ -305,7 +305,7 @@ export class FightScene3D extends Phaser.Scene {
     this.banner = new AnnouncerBanner(layer.root);
     this.fatalityOverlay = new FatalityOverlay(layer.root, characters);
     this.winOverlay = new WinOverlay(layer.root, characters, {
-      prompt: this.online ? 'R  REMATCH   ·   ESC  QUIT' : 'R  REMATCH   ·   ENTER  SELECT',
+      prompt: this.online ? 'SPACE  REMATCH   ·   ESC  QUIT' : 'SPACE  REMATCH   ·   ENTER  SELECT',
       revealFrame: 150, // let the "<NAME> WINS" beat land + breathe first (2D parity)
       onFirstShow: (id) => playVoice(this, id, 'victory', 0.85),
     });

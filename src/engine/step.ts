@@ -23,6 +23,7 @@ import {
   JUMP_SPEED_MULT,
   JUMP_VEL_MULT,
   CANCEL_WINDOW_TICKS,
+  CHARGE_RELEASE_TICKS,
   CHARGE_TICKS,
   COMBO_SCALE_FLOOR,
   COMBO_SCALE_STEP,
@@ -78,6 +79,8 @@ function initFighter(charId: string, def: CharacterDef, slot: 0 | 1): FighterSta
     inputBuffer: [],
     charge: 0,
     backCharge: 0,
+    chargeWindow: 0,
+    backChargeWindow: 0,
     stun: 0,
     hitstop: 0,
     buffered: null,
@@ -99,6 +102,7 @@ export function initialState(
     winsNeeded: rules?.winsNeeded ?? WINS_NEEDED,
     stage: rules?.stage ?? { minX: STAGE_MIN_X, maxX: STAGE_MAX_X },
     introTicks: rules?.introTicks ?? INTRO_TICKS,
+    ...(rules?.camera ? { camera: rules.camera } : {}),
   };
   return {
     tick: 0,
@@ -145,6 +149,39 @@ export function worldBox(f: FighterState, box: Box): Rect {
 
 function overlaps(a: Rect, b: Rect): boolean {
   return a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
+}
+
+// ---------- camera (MUGEN / SF2 horizontal scroll) ----------
+
+/** Camera centre x in world px. Fixed screen (no `rules.camera`): STAGE_W/2.
+ *  Otherwise the fighters' midpoint, clamped so the view stays inside the
+ *  stage ± margin. A pure function of state — renderers call it too. */
+export function cameraX(s: GameState): number {
+  const cam = s.rules.camera;
+  if (!cam) return STAGE_W / 2;
+  const mid = (s.fighters[0].x + s.fighters[1].x) / 2;
+  const lo = s.rules.stage.minX - cam.margin + cam.width / 2;
+  const hi = s.rules.stage.maxX + cam.margin - cam.width / 2;
+  return lo > hi ? (lo + hi) / 2 : Math.min(hi, Math.max(lo, mid));
+}
+
+/** Where fighters may stand this tick: the stage, narrowed to the camera
+ *  view minus its margin (so two fighters can never be further apart than
+ *  width − 2·margin, and the "corner" is wherever the view stops). */
+export function arenaBounds(s: GameState): { minX: number; maxX: number } {
+  const { minX, maxX } = s.rules.stage;
+  const cam = s.rules.camera;
+  if (!cam) return { minX, maxX };
+  const c = cameraX(s);
+  return { minX: Math.max(minX, c - cam.width / 2 + cam.margin), maxX: Math.min(maxX, c + cam.width / 2 - cam.margin) };
+}
+
+/** Horizontal extent of what's on screen (projectiles die 60px past it). */
+function viewBounds(s: GameState): { lo: number; hi: number } {
+  const cam = s.rules.camera;
+  if (!cam) return { lo: 0, hi: STAGE_W };
+  const c = cameraX(s);
+  return { lo: c - cam.width / 2, hi: c + cam.width / 2 };
 }
 
 // ---------- input helpers ----------
@@ -220,15 +257,16 @@ function motionDone(f: FighterState, motion: Motion): boolean {
     return seen === 7;
   }
 
-  // charge down-up: banked hold (f.charge, decays fast on release) + up now.
-  // pickAttack runs before the jump check, so the special wins over prejump.
+  // charge down-up (MUGEN `~60$D, U, x`): a ≥CHARGE_TICKS down-hold, still
+  // held or released within CHARGE_RELEASE_TICKS, + up now. pickAttack runs
+  // before the jump check, so the special wins over prejump.
   if (motion === 'du') {
-    return f.charge >= CHARGE_TICKS && ((buf[buf.length - 1] ?? 0) & BIT.up) !== 0;
+    return (f.charge >= CHARGE_TICKS || f.chargeWindow > 0) && ((buf[buf.length - 1] ?? 0) & BIT.up) !== 0;
   }
 
-  // charge back-forward (sonic boom): banked back-hold (f.backCharge) + forward now.
+  // charge back-forward (sonic boom, MUGEN `~60$B, F, x`): same, on back.
   if (motion === 'cbf') {
-    return f.backCharge >= CHARGE_TICKS && ((buf[buf.length - 1] ?? 0) & fwd) !== 0;
+    return (f.backCharge >= CHARGE_TICKS || f.backChargeWindow > 0) && ((buf[buf.length - 1] ?? 0) & fwd) !== 0;
   }
 
   const STAGES: Record<Exclude<Motion, '360' | 'du' | 'cbf'>, { need: number; not?: number }[]> = {
@@ -569,12 +607,13 @@ function updateFighter(
       // the full startup/active/recovery cell cycle plays once per side
       if (m.teleport && act.frame === (m.teleport.mirror ? mirrorTeleportPhases(m).half : m.startup)) {
         const o = s.fighters[slot === 0 ? 1 : 0];
+        const b = arenaBounds(s);
         if (m.teleport.mode === 'behind') {
           f.x = o.x + (f.x <= o.x ? 90 : -90);
         } else {
-          f.x = f.facing === 1 ? s.rules.stage.minX + 40 : s.rules.stage.maxX - 40;
+          f.x = f.facing === 1 ? b.minX + 40 : b.maxX - 40;
         }
-        f.x = Math.min(s.rules.stage.maxX, Math.max(s.rules.stage.minX, f.x));
+        f.x = Math.min(b.maxX, Math.max(b.minX, f.x));
       }
       // shoryuken leaps: rise while the attack stays out
       if (m.leap) {
@@ -832,8 +871,12 @@ function updateFighter(
   }
 
   // knockback slide + friction for anyone on the ground (walk speed above is
-  // positional, vx is purely impulse from hits/blocks)
-  if (grounded(f) && a.kind !== 'air' && a.kind !== 'airHit' && a.kind !== 'airAttack') {
+  // positional, vx is purely impulse from hits/blocks). Checked against the
+  // action AFTER this tick's update: a fighter who just took off (prejump →
+  // air) is not sliding — MUGEN applies no ground friction on the takeoff tick
+  const k = f.action.kind;
+  if (grounded(f) && k !== 'air' && k !== 'airHit' && k !== 'airAttack' &&
+      a.kind !== 'air' && a.kind !== 'airHit' && a.kind !== 'airAttack') {
     f.x += f.vx;
     f.vx *= GROUND_FRICTION;
     if (Math.abs(f.vx) < 0.05) f.vx = 0;
@@ -869,8 +912,13 @@ interface HitPayload {
   knockdown: boolean;
   /** damage dealt through block (heavies/specials); can never KO */
   chip: number;
-  /** freeze ticks this contact buys (L short, H long, specials most) */
+  /** freeze ticks this contact buys the VICTIM (L short, H long, specials most) */
   hitstop: number;
+  /** attacker-side freeze when it differs (asymmetric MUGEN pausetime);
+   *  omit to freeze the attacker for `hitstop` */
+  attackerHitstop?: number;
+  /** block pushback impulse; omit for 80% of knockback */
+  blockKnockback?: number;
   /** melee freezes both fighters; projectiles freeze the victim only */
   freezeAttacker: boolean;
   /** defender was clipped during their own attack's startup or recovery:
@@ -905,12 +953,24 @@ function scaleForCombo(damage: number, comboHits: number): number {
   return Math.max(1, Math.floor((damage * pct) / 100));
 }
 
-/** Freeze frames for a connecting move: specials hit hardest, otherwise the
- *  button strength embedded in the move id ('lp'/'cmk'/'jhk') decides. */
-function hitstopFor(moveId: string, m: MoveDef): number {
-  if (m.input) return HITSTOP_SPECIAL;
+/** Freeze frames for a connecting move: a per-move `hitstop` wins; otherwise
+ *  specials hit hardest and the button strength embedded in the move id
+ *  ('lp'/'cmk'/'jhk') decides. Returns [attacker, victim]. */
+function hitstopFor(moveId: string, m: MoveDef): [number, number] {
+  if (m.hitstop !== undefined) {
+    return typeof m.hitstop === 'number' ? [m.hitstop, m.hitstop] : m.hitstop;
+  }
+  if (m.input) return [HITSTOP_SPECIAL, HITSTOP_SPECIAL];
   const strength = moveId.match(/([lmh])[pk]$/)?.[1];
-  return strength === 'h' ? HITSTOP_HEAVY : strength === 'm' ? HITSTOP_MEDIUM : HITSTOP_LIGHT;
+  const h = strength === 'h' ? HITSTOP_HEAVY : strength === 'm' ? HITSTOP_MEDIUM : HITSTOP_LIGHT;
+  return [h, h];
+}
+
+/** Damage through block: per-move `chip` wins; lights are chipless; anything
+ *  meatier shaves 10%. */
+function chipFor(moveId: string, m: MoveDef): number {
+  if (m.chip !== undefined) return m.chip;
+  return CHIPLESS.has(moveId) ? 0 : Math.floor(m.damage * 0.1);
 }
 
 /** Apply a connected hit or block. attackerFacing pushes the defender. */
@@ -929,13 +989,13 @@ function applyHit(
   d.hitstop = Math.max(d.hitstop, hit.hitstop + (hit.counter ? COUNTER_HITSTOP_BONUS : 0));
   if (hit.freezeAttacker) {
     const atk = s.fighters[atkSlot];
-    atk.hitstop = Math.max(atk.hitstop, hit.hitstop);
+    atk.hitstop = Math.max(atk.hitstop, hit.attackerHitstop ?? hit.hitstop);
   }
 
   if (!hit.unblockable && isBlocking(d, defInput, hit.height)) {
     const guard = d.action.kind === 'crouch' || defInput.down ? 'crouch' : 'stand';
     d.action = { kind: 'blockstun', frame: hit.blockstun, guard };
-    d.vx = attackerFacing * hit.knockback * 0.8;
+    d.vx = attackerFacing * (hit.blockKnockback ?? hit.knockback * 0.8);
     if (hit.chip > 0) d.health = Math.max(1, d.health - hit.chip); // chip can't KO
   } else {
     // combo bookkeeping: a hit on an already-reeling victim extends the combo,
@@ -973,7 +1033,8 @@ function applyHit(
 
   // corner transfer: if the defender is pinned on a wall, push the attacker
   // back instead so spacing still changes
-  if (d.x <= s.rules.stage.minX + 1 || d.x >= s.rules.stage.maxX - 1) {
+  const arena = arenaBounds(s);
+  if (d.x <= arena.minX + 1 || d.x >= arena.maxX - 1) {
     s.fighters[atkSlot].vx = -attackerFacing * hit.knockback * 0.7;
   }
 }
@@ -984,7 +1045,14 @@ function resolveAttacks(
   inputs: [InputFrame, InputFrame],
   frozen: [boolean, boolean],
 ): void {
-  // snapshot both attacks first so trades (both connect same tick) work
+  // Two passes so trades work (P3.1): DETECT every connection against the
+  // start-of-tick state, THEN apply. Applying inside the loop let slot 0's hit
+  // put slot 1 in hitstun before slot 1 was checked — slot 0 (online: the
+  // host) always won. Same-tick rules: two strikes both land (a trade); a
+  // strike beats a grab (the thrower got hit); two grabs clash and both whiff.
+  // `a` is captured: applying the other side's hit REPLACES this fighter's action
+  type Conn = { slot: 0 | 1; a: FighterState['action']; m: ReturnType<typeof resolveMove>; grab: boolean; counter: boolean };
+  const conns: Conn[] = [];
   for (const slot of [0, 1] as const) {
     const f = s.fighters[slot];
     const a = f.action;
@@ -996,8 +1064,7 @@ function resolveAttacks(
     if (a.hasHit && !(m.rehit && a.frame - (a.lastHitFrame ?? 0) >= m.rehit)) continue;
     if (a.frame < m.startup || a.frame >= m.startup + m.active) continue;
 
-    const defSlot = slot === 0 ? 1 : 0;
-    const d = s.fighters[defSlot];
+    const d = s.fighters[slot === 0 ? 1 : 0];
     if (isInvulnerable(d)) continue;
 
     // command grabs: unblockable, range-based, grounded targets only
@@ -1013,61 +1080,76 @@ function resolveAttacks(
       ) {
         continue;
       }
-      if (grounded(d) && Math.abs(f.x - d.x) <= m.grab.range) {
-        a.hasHit = true;
-        if (m.techable) {
-          // hold the victim through the tech window; damage waits for expiry
-          if (d.action.kind === 'dazed') d.stun = 0; // the throw is the dizzy punish
-          s.pendingThrow = {
-            attacker: slot,
-            moveId: a.moveId!,
-            strength: a.strength,
-            ticksLeft: THROW_TECH_TICKS,
-          };
-          d.action = { kind: 'hitstun', frame: THROW_TECH_TICKS + 2 };
-          d.vx = 0;
-          // the grab thunk freezes both for a beat (melee-style)
-          f.hitstop = Math.max(f.hitstop, HITSTOP_LIGHT);
-          d.hitstop = Math.max(d.hitstop, HITSTOP_LIGHT);
-          continue;
-        }
-        applyHit(s, defSlot, f.facing, {
-          damage: m.damage,
-          hitstun: m.hitstun,
-          blockstun: m.blockstun,
-          knockback: m.knockback,
-          height: m.height,
-          knockdown: true,
-          chip: 0,
-          hitstop: hitstopFor(a.moveId!, m),
-          freezeAttacker: true,
-          counter: false, // grabs land clean, never as counters
-          unblockable: true,
-        }, inputs[defSlot]);
-        if (m.grabRecoil) f.vx = -f.facing * m.grabRecoil; // 86'd bounce-away
-        // kudzu drain: the grab feeds the attacker (Symbiosis)
-        if (m.heal) f.health = Math.min(defs[f.charId].health, f.health + m.heal);
-      }
+      if (grounded(d) && Math.abs(f.x - d.x) <= m.grab.range) conns.push({ slot, a, m, grab: true, counter: false });
       continue;
     }
 
     if (!m.hitbox) continue;
     if (overlaps(worldBox(f, m.hitbox), defenderHurtRect(d, defs[d.charId]))) {
-      a.hasHit = true;
-      a.lastHitFrame = a.frame;
+      conns.push({ slot, a, m, grab: false, counter: isCounterhit(d, defs) });
+    }
+  }
+
+  const grabs = conns.filter((c) => c.grab).length;
+  const strikes = conns.length - grabs;
+  for (const c of conns) {
+    if (c.grab && (strikes > 0 || grabs > 1)) continue; // struck, or a throw clash
+    const { slot, m, a } = c;
+    const f = s.fighters[slot];
+    const defSlot = slot === 0 ? 1 : 0;
+    const d = s.fighters[defSlot];
+    a.hasHit = true;
+    if (c.grab) {
+      if (m.techable) {
+        // hold the victim through the tech window; damage waits for expiry
+        if (d.action.kind === 'dazed') d.stun = 0; // the throw is the dizzy punish
+        s.pendingThrow = {
+          attacker: slot,
+          moveId: a.moveId!,
+          strength: a.strength,
+          ticksLeft: THROW_TECH_TICKS,
+        };
+        d.action = { kind: 'hitstun', frame: THROW_TECH_TICKS + 2 };
+        d.vx = 0;
+        // the grab thunk freezes both for a beat (melee-style)
+        f.hitstop = Math.max(f.hitstop, HITSTOP_LIGHT);
+        d.hitstop = Math.max(d.hitstop, HITSTOP_LIGHT);
+        continue;
+      }
       applyHit(s, defSlot, f.facing, {
         damage: m.damage,
         hitstun: m.hitstun,
         blockstun: m.blockstun,
         knockback: m.knockback,
         height: m.height,
-        knockdown: !!m.knockdown,
-        chip: CHIPLESS.has(a.moveId!) ? 0 : Math.floor(m.damage * 0.1),
-        hitstop: hitstopFor(a.moveId!, m),
+        knockdown: true,
+        chip: 0,
+        hitstop: hitstopFor(a.moveId!, m)[1],
+        attackerHitstop: hitstopFor(a.moveId!, m)[0],
         freezeAttacker: true,
-        counter: isCounterhit(d, defs),
+        counter: false, // grabs land clean, never as counters
+        unblockable: true,
       }, inputs[defSlot]);
+      if (m.grabRecoil) f.vx = -f.facing * m.grabRecoil; // 86'd bounce-away
+      // kudzu drain: the grab feeds the attacker (Symbiosis)
+      if (m.heal) f.health = Math.min(defs[f.charId].health, f.health + m.heal);
+      continue;
     }
+    a.lastHitFrame = a.frame;
+    applyHit(s, defSlot, f.facing, {
+      damage: m.damage,
+      hitstun: m.hitstun,
+      blockstun: m.blockstun,
+      knockback: m.knockback,
+      height: m.height,
+      knockdown: !!m.knockdown,
+      chip: chipFor(a.moveId!, m),
+      hitstop: hitstopFor(a.moveId!, m)[1],
+      attackerHitstop: hitstopFor(a.moveId!, m)[0],
+      blockKnockback: m.blockKnockback,
+      freezeAttacker: true,
+      counter: c.counter,
+    }, inputs[defSlot]);
   }
 }
 
@@ -1146,9 +1228,10 @@ function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputF
     }
   }
 
+  const view = viewBounds(s);
   for (const p of s.projectiles) {
     if (dead.has(p)) continue;
-    if (p.x < -60 || p.x > STAGE_W + 60 || p.ttl === 0) {
+    if (p.x < view.lo - 60 || p.x > view.hi + 60 || p.ttl === 0) {
       dead.add(p);
       continue;
     }
@@ -1191,7 +1274,8 @@ function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputF
       if (p.pull && d.action.kind !== 'blockstun') {
         const owner = s.fighters[p.owner];
         const side = d.x >= owner.x ? 1 : -1;
-        d.x = Math.min(s.rules.stage.maxX, Math.max(s.rules.stage.minX, owner.x + side * 85));
+        const b = arenaBounds(s);
+        d.x = Math.min(b.maxX, Math.max(b.minX, owner.x + side * 85));
         d.vx = 0;
       }
       // lingering clouds survive their hits and re-hit on a cooldown
@@ -1257,20 +1341,41 @@ function passivePhysics(f: FighterState, def: CharacterDef, stage: { minX: numbe
 
 // ---------- the tick ----------
 
-export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs): GameState {
+/** SOCD cleaning (P3.2, IKEMEN's rule): L+R → neutral, U+D → up. Done in the
+ *  engine so both online peers agree. Unchanged frames are returned as-is. */
+export function cleanSocd(i: InputFrame): InputFrame {
+  const lr = i.left && i.right;
+  const ud = i.up && i.down;
+  if (!lr && !ud) return i;
+  return { ...i, ...(lr ? { left: false, right: false } : {}), ...(ud ? { down: false } : {}) };
+}
+
+export function step(s: GameState, rawInputs: [InputFrame, InputFrame], defs: Defs): GameState {
   s.tick++;
+  const inputs: [InputFrame, InputFrame] = [cleanSocd(rawInputs[0]), cleanSocd(rawInputs[1])];
 
   for (const slot of [0, 1] as const) {
     const f = s.fighters[slot];
     const buf = f.inputBuffer;
     buf.push(packInput(inputs[slot]));
     if (buf.length > INPUT_BUFFER_LEN) buf.shift();
-    // bank charge while holding down; bleed it fast on release (short grace
-    // window to flick ↓→↑ without losing the charge)
-    f.charge = inputs[slot].down ? Math.min(f.charge + 1, 600) : Math.max(0, f.charge - 8);
-    // same for a held BACK (facing-relative) — fuels the 'cbf' sonic-boom motion
+    // MUGEN charge: count the hold streak (4-way — down counts whatever the
+    // horizontal, back counts whatever the vertical); releasing a streak that
+    // reached CHARGE_TICKS banks it for CHARGE_RELEASE_TICKS, a short one
+    // is simply gone (no bleed)
+    f.chargeWindow = Math.max(0, f.chargeWindow - 1);
+    f.backChargeWindow = Math.max(0, f.backChargeWindow - 1);
+    if (inputs[slot].down) f.charge = Math.min(f.charge + 1, 600);
+    else {
+      if (f.charge >= CHARGE_TICKS) f.chargeWindow = CHARGE_RELEASE_TICKS;
+      f.charge = 0;
+    }
     const backHeld = f.facing === 1 ? inputs[slot].left : inputs[slot].right;
-    f.backCharge = backHeld ? Math.min(f.backCharge + 1, 600) : Math.max(0, f.backCharge - 8);
+    if (backHeld) f.backCharge = Math.min(f.backCharge + 1, 600);
+    else {
+      if (f.backCharge >= CHARGE_TICKS) f.backChargeWindow = CHARGE_RELEASE_TICKS;
+      f.backCharge = 0;
+    }
     // dash stock regen: one at a time, only while short (see DASH_STOCKS)
     if (f.dashStocks < DASH_STOCKS && ++f.dashRegen >= DASH_REGEN_TICKS) {
       f.dashStocks++;
@@ -1312,7 +1417,7 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
   if (s.phase === 'roundEnd') {
     s.phaseFrame++;
     for (const slot of [0, 1] as const) {
-      passivePhysics(s.fighters[slot], defs[s.fighters[slot].charId], s.rules.stage);
+      passivePhysics(s.fighters[slot], defs[s.fighters[slot].charId], arenaBounds(s));
     }
     if (s.phaseFrame >= ROUND_END_TICKS) {
       if (s.roundWinner !== null && s.wins[s.roundWinner] >= s.rules.winsNeeded) {
@@ -1336,7 +1441,8 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
     // can deal damage anymore
     updateFighter(s, w, winnerDef, inputs[w]);
     s.projectiles = [];
-    winner.x = Math.min(s.rules.stage.maxX, Math.max(s.rules.stage.minX, winner.x));
+    const wb = arenaBounds(s);
+    winner.x = Math.min(wb.maxX, Math.max(wb.minX, winner.x));
     if (canAct(winner) && grounded(winner)) {
       winner.facing = s.fighters[loser].x >= winner.x ? 1 : -1;
     }
@@ -1453,7 +1559,8 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
         height: m.height,
         knockdown: true,
         chip: 0,
-        hitstop: hitstopFor(pt.moveId, m),
+        hitstop: hitstopFor(pt.moveId, m)[1],
+        attackerHitstop: hitstopFor(pt.moveId, m)[0],
         freezeAttacker: true,
         counter: false,
         unblockable: true,
@@ -1508,9 +1615,13 @@ export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs)
   updateProjectiles(s, defs, inputs);
   resolveAttacks(s, defs, inputs, frozen);
 
+  // the arena is computed ONCE from this tick's positions, then both are
+  // held inside it (with a camera: the view follows their midpoint, so a
+  // pair trying to separate too far gets pinned at the view's edges)
+  const arena = arenaBounds(s);
   for (const slot of [0, 1] as const) {
     const f = s.fighters[slot];
-    f.x = Math.min(s.rules.stage.maxX, Math.max(s.rules.stage.minX, f.x));
+    f.x = Math.min(arena.maxX, Math.max(arena.minX, f.x));
   }
 
   // the round clock holds its breath with the freeze frames

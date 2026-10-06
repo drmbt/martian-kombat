@@ -177,10 +177,8 @@ export class CpuDriver {
       // close avoids also completing a qcf on the same button
       this.queue.push({ down: true }, { [back]: true }, { down: true, [fwd]: true, ...btn });
     } else if (motion === 'du') {
-      // charge down-up: bank the charge by holding down, then release up +
-      // button. The engine bleeds charge by 8 the instant down releases (grace
-      // window), and that bleed happens BEFORE the motion is read, so hold
-      // CHARGE_TICKS + >8 to still clear the threshold on the release tick.
+      // charge down-up: hold down for ≥ CHARGE_TICKS (MUGEN charge: the
+      // streak banks on release for CHARGE_RELEASE_TICKS), then up + button.
       for (let i = 0; i < CHARGE_TICKS + 12; i++) this.queue.push({ down: true });
       this.queue.push({ up: true, ...btn });
     } else if (motion === 'cbf') {

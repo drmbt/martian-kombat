@@ -67,8 +67,8 @@ export class BootScene extends Phaser.Scene {
     // portraits: head icon + side bust + defeated bust — the select grid, VS
     // card, health-bar mugshots and win screen. Small, and the select screen
     // needs every fighter's icon up front, so they stay at boot.
-    for (const { id, playable } of ROSTER) {
-      if (!playable) continue; // 3D-only fighters have no packed 2D portraits
+    for (const { id, playable, secret } of ROSTER) {
+      if (!playable && !secret) continue; // 3D-only fighters have no packed 2D portraits
       queueFighterPortraits(this, id);
     }
     // generic impact sparks (greyscale, tinted per character at spawn)

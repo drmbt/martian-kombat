@@ -5,7 +5,10 @@ export function variantsFor(
   archetypeKey: string,
   move: Record<string, unknown>,
 ): { l: Record<string, unknown>; h: Record<string, unknown> } | null;
+export const ROSTER_MAX_FRONT: number;
+export function grabFloor(bodyBox?: { x: number; w: number }): number;
 export function applyKitGrammar(
   moves: Record<string, Record<string, unknown>>,
   specials?: { id: string; archetype: string }[],
+  opts?: { bodyBox?: { x: number; w: number } },
 ): Record<string, Record<string, unknown>>;

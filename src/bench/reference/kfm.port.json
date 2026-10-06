@@ -1,0 +1,440 @@
+{
+  "_source": "Kung Fu Man by Elecbyte — CC BY-NC (Creative Commons Noncommercial) — see source readme. Ported by tools/fg/import-mugen.ts; numbers are measured facts about the source character. Do not hand-edit: re-run npm run mugen:import.",
+  "id": "kfm",
+  "name": "KUNG FU MAN",
+  "color": "#c8c8c8",
+  "health": 1000,
+  "walkSpeed": 7.329,
+  "backSpeed": 6.718,
+  "jumpVel": 22.9032,
+  "jumpSpeedX": 7.634,
+  "gravity": 1.3437,
+  "prejumpFrames": 2,
+  "bodyBox": {
+    "x": -46,
+    "y": -284,
+    "w": 95,
+    "h": 284
+  },
+  "hurtStand": {
+    "x": -40,
+    "y": -284,
+    "w": 89,
+    "h": 284
+  },
+  "hurtCrouch": {
+    "x": -46,
+    "y": -189,
+    "w": 104,
+    "h": 189
+  },
+  "moves": {
+    "kung-fu-palm": {
+      "startup": 8,
+      "active": 3,
+      "recovery": 21,
+      "damage": 90,
+      "hitstun": 16,
+      "blockstun": 11,
+      "knockback": 6.8,
+      "hitbox": {
+        "x": 27,
+        "y": -202,
+        "w": 180,
+        "h": 67
+      },
+      "height": "mid",
+      "name": "Kung Fu Palm",
+      "hitstop": 15,
+      "chip": 4,
+      "blockKnockback": 6.8,
+      "knockdown": true,
+      "input": {
+        "motion": "qcf",
+        "button": "punch"
+      },
+      "variants": {
+        "m": {
+          "startup": 9,
+          "recovery": 25
+        }
+      }
+    },
+    "kung-fu-upper": {
+      "startup": 3,
+      "active": 2,
+      "recovery": 25,
+      "damage": 52,
+      "hitstun": 19,
+      "blockstun": 14,
+      "knockback": 3.54,
+      "hitbox": {
+        "x": 67,
+        "y": -177,
+        "w": 64,
+        "h": 61
+      },
+      "height": "mid",
+      "name": "Kung Fu Upper",
+      "hitstop": [
+        4,
+        8
+      ],
+      "chip": 4,
+      "blockKnockback": 12.45,
+      "input": {
+        "motion": "dp",
+        "button": "punch"
+      },
+      "variants": {
+        "m": {
+          "startup": 4,
+          "active": 3,
+          "recovery": 30,
+          "damage": 57
+        }
+      }
+    },
+    "kung-fu-blow": {
+      "startup": 13,
+      "active": 2,
+      "recovery": 15,
+      "damage": 100,
+      "hitstun": 19,
+      "blockstun": 15,
+      "knockback": 24.53,
+      "hitbox": {
+        "x": -43,
+        "y": -220,
+        "w": 321,
+        "h": 82
+      },
+      "height": "mid",
+      "name": "Kung Fu Blow",
+      "hitstop": 12,
+      "chip": 6,
+      "blockKnockback": 15.55,
+      "input": {
+        "motion": "qcb",
+        "button": "punch"
+      },
+      "variants": {
+        "m": {
+          "startup": 17,
+          "recovery": 16,
+          "damage": 125,
+          "hitstun": 21,
+          "blockstun": 17,
+          "blockKnockback": 18.77,
+          "chip": 9
+        }
+      }
+    },
+    "kung-fu-zankou": {
+      "startup": 8,
+      "active": 4,
+      "recovery": 17,
+      "damage": 100,
+      "hitstun": 16,
+      "blockstun": 11,
+      "knockback": 22.07,
+      "hitbox": {
+        "x": 12,
+        "y": -232,
+        "w": 92,
+        "h": 165
+      },
+      "height": "mid",
+      "name": "Kung Fu Zankou",
+      "hitstop": 12,
+      "chip": 6,
+      "blockKnockback": 22.07,
+      "input": {
+        "motion": "qcf",
+        "button": "kick"
+      },
+      "variants": {
+        "m": {
+          "startup": 9,
+          "recovery": 20
+        }
+      }
+    },
+    "throw": {
+      "startup": 0,
+      "active": 1,
+      "recovery": 20,
+      "damage": 78,
+      "hitstun": 1,
+      "blockstun": 1,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "name": "Kung Fu Throw",
+      "knockdown": true,
+      "input": {
+        "button": "LPLK"
+      },
+      "grab": {
+        "range": 104
+      },
+      "techable": true
+    },
+    "lp": {
+      "startup": 3,
+      "active": 4,
+      "recovery": 4,
+      "damage": 23,
+      "hitstun": 10,
+      "blockstun": 4,
+      "knockback": 6.8,
+      "hitbox": {
+        "x": 49,
+        "y": -244,
+        "w": 137,
+        "h": 27
+      },
+      "height": "mid",
+      "hitstop": 8,
+      "blockKnockback": 6.8,
+      "cancel": true,
+      "chains": [
+        "mp",
+        "lk",
+        "mk"
+      ]
+    },
+    "mp": {
+      "startup": 8,
+      "active": 2,
+      "recovery": 12,
+      "damage": 57,
+      "hitstun": 15,
+      "blockstun": 11,
+      "knockback": 11.41,
+      "hitbox": {
+        "x": 82,
+        "y": -263,
+        "w": 159,
+        "h": 79
+      },
+      "height": "mid",
+      "hitstop": 12,
+      "blockKnockback": 11.41,
+      "cancel": true
+    },
+    "lk": {
+      "startup": 4,
+      "active": 3,
+      "recovery": 7,
+      "damage": 26,
+      "hitstun": 13,
+      "blockstun": 9,
+      "knockback": 9.51,
+      "hitbox": {
+        "x": 43,
+        "y": -162,
+        "w": 168,
+        "h": 92
+      },
+      "height": "mid",
+      "hitstop": 12,
+      "blockKnockback": 9.51,
+      "cancel": true,
+      "chains": [
+        "mp",
+        "mk"
+      ]
+    },
+    "mk": {
+      "startup": 7,
+      "active": 8,
+      "recovery": 9,
+      "damage": 63,
+      "hitstun": 16,
+      "blockstun": 11,
+      "knockback": 12.45,
+      "hitbox": {
+        "x": 12,
+        "y": -198,
+        "w": 202,
+        "h": 46
+      },
+      "height": "mid",
+      "hitstop": 12,
+      "blockKnockback": 12.45,
+      "cancel": true
+    },
+    "clp": {
+      "startup": 3,
+      "active": 6,
+      "recovery": 2,
+      "damage": 23,
+      "hitstun": 8,
+      "blockstun": 3,
+      "knockback": 5.84,
+      "hitbox": {
+        "x": 52,
+        "y": -147,
+        "w": 113,
+        "h": 24
+      },
+      "height": "low",
+      "hitstop": [
+        10,
+        11
+      ],
+      "blockKnockback": 5.84,
+      "cancel": true,
+      "chains": [
+        "cmp",
+        "clk",
+        "cmk"
+      ]
+    },
+    "cmp": {
+      "startup": 4,
+      "active": 10,
+      "recovery": 7,
+      "damage": 37,
+      "hitstun": 16,
+      "blockstun": 11,
+      "knockback": 6.8,
+      "hitbox": {
+        "x": 61,
+        "y": -287,
+        "w": 113,
+        "h": 174
+      },
+      "height": "mid",
+      "hitstop": 12,
+      "blockKnockback": 6.8,
+      "cancel": true
+    },
+    "clk": {
+      "startup": 4,
+      "active": 3,
+      "recovery": 9,
+      "damage": 28,
+      "hitstun": 9,
+      "blockstun": 5,
+      "knockback": 9.51,
+      "hitbox": {
+        "x": 24,
+        "y": -73,
+        "w": 168,
+        "h": 73
+      },
+      "height": "low",
+      "hitstop": 12,
+      "blockKnockback": 9.51,
+      "cancel": true,
+      "chains": [
+        "cmp",
+        "cmk"
+      ]
+    },
+    "cmk": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 16,
+      "damage": 72,
+      "hitstun": 16,
+      "blockstun": 9,
+      "knockback": 0.69,
+      "hitbox": {
+        "x": 55,
+        "y": -76,
+        "w": 177,
+        "h": 79
+      },
+      "height": "low",
+      "hitstop": 12,
+      "blockKnockback": 9.51,
+      "knockdown": true
+    },
+    "jlp": {
+      "startup": 3,
+      "active": 11,
+      "recovery": 3,
+      "damage": 20,
+      "hitstun": 7,
+      "blockstun": 4,
+      "knockback": 6.8,
+      "hitbox": {
+        "x": 46,
+        "y": -214,
+        "w": 104,
+        "h": 49
+      },
+      "height": "high",
+      "hitstop": [
+        7,
+        8
+      ],
+      "blockKnockback": 6.8,
+      "chains": [
+        "jmp",
+        "jmk"
+      ]
+    },
+    "jmp": {
+      "startup": 6,
+      "active": 5,
+      "recovery": 11,
+      "damage": 72,
+      "hitstun": 13,
+      "blockstun": 11,
+      "knockback": 12.45,
+      "hitbox": {
+        "x": 70,
+        "y": -235,
+        "w": 104,
+        "h": 98
+      },
+      "height": "high",
+      "hitstop": 12,
+      "blockKnockback": 12.45
+    },
+    "jlk": {
+      "startup": 3,
+      "active": 15,
+      "recovery": 0,
+      "damage": 26,
+      "hitstun": 9,
+      "blockstun": 5,
+      "knockback": 6.8,
+      "hitbox": {
+        "x": 21,
+        "y": -165,
+        "w": 86,
+        "h": 73
+      },
+      "height": "high",
+      "hitstop": 8,
+      "blockKnockback": 6.8,
+      "chains": [
+        "jmp",
+        "jmk"
+      ]
+    },
+    "jmk": {
+      "startup": 6,
+      "active": 5,
+      "recovery": 7,
+      "damage": 70,
+      "hitstun": 14,
+      "blockstun": 11,
+      "knockback": 15.55,
+      "hitbox": {
+        "x": 40,
+        "y": -147,
+        "w": 171,
+        "h": 61
+      },
+      "height": "high",
+      "hitstop": 12,
+      "blockKnockback": 15.55
+    }
+  }
+}

@@ -22,6 +22,9 @@ import ben from './ben.json';
 import earl from './earl.json';
 import tao from './tao.json';
 import rj from './rj.json';
+// the secret unlockable — written by `npm run mugen:sprites` from the bench
+// port (frame data at 100% KFM parity) + src/bench/reference/kfm.unlock.json
+import kfm from './kfm.json';
 
 // Bake each character's optional `scale` into its geometry at load (see
 // src/data/characterScale.ts — the same math the dev editor re-applies live).
@@ -46,4 +49,5 @@ export const characters: Defs = {
   'ben': load(ben),
   'tao': load(tao), // THE END BOSS (arcade M. Bison analog)
   'rj': load(rj), // the sub-boss gatekeeper (Sagat analog)
+  kfm: load(kfm), // secret: Kung Fu Man (roster `secret`, unlocked on the select screen)
 };

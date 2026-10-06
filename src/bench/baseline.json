@@ -1,0 +1,7 @@
+{
+  "_note": "MKS-1 known errors (grandfathered). The CI ratchet fails on any error NOT listed here and on listed errors that are fixed. Regenerate: npm run bench -- --update-baseline",
+  "errors": [
+    "ben:clk>clp:infinite",
+    "vincent:clp>lk:infinite"
+  ]
+}

@@ -86,8 +86,13 @@ Add `{ id, name, playable: true }` to `src/data/roster.ts` **only after the
 assets exist** (else `assets.audit` fails early). Then:
 
 - `npm run gen:assets` (rescan the manifest so the loader sees the new files).
+- `npm run bench -- --char <id>` — the **MKS-1** gate (fighting-game-standards
+  skill): zero errors (every move performable + connects, throw range clears
+  the push box, no infinite chain loops), frame data in band or out on
+  purpose. Fix errors before shipping; the ratchet won't accept new ones.
 - `npm run test` — `assets.audit` must go green (it lists any missing asset
-  class), plus all engine tests.
+  class), plus all engine tests and the MKS-1 ratchet
+  (`src/bench/balance.audit.test.ts`).
 - Verify in the preview: the character loads with no 404s / console errors.
 
 **No loader wiring is needed.** Assets lazy-load on demand (boot stays small;

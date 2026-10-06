@@ -356,19 +356,24 @@
       "height": "high"
     },
     "throw": {
+      "name": "Throw",
+      "input": {
+        "button": "LPLK"
+      },
       "startup": 3,
       "active": 2,
       "recovery": 20,
-      "damage": 0,
+      "damage": 85,
       "hitstun": 0,
       "blockstun": 0,
       "knockback": 6,
       "hitbox": null,
       "height": "mid",
       "grab": {
-        "range": 64
+        "range": 94
       },
-      "techable": true
+      "techable": true,
+      "knockdown": true
     },
     "quesadilla": {
       "name": "Quesadilla",

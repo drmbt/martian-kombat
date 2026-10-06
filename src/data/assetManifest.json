@@ -74,5 +74,115 @@
   "moveVfx": [
     "vincent/rising-glyph",
     "yulia/volga-piledriver"
-  ]
+  ],
+  "stageWide": {
+    "ai-kitchen": [
+      2520,
+      1440
+    ],
+    "altar": [
+      2520,
+      1440
+    ],
+    "bbac": [
+      2520,
+      1440
+    ],
+    "chiba-roof": [
+      2520,
+      1440
+    ],
+    "chiba": [
+      2520,
+      1440
+    ],
+    "dodecahedron": [
+      2520,
+      1440
+    ],
+    "dojo": [
+      2520,
+      1440
+    ],
+    "dome": [
+      2520,
+      1440
+    ],
+    "drive-in": [
+      2520,
+      720
+    ],
+    "escapes": [
+      2520,
+      720
+    ],
+    "estates": [
+      2520,
+      720
+    ],
+    "hyperion": [
+      2520,
+      720
+    ],
+    "institute": [
+      2520,
+      720
+    ],
+    "last-resort": [
+      2520,
+      720
+    ],
+    "mars": [
+      2520,
+      720
+    ],
+    "mimos": [
+      2520,
+      720
+    ],
+    "museum": [
+      2520,
+      720
+    ],
+    "neptune": [
+      2520,
+      720
+    ],
+    "painted-canyon": [
+      2520,
+      720
+    ],
+    "salton": [
+      2520,
+      720
+    ],
+    "saturn": [
+      2520,
+      720
+    ],
+    "shipwreck": [
+      2520,
+      720
+    ],
+    "ski-inn": [
+      2520,
+      720
+    ],
+    "star-beach": [
+      2520,
+      720
+    ],
+    "the-range": [
+      2520,
+      720
+    ],
+    "tvs": [
+      2520,
+      720
+    ],
+    "van": [
+      2520,
+      720
+    ]
+  }
 }

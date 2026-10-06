@@ -1,0 +1,148 @@
+{
+  "version": 1,
+  "step": 0,
+  "inputs": {
+    "name": "Mirage",
+    "description": "a heat-shimmer desert illusionist",
+    "referencePhotos": []
+  },
+  "draft": {
+    "color": "hsl(272 55% 62%)",
+    "archetype": "zoner",
+    "lore": {
+      "tagline": "They call MIRAGE.",
+      "personality": "a heat-shimmer desert illusionist",
+      "backstory": "A Martian of Bombay Beach — a heat-shimmer desert illusionist. (edit me: arcade backstory)"
+    },
+    "winQuotes": [
+      "MIRAGE wins. Obviously.",
+      "You fought well. You still lost.",
+      "The desert always collects."
+    ],
+    "vo": {
+      "kiai": [
+        "Hah!",
+        "Rrragh!",
+        "Take this!",
+        "Come on!",
+        "Hyah!",
+        "Now!"
+      ],
+      "hurt": [
+        "Ugh!",
+        "Gah!",
+        "Nngh!",
+        "No!",
+        "Aagh!",
+        "Tch!"
+      ],
+      "victory": [
+        "Too easy.",
+        "Next.",
+        "Predictable.",
+        "Done."
+      ]
+    },
+    "specials": [
+      {
+        "name": "Bolt",
+        "controls": "qcf+P",
+        "archetype": "projectile",
+        "description": "ranged energy projectile",
+        "id": "bolt"
+      },
+      {
+        "name": "Step",
+        "controls": "qcb+K",
+        "archetype": "teleport",
+        "description": "blink to reposition",
+        "id": "step"
+      },
+      {
+        "name": "Pillar",
+        "controls": "dp+P",
+        "archetype": "anti-air-dp",
+        "description": "rising anti-air",
+        "id": "pillar"
+      },
+      {
+        "name": "Double",
+        "controls": "qcf+K",
+        "archetype": "advancing-rush",
+        "description": "dash-in mixup",
+        "id": "double"
+      }
+    ],
+    "specialPool": [
+      {
+        "name": "Overdrive",
+        "controls": "qcb+P",
+        "archetype": "reversal",
+        "description": "invincible reversal",
+        "id": "overdrive"
+      },
+      {
+        "name": "Vortex",
+        "controls": "hcf+P",
+        "archetype": "projectile",
+        "description": "spiralling projectile",
+        "id": "vortex"
+      },
+      {
+        "name": "Lunge",
+        "controls": "qcf+K",
+        "archetype": "advancing-rush",
+        "description": "long-range lunge",
+        "id": "lunge"
+      },
+      {
+        "name": "Snare",
+        "controls": "hcb+K",
+        "archetype": "command-grab",
+        "description": "ranged pull grab",
+        "id": "snare"
+      }
+    ],
+    "physics": {
+      "health": 1000,
+      "walkSpeed": 3.3,
+      "backSpeed": 3.4,
+      "jumpVel": 18,
+      "gravity": 0.9,
+      "prejumpFrames": 4
+    },
+    "fatality": {
+      "id": "finish",
+      "name": "MIRAGE Finish",
+      "input": "hcb+P"
+    },
+    "stagePrompt": "A Bombay Beach / Mars College desert locale, redraw as gritty 16-bit retro pixel-art anchored on the salton style reference. 21:9. The bottom quarter is a continuous textured walkable ground plane, edge to edge, touching the bottom of the frame; no props or people in the fighter strip.",
+    "musicPrompt": "A loopable ~75s instrumental battle theme for MIRAGE's desert stage. Gritty desert dub-techno, mid-tempo ~92 BPM, strong rhythmic loop, no vocals, clean loop point, mixed to sit under SFX."
+  },
+  "generatedVo": {},
+  "generatedFatality": [],
+  "skeletons": {},
+  "autoHitboxes": {},
+  "jobs": [
+    {
+      "key": "canonical",
+      "kind": "canonical",
+      "label": "Canonical",
+      "status": "done",
+      "prompt": "Full-body fighting-game character sheet of a heat-shimmer desert illusionist. Neutral confident standing pose, arms relaxed, facing right. Art style: hand-painted cel-shaded 2D anime fighter, bold clean line art, painterly cel shading. Full body head to toe at the SAME scale and camera distance as the reference image — the top of the head near the top edge and the soles of the feet on an invisible ground line just above the bottom edge, the figure filling the frame vertically the same amount as the reference, centered horizontally, facing right. Background: solid flat chroma-key green (#00B140), completely uniform, no shadow, no floor, no text, no border.",
+      "mock": true,
+      "approved": false,
+      "mime": "image/png"
+    },
+    {
+      "key": "portrait",
+      "kind": "portrait",
+      "label": "Portrait",
+      "status": "done",
+      "prompt": "Tight head-and-shoulders BUST portrait of Mirage (a heat-shimmer desert illusionist) for a fighting-game character-select icon. ONLY the head and shoulders fill the frame — face straight-on toward the viewer, direct gaze, neutral confident expression, top of the head near the top edge, shoulders cropped at the bottom edge. This is a close-up: do NOT show a full body, do NOT show the torso below the chest, hands, legs or feet, do NOT zoom out. Art style: hand-painted cel-shaded 2D anime fighter, bold clean line art, painterly cel shading. Background: solid flat chroma-key green (#00B140), completely uniform, no shadow, no floor, no text, no border.",
+      "mock": true,
+      "approved": false,
+      "mime": "image/png"
+    }
+  ]
+}

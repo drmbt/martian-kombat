@@ -13,7 +13,10 @@
 //   moveProj   — "<char>/<move>" with per-move projectile art
 //   moveBurst  — "<char>/<move>" with a detonation-burst sprite
 //   moveVfx    — "<char>/<move>" with per-move impact VFX art
-import { existsSync, readdirSync, writeFileSync } from 'node:fs';
+//   stageWide  — { <stage id>: [w, h] } ultra-wide stage art in
+//                backgrounds/stages-wide/ (scrolling-camera arenas; h > w/3.5
+//                means a TALL stage whose bottom band is shown)
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = new URL('..', import.meta.url).pathname;
@@ -54,15 +57,37 @@ for (const id of spriteDirs) {
   }
 }
 
+/** [w, h] from a JPEG's SOF header — no ffprobe (the CI/Cloudflare build has none) */
+function jpegSize(path) {
+  const b = readFileSync(path);
+  for (let i = 2; i + 9 < b.length; ) {
+    if (b[i] !== 0xff) { i++; continue; }
+    const m = b[i + 1];
+    if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc) {
+      return [b.readUInt16BE(i + 7), b.readUInt16BE(i + 5)];
+    }
+    i += 2 + b.readUInt16BE(i + 2);
+  }
+  return null;
+}
+const stageWide = {};
+const wideDir = join(PUB, 'backgrounds', 'stages-wide');
+for (const f of ls(wideDir).filter((x) => x.endsWith('.jpg')).sort()) {
+  const size = jpegSize(join(wideDir, f));
+  if (size) stageWide[f.slice(0, -4)] = size;
+}
+
 const manifest = {
   stageVo,
   legacyProj: legacyProj.sort(),
   moveProj: moveProj.sort(),
   moveBurst: moveBurst.sort(),
   moveVfx: moveVfx.sort(),
+  stageWide,
 };
 writeFileSync(OUT, JSON.stringify(manifest, null, 2) + '\n');
 console.log(
   `[asset-manifest] ${stageVo.length} stage VOs · ${legacyProj.length} legacy proj · ` +
-    `${moveProj.length} move proj · ${moveBurst.length} bursts · ${moveVfx.length} vfx`,
+    `${moveProj.length} move proj · ${moveBurst.length} bursts · ${moveVfx.length} vfx · ` +
+    `${Object.keys(stageWide).length} wide stages`,
 );

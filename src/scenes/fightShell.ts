@@ -8,7 +8,7 @@ import Phaser from 'phaser';
 import type { Defs, GameState, InputFrame } from '../engine';
 import type { OnlineFightData } from '../net/lobby';
 import { RematchLink } from '../net/rematch';
-import { menuNav, navDefer } from '../input/menu-nav';
+import { attackKeyCodes, menuNav, navDefer } from '../input/menu-nav';
 import { play } from './BootScene';
 import { MoveLogModel } from '../presentation/moveLog';
 import type { UiLayer } from '../ui/layer';
@@ -141,8 +141,13 @@ export class FightShell {
       this.moveLogOverlay.setVisible(this.moveLogOn);
     });
     for (const d of opts.debugKeys ?? []) kb.on(`keydown-${d.key}`, d.act);
-    kb.on('keydown-R', () => {
+    // rematch is SPACE, not R: R is P1's default light punch, so mashing
+    // through a KO restarted the match and skipped the win screen (P2.4).
+    // Ignored if the player bound SPACE to an attack; armed after the KO.
+    kb.on('keydown-SPACE', () => {
       if (this.opts.state().phase !== 'matchEnd') return;
+      if (this.scene.time.now < this.endNavArmedAt) return;
+      if (attackKeyCodes().has(32)) return;
       if (this.opts.online) this.optInRematch();
       else this.restartMatch();
     });
@@ -152,9 +157,11 @@ export class FightShell {
       // select underneath (the studio flag was missed here once: pressing
       // ENTER while editing sprite size dumped the user to the main menu)
       if (this.opts.tuner || this.opts.spriteEditor || this.opts.studio) return;
-      if (this.opts.online && this.opts.state().phase === 'matchEnd') this.optInRematch();
+      const ended = this.opts.state().phase === 'matchEnd';
+      if (ended && this.scene.time.now < this.endNavArmedAt) return;
+      if (this.opts.online && ended) this.optInRematch();
       else if (this.opts.training) this.toCharacterSelect();
-      else if (this.opts.state().phase === 'matchEnd') this.toCharacterSelect();
+      else if (ended) this.toCharacterSelect();
     });
     // quick local restart, any time (not just matchEnd)
     kb.on('keydown-F9', () => {

@@ -9,7 +9,9 @@
   "compatibility_date": "2025-06-01",
   "assets": {
     "directory": "./dist",
-    // single-page canvas app — serve index.html for any unmatched route
-    "not_found_handling": "single-page-application"
+    // a missing file must 404 (P2.2): "single-page-application" answered every
+    // missing .png/.mp3 with index.html + HTTP 200, cached 7 days by _headers
+    // → EncodingError. The game has no client routes (state is in ?query).
+    "not_found_handling": "none"
   }
 }

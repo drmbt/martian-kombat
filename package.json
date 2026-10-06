@@ -26,7 +26,19 @@
     "gen:voice": "node tools/gen-voice.mjs",
     "gen:qa": "node tools/qa/run.mjs pose_qa.py",
     "gen:busts": "node tools/qa/run.mjs portrait_crop.py --all",
-    "studio:run": "node tools/studio-run.mjs"
+    "studio:run": "node tools/studio-run.mjs",
+    "bench": "vite-node tools/fg/bench.ts --",
+    "mugen:fetch": "node tools/fg/fetch-mugen.mjs",
+    "mugen:import": "vite-node tools/fg/import-mugen.ts --",
+    "mugen:sprites": "vite-node tools/fg/mugen-sprites.ts --",
+    "raw:manifest": "node tools/raw-sync.mjs manifest",
+    "raw:push": "node tools/raw-sync.mjs push",
+    "raw:pull": "node tools/raw-sync.mjs pull",
+    "raw:verify": "node tools/raw-sync.mjs verify",
+    "raw:status": "node tools/raw-sync.mjs status",
+    "raw:snapshot": "node tools/raw-sync.mjs snapshot",
+    "gen:outpaint": "node tools/gen-outpaint.mjs",
+    "playtest:video": "vite-node tools/fg/playtest-video.ts --"
   },
   "dependencies": {
     "peerjs": "^1.5.5",

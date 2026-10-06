@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  CHARGE_RELEASE_TICKS,
+  CHARGE_TICKS,
   COUNTER_HITSTOP_BONUS,
   COUNTER_HITSTUN_MULT,
   DIZZY_TICKS,
@@ -798,7 +800,7 @@ describe('flo: kernel panic kit (traps, fields, charge)', () => {
 
   it('Root Access needs a banked down-charge, then pops the opponent up', () => {
     const s = freshFlo();
-    run(s, 50, inp({ down: true }), inp()); // bank the charge
+    run(s, CHARGE_TICKS + 2, inp({ down: true }), inp()); // bank the charge
     step(s, [inp({ up: true, lk: true }), inp()], characters);
     expect(s.fighters[0].action.moveId).toBe('root-access');
 
@@ -821,12 +823,31 @@ describe('flo: kernel panic kit (traps, fields, charge)', () => {
     expect(s.fighters[0].action.moveId).toBe('lk');
   });
 
-  it('the charge bleeds away after releasing down', () => {
+  it('the banked charge expires CHARGE_RELEASE_TICKS after releasing down (MUGEN time = 10)', () => {
     const s = freshFlo();
-    run(s, 50, inp({ down: true }), inp());
-    run(s, 10, inp(), inp()); // idle: charge decays fast
+    run(s, CHARGE_TICKS + 2, inp({ down: true }), inp());
+    run(s, CHARGE_RELEASE_TICKS, inp(), inp()); // idle past the release window
     step(s, [inp({ up: true, lk: true }), inp()], characters);
     expect(s.fighters[0].action.moveId).not.toBe('root-access');
+  });
+
+  it('MUGEN charge rules: a 59-tick hold fails, 60 works, and the release window is 10 ticks', () => {
+    const tryCharge = (hold: number, gap: number): string | undefined => {
+      const s = freshFlo();
+      run(s, hold, inp({ down: true }), inp());
+      run(s, gap, inp(), inp());
+      step(s, [inp({ up: true, lk: true }), inp()], characters);
+      return s.fighters[0].action.moveId;
+    };
+    expect(tryCharge(CHARGE_TICKS - 1, 0)).not.toBe('root-access');
+    expect(tryCharge(CHARGE_TICKS, 0)).toBe('root-access');
+    expect(tryCharge(CHARGE_TICKS, CHARGE_RELEASE_TICKS - 1)).toBe('root-access');
+    expect(tryCharge(CHARGE_TICKS, CHARGE_RELEASE_TICKS)).not.toBe('root-access');
+    // 4-way: down-back holds the down-charge too
+    const s = freshFlo();
+    run(s, CHARGE_TICKS, inp({ down: true, left: true }), inp());
+    step(s, [inp({ up: true, lk: true }), inp()], characters);
+    expect(s.fighters[0].action.moveId).toBe('root-access');
   });
 });
 

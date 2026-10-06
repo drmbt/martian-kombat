@@ -110,10 +110,10 @@
       "blockstun": 9,
       "knockback": 6,
       "hitbox": {
-        "x": -23,
-        "y": -111,
-        "w": 57,
-        "h": 66
+        "x": 41,
+        "y": -160,
+        "w": 59,
+        "h": 68
       },
       "height": "mid",
       "chains": [

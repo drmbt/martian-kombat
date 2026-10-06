@@ -1,0 +1,11 @@
+{
+  "name": "KUNG FU MAN",
+  "scale": 0.79,
+  "_scaleNote": "uniform resize (art + boxes + reach) so his idle art (~255 world px with hair) sits in the roster band (201-279, median 246); the bench port stays unscaled",
+  "winQuotes": [
+    "Every engine starts with me. Did you think yours would be different?",
+    "Four buttons. That is all I have ever needed.",
+    "I am the reference. You are the deviation.",
+    "Your frame data is measured. Mine is the measure."
+  ]
+}

@@ -14,8 +14,8 @@ export class RematchPrompt {
         ? 'REMATCH! back to select…'
         : `waiting for ${st.remoteName}…`
       : st.remoteReady
-        ? `${st.remoteName} wants a REMATCH!  ·  [R] accept   [ESC] quit`
-        : 'REMATCH?  [R] play again   ·   [ESC] quit';
+        ? `${st.remoteName} wants a REMATCH!  ·  [SPACE] accept   [ESC] quit`
+        : 'REMATCH?  [SPACE] play again   ·   [ESC] quit';
     this.show(msg, st.localReady && st.remoteReady ? '#8fe388' : '#ffd24a');
   }
 

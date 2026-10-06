@@ -66,6 +66,13 @@ Then: `npm run gen:assets && npm run test` → the audit for `<id>` goes green.
 3. Register the stage in the `STAGES` array in `src/data/stages.ts`.
 4. Generate the art: `npm run gen:stages -- --stage <id>` (21:9 pixel-art,
    packed to `public/assets/backgrounds/stages/<id>.jpg`).
+4b. Widen it for the scrolling camera: add a `DESC` entry (look / scene /
+   sides — written after LOOKING at the art) to `tools/stages-wide.mjs`, run
+   `npm run gen:outpaint -- --stage <id>`, review
+   `assets/raw/stages-wide/<id>/try1-sides.wide.jpg`, re-roll bad sides with
+   `--try 2 --from left=1` (or `right=1`), then `--ship --try N`. The
+   wide-art audit fails until `public/assets/backgrounds/stages-wide/<id>.jpg`
+   exists.
 5. Generate the name call-out: add `'stage-<id>': 'SPOKEN NAME!'` to
    `announcerLines` in `tools/gen-audio.mjs`, then
    `npm run gen:audio --concurrency 1` (the stage-name voice is a paid
