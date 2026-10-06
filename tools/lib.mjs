@@ -142,15 +142,17 @@ function apiError(message, status) {
   return e;
 }
 
-/** Gemini image generation (nano-banana). referencePaths are optional input images. */
-export async function geminiImage({ apiKey, model, prompt, referencePaths = [], aspectRatio }) {
+/** Gemini image generation (nano-banana). referencePaths are optional input
+ *  images; imageSize ('1K' | '2K' | '4K') is optional (model default ~1K). */
+export async function geminiImage({ apiKey, model, prompt, referencePaths = [], aspectRatio, imageSize }) {
   if (genMock()) return mockImage(aspectRatio);
   const parts = [{ text: prompt }, ...referencePaths.map(imagePart)];
+  const imageConfig = { ...(aspectRatio ? { aspectRatio } : {}), ...(imageSize ? { imageSize } : {}) };
   const body = {
     contents: [{ parts }],
     generationConfig: {
       responseModalities: ['IMAGE'],
-      ...(aspectRatio ? { imageConfig: { aspectRatio } } : {}),
+      ...(Object.keys(imageConfig).length ? { imageConfig } : {}),
     },
   };
   return withBackoff(async () => {

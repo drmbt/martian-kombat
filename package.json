@@ -35,7 +35,9 @@
     "raw:pull": "node tools/raw-sync.mjs pull",
     "raw:verify": "node tools/raw-sync.mjs verify",
     "raw:status": "node tools/raw-sync.mjs status",
-    "raw:snapshot": "node tools/raw-sync.mjs snapshot"
+    "raw:snapshot": "node tools/raw-sync.mjs snapshot",
+    "gen:outpaint": "node tools/gen-outpaint.mjs",
+    "playtest:video": "vite-node tools/fg/playtest-video.ts --"
   },
   "dependencies": {
     "peerjs": "^1.5.5",
