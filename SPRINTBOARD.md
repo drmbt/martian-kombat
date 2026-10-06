@@ -1525,6 +1525,19 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-10-06 · tools/assets/tests · all 27 stages ultra-wide (D9
+  complete)** — the last six stages shipped (mimos, painted-canyon,
+  shipwreck, last-resort, saturn, ski-inn). `gen:outpaint` sides mode now
+  corrects the model's regrade with a colour map fitted on the context it
+  re-painted + a per-row residual faded over 240 px from the join (fixed
+  last-resort's grey seam from an existing pass, no new call); `--from
+  left=N,right=M` reuses a good side from an earlier try so only the bad
+  side re-rolls; per-side `left`/`right` prompt text in
+  `tools/stages-wide.mjs` + a global no-cloning / keep-the-sky line stopped
+  the saturn + ski-inn left passes copying their signs. New audit: every
+  registered stage must have `stages-wide/<id>.jpg`. ~76 image calls for
+  all of D9. No R2 writes (P8.17). — Claude (Opus 5.5)
+
 - **2026-10-06 · scenes/data/tools/assets · SF2 scrolling camera ON by
   default + ultra-wide stages (D9)** — every real fight (not the dev
   editors) runs `MatchRules.camera` with the arena from `stageArena(id)`

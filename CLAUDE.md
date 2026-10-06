@@ -145,8 +145,10 @@ The pipeline turns a photo of a real person into a game-ready sprite sheet:
    add a style/edge note to `tools/stages-wide.mjs` after LOOKING at the art)
    uses the TALL art in `public/assets/backgrounds/stages tall/` when present
    (only its bottom 3.5:1 band is shown until a Marvel vs Capcom-style vertical
-   camera exists). Review `assets/raw/stages-wide/<id>/tryN-*.wide.jpg`,
-   re-roll with `--try N+1`, then `--ship --try N` →
+   camera exists). Review `assets/raw/stages-wide/<id>/tryN-*.wide.jpg`
+   (seams, duplicated props, colour drift — `reviewFlag` in the report),
+   re-roll with `--try N+1` — keep a good side with `--from left=N` /
+   `right=N` so only the bad side re-rolls — then `--ship --try N` →
    `public/assets/backgrounds/stages-wide/<id>.jpg` and `npm run gen:assets`.
    A stage without wide art still works (its 21:9 art becomes a narrower arena).
 6. **Audio** — ElevenLabs for announcer VO ("ROUND ONE… FIGHT!"), per-character

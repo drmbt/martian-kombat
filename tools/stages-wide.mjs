@@ -120,7 +120,9 @@ export const DESC = {
   saturn: {
     look: 'graphic pixel art dominated by deep ultramarine and white trompe-l\'oeil murals, warm dusk sky with string lights',
     scene: 'a courtyard of enormous indigo-and-white trompe-l\'oeil mural panels of impossible arches and staircases, string lights overhead, palms and a twilight sky, a gravel clearing',
-    sides: `Continue the line of mural panels outward with more indigo-and-white painted architecture (arches, colonnades, stairs), more string lights and palms; the gravel clearing continues. No readable words. ${FLOOR_SIDES}`,
+    sides: `Continue the line of mural panels outward with NEW indigo-and-white painted architecture compositions (each panel different from every panel already shown), more string lights and palms; the gravel clearing continues. Same warm dusk sky to the frame edge. No readable words. ${FLOOR_SIDES}`,
+    // the left pass cloned the SATURN / staircase panels twice — name new subjects
+    left: `Left: ONE new mural panel in the same indigo-and-white brushwork but a DIFFERENT subject — a crescent moon over a domed observatory hall — then the panel wall ends with its plain timber bracing; beyond it the gravel clearing continues to a low adobe wall, palms and the dusk mountains under the string lights. Do NOT paint another SATURN sign or a copy of any staircase, arch or tunnel panel already in the image. ${FLOOR_SIDES}`,
   },
   shipwreck: {
     look: 'warm dusk pixel art with pastel mauve sky, muted rust browns and cracked pale sand',
@@ -131,6 +133,8 @@ export const DESC = {
     look: 'warm golden-hour pixel art with deep blue sky, orange-striped buildings and dusty asphalt',
     scene: 'the Ski Inn dive bar on a dusty desert street: an orange-and-white striped two-storey building, a vintage marquee sign on a pole, palms, telephone poles, parked beater cars, red patio umbrellas, a cracked asphalt and gravel street',
     sides: `Continue the street outward: more low buildings, palms, telephone poles and parked cars set back along the street. No new readable signs. ${FLOOR_SIDES}`,
+    // the left pass cloned the Ski Inn sign, then the striped building
+    left: `Left: the street continues past the sign to a low tan cinder-block bait shop with a flat roof and a faded blank awning, a chain-link fence, a dirt lot with an old pickup truck, one palm and telephone poles. Do NOT paint another Ski Inn sign, marquee or street sign, and no orange-and-white striped building. ${FLOOR_SIDES}`,
   },
   'star-beach': {
     look: 'pale, sun-bleached pixel art with a hazy white-blue sky, harsh sun and bright cracked salt flats',

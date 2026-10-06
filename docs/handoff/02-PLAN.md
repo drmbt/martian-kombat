@@ -1074,6 +1074,25 @@ files unasked. Full design: `docs/CHARACTER_STUDIO.md` Phases 4–5 (+ the R2
 
 *(newest first; one entry per session: date · who · done · next · gotchas)*
 
+- **2026-10-06 · D9 finished: camera on + 27/27 wide stages (Claude Opus 5.5).**
+  SF2 scrolling camera on by default (`318d8ec`); every registered stage has
+  3.5:1 art in `public/assets/backgrounds/stages-wide/` (tall sources show
+  their bottom band), enforced by the new wide-art audit. 432/432 tests, tsc
+  clean. ~76 image calls for all of D9 (incl. the first test round).
+  **Next:** P8.17 (make `raw:push` no-clobber) BEFORE any R2 push — the
+  wide-stage raws (`assets/raw/stages-wide/`, ~27 dirs of passes + prompt
+  sidecars) are local-only until then; then P1.
+  **Gotchas:** shipped files before the colour-map change (21 stages +
+  mimos/painted-canyon/shipwreck) were composited with the older
+  mean-offset method — re-running their `--try N` re-composites
+  `tryN-sides.wide.jpg` with the new method (the raw passes are reused), so
+  REVIEW before re-shipping. No pixel metric predicts the real rejects
+  (cloned props, redrawn edges): `reviewFlag` only says the model regraded
+  the frame; visual review of the band is the gate. Re-run
+  `gen-asset-manifest.mjs` after any `--ship` (the dev server only scans at
+  start). A hidden browser pane pauses Phaser's RAF loop — in-game checks
+  need the pane visible.
+
 - **2026-10-06 · decisions round + D9/D10 work (Claude Opus 5.5).**
   Recorded D1–D10 (§2 "Decisions recorded"). Set up **CorridorKey** on this
   machine: sibling clone `../CorridorKey` at `97e55a4` (= the old machine

@@ -4,8 +4,11 @@
 //
 //   sides  — two passes. Each shows the model 3/4 of the stage plus a solid
 //            magenta band (the empty canvas) on one side; only the new band
-//            is kept, aligned to the original, colour-matched on an overlap
-//            strip and feather-blended. The original pixels stay untouched.
+//            is kept, aligned to the original, colour-corrected and
+//            feather-blended. The model regrades the context it repaints, so
+//            the correction is (1) a colour map fitted on that repainted
+//            context (fitColour) plus (2) the per-row residual at the join,
+//            faded out over DECAY px. The original pixels stay untouched.
 //   pillar — one pass. The whole stage, shrunk to 2/3, sits in the middle
 //            of a magenta 21:9 canvas; the model extends it on ALL sides.
 //            The original is composited back over the middle. Yields a
@@ -16,6 +19,9 @@
 //                           [--aspect 3.5] [--force]
 //   npm run gen:outpaint -- --stage chiba-roof --mode sides --try 2 \
 //        --src "public/assets/backgrounds/stages tall/chiba-roof.png" --width 2520
+//   npm run gen:outpaint -- --stage mimos --try 3 --from left=2,right=1
+//        # sides mode: every try shares one canvas geometry, so a good side
+//        # from an earlier try is reused (copied) and only the rest re-rolls
 //
 // `sides` works on ANY source size (e.g. the 1680×1440 "stages tall" set):
 // each pass's canvas uses the widest model-supported aspect ratio that fits
@@ -26,21 +32,25 @@
 // prompt descriptions live in DESC (written after LOOKING at each image —
 // stage styles vary, so the prompt must describe the actual picture).
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ROOT, geminiImage, loadEnv, pool, saveAsset } from './lib.mjs';
 import { DESC, SOURCE_OVERRIDE, STAGE_SOURCES_TALL, TALL_ALIAS } from './stages-wide.mjs';
 
 const OV = 72; // blend overlap (px at stage resolution)
+const FIT = 360; // context strip (px) the colour map is fitted on
+const DECAY = Number(process.env.MK_OUTPAINT_DECAY ?? 240); // px over which the per-row seam residual fades into the band
 const MAGENTA = [255, 0, 255];
 
-const OUTPAINT = (d, where) => `TASK: OUTPAINTING a 2D fighting-game stage background.
+const OUTPAINT = (d, where, side) => `TASK: OUTPAINTING a 2D fighting-game stage background.
 The attached image is the stage, ${where}. The solid pure-magenta (#FF00FF) area is EMPTY canvas, not part of the scene.
 Replace EVERY magenta pixel with a seamless continuation of the scene, so the whole frame reads as one image painted at once.
 Do NOT change, move, resize, restyle, recolour or crop the existing (non-magenta) artwork — keep it exactly where it is.
 The scene: ${d.scene}.
 Match the existing art exactly: ${d.look}. Same pixel-cluster size, same dithering, same palette and light direction, same horizon height and perspective vanishing point.
-${d.sides}
+${(side && d[side]) || d.sides}
+Every object in the new area is NEW: never copy, mirror or repeat a sign, mural, building, vehicle or prop that is already in the image.
+Keep the existing sky colour, haze and light unchanged all the way to the frame edge — no darkening, no greying, no change of weather or time of day.
 FLOOR CONTRACT: the bottom quarter of the frame is walkable ground running the full width, edge to edge, touching the bottom edge of the image — no objects, props or people in that strip, no blank bands.
 No magenta left anywhere. No seams, borders, frames, vignettes or colour shifts. No people, no text, no UI, no watermark.`;
 
@@ -92,6 +102,61 @@ function align(gen, gw, gh, ref, rw, region, r = 10) {
   return best;
 }
 
+/**
+ * Colour map gen→source fitted on the context the model RE-PAINTED (it
+ * regrades the whole frame — tint, contrast, saturation — not just the new
+ * band). 8×8 block means make it robust to small misregistration; a scaled
+ * ridge pulls it toward identity. Returns M (4×3): out_c = Σ [r g b 1]·M[·][c].
+ * Region in source coords [x0,x1); source x maps to gen x + gx, y + gy.
+ */
+function fitColour(src, sw, gen, gw, gh, x0, x1, gx, gy, B = 8) {
+  const X = [];
+  const Y = [];
+  for (let by = 0; by + B <= gh; by += B) for (let bx = x0; bx + B <= x1; bx += B) {
+    const s = [0, 0, 0];
+    const g = [0, 0, 0];
+    let n = 0;
+    for (let y = by; y < by + B; y++) for (let x = bx; x < bx + B; x++) {
+      const qx = x + gx;
+      const qy = y + gy;
+      if (qx < 0 || qy < 0 || qx >= gw || qy >= gh) continue;
+      const si = px(src, sw, x, y);
+      const gi = px(gen, gw, qx, qy);
+      for (let c = 0; c < 3; c++) { s[c] += src[si + c]; g[c] += gen[gi + c]; }
+      n++;
+    }
+    if (n < B * B) continue;
+    X.push([g[0] / n, g[1] / n, g[2] / n, 1]);
+    Y.push(s.map((v) => v / n));
+  }
+  // normal equations with a ridge toward identity: (XᵀX + Λ) M = XᵀY + Λ I
+  const A = Array.from({ length: 4 }, (_, i) => Array.from({ length: 4 }, (_, j) => X.reduce((a, r) => a + r[i] * r[j], 0)));
+  const R = Array.from({ length: 4 }, (_, i) => [0, 1, 2].map((c) => X.reduce((a, r, k) => a + r[i] * Y[k][c], 0)));
+  for (let i = 0; i < 4; i++) {
+    const lam = 0.05 * A[i][i];
+    A[i][i] += lam;
+    if (i < 3) R[i][i] += lam;
+  }
+  // Gauss-Jordan on [A | R]
+  for (let i = 0; i < 4; i++) {
+    let p = i;
+    for (let r = i + 1; r < 4; r++) if (Math.abs(A[r][i]) > Math.abs(A[p][i])) p = r;
+    [A[i], A[p]] = [A[p], A[i]];
+    [R[i], R[p]] = [R[p], R[i]];
+    const d = A[i][i] || 1e-9;
+    for (let j = 0; j < 4; j++) A[i][j] /= d;
+    for (let c = 0; c < 3; c++) R[i][c] /= d;
+    for (let r = 0; r < 4; r++) {
+      if (r === i) continue;
+      const f = A[r][i];
+      for (let j = 0; j < 4; j++) A[r][j] -= f * A[i][j];
+      for (let c = 0; c < 3; c++) R[r][c] -= f * R[i][c];
+    }
+  }
+  return R;
+}
+const applyColour = (M, r, g, b) => [0, 1, 2].map((c) => r * M[0][c] + g * M[1][c] + b * M[2][c] + M[3][c]);
+
 function magentaLeft(buf, w, x0, x1, y0, y1) {
   let n = 0;
   for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
@@ -114,6 +179,8 @@ const force = args.includes('--force');
 const ship = args.includes('--ship');
 const srcArg = opt('src');
 const widthArg = opt('width');
+// --from left=2,right=1 → reuse that side's raw pass from an earlier try
+const fromTry = Object.fromEntries((opt('from', '') || '').split(',').filter(Boolean).map((kv) => kv.split('=')));
 const ids = all ? Object.keys(DESC) : [only];
 if ((!all && (!only || !DESC[only])) || !['sides', 'pillar'].includes(mode)) {
   console.error('usage: npm run gen:outpaint -- (--stage <id> | --all) [--mode sides|pillar] [--try N] [--force]');
@@ -169,7 +236,16 @@ async function outpaint(id) {
       console.log(`[${id}] ${tag}-${name}: exists, reusing`);
       return raw;
     }
-    const prompt = OUTPAINT(d, where);
+    if (fromTry[name]) {
+      const from = join(OUT, `${tag.replace(/^try\d+/, `try${fromTry[name]}`)}-${name}.png`);
+      if (!existsSync(from)) throw new Error(`--from ${name}=${fromTry[name]}: no ${from}`);
+      copyFileSync(from, raw);
+      const side = (f) => f.replace(/\.png$/, '.prompt.txt');
+      if (existsSync(side(from))) copyFileSync(side(from), side(raw));
+      console.log(`[${id}] ${tag}-${name}: reused try${fromTry[name]}`);
+      return raw;
+    }
+    const prompt = OUTPAINT(d, where, name);
     console.log(`[${id}] ${tag}-${name}: generating ...`);
     const buf = await geminiImage({
       apiKey: env.GEMINI_API_KEY, model: 'gemini-3-pro-image', prompt,
@@ -179,7 +255,7 @@ async function outpaint(id) {
     return raw;
   }
 
-  const report = { stage: id, source: SRC.replace(`${ROOT}/`, ''), mode, try: tryN, aspect };
+  const report = { stage: id, source: SRC.replace(`${ROOT}/`, ''), mode, try: tryN, aspect, ...(Object.keys(fromTry).length ? { from: fromTry } : {}) };
 
   if (mode === 'sides') {
     const W = widthArg ? Number(widthArg) : Math.round((W0 * aspect) / (21 / 9) / 2) * 2;
@@ -223,7 +299,42 @@ async function outpaint(id) {
         n++;
       }
       const delta = sum.map((v) => v / Math.max(1, n));
+      // 1) global colour map fitted on the re-painted context nearest the band
+      const fitX = side === 'left' ? [0, FIT] : [W0 - FIT, W0];
+      const M = fitColour(src, W0, g, CW, H0, fitX[0], fitX[1], s2c + a.dx, a.dy);
+      // 2) what's left at the seam, per row (±24 rows box filter): faded out
+      //    over DECAY px into the band so the join is exact but the far band
+      //    keeps the fitted colour
+      const rowSum = Array.from({ length: H0 }, () => [0, 0, 0, 0]);
+      for (let y = 0; y < H0; y++) for (let k = 0; k < OV; k += 2) {
+        const sx = side === 'left' ? k : W0 - OV + k;
+        const gx = sx + s2c + a.dx;
+        const gy = y + a.dy;
+        if (gx < 0 || gx >= CW || gy < 0 || gy >= H0) continue;
+        const si = px(src, W0, sx, y);
+        const gi = px(g, CW, gx, gy);
+        const m = applyColour(M, g[gi], g[gi + 1], g[gi + 2]);
+        for (let c = 0; c < 3; c++) rowSum[y][c] += src[si + c] - m[c];
+        rowSum[y][3]++;
+      }
+      const rowRes = rowSum.map((_, y) => {
+        const acc = [0, 0, 0];
+        let cnt = 0;
+        for (let k = Math.max(0, y - 24); k <= Math.min(H0 - 1, y + 24); k++) {
+          for (let c = 0; c < 3; c++) acc[c] += rowSum[k][c];
+          cnt += rowSum[k][3];
+        }
+        return acc.map((v) => v / Math.max(1, cnt));
+      });
+      // seamResidual (diagnostic): RMS over 16-row bands of the per-row
+      // correction the fade applies at the join — how far the model's local
+      // grade strayed even after the colour map
+      let rs = 0;
+      let rn = 0;
+      for (let y = 8; y < H0; y += 16) for (let c = 0; c < 3; c++) { rs += rowRes[y][c] ** 2; rn++; }
+      const seamResidual = Math.sqrt(rs / Math.max(1, rn));
       // write band + overlap into the final frame
+      const seam = side === 'left' ? ext : W0 + ext;
       const fx0 = side === 'left' ? 0 : W0 + ext - OV;
       const fx1 = side === 'left' ? ext + OV : W;
       for (let y = 0; y < H0; y++) for (let fx = fx0; fx < fx1; fx++) {
@@ -235,14 +346,18 @@ async function outpaint(id) {
         const w = side === 'left'
           ? (fx < ext ? 1 : 1 - (fx - ext) / OV)
           : (fx >= W0 + ext ? 1 : (fx - (W0 + ext - OV)) / OV);
+        const fade = Math.max(0, 1 - Math.abs(fx - seam) / DECAY);
+        const m = applyColour(M, g[gi], g[gi + 1], g[gi + 2]);
         for (let c = 0; c < 3; c++) {
-          const gv = Math.min(255, Math.max(0, g[gi + c] + delta[c]));
+          const gv = Math.min(255, Math.max(0, m[c] + rowRes[y][c] * fade));
           out[oi + c] = Math.round(gv * w + out[oi + c] * (1 - w));
         }
       }
       report[side] = {
         shift: [a.dx, a.dy],
         colourOffset: delta.map((v) => +v.toFixed(1)),
+        colourMap: M.map((r) => r.map((v) => +v.toFixed(3))),
+        seamResidual: +seamResidual.toFixed(1),
         magentaLeft: +magentaLeft(g, CW, side === 'left' ? 0 : P, side === 'left' ? ext : CW, 0, H0).toFixed(4),
       };
     }
@@ -313,8 +428,13 @@ async function outpaint(id) {
   // two rejected stages were 30–35, accepted ones ≤ 9, one borderline 13.6)
   const offs = ['left', 'right'].flatMap((k) => report[k]?.colourOffset ?? []).concat(report.colourOffset ?? []);
   report.maxColourOffset = +Math.max(0, ...offs.map(Math.abs)).toFixed(1);
+  // Since 2026-10-06 sides mode CORRECTS that drift (fitted colour map +
+  // per-row seam fade), so a flag no longer means a hard seam — it means the
+  // model regraded the frame: eyeball the band for haze/gradients. No pixel
+  // metric caught the real rejects (cloned props, redrawn edges) — fine
+  // pixel-art texture swamps them — so visual review stays the gate.
   report.reviewFlag = report.maxColourOffset > 12;
-  if (report.reviewFlag) console.warn(`[${id}] ${tag}: colour offset ${report.maxColourOffset} — likely seam, review closely / re-roll`);
+  if (report.reviewFlag) console.warn(`[${id}] ${tag}: model drift ${report.maxColourOffset} (corrected) — eyeball the band`);
   writeFileSync(join(OUT, `${tag}.report.json`), `${JSON.stringify(report, null, 2)}\n`);
   console.log(JSON.stringify(report));
 }

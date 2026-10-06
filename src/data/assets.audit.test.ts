@@ -70,6 +70,14 @@ describe('asset completeness audit', () => {
     const missing = STAGES.filter((s) => !existsSync(join(process.cwd(), 'public', s.file))).map((s) => s.id);
     expect(missing, `stages registered without art: ${missing.join(', ')}`).toEqual([]);
   });
+
+  it('every registered stage has ultra-wide art for the scrolling camera', () => {
+    // fights scroll across a 3.5:1 stage (stageArena); without wide art a
+    // stage falls back to a cramped 21:9 arena. Widen new stages with
+    // npm run gen:outpaint -- --stage <id> (review, then --ship) + gen:assets
+    const missing = STAGES.filter((s) => !existsSync(join(process.cwd(), 'public', 'assets', 'backgrounds', 'stages-wide', `${s.id}.jpg`))).map((s) => s.id);
+    expect(missing, `stages without wide art: ${missing.join(', ')}`).toEqual([]);
+  });
 });
 
 // ---------------------------------------------------------------------------
