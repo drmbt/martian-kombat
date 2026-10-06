@@ -17,6 +17,7 @@ interface Captured {
   bothLocked: boolean;
   start: StartConfig | null;
   adoptedRender3d: boolean | null;
+  unlocked: string[];
 }
 
 function mount(transport: Transport, isHost: boolean, name: string, extra: Record<string, unknown> = {}): Captured {
@@ -28,6 +29,7 @@ function mount(transport: Transport, isHost: boolean, name: string, extra: Recor
     bothLocked: false,
     start: null,
     adoptedRender3d: null,
+    unlocked: [],
   };
   cap.ctrl = new LobbyController(
     {
@@ -37,6 +39,7 @@ function mount(transport: Transport, isHost: boolean, name: string, extra: Recor
       onBothLocked: () => (cap.bothLocked = true),
       onStart: (c) => (cap.start = c),
       onRenderMode: (r) => (cap.adoptedRender3d = r),
+      onRemoteUnlock: (id) => cap.unlocked.push(id),
     },
     { transport, isHost, defs: characters, localName: name, ...extra },
   );
@@ -62,6 +65,17 @@ describe('LobbyController handshake', () => {
     expect(host.ready).toEqual({ remoteName: 'Yulia', render3d: true });
     expect(guest.ready).toEqual({ remoteName: 'Flo', render3d: true });
     expect(guest.adoptedRender3d).toBe(true); // guest auto-adopted host's 3D
+  });
+
+  it('a secret unlock on one side reaches the other (both players get it)', () => {
+    const wire = createLoopbackPair({ latency: 1 });
+    const host = mount(wire.a, true, 'Flo');
+    const guest = mount(wire.b, false, 'Yulia');
+    wire.run(3);
+    guest.ctrl.sendUnlock('kfm');
+    wire.run(2);
+    expect(host.unlocked).toEqual(['kfm']);
+    expect(guest.unlocked).toEqual([]);
   });
 
   it('exchanges picks, both vote the same stage, and starts on it', () => {

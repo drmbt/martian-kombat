@@ -12,6 +12,7 @@ export type NetMsg =
   | { t: 'hello'; proto: number; charHash: number; name: string } // compatibility handshake on connect (V21) — char picked later, in Select
   | { t: 'cursor'; idx: number } // live character-grid cursor position (shows the remote player's cursor before they lock)
   | { t: 'pick'; charId: string } // a player locked their fighter on the (shared) character-select screen
+  | { t: 'unlock'; id: string } // a player unlocked a secret fighter on the select screen — unlocks it for both
   | { t: 'stagePick'; stageId: string } // a player's stage vote; host reconciles (agree → that, disagree → coin flip)
   | { t: 'start'; rules: MatchRules; stage: string; chars: [string, string]; delay: number; render3d: boolean }
   | { t: 'input'; tick: number; frames: number[] } // packed inputs, oldest first, last-8 redundancy (V22)

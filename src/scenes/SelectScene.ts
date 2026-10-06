@@ -5,6 +5,7 @@
 import Phaser from 'phaser';
 import { STAGE_H, STAGE_W } from '../engine';
 import { ROSTER, type RosterEntry } from '../data/roster';
+import { isUnlocked, unlock } from '../data/unlocks';
 import { characters } from '../data/characters';
 import { STAGES, stageById, stageOwner, type StageEntry } from '../data/stages';
 import { play, announce } from './BootScene';
@@ -15,6 +16,7 @@ import { BindAction, getSettings } from '../settings';
 import type { OnlineSelectData, StartConfig } from '../net/lobby';
 import { UiLayer } from '../ui/layer';
 import { CELL_H, CELL_W, FLOOR_FRAC } from '../render/coords';
+import { cellWidth } from '../render/geometry';
 // type-only: the real module (and three) loads dynamically on the 3D path
 import type { SelectPreview3D } from '../renderer3d/SelectPreview3D';
 
@@ -178,7 +180,47 @@ export class SelectScene extends Phaser.Scene {
   /** Whether an entry can be picked in the CURRENT render mode: 3D needs a baked
    *  GLB (`mesh3d`), 2D just needs a sprite sheet (`playable`). */
   private pickable(entry: RosterEntry): boolean {
-    return this.render3d ? !!entry.mesh3d : entry.playable;
+    return this.render3d ? !!entry.mesh3d : entry.playable || (!!entry.secret && isUnlocked(entry.id));
+  }
+
+  /** a secret fighter still behind its "???" tile */
+  private hidden(entry: RosterEntry): boolean {
+    return !!entry.secret && !isUnlocked(entry.id);
+  }
+
+  /** "???" tiles by roster index: the portrait to reveal + the mark to drop */
+  private secretTiles = new Map<number, { img?: Phaser.GameObjects.Image; mark: Phaser.GameObjects.Text }>();
+
+  /** Unlock a secret fighter for BOTH players: confirming its "???" tile (any
+   *  attack / ENTER / click) does it; online the other grid opens via the
+   *  `unlock` message. Remembered in this browser. */
+  private unlockSecret(id: string, broadcast: boolean): void {
+    const i = ROSTER.findIndex((e) => e.id === id);
+    const entry = ROSTER[i];
+    if (!entry?.secret) return;
+    const fresh = !isUnlocked(id);
+    unlock(id);
+    const tile = this.secretTiles.get(i);
+    if (tile) {
+      tile.img?.setVisible(true).setAlpha(this.pickable(entry) ? 1 : 0.3);
+      if (this.pickable(entry)) tile.img?.clearTint();
+      tile.mark.destroy();
+      this.secretTiles.delete(i);
+    }
+    if (broadcast) this.online?.controller.sendUnlock(id);
+    if (fresh) {
+      play(this, 's-blip', 0.9);
+      const banner = this.add
+        .text(STAGE_W / 2, STAGE_H / 2, `${entry.name} UNLOCKED!`, {
+          fontFamily: 'monospace', fontSize: '34px', fontStyle: 'bold', color: '#ffd24a',
+          stroke: '#2a0a0a', strokeThickness: 8, backgroundColor: '#1a1020', padding: { x: 18, y: 8 },
+        })
+        .setOrigin(0.5)
+        .setDepth(40);
+      this.tweens.add({ targets: banner, alpha: 0, delay: 1300, duration: 500, onComplete: () => banner.destroy() });
+    }
+    this.sideSheet = ['', '']; // re-texture the side preview now it's revealed
+    this.redraw();
   }
 
   create(): void {
@@ -189,6 +231,7 @@ export class SelectScene extends Phaser.Scene {
     this.stageMode = false;
     this.stageIdx = 0;
     this.stageCursor = null;
+    this.secretTiles = new Map(); // scene restarts reuse this instance
     // the menu theme carries through character select (no-op if already playing)
     playMusic('menu');
 
@@ -246,9 +289,21 @@ export class SelectScene extends Phaser.Scene {
       const c = this.gcell;
       const cellBg = this.add.rectangle(x, y, c, c, 0x14101a, 0.85).setStrokeStyle(2, 0x594566).setDepth(2);
       const locked = !this.pickable(entry);
+      let img: Phaser.GameObjects.Image | undefined;
       if (this.textures.exists(`portrait-${entry.id}`)) {
-        const img = this.add.image(x, y, `portrait-${entry.id}`).setDisplaySize(c - 6, c - 6).setDepth(3);
+        img = this.add.image(x, y, `portrait-${entry.id}`).setDisplaySize(c - 6, c - 6).setDepth(3);
         if (locked) img.setAlpha(0.3).setTint(0x777799);
+      }
+      if (this.hidden(entry)) {
+        img?.setVisible(false);
+        const mark = this.add
+          .text(x, y, '???', {
+            fontFamily: 'monospace', fontSize: `${Math.round(c * 0.3)}px`, fontStyle: 'bold', color: '#ffd24a',
+            stroke: '#000', strokeThickness: 4,
+          })
+          .setOrigin(0.5)
+          .setDepth(4);
+        this.secretTiles.set(i, { img, mark });
       }
       // in 3D mode a sprite-playable fighter with no baked GLB reads "3D SOON"
       if (locked && this.render3d && entry.playable) {
@@ -393,6 +448,7 @@ export class SelectScene extends Phaser.Scene {
       onRemoteLock: (r) => this.applyRemotePick(r.charId),
       onBothLocked: () => this.onBothLocked(),
       onRemoteStage: (stageId) => this.applyRemoteStageVote(stageId),
+      onRemoteUnlock: (id) => this.unlockSecret(id, false),
       onStart: (c) => this.launchOnline(c),
       onPhase: (phase, detail) => {
         if (phase === 'error') this.onNetError(detail ?? 'connection lost');
@@ -424,6 +480,7 @@ export class SelectScene extends Phaser.Scene {
     const remoteSlot: 0 | 1 = this.online!.localSlot === 0 ? 1 : 0;
     const i = ROSTER.findIndex((e) => e.id === charId);
     if (i < 0) return;
+    if (this.hidden(ROSTER[i])) this.unlockSecret(charId, false); // they picked it, so it's unlocked
     this.idx[remoteSlot] = i;
     this.confirmed[remoteSlot] = true;
     announce(this, `ann-${charId}`);
@@ -574,6 +631,10 @@ export class SelectScene extends Phaser.Scene {
     if (this.online) p = this.online.localSlot;
     if (this.confirmed[p] || this.starting) return;
     const entry = ROSTER[this.idx[p]];
+    if (this.hidden(entry)) {
+      this.unlockSecret(entry.id, true); // confirming the "???" tile IS the unlock
+      return;
+    }
     if (!this.pickable(entry)) {
       play(this, 's-blip', 0.3);
       return;
@@ -933,6 +994,15 @@ export class SelectScene extends Phaser.Scene {
       const spr = this.sideSprites[p];
       const sheetKey = `sheet-${entry.id}`;
       const portraitKey = `portrait-${entry.id}`;
+      // still-secret fighter: no preview, no name, no download — just "???"
+      if (this.hidden(entry)) {
+        spr?.setVisible(false);
+        this.sideSheet[p] = '';
+        pod.fillStyle(color, 0.16);
+        pod.fillEllipse(sx, SIDE_BASE_Y + 8, 150, 26);
+        this.nameTexts[p].setText('???');
+        continue;
+      }
       // Lazy-load: the heavy sheet is no longer boot-loaded — pull the
       // highlighted fighter's sheet (deduped) so the idle animation streams in.
       // redraw() runs every frame, so the moment it lands the idle branch below
@@ -959,7 +1029,7 @@ export class SelectScene extends Phaser.Scene {
         if (this.sideSheet[p] !== sheetKey) {
           this.sideSheet[p] = sheetKey;
           spr.setTexture(sheetKey, 0);
-          spr.setDisplaySize((SIDE_SPRITE_H * CELL_W) / CELL_H, SIDE_SPRITE_H);
+          spr.setDisplaySize((SIDE_SPRITE_H * cellWidth(characters[entry.id])) / CELL_H, SIDE_SPRITE_H);
           spr.setFlipX(p === 1);
           this.sideIdle[p] = this.idleFrames(entry.id);
           if (!this.pickable(entry)) spr.setAlpha(0.5).setTint(0x8a8aa0);

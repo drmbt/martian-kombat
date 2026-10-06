@@ -14,7 +14,7 @@ import { PROTO, type NetMsg, type Transport, type TransportStatus } from './tran
  *  typo fix in a win quote or a renamed move must not split online players. */
 const NON_SIM_KEYS = new Set([
   'name', 'color', 'lore', 'winQuotes', 'vo', 'arcade', 'stage', 'comment',
-  'vfx', 'voice', 'voiceText', 'renderSize', 'panels',
+  'vfx', 'voice', 'voiceText', 'renderSize', 'panels', 'cellW',
 ]);
 
 function fnv(json: string): number {
@@ -130,6 +130,8 @@ export interface LobbyHooks {
   onBothLocked?: () => void;
   /** the remote player cast their stage vote (for a "opponent picked X" note) */
   onRemoteStage?: (stageId: string) => void;
+  /** the remote player unlocked a secret fighter — unlock it here too */
+  onRemoteUnlock?: (id: string) => void;
   /** match config agreed — launch the Fight with a NetSession using this */
   onStart?: (config: StartConfig) => void;
 }
@@ -243,6 +245,12 @@ export class LobbyController {
     this.maybeBothLocked();
   }
 
+  /** the local player unlocked a secret fighter — open it on both grids */
+  sendUnlock(id: string): void {
+    if (this.phase === 'error' || this.started) return;
+    this.transport.send({ t: 'unlock', id });
+  }
+
   /** the local player cast their stage vote. BOTH players vote; the host
    *  reconciles (agree → that stage, disagree → coin flip between the two) and
    *  sends the authoritative `start`. */
@@ -315,6 +323,10 @@ export class LobbyController {
         this.remoteChar = m.charId;
         this.hooks.onRemoteLock?.({ name: this.remoteName, charId: m.charId });
         this.maybeBothLocked();
+        break;
+      }
+      case 'unlock': {
+        this.hooks.onRemoteUnlock?.(m.id);
         break;
       }
       case 'stagePick': {
