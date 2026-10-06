@@ -422,14 +422,14 @@
       "height": "mid",
       "knockdown": true,
       "grab": {
-        "range": 95
+        "range": 113
       },
       "variants": {
         "l": {
           "startup": 6,
           "damage": 104,
           "grab": {
-            "range": 82
+            "range": 110
           }
         },
         "h": {
@@ -437,7 +437,7 @@
           "damage": 132,
           "recovery": 26,
           "grab": {
-            "range": 109
+            "range": 119
           }
         }
       }

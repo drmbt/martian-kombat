@@ -2,18 +2,6 @@
   "_note": "MKS-1 known errors (grandfathered). The CI ratchet fails on any error NOT listed here and on listed errors that are fixed. Regenerate: npm run bench -- --update-baseline",
   "errors": [
     "ben:clk>clp:infinite",
-    "ben:throw:unreachable",
-    "bodhi:table-work[l]:throw-out-of-range",
-    "bodhi:table-work[m]:throw-out-of-range",
-    "earl:throw:unreachable",
-    "flo:lk:never-connects",
-    "kirby:cmp:never-connects",
-    "marzipan:symbiosis[l]:throw-out-of-range",
-    "rapha:throw:throw-out-of-range",
-    "tao:chp:never-connects",
-    "vanessa:throw:throw-out-of-range",
-    "vincent:clk:never-connects",
-    "vincent:clp>lk:infinite",
-    "ygor:throw:throw-out-of-range"
+    "vincent:clp>lk:infinite"
   ]
 }

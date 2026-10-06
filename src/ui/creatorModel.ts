@@ -503,7 +503,7 @@ export class CreatorModel {
     }
     // the roster-standard grammar: light chains, medium cancels, L/H variants
     // (tools/core/kit.mjs — the ben/earl thin-kit regression can't recur)
-    applyKitGrammar(moves as Record<string, Record<string, unknown>>, d.specials);
+    applyKitGrammar(moves as Record<string, Record<string, unknown>>, d.specials, { bodyBox: { x: -42, w: 84 } }); // = bodyBox below
     return {
       id: this.id,
       name: this.inputs.name.toUpperCase(),
@@ -566,7 +566,7 @@ export class CreatorModel {
     }
     // non-destructive grammar fill (existing hand-tuned chains/cancel/variants
     // on a canon-reopened kit are never touched)
-    applyKitGrammar(moves, d.specials);
+    applyKitGrammar(moves, d.specials, { bodyBox: out.bodyBox as { x: number; w: number } | undefined });
     out.moves = moves;
     if (d.arcade && (d.arcade.motivation || d.arcade.ending)) out.arcade = d.arcade;
     if (this.inputs.stageMode === 'none') delete out.stage;

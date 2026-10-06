@@ -11,23 +11,23 @@
 
 | Fighter | HP | Walk (CH/s) | Jump air (f) | Jump dist (CH) | Fastest normal (f) | Best combo | Longest chain loop | Errors | Warnings |
 |---|--:|--:|--:|--:|--:|--:|--:|--:|--:|
-| vincent | 1000 | 1.06 | 43 | 1.08 | 2 | 23.2% | 16 ∞ | 2 | 13 |
+| vincent | 1000 | 1.06 | 43 | 1.08 | 2 | 23.2% | 16 ∞ | 1 | 15 |
 | yulia | 1080 | 0.99 | 43 | 1.02 | 3 | 24.0% | 8 | 0 | 20 |
 | catherine | 1000 | 1.03 | 43 | 1.06 | 6 | 28.4% | 9 | 0 | 13 |
-| flo | 1020 | 0.87 | 43 | 0.89 | 6 | 19.4% | 5 | 1 | 18 |
+| flo | 1020 | 0.87 | 43 | 0.89 | 6 | 19.4% | 5 | 0 | 18 |
 | freeman | 1050 | 0.75 | 43 | 0.77 | 5 | 19.4% | 6 | 0 | 13 |
 | gene | 960 | 1.00 | 42 | 1.00 | 5 | 19.8% | 5 | 0 | 10 |
-| kirby | 950 | 1.16 | 45 | 1.24 | 4 | 23.5% | 7 | 1 | 4 |
-| marzipan | 1050 | 0.80 | 56 | 1.07 | 6 | 15.8% | 5 | 1 | 22 |
-| bodhi | 1120 | 1.16 | 41 | 1.14 | 5 | 16.8% | 6 | 2 | 11 |
+| kirby | 950 | 1.16 | 45 | 1.24 | 4 | 23.5% | 7 | 0 | 5 |
+| marzipan | 1050 | 0.80 | 56 | 1.07 | 6 | 15.8% | 5 | 0 | 22 |
+| bodhi | 1120 | 1.16 | 41 | 1.14 | 5 | 16.8% | 6 | 0 | 11 |
 | cat | 980 | 1.30 | 41 | 1.27 | 4 | 26.4% | 6 | 0 | 5 |
 | chebel | 1050 | 1.22 | 41 | 1.19 | 5 | 17.9% | 5 | 0 | 6 |
-| ygor | 1080 | 1.05 | 41 | 1.03 | 5 | 16.1% | 5 | 1 | 7 |
-| rapha | 1020 | 0.90 | 43 | 0.93 | 6 | 16.7% | 5 | 1 | 24 |
-| vanessa | 950 | 1.00 | 41 | 0.98 | 5 | 18.7% | 5 | 1 | 18 |
-| earl | 1000 | 0.77 | 43 | 0.79 | 5 | 14.4% | 13 | 1 | 10 |
-| ben | 1000 | 0.65 | 43 | 0.67 | 5 | 14.9% | 16 ∞ | 2 | 16 |
-| tao | 1050 | 0.78 | 43 | 0.80 | 5 | 17.1% | 10 | 1 | 13 |
+| ygor | 1080 | 1.05 | 41 | 1.03 | 5 | 16.1% | 5 | 0 | 7 |
+| rapha | 1020 | 0.90 | 43 | 0.93 | 6 | 16.7% | 5 | 0 | 24 |
+| vanessa | 950 | 1.00 | 41 | 0.98 | 5 | 18.7% | 5 | 0 | 18 |
+| earl | 1000 | 0.77 | 43 | 0.79 | 5 | 14.4% | 13 | 0 | 10 |
+| ben | 1000 | 0.65 | 43 | 0.67 | 5 | 14.9% | 16 ∞ | 1 | 16 |
+| tao | 1050 | 0.78 | 43 | 0.80 | 5 | 17.1% | 10 | 0 | 13 |
 | rj | 1020 | 0.75 | 41 | 0.73 | 6 | 18.2% | 11 | 0 | 19 |
 | *kfm (reference)* | 1000 | 1.55 | 37 | 1.02 | 4 | 18.5% | 1 | 0 | 9 |
 
@@ -42,7 +42,7 @@
 | special | 12 / 10 | -6 / -5 | -15 / -12 | 10 / 12 | 8.8 / 9.5 |
 | reversal | 6 / — | — / — | -25 / — | 10 / — | 9.1 / — |
 | projectile | 14 / — | 3 / — | -3 / — | 10 / — | 7.4 / — |
-| throw | 7 / 1 | — / — | — / — | 10 / 4 | 10.5 / 7.8 |
+| throw | 6 / 1 | — / — | — / — | 10 / 4 | 9.5 / 7.8 |
 
 ## VINCENT
 
@@ -57,7 +57,7 @@
 | clp | light | 2 | 9 | 8 | 18 | -3 | -7 | 40 | 4 | 0.14 / 0.11 |
 | cmp | medium | 8 | 4 | 15 | 26 | -1 | -7 | 65 | 6 | 0.19 / 0.15 |
 | chp | heavy | 11 | 5 | 19 | 34 | KD | -9 | 90 | 9 | — / 0.19 |
-| clk ⚠ | light | 3 | 10 | 9 | 21 | — | — | 40 | — | — / — |
+| clk | light | 3 | 10 | 9 | 21 | -5 | -9 | 40 | 4 | 0.14 / 0.11 |
 | cmk | medium | 2 | 12 | 10 | 23 | -3 | -10 | 65 | 6 | 0.19 / 0.15 |
 | chk | heavy | 9 | 4 | 20 | 32 | KD | -11 | 60 | 9 | — / 0.15 |
 | jlp | air | 5 | 6 | 8 | 18 | — | — | 45 | — | — / — |
@@ -83,7 +83,6 @@
 
 Best meterless combo: **23.2%** (4 hits) — `lk > lp > mp > rising-glyph(h)`
 
-- ✗ **clk** never-connects: light never connects vs a standing mirror (hitbox reach 22px, bodies touch at 102px)
 - ✗ **clp>lk** infinite: [clp > lk] still combos at 16 moves (midscreen 15, corner 16) — e.g. lk > clp > lk
 
 ## YULIA
@@ -170,7 +169,7 @@ Best meterless combo: **28.4%** (6 hits) — `lk > lp > mp > mise-en-place(h)`
 | lp | light | 6 | 3 | 12 | 20 | +1 | -4 | 48 | 4 | 0.18 / 0.14 |
 | mp | medium | 10 | 3 | 16 | 28 | +1 | -6 | 74 | 6 | 0.23 / 0.18 |
 | hp | heavy | 13 | 4 | 21 | 37 | KD | -9 | 102 | 9 | — / 0.24 |
-| lk ⚠ | light | 6 | 3 | 11 | 19 | — | — | 44 | — | — / — |
+| lk | light | 6 | 3 | 11 | 19 | +1 | -4 | 44 | 4 | 0.15 / 0.12 |
 | mk | medium | 11 | 4 | 18 | 32 | -1 | -8 | 82 | 6 | 0.28 / 0.22 |
 | hk | heavy | 14 | 4 | 22 | 39 | KD | -10 | 108 | 9 | — / 0.26 |
 | clp | light | 6 | 3 | 11 | 19 | +1 | -4 | 44 | 4 | 0.15 / 0.12 |
@@ -203,8 +202,6 @@ Best meterless combo: **28.4%** (6 hits) — `lk > lp > mp > mise-en-place(h)`
 | Throw (throw) | throw | 5 | 2 | 21 | 27 | KD | — | 85 | 4 | — / — |
 
 Best meterless combo: **19.4%** (2 hits) — `mk > smokescreen(h)`
-
-- ✗ **lk** never-connects: light never connects vs a standing mirror (hitbox reach 34px, bodies touch at 88px)
 
 ## FREEMAN
 
@@ -290,7 +287,7 @@ Best meterless combo: **19.8%** (2 hits) — `mk > rate-limit(h)`
 | mk | medium | 8 | 4 | 15 | 26 | 0 | -7 | 68 | 6 | 0.22 / 0.18 |
 | hk | heavy | 10 | 5 | 18 | 32 | KD | -8 | 85 | 9 | — / 0.20 |
 | clp | light | 5 | 3 | 9 | 16 | +2 | -2 | 38 | 4 | 0.15 / 0.12 |
-| cmp ⚠ | medium | 7 | 4 | 14 | 24 | — | — | 58 | — | — / — |
+| cmp | medium | 7 | 4 | 14 | 24 | -1 | -7 | 58 | 6 | 0.20 / 0.16 |
 | chp | heavy | 10 | 5 | 18 | 32 | KD | -9 | 80 | 9 | — / 0.18 |
 | clk | light | 5 | 3 | 11 | 18 | 0 | -4 | 38 | 4 | 0.15 / 0.12 |
 | cmk | medium | 8 | 4 | 16 | 27 | -2 | -8 | 60 | 6 | 0.20 / 0.16 |
@@ -315,8 +312,6 @@ Best meterless combo: **19.8%** (2 hits) — `mk > rate-limit(h)`
 | Throw (throw) | throw | 5 | 2 | 21 | 27 | KD | — | 85 | 4 | — / — |
 
 Best meterless combo: **23.5%** (4 hits) — `lp > lk > mk > cartwheel(h)`
-
-- ✗ **cmp** never-connects: medium never connects vs a standing mirror (hitbox reach 17px, bodies touch at 94px)
 
 ## MARZIPAN
 
@@ -356,8 +351,6 @@ Best meterless combo: **23.5%** (4 hits) — `lp > lk > mk > cartwheel(h)`
 
 Best meterless combo: **15.8%** (4 hits) — `lp > lk > lp > lk`
 
-- ✗ **symbiosis[l]** throw-out-of-range: grab range 95px can't reach vincent (95px)
-
 ## BODHI
 
 | Move | Class | Startup | Active | Recovery | Total | On hit | On block | Dmg | Hitstop | Push hit/blk (CH) |
@@ -383,7 +376,7 @@ Best meterless combo: **15.8%** (4 hits) — `lp > lk > lp > lk`
 | Deep Tissue (deep-tissue) L | throw | 6 | 4 | 29 | 38 | KD | — | 150 | 10 | — / — |
 | Deep Tissue (deep-tissue) M | throw | 7 | 4 | 29 | 39 | KD | — | 172 | 10 | — / — |
 | Deep Tissue (deep-tissue) H | throw | 9 | 4 | 33 | 45 | KD | — | 192 | 10 | — / — |
-| Table Work (table-work) L ⚠ | throw | 7 | 3 | 25 | 34 | KD | — | 104 | — | — / — |
+| Table Work (table-work) L | throw | 7 | 3 | 25 | 34 | KD | — | 104 | 10 | — / — |
 | Table Work (table-work) M | throw | 8 | 3 | 25 | 35 | KD | — | 118 | 10 | — / — |
 | Table Work (table-work) H | throw | 10 | 3 | 27 | 39 | KD | — | 132 | 10 | — / — |
 | Ascendant (ascendant) L | reversal | 6 | 8 | 27 | 40 | KD | -19 | 84 | 10 | — / 0.28 |
@@ -395,9 +388,6 @@ Best meterless combo: **15.8%** (4 hits) — `lp > lk > lp > lk`
 | Throw (throw) | throw | 5 | 2 | 21 | 27 | KD | — | 95 | 4 | — / — |
 
 Best meterless combo: **16.8%** (2 hits) — `mk > ascendant(h)`
-
-- ✗ **table-work[l]** throw-out-of-range: grab range 77px ≤ push-box separation 84px (mirror)
-- ✗ **table-work[m]** throw-out-of-range: grab range 89px can't reach vincent (93px), yulia (91px), catherine (90px), kirby (89px), ben (92px)
 
 ## CAT
 
@@ -507,11 +497,9 @@ Best meterless combo: **17.9%** (2 hits) — `mk > unicycle-rush(h)`
 | Rainbow Road (rainbow-road) L | projectile | 13 | 2 | 25 | 39 | +4 | — | 72 | 10 | 0.18 / — |
 | Rainbow Road (rainbow-road) M | projectile | 13 | 2 | 25 | 39 | +4 | — | 72 | 10 | 0.18 / — |
 | Rainbow Road (rainbow-road) H | projectile | 13 | 2 | 25 | 39 | +4 | — | 72 | 10 | 0.18 / — |
-| Throw (throw) ⚠ | throw | 5 | 2 | 21 | 27 | KD | — | 94 | — | — / — |
+| Throw (throw) | throw | 5 | 2 | 21 | 27 | KD | — | 94 | 4 | — / — |
 
 Best meterless combo: **16.1%** (2 hits) — `mk > suave-creature(h)`
-
-- ✗ **throw** throw-out-of-range: grab range 79px ≤ push-box separation 88px (mirror)
 
 ## RAPHA
 
@@ -550,8 +538,6 @@ Best meterless combo: **16.1%** (2 hits) — `mk > suave-creature(h)`
 | Throw (throw) | throw | 5 | 2 | 21 | 27 | KD | — | 85 | 4 | — / — |
 
 Best meterless combo: **16.7%** (4 hits) — `lp > lk > lp > lk`
-
-- ✗ **throw** throw-out-of-range: grab range 90px can't reach vincent (93px), yulia (91px), catherine (90px), ben (92px)
 
 ## VANESSA
 
@@ -592,8 +578,6 @@ Best meterless combo: **16.7%** (4 hits) — `lp > lk > lp > lk`
 
 Best meterless combo: **18.7%** (2 hits) — `mk > spoken-word(h)`
 
-- ✗ **throw** throw-out-of-range: grab range 91px can't reach vincent (91px)
-
 ## EARL
 
 | Move | Class | Startup | Active | Recovery | Total | On hit | On block | Dmg | Hitstop | Push hit/blk (CH) |
@@ -616,7 +600,7 @@ Best meterless combo: **18.7%** (2 hits) — `mk > spoken-word(h)`
 | jlk | air | 5 | 6 | 6 | 16 | — | — | 32 | — | — / — |
 | jmk | air | 7 | 6 | 8 | 20 | — | — | 52 | — | — / — |
 | jhk | air | 10 | 6 | 10 | 25 | — | — | 76 | — | — / — |
-| throw ⚠ | throw | — | 2 | — | — | — | — | 0 | — | — / — |
+| Throw (throw) | throw | 4 | 2 | 21 | 26 | KD | — | 85 | 4 | — / — |
 | Trumpet Blast (bolt) L | projectile | 12 | 2 | 25 | 38 | +2 | -4 | 52 | 10 | 0.23 / 0.19 |
 | Trumpet Blast (bolt) M | projectile | 14 | 2 | 25 | 40 | +2 | -4 | 60 | 10 | 0.23 / 0.19 |
 | Trumpet Blast (bolt) H | projectile | 16 | 2 | 25 | 42 | +2 | -4 | 70 | 10 | 0.23 / 0.19 |
@@ -629,8 +613,6 @@ Best meterless combo: **18.7%** (2 hits) — `mk > spoken-word(h)`
 | Double (double) H | special | 12 | 4 | 21 | 36 | -6 | -12 | 84 | 10 | 0.25 / 0.22 |
 
 Best meterless combo: **14.4%** (2 hits) — `mk > pillar(h)`
-
-- ✗ **throw** unreachable: no `input` and 'throw' is not a normal slot — it can never be performed
 
 ## BEN
 
@@ -654,7 +636,7 @@ Best meterless combo: **14.4%** (2 hits) — `mk > pillar(h)`
 | jlk | air | 5 | 6 | 6 | 16 | — | — | 32 | — | — / — |
 | jmk | air | 7 | 6 | 8 | 20 | — | — | 52 | — | — / — |
 | jhk | air | 10 | 6 | 10 | 25 | — | — | 76 | — | — / — |
-| throw ⚠ | throw | — | 2 | — | — | — | — | 0 | — | — / — |
+| Throw (throw) | throw | 4 | 2 | 21 | 26 | KD | — | 85 | 4 | — / — |
 | Quesadilla (quesadilla) L | projectile | 12 | 2 | 25 | 38 | +2 | -4 | 52 | 10 | 0.20 / 0.16 |
 | Quesadilla (quesadilla) M | projectile | 14 | 2 | 25 | 40 | +2 | -4 | 60 | 10 | 0.20 / 0.16 |
 | Quesadilla (quesadilla) H | projectile | 16 | 2 | 25 | 42 | +2 | -4 | 70 | 10 | 0.20 / 0.16 |
@@ -670,7 +652,6 @@ Best meterless combo: **14.4%** (2 hits) — `mk > pillar(h)`
 
 Best meterless combo: **14.9%** (7 hits) — `mk > hot-coffee(h)`
 
-- ✗ **throw** unreachable: no `input` and 'throw' is not a normal slot — it can never be performed
 - ✗ **clk>clp** infinite: [clk > clp] still combos at 16 moves (midscreen 11, corner 16) — e.g. clp > clk > clp
 
 ## TAO
@@ -685,7 +666,7 @@ Best meterless combo: **14.9%** (7 hits) — `mk > hot-coffee(h)`
 | hk | heavy | 13 | 4 | 21 | 37 | KD | -10 | 102 | 9 | — / 0.17 |
 | clp | light | 5 | 3 | 9 | 16 | +1 | -2 | 38 | 4 | 0.08 / 0.06 |
 | cmp | medium | 8 | 4 | 14 | 25 | -1 | -8 | 60 | 6 | 0.13 / 0.10 |
-| chp ⚠ | heavy | 10 | 4 | 19 | 32 | — | — | 88 | — | — / — |
+| chp | heavy | 10 | 4 | 19 | 32 | -2 | -8 | 88 | 9 | 0.21 / 0.17 |
 | clk | light | 6 | 3 | 10 | 18 | 0 | -3 | 38 | 4 | 0.08 / 0.06 |
 | cmk | medium | 9 | 4 | 15 | 27 | -2 | -9 | 62 | 6 | 0.13 / 0.10 |
 | chk | heavy | 12 | 5 | 22 | 38 | KD | -12 | 90 | 9 | — / 0.17 |
@@ -710,8 +691,6 @@ Best meterless combo: **14.9%** (7 hits) — `mk > hot-coffee(h)`
 | Maestro's Advance (maestros-advance) H | special | 13 | 5 | 22 | 39 | KD | -14 | 94 | 10 | — / 0.25 |
 
 Best meterless combo: **17.1%** (2 hits) — `mk > duende-kick(h)`
-
-- ✗ **chp** never-connects: heavy never connects vs a standing mirror (hitbox reach -3px, bodies touch at 88px)
 
 ## RJ
 

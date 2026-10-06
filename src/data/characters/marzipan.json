@@ -390,7 +390,7 @@
           "damage": 100,
           "startup": 7,
           "grab": {
-            "range": 95
+            "range": 105
           }
         },
         "h": {

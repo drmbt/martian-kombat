@@ -190,10 +190,10 @@
       "blockstun": 10,
       "knockback": 8,
       "hitbox": {
-        "x": -32,
-        "y": -56,
-        "w": 47,
-        "h": 50
+        "x": 40,
+        "y": -42,
+        "w": 54,
+        "h": 38
       },
       "height": "mid",
       "cancel": true

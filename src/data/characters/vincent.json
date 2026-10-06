@@ -213,10 +213,10 @@
       "blockstun": 9,
       "knockback": 6,
       "hitbox": {
-        "x": -33,
-        "y": -95,
-        "w": 55,
-        "h": 50
+        "x": 48,
+        "y": -115,
+        "w": 76,
+        "h": 59
       },
       "height": "low",
       "chains": [
