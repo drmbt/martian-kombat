@@ -270,6 +270,9 @@ export interface CharacterDef {
   color: string;
   /** home-stage id (src/data/stages.ts) — UI hint only, engine never reads it */
   stage?: string;
+  /** render hint only: sheet cell width when wider than the standard
+   *  CELL_W (body still centred — ported MUGEN art with long reach) */
+  cellW?: number;
   /** SFII-style victory taunts; the win screen picks one at random. Presentation
    *  only, engine never reads it. */
   winQuotes?: string[];

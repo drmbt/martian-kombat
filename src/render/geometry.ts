@@ -14,6 +14,13 @@ import { ART_MARGIN, CELL_H, CELL_W, FLOOR_FRAC, SPRITE_FOOT_OFFSET_Y } from './
 export interface RenderableDef {
   hurtStand: { h: number };
   spriteOffsetY?: number;
+  /** wider-than-standard cells (body centred); default CELL_W */
+  cellW?: number;
+}
+
+/** this fighter's sheet cell width — CELL_W unless its art needs more reach */
+export function cellWidth(def: { cellW?: number } | undefined): number {
+  return def?.cellW ?? CELL_W;
 }
 
 /** art draw scale: cell px → world px */
@@ -36,13 +43,13 @@ export function cellToWorld(
   mirror: 1 | -1 = 1,
 ): [number, number] {
   const s = renderScale(def);
-  return [fx + mirror * (jx - 0.5 * CELL_W) * s, fy + footOffset(def) + (jy - FLOOR_FRAC * CELL_H) * s];
+  return [fx + mirror * (jx - 0.5 * cellWidth(def)) * s, fy + footOffset(def) + (jy - FLOOR_FRAC * CELL_H) * s];
 }
 
 /** world point → cell space (facing right) */
 export function worldToCell(def: RenderableDef, fx: number, fy: number, wx: number, wy: number): [number, number] {
   const s = renderScale(def);
-  return [0.5 * CELL_W + (wx - fx) / s, FLOOR_FRAC * CELL_H + (wy - (fy + footOffset(def))) / s];
+  return [0.5 * cellWidth(def) + (wx - fx) / s, FLOOR_FRAC * CELL_H + (wy - (fy + footOffset(def))) / s];
 }
 
 /** An origin-relative CELL-space box (hitboxFromSkeleton output: x from center,

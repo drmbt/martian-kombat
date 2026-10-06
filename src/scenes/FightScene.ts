@@ -1063,8 +1063,11 @@ export class FightScene extends Phaser.Scene {
     const src = sheet.getSourceImage() as HTMLImageElement | HTMLCanvasElement | undefined;
     if (!src) return null;
 
-    const cols = Math.max(1, Math.floor(src.width / CELL_W));
-    const sx0 = (frame % cols) * CELL_W;
+    // wide-cell sheets (cellW > CELL_W): the shadow samples the centred
+    // standard-width band, so every fighter's shadow is built the same way
+    const cw = geom.cellWidth(characters[charId]);
+    const cols = Math.max(1, Math.floor(src.width / cw));
+    const sx0 = (frame % cols) * cw + (cw - CELL_W) / 2;
     const sy0 = Math.floor(frame / cols) * CELL_H;
 
     const srcCanvas = document.createElement('canvas');
@@ -1317,7 +1320,7 @@ export class FightScene extends Phaser.Scene {
         const flash = this.hitFlashSprites[slot];
         sprite.setVisible(true);
         const h = def.hurtStand.h * ART_MARGIN; // art has margin around the body
-        sprite.setDisplaySize((h * CELL_W) / CELL_H, h);
+        sprite.setDisplaySize((h * geom.cellWidth(def)) / CELL_H, h);
         sprite.setPosition(f.x, f.y + geom.footOffset(def));
         sprite.setFlipX(f.facing === -1);
         sprite.setRotation(0);
