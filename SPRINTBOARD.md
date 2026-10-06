@@ -1525,6 +1525,18 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-10-06 · engine/data/scenes/net/tools · pre-ship bug-fix pass** —
+  trades resolve against the start-of-tick state (slot 0 no longer always
+  wins; strike beats grab, grabs clash); SOCD cleaning in the engine (L+R =
+  neutral, U+D = up); 3D is DEV/`?3d=1`-only and a saved 3D setting boots 2D
+  (the title L/R trap); rematch moved from R (P1 light punch) to SPACE, all
+  end-of-match keys wait for the KO arming delay; Cloudflare missing files
+  404 instead of index.html; Ben/Earl throws work; 8 grabs reach the whole
+  roster + a `grabFloor` in the kit grammar; 4 never-connect normals boxed on
+  their real striking limb (MKS-1 errors 14 → 2); online compat hash =
+  sim-only data + stage arenas + an engine fingerprint (PROTO 2) and
+  `hashState` covers charge/dash/combo/buffer. 445 tests. — Claude (Opus 5.5)
+
 - **2026-10-06 · tools/assets/tests · all 27 stages ultra-wide (D9
   complete)** — the last six stages shipped (mimos, painted-canyon,
   shipwreck, last-resort, saturn, ski-inn). `gen:outpaint` sides mode now

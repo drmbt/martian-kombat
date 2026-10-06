@@ -315,7 +315,7 @@ stale. Fixing that makes every later session cheaper and less misled.*
 
 ## P2 — Player-facing traps + cheap infra/security fixes (one PR)
 
-- [ ] **P2.1 3D trap — HIGH [V].** On the title menu, ←/→/A/D
+- [x] **P2.1 3D trap — HIGH [V].** *Done 2026-10-06: `render3dAllowed()` (DEV or `?3d=1`) gates the chip, L/R and pad L/R; `sanitize` migrates a saved `render3d:true` to 2D (`src/settings.test.ts`); verified in a prod build (saved 3D boots 2D, L/R inert, `?3d=1` still works).* On the title menu, ←/→/A/D
       (`MenuScene.ts:~201`) or the RENDER chip (`:~75-85`) flips to 3D and
       **persists** it (`:~216-217`). In 3D, `SelectScene.pickable()`
       (`:~181`) requires `mesh3d`, which no roster entry has since 0d18a75,
@@ -329,7 +329,7 @@ stale. Fixing that makes every later session cheaper and less misled.*
       **Accept:** prod build: L/R on the menu changes nothing; a saved
       `render3d:true` boots 2D; attract never starts DanceScene; a unit test
       for the settings migration.
-- [ ] **P2.2 Cloudflare 404 fallback — HIGH [A, verified live by agent].**
+- [x] **P2.2 Cloudflare 404 fallback — HIGH [A, verified live by agent].** *Done 2026-10-06 in `wrangler.jsonc` (`"none"`; no client routes exist). The curl acceptance runs after the next deploy.*
       `wrangler.jsonc` `"not_found_handling": "single-page-application"`
       returns `index.html` with HTTP 200 for any missing `.png`/`.mp3`, and
       `public/_headers` then caches it for 7 days. That brings back the
@@ -343,7 +343,7 @@ stale. Fixing that makes every later session cheaper and less misled.*
       Enter.
       **Accept:** browser — ESC → arrows → Enter works for P1 and P2
       bindings.
-- [ ] **P2.4 Rematch key = P1 light punch — MED [V].** P1's LP is key R
+- [x] **P2.4 Rematch key = P1 light punch — MED [V].** *Done 2026-10-06: rematch = SPACE (ignored if bound to an attack); SPACE/ENTER/click all wait for `endNavArmedAt`; prompts updated. Verified in a prod build: mashing R through matchEnd does nothing, SPACE rematches.* P1's LP is key R
       (`settings.ts:28`, keyCode 82), and `fightShell.ts:~101,~144` bind
       `keydown-R` to restart. Mashing through a KO restarts the match and
       skips the win screen.
@@ -421,7 +421,7 @@ KFM parity test. Synthetic fighters for engine tests already exist:
       e.g. `vincent.json` silently changes engine coverage. Move to frozen
       fixture defs (`src/bench/fixtures.ts` `testChar`/`testMove`, or
       `src/engine/__fixtures__/`). Keep one roster smoke test.
-- [ ] **P3.1 No trades: slot 0 always wins — HIGH [V].**
+- [x] **P3.1 No trades: slot 0 always wins — HIGH [V].** *Done 2026-10-06: `resolveAttacks` detects against the start-of-tick state, then applies; strike beats grab, grab vs grab clashes (`src/engine/trades.test.ts`, fails on the old code).*
       `resolveAttacks` (`step.ts:~981-1000`) loops slot 0 then 1, reading the
       live `f.action`. Slot 0's `applyHit` puts slot 1 into hitstun before
       slot 1 is evaluated, despite the comment "snapshot both attacks first".
@@ -432,7 +432,7 @@ KFM parity test. Synthetic fighters for engine tests already exist:
       **Test:** Yulia mirror, both LP on the same tick → both take damage.
       (This is the "always trade" baseline; MUGEN-style priority —
       Hit/Miss/Dodge — is P10.7 C5 on top of it.)
-- [ ] **P3.2 SOCD: L+R walks forward AND blocks — HIGH [V].**
+- [x] **P3.2 SOCD: L+R walks forward AND blocks — HIGH [V].** *Done 2026-10-06: `cleanSocd` at the top of `step()`; rule in FIGHTING_STANDARDS §4 (`src/engine/socd.test.ts`, fails on the old code: 108 blocking ticks).*
       `holdingForward` is checked before back (`step.ts:~807`), and
       `isBlocking` (`:~854-856`) accepts `walkF` while `holdingBack`.
       Measured: advanced 192px while blocking 6/6 MP.
@@ -499,7 +499,7 @@ KFM parity test. Synthetic fighters for engine tests already exist:
       KO pop (×3); fatality parsing should reuse `pickAttack`.
       **Guard:** record final `hashState` of 3 long seeded random-input sims
       before the refactor and assert they're identical after.
-- [ ] **P3.10 Online compatibility guard.**
+- [x] **P3.10 Online compatibility guard.** *Done 2026-10-06: one compat hash = sim-only char data (`NON_SIM_KEYS` ignores quotes/VO/names/vfx) + the stage-arena table (D9) + `simFingerprint` (a scripted 900-tick match through `step()`, so engine changes are caught without a version bump); PROTO 2; `hashState` now covers charge, dash stocks, combo count, buffered press and the input buffer.*
       - Add a build/engine-version field to the lobby hello and refuse
         mismatched peers.
       - `charDataHash` currently includes win quotes/VO/lore text (a typo fix
@@ -535,17 +535,17 @@ shows the error gone, then `npm run bench -- --update-baseline` in the same
 commit (the ratchet rejects a fixed error that's still listed). Full table of
 the 14 errors: FIGHTING_STANDARDS §6.1.*
 
-- [ ] **P4.0 Four normals can never hit anyone — HIGH [V, bench].**
+- [x] **P4.0 Four normals can never hit anyone — HIGH [V, bench].** *Done 2026-10-06: the auto-hitbox reproduced the bad boxes (DWPose missed the extended limb), so the boxes were placed on the active cells' forward-most opaque pixels. Vincent `clk` now connects but measures −9 on block (P4.3).*
       vincent `clk` (reach 22 px, bodies touch at 102), flo `lk` (34 vs 88),
       kirby `cmp` (17 vs 94), tao `chp` (hitbox behind the body, −3).
       Pose-measured boxes from the wrong limb/side. Re-derive from the active
       cell's skeleton (Sprite Editor auto-hitbox), then sanity-check:
       `hitbox.x + w` must exceed the push-box front + opponent hurtbox back.
 
-- [ ] **P4.1 Ben & Earl throws do nothing — HIGH [V].** `moves.throw` has
+- [x] **P4.1 Ben & Earl throws do nothing — HIGH [V].** *Done 2026-10-06 (LPLK, 85 damage, knockdown, range per P4.2).* `moves.throw` has
       no `input` and `damage: 0` (`grab.range` 64), so LP+LK just jabs.
       Set `input: {button:'LPLK'}`, damage ≈85, techable, and range per P4.2.
-- [ ] **P4.2 Grab reach can't connect — HIGH [V, bench].** Bodies stop at
+- [x] **P4.2 Grab reach can't connect — HIGH [V, bench].** *Done 2026-10-06: ranges = widest roster gap + ~10 px, written PRE-scale (ranges scale with `scale`); `kit.mjs` `grabFloor` + `src/data/kit.test.ts`. MKS-1 errors 14 → 2 (the P4.3 infinites).* Bodies stop at
       front + front, so a grab shorter than that never reaches. The bench's
       cross-matchup `throw-out-of-range` rule IS the requested test (already
       in CI via the ratchet). Measured: ygor throw 79 (misses even the
@@ -1073,6 +1073,22 @@ files unasked. Full design: `docs/CHARACTER_STUDIO.md` Phases 4–5 (+ the R2
 ## Handoff log
 
 *(newest first; one entry per session: date · who · done · next · gotchas)*
+
+- **2026-10-06 · pre-ship bug-fix pass (Claude Opus 5.5).** Done: P2.1,
+  P2.2, P2.4, P3.1, P3.2, P3.10, P4.0, P4.1, P4.2 (details on each item).
+  445/445 tests (34 files), tsc clean, MKS-1 errors 14 → 2, prod build main
+  chunk 499.5 KB gz (unchanged). Browser-verified in a `vite preview` prod
+  build: saved 3D boots 2D and L/R is inert, `?3d=1` still reaches 3D,
+  mashing R through match end no longer restarts, SPACE rematches, a fight
+  loads `bg-stage-wide-dojo` with the camera on.
+  **Next:** open the one big PR for this branch (D7) once the user OKs it;
+  P2.2's curl check after that deploy; then P4.3 (Vincent/Ben infinites) or
+  P3.12 feel pass.
+  **Gotchas:** with the browser pane hidden there are NO animation frames at
+  all — drive Phaser by hand: `__game.step(t, 16.7)` in a loop (see this
+  entry's session). Character grab ranges / hitboxes in JSON are PRE-`scale`
+  (the bench reports baked values: ben 64 → 76). PROTO is 2 now: an old tab
+  can't join a new one (by design).
 
 - **2026-10-06 · D9 finished: camera on + 27/27 wide stages (Claude Opus 5.5).**
   SF2 scrolling camera on by default (`318d8ec`); every registered stage has

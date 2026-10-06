@@ -160,6 +160,18 @@ MUGEN reference semantics (porter, ±1f, verified against IKEMEN source):
 **ground.slidetime** (a documented-vs-actual quirk IKEMEN preserves), IKEMEN
 characters to `ground.hittime`.
 
+**Input & contact rules (engine, 2026-10-06):**
+
+- **SOCD cleaning** (IKEMEN's rule): left+right held together = neutral,
+  up+down = up. Applied inside `step()` (`cleanSocd`) so online peers agree.
+  Before this, L+R walked forward AND blocked (measured: 192 px advance while
+  blocking 6/6 MPs).
+- **Same-tick connections** resolve against the start-of-tick state, never in
+  slot order: two strikes both land (a trade); a strike beats a grab (the
+  thrower got hit); two grabs clash and both whiff. Before this, slot 0
+  (online: the host) always won. MUGEN-style per-move priority
+  (Hit/Miss/Dodge) is roadmap C5 on top of this baseline.
+
 **Units:** `f` (60 Hz frames — all three engines), `CH` (character heights:
 px ÷ standing hurtbox height; makes 320×240 MUGEN and our 960×540 world
 comparable), `CH/s` for speeds, `%HP` for damage.
@@ -204,23 +216,29 @@ wide, so corners come twice as fast.
 
 ### 6.1 Errors — objectively broken (ratcheted in `src/bench/baseline.json`)
 
-14 errors. Throw reach is checked against **every playable opponent's** push
-box (bodies stop at front + front), not just the mirror.
+14 errors at audit time; **12 fixed 2026-10-06** (struck through below) —
+2 remain, both P4.3 balance work. Throw reach is checked against **every
+playable opponent's** push box (bodies stop at front + front), not just the
+mirror. The kit grammar (`tools/core/kit.mjs` `grabFloor`) now keeps
+Studio-built grabs out of range errors too. The four never-connect normals
+were boxes placed behind the body — the DWPose skeleton missed the extended
+limb, so the auto-hitbox reproduced them; they were re-placed on the active
+cells' forward-most opaque pixels.
 
 | Fighter | Move | Rule | Detail |
 |---|---|---|---|
-| vincent | `clk` | never-connects | hitbox reaches 22 px; bodies touch at 102 px |
+| ~~vincent~~ | ~~`clk`~~ | ~~never-connects~~ | ~~hitbox reaches 22 px; bodies touch at 102 px~~ |
 | vincent | `clp`/`lk` | **infinite** | 15 midscreen / 16+ corner — `lk`,`clp`,`cmk` drifted to 2f startup with 9–12 active frames (older docs: `lk` 5/3/10) |
-| flo | `lk` | never-connects | reach 34 px vs 88 px |
-| kirby | `cmp` | never-connects | reach 17 px vs 94 px |
-| tao | `chp` | never-connects | hitbox sits behind the fighter (reach −3 px) |
-| bodhi | Table Work L | throw-out-of-range | range 77 px ≤ push separation 84 px (even the mirror) |
-| bodhi | Table Work M | throw-out-of-range | 89 px can't reach vincent, yulia, catherine, kirby, ben |
-| ygor | throw | throw-out-of-range | range 79 px ≤ 88 px (even the mirror) |
-| rapha | throw | throw-out-of-range | 90 px can't reach vincent, yulia, catherine, ben |
-| vanessa | throw | throw-out-of-range | 91 px can't reach vincent (91 px) |
-| marzipan | Symbiosis L | throw-out-of-range | 95 px can't reach vincent (95 px) |
-| earl, ben | `throw` | **unreachable** | no `input` field — the throw can never be performed (also `damage: 0`, range 64) |
+| ~~flo~~ | ~~`lk`~~ | ~~never-connects~~ | ~~reach 34 px vs 88 px~~ |
+| ~~kirby~~ | ~~`cmp`~~ | ~~never-connects~~ | ~~reach 17 px vs 94 px~~ |
+| ~~tao~~ | ~~`chp`~~ | ~~never-connects~~ | ~~hitbox sits behind the fighter (reach −3 px)~~ |
+| ~~bodhi~~ | ~~Table Work L~~ | ~~throw-out-of-range~~ | ~~range 77 px ≤ push separation 84 px (even the mirror)~~ |
+| ~~bodhi~~ | ~~Table Work M~~ | ~~throw-out-of-range~~ | ~~89 px can't reach vincent, yulia, catherine, kirby, ben~~ |
+| ~~ygor~~ | ~~throw~~ | ~~throw-out-of-range~~ | ~~range 79 px ≤ 88 px (even the mirror)~~ |
+| ~~rapha~~ | ~~throw~~ | ~~throw-out-of-range~~ | ~~90 px can't reach vincent, yulia, catherine, ben~~ |
+| ~~vanessa~~ | ~~throw~~ | ~~throw-out-of-range~~ | ~~91 px can't reach vincent (91 px)~~ |
+| ~~marzipan~~ | ~~Symbiosis L~~ | ~~throw-out-of-range~~ | ~~95 px can't reach vincent (95 px)~~ |
+| ~~earl, ben~~ | ~~`throw`~~ | ~~**unreachable**~~ | ~~no `input` field — the throw can never be performed (also `damage: 0`, range 64)~~ |
 | ben | `clk`/`clp` | **infinite** | 11 midscreen / 16+ corner |
 
 Earl (13), Tao (10) and RJ (11) also have long-but-finite light loops.
