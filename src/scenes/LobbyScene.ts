@@ -11,6 +11,7 @@ import { STAGE_H, STAGE_W } from '../engine';
 import { play } from './BootScene';
 import { playMusic } from '../audio/music';
 import { characters } from '../data/characters';
+import { STAGES, stageArena } from '../data/stages';
 import { menuNav, navDefer } from '../input/menu-nav';
 import { getSettings } from '../settings';
 import { LobbyController, type OnlineSelectData } from '../net/lobby';
@@ -220,6 +221,9 @@ export class LobbyScene extends Phaser.Scene {
           ? { roundTicks: cfg.roundSeconds * 60, winsNeeded: cfg.winsNeeded, stage: bounds, introTicks: 240 }
           : undefined,
         stage: this.isHost ? hostStage : undefined,
+        // the scrolling-camera arenas come from this build's wide-stage art
+        // (stageArena, D9): peers on builds with different art must not match
+        simExtra: STAGES.map((st) => [st.id, stageArena(st.id)]),
       },
     );
     this.setStatus('connected — verifying…');

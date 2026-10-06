@@ -61,6 +61,13 @@ describe('hashState', () => {
       (s) => (s.fighters[1].action.kind = 'hitstun'),
       (s) => (s.fighters[0].action.frame += 1),
       (s) => (s.fighters[0].facing = -1),
+      // P3.10: hidden state that only shows up ticks later
+      (s) => (s.fighters[0].charge += 1),
+      (s) => (s.fighters[1].backChargeWindow = 3),
+      (s) => (s.fighters[0].dashStocks -= 1),
+      (s) => (s.fighters[1].comboHits = 2),
+      (s) => (s.fighters[0].buffered = { id: 'lp', ticksLeft: 5 }),
+      (s) => s.fighters[1].inputBuffer.push(7),
     ];
     for (const mutate of mutations) {
       const s = structuredClone(base);

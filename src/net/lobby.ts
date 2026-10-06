@@ -7,14 +7,17 @@
 // match: a protocol-version skew (wire format differs) and a character-data
 // skew (one peer's frame data was patched → sims diverge tick one). Both
 // refuse the match up front with a shown reason rather than desyncing later.
-import type { Defs, MatchRules } from '../engine';
+import { EMPTY_INPUT, hashState, initialState, step, type Defs, type InputFrame, type MatchRules } from '../engine';
 import { PROTO, type NetMsg, type Transport, type TransportStatus } from './transport';
 
-/** FNV-1a over the serialized character registry. Equal ⇔ both peers run
- *  identical frame data / hitboxes / move lists. Any drift (a rebalance on one
- *  side) changes it, and the handshake refuses the match. */
-export function charDataHash(defs: Defs): number {
-  const json = JSON.stringify(defs);
+/** Presentation-only character fields (P3.10): they never touch step(), so a
+ *  typo fix in a win quote or a renamed move must not split online players. */
+const NON_SIM_KEYS = new Set([
+  'name', 'color', 'lore', 'winQuotes', 'vo', 'arcade', 'stage', 'comment',
+  'vfx', 'voice', 'voiceText', 'renderSize', 'panels',
+]);
+
+function fnv(json: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < json.length; i++) {
     h ^= json.charCodeAt(i) & 0xff;
@@ -24,6 +27,44 @@ export function charDataHash(defs: Defs): number {
     h = (h + (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24)) >>> 0;
   }
   return h >>> 0;
+}
+
+/** FNV-1a over the SIM-RELEVANT character data (+ any extra sim inputs, e.g.
+ *  the stage arena table). Equal ⇔ both peers run identical frame data /
+ *  hitboxes / move lists; presentation text is ignored (NON_SIM_KEYS). */
+export function charDataHash(defs: Defs, extra?: unknown): number {
+  // the key filter applies to character data only (arena tables have a `stage` too)
+  const sim = JSON.stringify(defs, (k, v) => (NON_SIM_KEYS.has(k) ? undefined : v));
+  return fnv(`${sim}|${JSON.stringify(extra ?? null)}`);
+}
+
+/** The engine's behaviour, measured (P3.10): a fixed 900-tick scripted match
+ *  (deterministic LCG inputs) between the first two characters, hashed at the
+ *  end. Any change to step() semantics changes it — no version constant to
+ *  forget to bump. ~5 ms. */
+export function simFingerprint(defs: Defs): number {
+  const ids = Object.keys(defs).sort();
+  if (ids.length === 0) return 0;
+  // walls far away: a corner clamp would absorb a divergence (e.g. walk speed)
+  const s = initialState(ids[0], ids[1] ?? ids[0], defs, { roundTicks: 0, introTicks: 0, stage: { minX: -20000, maxX: 20000 } });
+  let seed = 0x2545f491;
+  const rnd = (): number => ((seed = (Math.imul(seed, 1103515245) + 12345) >>> 0) >>> 16) & 0xffff;
+  // mostly movement (walk/jump/crouch held in runs), occasional attacks — so
+  // physics, normals, specials and hits all shape the final state
+  const DIRS = ['up', 'down', 'left', 'right'] as const;
+  const BTNS = ['lp', 'mp', 'hp', 'lk', 'mk', 'hk'] as const;
+  const held: [InputFrame, InputFrame] = [{ ...EMPTY_INPUT }, { ...EMPTY_INPUT }];
+  const frame = (slot: 0 | 1): InputFrame => {
+    if (rnd() % 12 === 0) {
+      held[slot] = { ...EMPTY_INPUT };
+      for (const k of DIRS) if (rnd() % 3 === 0) held[slot][k] = true;
+    }
+    const f: InputFrame = { ...held[slot] };
+    for (const k of BTNS) if (rnd() % 120 === 0) f[k] = true;
+    return f;
+  };
+  for (let t = 0; t < 900; t++) step(s, [frame(0), frame(1)], defs);
+  return hashState(s);
 }
 
 export type LobbyPhase =
@@ -110,6 +151,9 @@ export interface LobbyOptions {
   skipVerify?: boolean;
   /** rematch: the opponent's name is already known (no hello to carry it) */
   remoteName?: string;
+  /** extra sim inputs both peers must agree on (the stage arena table — it
+   *  comes from the build's wide-stage art, D9) — folded into the hash */
+  simExtra?: unknown;
 }
 
 const DEFAULT_RULES: MatchRules = {
@@ -150,7 +194,8 @@ export class LobbyController {
     this.hooks = hooks;
     this.transport = opts.transport;
     this.isHost = opts.isHost;
-    this.charHash = charDataHash(opts.defs);
+    // one compatibility number: sim data + arenas + the engine's measured behaviour
+    this.charHash = charDataHash(opts.defs, { extra: opts.simExtra ?? null, sim: simFingerprint(opts.defs) });
     this.localName = opts.localName;
     this.delay = opts.delay ?? 2;
     this.rules = opts.rules ?? DEFAULT_RULES;
@@ -255,7 +300,7 @@ export class LobbyController {
           return this.fail(`version mismatch (peer proto ${m.proto}, need ${PROTO})`);
         }
         if (m.charHash !== this.charHash) {
-          return this.fail('character data mismatch — both players need the same game version');
+          return this.fail('game version mismatch — both players need the same build (reload the page)');
         }
         this.remoteVerified = true;
         this.remoteName = m.name;

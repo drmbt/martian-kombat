@@ -5,7 +5,7 @@
 import type { GameState, MatchRules } from '../engine';
 
 /** bump on any wire-format change — checked in the hello handshake (V21) */
-export const PROTO = 1;
+export const PROTO = 2; // 2: compat hash = sim-only char data + arenas + engine fingerprint (P3.10)
 
 export type NetMsg =
   | { t: 'mode'; render3d: boolean } // host announces its renderer on connect; guest auto-adopts (2D/3D never cross-join)

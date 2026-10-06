@@ -65,6 +65,18 @@ export function hashState(s: GameState): number {
     fnv.num(f.hitstop);
     fnv.num(KINDS.indexOf(f.action.kind));
     fnv.num(f.action.frame);
+    // P3.10: hidden state that decides FUTURE ticks — without it a divergence
+    // (a dropped buffered press, a charge one tick short) hid until it acted
+    fnv.num(f.charge);
+    fnv.num(f.backCharge);
+    fnv.num(f.chargeWindow);
+    fnv.num(f.backChargeWindow);
+    fnv.num(f.dashStocks);
+    fnv.num(f.dashRegen);
+    fnv.num(f.comboHits);
+    fnv.num(f.buffered ? f.buffered.ticksLeft : -1);
+    fnv.num(f.inputBuffer.length);
+    for (const w of f.inputBuffer) fnv.num(w);
   }
   fnv.num(s.projectiles.length);
   for (const p of s.projectiles) {
