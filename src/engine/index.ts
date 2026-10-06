@@ -2,6 +2,7 @@ export * from './types';
 export * from './constants';
 export {
   step,
+  cleanSocd,
   initialState,
   worldBox,
   packInput,

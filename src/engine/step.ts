@@ -1045,7 +1045,14 @@ function resolveAttacks(
   inputs: [InputFrame, InputFrame],
   frozen: [boolean, boolean],
 ): void {
-  // snapshot both attacks first so trades (both connect same tick) work
+  // Two passes so trades work (P3.1): DETECT every connection against the
+  // start-of-tick state, THEN apply. Applying inside the loop let slot 0's hit
+  // put slot 1 in hitstun before slot 1 was checked — slot 0 (online: the
+  // host) always won. Same-tick rules: two strikes both land (a trade); a
+  // strike beats a grab (the thrower got hit); two grabs clash and both whiff.
+  // `a` is captured: applying the other side's hit REPLACES this fighter's action
+  type Conn = { slot: 0 | 1; a: FighterState['action']; m: ReturnType<typeof resolveMove>; grab: boolean; counter: boolean };
+  const conns: Conn[] = [];
   for (const slot of [0, 1] as const) {
     const f = s.fighters[slot];
     const a = f.action;
@@ -1057,8 +1064,7 @@ function resolveAttacks(
     if (a.hasHit && !(m.rehit && a.frame - (a.lastHitFrame ?? 0) >= m.rehit)) continue;
     if (a.frame < m.startup || a.frame >= m.startup + m.active) continue;
 
-    const defSlot = slot === 0 ? 1 : 0;
-    const d = s.fighters[defSlot];
+    const d = s.fighters[slot === 0 ? 1 : 0];
     if (isInvulnerable(d)) continue;
 
     // command grabs: unblockable, range-based, grounded targets only
@@ -1074,64 +1080,76 @@ function resolveAttacks(
       ) {
         continue;
       }
-      if (grounded(d) && Math.abs(f.x - d.x) <= m.grab.range) {
-        a.hasHit = true;
-        if (m.techable) {
-          // hold the victim through the tech window; damage waits for expiry
-          if (d.action.kind === 'dazed') d.stun = 0; // the throw is the dizzy punish
-          s.pendingThrow = {
-            attacker: slot,
-            moveId: a.moveId!,
-            strength: a.strength,
-            ticksLeft: THROW_TECH_TICKS,
-          };
-          d.action = { kind: 'hitstun', frame: THROW_TECH_TICKS + 2 };
-          d.vx = 0;
-          // the grab thunk freezes both for a beat (melee-style)
-          f.hitstop = Math.max(f.hitstop, HITSTOP_LIGHT);
-          d.hitstop = Math.max(d.hitstop, HITSTOP_LIGHT);
-          continue;
-        }
-        applyHit(s, defSlot, f.facing, {
-          damage: m.damage,
-          hitstun: m.hitstun,
-          blockstun: m.blockstun,
-          knockback: m.knockback,
-          height: m.height,
-          knockdown: true,
-          chip: 0,
-          hitstop: hitstopFor(a.moveId!, m)[1],
-          attackerHitstop: hitstopFor(a.moveId!, m)[0],
-          freezeAttacker: true,
-          counter: false, // grabs land clean, never as counters
-          unblockable: true,
-        }, inputs[defSlot]);
-        if (m.grabRecoil) f.vx = -f.facing * m.grabRecoil; // 86'd bounce-away
-        // kudzu drain: the grab feeds the attacker (Symbiosis)
-        if (m.heal) f.health = Math.min(defs[f.charId].health, f.health + m.heal);
-      }
+      if (grounded(d) && Math.abs(f.x - d.x) <= m.grab.range) conns.push({ slot, a, m, grab: true, counter: false });
       continue;
     }
 
     if (!m.hitbox) continue;
     if (overlaps(worldBox(f, m.hitbox), defenderHurtRect(d, defs[d.charId]))) {
-      a.hasHit = true;
-      a.lastHitFrame = a.frame;
+      conns.push({ slot, a, m, grab: false, counter: isCounterhit(d, defs) });
+    }
+  }
+
+  const grabs = conns.filter((c) => c.grab).length;
+  const strikes = conns.length - grabs;
+  for (const c of conns) {
+    if (c.grab && (strikes > 0 || grabs > 1)) continue; // struck, or a throw clash
+    const { slot, m, a } = c;
+    const f = s.fighters[slot];
+    const defSlot = slot === 0 ? 1 : 0;
+    const d = s.fighters[defSlot];
+    a.hasHit = true;
+    if (c.grab) {
+      if (m.techable) {
+        // hold the victim through the tech window; damage waits for expiry
+        if (d.action.kind === 'dazed') d.stun = 0; // the throw is the dizzy punish
+        s.pendingThrow = {
+          attacker: slot,
+          moveId: a.moveId!,
+          strength: a.strength,
+          ticksLeft: THROW_TECH_TICKS,
+        };
+        d.action = { kind: 'hitstun', frame: THROW_TECH_TICKS + 2 };
+        d.vx = 0;
+        // the grab thunk freezes both for a beat (melee-style)
+        f.hitstop = Math.max(f.hitstop, HITSTOP_LIGHT);
+        d.hitstop = Math.max(d.hitstop, HITSTOP_LIGHT);
+        continue;
+      }
       applyHit(s, defSlot, f.facing, {
         damage: m.damage,
         hitstun: m.hitstun,
         blockstun: m.blockstun,
         knockback: m.knockback,
         height: m.height,
-        knockdown: !!m.knockdown,
-        chip: chipFor(a.moveId!, m),
+        knockdown: true,
+        chip: 0,
         hitstop: hitstopFor(a.moveId!, m)[1],
         attackerHitstop: hitstopFor(a.moveId!, m)[0],
-        blockKnockback: m.blockKnockback,
         freezeAttacker: true,
-        counter: isCounterhit(d, defs),
+        counter: false, // grabs land clean, never as counters
+        unblockable: true,
       }, inputs[defSlot]);
+      if (m.grabRecoil) f.vx = -f.facing * m.grabRecoil; // 86'd bounce-away
+      // kudzu drain: the grab feeds the attacker (Symbiosis)
+      if (m.heal) f.health = Math.min(defs[f.charId].health, f.health + m.heal);
+      continue;
     }
+    a.lastHitFrame = a.frame;
+    applyHit(s, defSlot, f.facing, {
+      damage: m.damage,
+      hitstun: m.hitstun,
+      blockstun: m.blockstun,
+      knockback: m.knockback,
+      height: m.height,
+      knockdown: !!m.knockdown,
+      chip: chipFor(a.moveId!, m),
+      hitstop: hitstopFor(a.moveId!, m)[1],
+      attackerHitstop: hitstopFor(a.moveId!, m)[0],
+      blockKnockback: m.blockKnockback,
+      freezeAttacker: true,
+      counter: c.counter,
+    }, inputs[defSlot]);
   }
 }
 
@@ -1323,8 +1341,18 @@ function passivePhysics(f: FighterState, def: CharacterDef, stage: { minX: numbe
 
 // ---------- the tick ----------
 
-export function step(s: GameState, inputs: [InputFrame, InputFrame], defs: Defs): GameState {
+/** SOCD cleaning (P3.2, IKEMEN's rule): L+R → neutral, U+D → up. Done in the
+ *  engine so both online peers agree. Unchanged frames are returned as-is. */
+export function cleanSocd(i: InputFrame): InputFrame {
+  const lr = i.left && i.right;
+  const ud = i.up && i.down;
+  if (!lr && !ud) return i;
+  return { ...i, ...(lr ? { left: false, right: false } : {}), ...(ud ? { down: false } : {}) };
+}
+
+export function step(s: GameState, rawInputs: [InputFrame, InputFrame], defs: Defs): GameState {
   s.tick++;
+  const inputs: [InputFrame, InputFrame] = [cleanSocd(rawInputs[0]), cleanSocd(rawInputs[1])];
 
   for (const slot of [0, 1] as const) {
     const f = s.fighters[slot];
