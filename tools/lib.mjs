@@ -117,7 +117,10 @@ export function concurrencyArg(dflt) {
  *  width — is the real concurrency ceiling; this is what makes wide pools
  *  safe (CHARACTER_STUDIO §2.8: "429 backoff in the shared pool, finally").
  *  Errors carry `.status` when the API helpers below throw them. */
-export async function withBackoff(fn, { tries = 5, baseMs = 2000, label = 'api' } = {}) {
+export async function withBackoff(fn, { tries, baseMs, label = 'api' } = {}) {
+  // env overrides for overloaded days (e.g. MK_BACKOFF_TRIES=8 MK_BACKOFF_BASE_MS=15000)
+  tries ??= Number(process.env.MK_BACKOFF_TRIES) || 5;
+  baseMs ??= Number(process.env.MK_BACKOFF_BASE_MS) || 2000;
   let lastErr;
   for (let attempt = 0; attempt < tries; attempt++) {
     try {
@@ -125,10 +128,13 @@ export async function withBackoff(fn, { tries = 5, baseMs = 2000, label = 'api' 
     } catch (e) {
       lastErr = e;
       const status = e?.status ?? 0;
-      const transient = status === 429 || (status >= 500 && status <= 504);
+      // network-level failures (undici "fetch failed", resets, DNS blips) are
+      // as transient as a 503 — retry them too
+      const network = !status && /fetch failed|ECONNRESET|ETIMEDOUT|EAI_AGAIN|socket hang up|network/i.test(`${e?.message} ${e?.cause?.code ?? ''}`);
+      const transient = network || status === 429 || (status >= 500 && status <= 504);
       if (!transient || attempt === tries - 1) throw e;
-      const delay = Math.round(baseMs * 2 ** attempt * (0.7 + Math.random() * 0.6));
-      console.warn(`  ${label}: ${status} — backing off ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${tries})`);
+      const delay = Math.min(180_000, Math.round(baseMs * 2 ** attempt * (0.7 + Math.random() * 0.6)));
+      console.warn(`  ${label}: ${status || 'network'} — backing off ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${tries})`);
       await new Promise((r) => setTimeout(r, delay));
     }
   }

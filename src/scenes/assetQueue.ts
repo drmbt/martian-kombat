@@ -7,7 +7,7 @@
 import Phaser from 'phaser';
 import { characters } from '../data/characters';
 import { ROSTER } from '../data/roster';
-import { STAGES } from '../data/stages';
+import { STAGES, wideStage } from '../data/stages';
 import assetManifest from '../data/assetManifest.json';
 import { CELL_H, CELL_W } from '../render/coords';
 
@@ -112,6 +112,9 @@ export function queueStage(scene: Phaser.Scene, stageId: string): number {
     if (!scene.textures.exists(key)) { scene.load.image(key, url); n++; }
   };
   img(`bg-stage-${st.id}`, st.file);
+  // the ultra-wide (scrolling-camera) art, when generated — FightScene prefers it
+  const wide = wideStage(st.id);
+  if (wide) img(`bg-stage-wide-${st.id}`, wide.file);
   if (st.layers?.sky) img(`bg-stage-${st.id}-sky`, st.layers.sky.file);
   if (st.layers?.far) img(`bg-stage-${st.id}-far`, st.layers.far.file);
   if (st.layers?.near) img(`bg-stage-${st.id}-near`, st.layers.near.file);

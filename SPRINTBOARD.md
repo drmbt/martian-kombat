@@ -1525,6 +1525,18 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-10-06 · scenes/data/tools/assets · SF2 scrolling camera ON by
+  default + ultra-wide stages (D9)** — every real fight (not the dev
+  editors) runs `MatchRules.camera` with the arena from `stageArena(id)`
+  (a pure function of stage id + build, so online peers agree); FightScene
+  pins the HUD (`gfxScreen`, scroll factor 0) and draws the stage as a world
+  object (tall art bottom-anchored). `tools/gen-outpaint.mjs` became a batch
+  tool (`--all`, tall-source auto-pick, review flag, `--ship`) with per-stage
+  style/edge prompts in `tools/stages-wide.mjs`; 21/27 stages reviewed +
+  shipped to `public/assets/backgrounds/stages-wide/` (the rest in
+  progress). Asset manifest gains `stageWide`; `withBackoff` retries network
+  errors + env-tunable. No R2 writes (P8.17). — Claude (Opus 5.5)
+
 - **2026-10-06 · engine/tools/docs · decisions D1–D10, MUGEN jump + charge,
   scroll prototype, outpaint test** — engine adopts MUGEN semantics (no
   takeoff-tick friction, `JUMP_SPEED_MULT` 1.4 keeps distances; charge =

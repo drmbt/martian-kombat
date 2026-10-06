@@ -138,6 +138,17 @@ The pipeline turns a photo of a real person into a game-ready sprite sheet:
    fighter strip (the `STAGE_STYLE` prompt in the script enforces this; keep it
    intact). Stages generate concurrently (`--concurrency N`, default 4).
    GPT Image (`gpt-image-2`) remains the route for non-stage stills (UI art).
+   **Then widen it (every stage, since 2026-10-06):** every fight uses the
+   SF2/MUGEN **scrolling camera** (fighters always on screen; `MatchRules.camera`
+   via `stageArena()` in `src/data/stages.ts`) over an **ultra-wide 3.5:1**
+   stage. `npm run gen:outpaint -- --stage <id>` (two-pass side outpainting;
+   add a style/edge note to `tools/stages-wide.mjs` after LOOKING at the art)
+   uses the TALL art in `public/assets/backgrounds/stages tall/` when present
+   (only its bottom 3.5:1 band is shown until a Marvel vs Capcom-style vertical
+   camera exists). Review `assets/raw/stages-wide/<id>/tryN-*.wide.jpg`,
+   re-roll with `--try N+1`, then `--ship --try N` →
+   `public/assets/backgrounds/stages-wide/<id>.jpg` and `npm run gen:assets`.
+   A stage without wide art still works (its 21:9 art becomes a narrower arena).
 6. **Audio** — ElevenLabs for announcer VO ("ROUND ONE… FIGHT!"), per-character
    grunts/taunts, and hit SFX. When a real voice sample exists, clone the actual
    person's voice instead: drop clips in `assets/voice-inspo/<name>/` (see its

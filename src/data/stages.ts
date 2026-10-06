@@ -2,8 +2,9 @@
 // assets/stage-inspo/<FOLDER>/, packed to public/assets/backgrounds/stages/.
 // A character claims a home stage with an optional `stage: "<id>"` field in
 // its JSON — used by the stage-select dialog to badge home stages.
-import type { Defs } from '../engine';
+import { STAGE_H, STAGE_W, type Defs, type MatchRules } from '../engine';
 import stagePins from './stage-pins.json';
+import assetManifest from './assetManifest.json';
 
 export interface StageEntry {
   id: string;
@@ -83,4 +84,44 @@ export function stageById(id: string): StageEntry | undefined {
 export function stageOwner(stageId: string, charIds: string[], defs: Defs): string | null {
   for (const c of charIds) if (defs[c]?.stage === stageId) return c;
   return null;
+}
+
+// ---------------------------------------------------------------------------
+// SF2 / MUGEN scrolling arenas. Every stage fights on a scrolling camera
+// (MatchRules.camera): the view follows the fighters, who can never leave it.
+// The arena is the stage art's DISPLAYED width at screen height, so it is a
+// pure function of the stage id + this build's asset manifest — both online
+// peers derive the identical rules from the agreed stage (V25).
+
+/** visible band of an ultra-wide stage (backgrounds/stages-wide/<id>.jpg,
+ *  outpainted by tools/gen-outpaint.mjs). TALL art (MvC-style headroom) is
+ *  wider-than-tall too: only its bottom WIDE_ASPECT band is shown for now. */
+export const WIDE_ASPECT = 3.5;
+/** classic stage art (21:9) — the arena when no wide art exists yet */
+const ART_ASPECT = 21 / 9;
+/** fighters stop this far inside the view's edges (= STAGE_MIN_X; MUGEN screenleft) */
+export const CAMERA_MARGIN = 50;
+
+const WIDE = (assetManifest as unknown as { stageWide?: Record<string, [number, number]> }).stageWide ?? {};
+
+/** the ultra-wide art for a stage, if it has been generated */
+export function wideStage(id: string): { file: string; w: number; h: number; tall: boolean } | undefined {
+  const size = WIDE[id];
+  if (!size) return undefined;
+  return { file: `assets/backgrounds/stages-wide/${id}.jpg`, w: size[0], h: size[1], tall: size[1] > size[0] / WIDE_ASPECT + 1 };
+}
+
+/** stage art width in world px when drawn at screen height */
+export function stageArtWidth(id: string): number {
+  return Math.round(STAGE_H * (wideStage(id) ? WIDE_ASPECT : ART_ASPECT));
+}
+
+/** Scrolling-camera rules for a stage: the walkable arena spans the art minus
+ *  the margin, centred on STAGE_W/2 (spawns and the engine origin stay put). */
+export function stageArena(id: string): Pick<MatchRules, 'stage' | 'camera'> {
+  const half = stageArtWidth(id) / 2;
+  return {
+    stage: { minX: Math.round(STAGE_W / 2 - half + CAMERA_MARGIN), maxX: Math.round(STAGE_W / 2 + half - CAMERA_MARGIN) },
+    camera: { width: STAGE_W, margin: CAMERA_MARGIN },
+  };
 }

@@ -136,7 +136,8 @@ Workers Static Assets (`wrangler.jsonc`), serving the HEAD build.
 | D1 | **Move `assets/voice-inspo/` + `assets/character-inspo/` to the private R2 bucket** and `git rm` them (no history rewrite now; D2 later). | P9.2 unblocked. |
 | D4 | **Gate card now, simplified touch later.** | P7.2 now; P7.4 = stick + 3–4 buttons, later. |
 | D8 | **All four feel changes**, each A/B-playtested before going roster-wide: KFM hitstop (~8/12/12/15, after P3.5), plus-on-hit mediums/heavies (links), safer on block (lights ≈ −2..+1, mediums ≈ −4), walk toward ~1.5 CH/s. | New **P3.12**. |
-| D9 | Wants to SEE it first: render a fixed-vs-scroll playtest comparison (stacked video); test automated outpainting for wider stages (D6 approved for 2 stages × ≤ 3 tries); the 1680×1440 "stages tall" set (Marvel vs Capcom-style high-jump WIP) may get side-outpainting later. | P10.9 E2 in progress. |
+| D9 (2026-10-06, after the videos) | **SF2 camera ON BY DEFAULT** (fighters always on screen) and **every stage outpainted to ultra-wide 3.5:1**; stages with TALL art outpaint from it and show only its bottom 3.5:1 band until a Marvel vs Capcom-style vertical camera. **Do not write to R2** until the raw-sync logic is updated (see P8.17). | P10.9 E2 done; P8.17 new. |
+| D9 (first pass) | Wanted to SEE it first: render a fixed-vs-scroll playtest comparison (stacked video); test automated outpainting for wider stages (D6 approved for 2 stages × ≤ 3 tries); the 1680×1440 "stages tall" set (Marvel vs Capcom-style high-jump WIP) may get side-outpainting later. | P10.9 E2 in progress. |
 | D10 | **Adopt MUGEN semantics**: no ground friction on the jump takeoff tick, with each fighter's `jumpSpeedX` rescaled to keep MUGEN-like distances (~1.0 CH); MUGEN charge = hold ≥ **60** ticks, down-back/up-back count (4-way `$`), then forward/up + button within **10** ticks of release. | P3.11 rewritten. |
 
 ---
@@ -850,7 +851,18 @@ can exhaust its memory.*
       `/__editor/jobs`, `/jobs/stream`, `/__editor/pack` — WIRE them (Studio
       Phase 4 jobs/cost UI, see P12), don't delete.
 - [ ] **P8.16** `corridorkey.mjs` clones an unpinned third-party HEAD. Pin
-      the commit recorded in RESCUE_REPORT.
+      the commit recorded in RESCUE_REPORT (`97e55a4` — also what the new
+      machine's sibling clone is on, set up 2026-10-06).
+- [ ] **P8.17 Make `raw:push` no-clobber before the next push (⛔ user:
+      "not ready to test yet").** Today `rclone copy --checksum` REPLACES any
+      R2 object whose local copy changed, so one push from a machine with a
+      stale/edited file overwrites the good version in `martiankombat-raw`
+      (only the 2026-10 snapshot would survive). Add `--ignore-existing` by
+      default + an explicit `--overwrite` (or versioned keys), a dry-run
+      preview, and a test; then push the local-only raw sets that exist only
+      on the new machine: `assets/raw/stages-wide/` (outpaint tries + prompt
+      sidecars), `assets/raw/playtest/`, `assets/raw/keyed/kirby/`. Until
+      then: **no `raw:push`, no R2 writes of any kind.**
 
 ## P9 — Repo weight & history (all ⛔; the R2 mirror is the backup)
 
@@ -964,8 +976,12 @@ can exhaust its memory.*
       - D4 export a Martian fighter as MUGEN/IKEMEN DEF/CNS/AIR/CMD (run our
         cast inside IKEMEN — the reverse parity test);
       - D5 more references (licence-checked; the importer is generic).
-- [ ] **P10.9 Tooling & feel (MKS-1 Phase E).** *2026-10-06 progress on
-      E2/D9:* the engine camera exists (`MatchRules.camera`, `cameraX`,
+- [ ] **P10.9 Tooling & feel (MKS-1 Phase E).** *E2 DONE 2026-10-06 (D9):
+      the SF2 scrolling camera is on by default for every real fight
+      (FightScene: `stageArena()` → `MatchRules.camera`; HUD screen-pinned on
+      `gfxScreen`; editors keep the fixed screen); all stages outpainted to
+      3.5:1 (`public/assets/backgrounds/stages-wide/`, tall sources shown by
+      their bottom band). Earlier progress notes:* the engine camera exists (`MatchRules.camera`, `cameraX`,
       `arenaBounds`; default off; 5 tests); `npm run playtest:video`
       renders fixed-vs-scroll comparisons (sent: chiba-roof, drive-in);
       `npm run gen:outpaint` widens stages — the two-pass `sides` mode is
