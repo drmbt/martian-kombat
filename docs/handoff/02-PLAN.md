@@ -44,7 +44,10 @@
    reproduce first (failing vitest for engine/data; a probe or browser repro
    for UI), then fix. Line numbers drift — re-locate by symbol, they're
    marked `~` when approximate.
-4. **Branching:** `main` is believed to auto-deploy martiankombat.com via a
+4. **Branching (D7, 2026-10-06): for now, commit phase work to
+   `feat/mks1-rescue-handoff` and open one bigger PR later.** The general
+   policy below applies once the user switches back to PR-per-phase.
+   `main` is believed to auto-deploy martiankombat.com via a
    Cloudflare dashboard Git build (confirm with the user in P0.5). Work on
    one branch per phase (`fix/p2-player-traps`, `fix/p3-engine-correctness`,
    …), small scoped commits (CLAUDE.md conventions: `engine: …`, `ui: …`,
@@ -122,6 +125,20 @@ Workers Static Assets (`wrangler.jsonc`), serving the HEAD build.
 | **D9** | Arena width: ours is 3.0 character-heights walkable on a fixed screen, KFM's stage ~6.6. Optional horizontal camera scroll into the 21:9 art's overscan (SF2-style, no zoom; camera zoom was declined earlier). | P10.9 |
 | **D10** | Engine quirks the bench found: takeoff friction (forward jump = 0.85 × `jumpSpeedX`) and charge bleed (a charge needs `CHARGE_TICKS` + 8 = 43 ticks). Fix (changes every fighter's feel, re-fit KFM) or keep and document as house feel? | P3.11 |
 
+### Decisions recorded 2026-10-06 (wizard round with the user)
+
+| ID | Decision | Effect on the plan |
+|---|---|---|
+| D7 | **Stack on `feat/mks1-rescue-handoff`**; one bigger PR later (not PR-per-phase for now). | §0.4: commit phase work to this branch until the user says otherwise. |
+| D7b | **Unpublish GitHub Pages**; README → martiankombat.com. | P2.5 unblocked. |
+| D5 | **Freeze 3D** (dev-only / `?3d=1`). | P2.1 + P11 as written. |
+| D3 | **Platform now** — finish Character Studio phases 4–5 (jobs/cost UI, R2 publish, custom-fighter registry, auth/moderation). | New **P12**; P8.15 = wire, don't delete; P2.7 (dev-server hardening) becomes a prerequisite. |
+| D1 | **Move `assets/voice-inspo/` + `assets/character-inspo/` to the private R2 bucket** and `git rm` them (no history rewrite now; D2 later). | P9.2 unblocked. |
+| D4 | **Gate card now, simplified touch later.** | P7.2 now; P7.4 = stick + 3–4 buttons, later. |
+| D8 | **All four feel changes**, each A/B-playtested before going roster-wide: KFM hitstop (~8/12/12/15, after P3.5), plus-on-hit mediums/heavies (links), safer on block (lights ≈ −2..+1, mediums ≈ −4), walk toward ~1.5 CH/s. | New **P3.12**. |
+| D9 | Wants to SEE it first: render a fixed-vs-scroll playtest comparison (stacked video); test automated outpainting for wider stages (D6 approved for 2 stages × ≤ 3 tries); the 1680×1440 "stages tall" set (Marvel vs Capcom-style high-jump WIP) may get side-outpainting later. | P10.9 E2 in progress. |
+| D10 | **Adopt MUGEN semantics**: no ground friction on the jump takeoff tick, with each fighter's `jumpSpeedX` rescaled to keep MUGEN-like distances (~1.0 CH); MUGEN charge = hold ≥ **60** ticks, down-back/up-back count (4-way `$`), then forward/up + button within **10** ticks of release. | P3.11 rewritten. |
+
 ---
 
 ## 3. Guardrails (don't break these while fixing)
@@ -163,19 +180,19 @@ Workers Static Assets (`wrangler.jsonc`), serving the HEAD build.
 
 ## P0 — Rescue (old machine) → restore + baseline (new machine)
 
-- [ ] **P0.1 Old machine: run `01-OLD-MACHINE-PASSOFF.md`.** Private R2
+- [x] **P0.1 Old machine: run `01-OLD-MACHINE-PASSOFF.md`.** Done 2026-10-04 — see `RESCUE_REPORT.md`. Private R2
       mirror of every gitignored asset + snapshot, `tools/raw-sync.mjs`,
       canonical regen anchors committed (§ "Canonical anchors" in that file),
       `RESCUE_REPORT.md`, all pushed to `feat/mks1-rescue-handoff`. The user
       copies `.env` to the new machine privately (never git, never R2).
-- [ ] **P0.2 New machine: run `03-NEW-MACHINE-RESUME.md`.** `.env` key
+- [x] **P0.2 New machine: run `03-NEW-MACHINE-RESUME.md`.** Done 2026-10-06: 949/949 restored + verified, 18/18 anchors, jobs not restored. `.env` key
       NAMES check; `brew install rclone`; `npm ci`; `npm run raw:pull`;
       `npm run raw:verify` → 0 mismatches; `assets/raw/jobs/` NOT restored;
       every roster fighter has its anchor. If an anchor is missing, the git
       fallback is `git show 6c39409^:assets/raw/canonical/<id>.png` (16
       fighters + `ko/` variants; **ben, tao, rj were never in git** — the
       old machine is their only source).
-- [ ] **P0.3 Baseline.** `tsc`, `vitest` (expect 411+), `npx vite build
+- [x] **P0.3 Baseline.** Done 2026-10-06 (numbers in the Handoff log). `tsc`, `vitest` (expect 411+), `npx vite build
       --outDir /tmp/mk-dist`, `npm run bench` (must reproduce
       `docs/FRAME_DATA.md` exactly — the engine is deterministic across
       machines; a diff means a data or environment drift). Record in the
@@ -183,7 +200,7 @@ Workers Static Assets (`wrangler.jsonc`), serving the HEAD build.
 - [x] **P0.4 Reconcile in-flight work.** Done 2026-10-04: the MUGEN/IKEMEN
       parity work is MKS-1 Phase A, committed on `feat/mks1-rescue-handoff`
       and folded into this plan (P3, P4, P10.7–P10.9).
-- [ ] **P0.5 Deploy/branch policy (D7).** Confirm how martiankombat.com
+- [x] **P0.5 Deploy/branch policy (D7).** Decided 2026-10-06 (stack on this branch; see §2). Confirm how martiankombat.com
       deploys (dashboard Git build on `main`?), whether branch pushes make
       preview builds, the PR-per-phase flow, and when this branch merges.
 
@@ -337,8 +354,11 @@ stale. Fixing that makes every later session cheaper and less misled.*
       Settings → Pages, or `gh api -X DELETE repos/drmbt/martian-kombat/pages`
       after confirmation), or replace it with a redirect page.
 - [ ] **P2.6 Remove shipped orphans [A].**
-      - `public/assets/backgrounds/stages tall/` (13 files, 17 MB, incl. typo
-        `ai-kitchn.png`);
+      - **KEEP `public/assets/backgrounds/stages tall/`** — not an orphan: the
+        user's 1680×1440 upward-expanded stages for future Marvel vs
+        Capcom-style high-jump air fighting (D9). Move it out of
+        `public/` (unreferenced, so it ships for nothing) to
+        `assets/stages-tall/` and fix the `ai-kitchn` typo — don't delete;
       - `public/assets/backgrounds/stages/_old/` (11 files, 2.3 MB);
       - `public/dev/glb-viewer.html` (live in prod, broken: imports
         `/node_modules`);
@@ -486,9 +506,26 @@ KFM parity test. Synthetic fighters for engine tests already exist:
       - `hashState` skips buffer, charge, dash stocks and combo count:
         include them so divergence is caught early.
 
-- [ ] **P3.11 Quirks (⛔ D10).** Takeoff friction on the jump launch tick;
-      charge bleed on the release tick. If fixing: one commit each, re-fit
-      KFM, re-run `npm run bench -- --md`, note it in FIGHTING_STANDARDS §6.
+- [x] **P3.11 MUGEN jump + charge semantics (D10 decided).** Done
+      2026-10-06: `JUMP_SPEED_MULT` 1.6 → 1.4 (distances held within
+      0.01 CH), `CHARGE_TICKS` 60 + `CHARGE_RELEASE_TICKS` 10, KFM re-fit
+      (jumpSpeedX 8.754 → MUGEN's own 7.634), quirk tests flipped, 6 new tests.
+      - Jump: no ground friction on the takeoff tick (forward jump vx =
+        `jumpSpeedX` exactly); rescale every fighter's `jumpSpeedX` (×0.85,
+        measured) so distances stay MUGEN-like (~1.0 CH, KFM 1.03).
+      - Charge: MUGEN `~60$B, F, x` — a hold streak of ≥ 60 ticks where
+        down-back/up-back count as back (and down-left/right count as down),
+        then the opposite direction + button within 10 ticks of release; no
+        bleed. `CHARGE_TICKS` → 60.
+      - Flip the quirk tests in `src/bench/framedata.test.ts`, re-fit KFM
+        (its port's jumpSpeedX compensation disappears), `npm run bench -- --md`,
+        update FIGHTING_STANDARDS §4/§6 and the move-authoring skill.
+- [ ] **P3.12 Feel pass (D8 decided) — A/B before roster-wide.** After
+      P3.5: KFM-like hitstop (~8/12/12/15); mediums/heavies +2..+5 on hit
+      (raise `hitstun`); lights ≈ −2..+1 and mediums ≈ −4 on block (raise
+      `blockstun` / trim recovery); walk toward ~1.5 CH/s. Do each as a global
+      constant or a per-class data transform behind a dev toggle, playtest
+      A/B (record clips), then apply, re-bench, re-baseline.
 
 ## P4 — Character data, balance, schema lint
 
@@ -809,9 +846,9 @@ can exhaust its memory.*
       - One model-id constant (`'gemini-3-pro-image'` is hard-coded 12×).
       - Baseline ≈ 65–70 images per fighter, ~$9 at list price (verify
         current pricing).
-- [ ] **P8.15 ⛔ D3** Endpoints with zero callers: `/__editor/jobs`,
-      `/jobs/stream`, `/__editor/pack`. Wire the studio jobs/cost UI
-      (Studio Phase 4) or delete them.
+- [ ] **P8.15 (D3 = platform now)** Endpoints with zero callers:
+      `/__editor/jobs`, `/jobs/stream`, `/__editor/pack` — WIRE them (Studio
+      Phase 4 jobs/cost UI, see P12), don't delete.
 - [ ] **P8.16** `corridorkey.mjs` clones an unpinned third-party HEAD. Pin
       the commit recorded in RESCUE_REPORT.
 
@@ -821,7 +858,9 @@ can exhaust its memory.*
       (0 ahead), `flo-char` (0), `spike/3d-renderer` (0), `marzi-char` (2
       superseded draft commits). **Keep `feat/3d-mode`** (R2 GLB seam +
       `docs/3D_MODE_R2.md`).
-- [ ] **P9.2 ⛔ D1** voice-inspo / photos exposure (see §2).
+- [ ] **P9.2 (D1 decided: move to private R2 + `git rm`, no history
+      rewrite yet)** voice-inspo / photos exposure (see §2). `raw-sync` must
+      learn to pull these paths (they become ignored once removed).
       `assets/general-inspo/vanessa.wav` is an exact 16 MB duplicate of the
       voice-inspo copy, and `stage-inspo/DOME/Untitled` duplicates
       `Untitled2.png`.
@@ -925,12 +964,42 @@ can exhaust its memory.*
       - D4 export a Martian fighter as MUGEN/IKEMEN DEF/CNS/AIR/CMD (run our
         cast inside IKEMEN — the reverse parity test);
       - D5 more references (licence-checked; the importer is generic).
-- [ ] **P10.9 Tooling & feel (MKS-1 Phase E).**
+- [ ] **P10.9 Tooling & feel (MKS-1 Phase E).** *2026-10-06 progress on
+      E2/D9:* the engine camera exists (`MatchRules.camera`, `cameraX`,
+      `arenaBounds`; default off; 5 tests); `npm run playtest:video`
+      renders fixed-vs-scroll comparisons (sent: chiba-roof, drive-in);
+      `npm run gen:outpaint` widens stages — the two-pass `sides` mode is
+      seamless on normal 21:9 AND the 1680×1440 tall art (try1/try2 in
+      `assets/raw/stages-wide/`), the one-pass `pillar` mode is not (seams,
+      ghost duplicates). **Next for E2:** user verdict on the videos → wire
+      the camera into FightScene behind a setting (HUD scroll-factor 0,
+      background as a world object), then outpaint the remaining stages
+      (⛔ D6: ~2 calls per stage).
       - E1 training: SF6-style frame meter, input display, dummy
         record/playback; show bench numbers live in the Studio MOVES module;
       - E2 ⛔ D9 optional camera scroll into the 21:9 overscan;
       - E3 alternate palettes (hue-shift shader) for mirror matches;
       - E4 CPU-vs-CPU matchup matrix (deterministic seeds) for win rates.
+
+## P12 — Platform: Character Studio phases 4–5 (D3 = platform now)
+
+*Prerequisites: P2.7 (dev-server hardening) and P2.8 (paused job resume) —
+anything that lets Martians build fighters must not spend money or write
+files unasked. Full design: `docs/CHARACTER_STUDIO.md` Phases 4–5 (+ the R2
+§6 / open questions §9 being folded in by P1.4).*
+
+- [ ] **P12.1 Jobs + cost UI** — wire `/__editor/jobs` + `/jobs/stream`
+      into the Studio: queued/running/paused jobs, per-job and per-fighter
+      cost estimates (P8.14 pricing), explicit character-scoped resume.
+- [ ] **P12.2 Auto-pilot run** — `studio:run` DAG from the UI, with the
+      MKS-1 bench as a ship gate (zero errors before SHIP).
+- [ ] **P12.3 Publish to R2** — a publish path for player-made fighters
+      (the PUBLIC bucket `martiankombat-assets`, or a new one), a
+      custom-fighter registry the game loads at runtime (not `roster.ts`),
+      and the `StorageDriver` seam from the Studio plan.
+- [ ] **P12.4 Accounts, auth, moderation** — who may publish, review queue,
+      takedown; scope with the user before building.
+- [ ] **P12.5 Retire `CharacterCreatorScene`** (registered, never started).
 
 ## P11 — 3D mode (⛔ D5)
 
@@ -988,6 +1057,39 @@ can exhaust its memory.*
 ## Handoff log
 
 *(newest first; one entry per session: date · who · done · next · gotchas)*
+
+- **2026-10-06 · decisions round + D9/D10 work (Claude Opus 5.5).**
+  Recorded D1–D10 (§2 "Decisions recorded"). Set up **CorridorKey** on this
+  machine: sibling clone `../CorridorKey` at `97e55a4` (= the old machine
+  and upstream HEAD), uv env with the MLX extra, MLX weights (SHA-256 OK);
+  `.env` `CORRIDORKEY_DIR` repointed to the sibling (it held an old-machine
+  path); end-to-end proof: `gen:key --char kirby` keyed all 64 frames in
+  ~5:44 (~5.4 s/frame, M5 Max) → `assets/raw/keyed/kirby/` (not repacked).
+  **D10 / P3.11 done** (MUGEN jump + charge). **D9:** engine camera,
+  outpaint tool + test (8 image calls: chiba-roof 2 tries, drive-in 1),
+  comparison videos (`assets/raw/playtest/`). Bench now charges cbf moves
+  as down-back (no walk-back), so charge projectiles measure at true point
+  blank. 425/425 tests, 14 MKS-1 errors (unchanged).
+  **Next:** user verdict on the scroll videos + outpaint quality; then P1.
+  **Gotchas:** this ffmpeg build has no `drawtext` (the video tool draws
+  its own bitmap font); vite-node can't run scripts outside the repo.
+
+- **2026-10-06 · new machine, resume Step 1 (Claude Opus 5.5).** P0.2 +
+  P0.3 done on `feat/mks1-rescue-handoff` (`73b84cf`). `.env` key names
+  match RESCUE_REPORT §6 (13 expected keys set, plus `VITE_ASSET_BASE`;
+  `GEMINI_TEXT_MODEL`/`MK_PYTHON` absent = code defaults). Installed rclone
+  1.75.1 → `npm ci` → `raw:pull`: 949 files / 706 MB in ~50 s,
+  `verify` 949 OK / 0 missing / 0 mismatched; `assets/raw/jobs/` empty;
+  18/18 roster anchors present. Baseline: `tsc` clean, **419/419 vitest**
+  (27 files), `vite build` main chunk 2,016.90 KB / 497.75 KB gz (= audit),
+  `npm run bench -- --md` reproduces `docs/FRAME_DATA.md` byte-for-byte
+  (14 MKS-1 errors) — the engine measures identically on both machines.
+  **Next:** Step 2 decisions round (D7, D5, D3, D4, D1, D8, D9, D10), then
+  the PR for this branch and P1.
+  **Gotchas:** `CORRIDORKEY_DIR` in `.env` points at a path that doesn't
+  exist here — fix it before `gen:key` (the tool can self-bootstrap a
+  clone; pin it to `97e55a4` per P8.16). `npm ci` warns that fsevents'
+  install script wasn't approved (`npm approve-scripts`) — harmless.
 
 - **2026-10-04 · MKS-1 session (Claude Opus 5.5).** Built MKS-1 Phase A
   (see Appendix A), then merged the audit plan and the MKS-1 roadmap into

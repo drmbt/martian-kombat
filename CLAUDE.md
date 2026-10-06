@@ -263,6 +263,9 @@ npm run bench                          # MKS-1 roster audit (engine-measured fra
 npm run bench -- --char vincent        # one fighter's measured table + findings (--md, --parity kfm, --update-baseline)
 npm run mugen:fetch                    # reference content (KFM, stages, IKEMEN data) → gitignored assets/raw/mugen/
 npm run mugen:import -- --def <char.def> --id <id> --fit   # port + auto-fit a MUGEN/IKEMEN char → src/bench/reference/
+npm run raw:pull / raw:push / raw:verify   # private R2 mirror of gitignored assets (docs/RAW_ASSET_STORE.md)
+npm run gen:outpaint -- --stage <id> --mode sides   # widen a stage (two-pass side outpaint; --src/--width for tall art)
+npm run playtest:video -- --stage <id>     # fixed-screen vs scrolling-camera comparison video (assets/raw/playtest/)
 ```
 
 All gen scripts are idempotent (skip existing files; `--force` regens,

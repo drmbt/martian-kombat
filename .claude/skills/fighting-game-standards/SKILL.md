@@ -84,10 +84,12 @@ Chain/cancel normals (non-light) are exempt from the on-block band.
 - **Slow light** → lights are the "get off me" button; ≤ 6f measured.
 - **Floaty jump** (airtime > 50f) → raise `gravity` and `jumpVel` together
   (apex ∝ v²/g, airtime ∝ v/g).
-- **Jump distance**: the engine applies ground friction on the takeoff tick,
-  so forward-jump speed is `0.85 × jumpSpeedX` after tick 1 (known quirk).
-- **Charge moves** need `CHARGE_TICKS + 8` ticks of hold (the release tick
-  bleeds 8) — tell playtesters ~0.7 s.
+- **Jump distance**: a forward jump's air speed is exactly `jumpSpeedX`
+  (default `walkSpeed × JUMP_SPEED_MULT` = ×1.4; MUGEN semantics since
+  2026-10-06 — no takeoff-tick friction). Distance ≈ `jumpSpeedX × (airtime + 1)`.
+- **Charge moves** (MUGEN `~60$B, F`): hold the charge direction 60 ticks
+  (`CHARGE_TICKS`; down-back counts as back), release, then forward/up +
+  button within 10 ticks (`CHARGE_RELEASE_TICKS`) — tell playtesters ~1 s.
 - **Cancels feel dropped after heavies**: the 8-tick action buffer expires
   during hitstop ≥ 9 (known quirk, plan P3.5). Don't raise hitstop until P3.5.
 

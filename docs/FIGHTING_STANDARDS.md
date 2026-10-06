@@ -84,7 +84,7 @@ attributed. KFM is a **bench-only** fighter: never in `ROSTER`, never shipped.
 | Guard break / guard points | ❌ | ✅ | ❌ | optional (C10) |
 | Red life | ❌ | ✅ | ➖ (SF2 ghost bar is cosmetic) | |
 | Power / super meter | ✅ power (default max 3000, 1000/level), `poweradd`, `SuperPause` | ✅ + `LifeToPowerMul` 0.7 / 0.6 | ❌ (RFE "super bar") | roadmap C7 — unlocks ported supers & EX moves |
-| **Input language** | `~` release, `/` hold, `$` 4-way, `+` simultaneous, `>` strict, charge `~30$B`; `command.time` 15, `buffer.time` 1 | same; `Input.PauseOnHitPause = 1` | ✅ 9 motions, mash, PPP/KKK/LPLK chords, charge via hold counters | `ff`, double-quarter supers missing (C8); buffer-in-hitstop fix (C1) |
+| **Input language** | `~` release, `/` hold, `$` 4-way, `+` simultaneous, `>` strict, charge `~60$B, F` (KFM's reference); `command.time` 15, `buffer.time` 1 | same; `Input.PauseOnHitPause = 1` | ✅ 9 motions, mash, PPP/KKK/LPLK chords, **MUGEN charge (60-tick 4-way hold, 10-tick release window)** | `ff`, double-quarter supers missing (C8); buffer-in-hitstop fix (C1) |
 | Chains / cancels | trigger-authored (`movecontact`, `time > N`) | same | ✅ data `chains` + `cancel` on contact, 8f window | ours never whiff-cancels (MUGEN can) |
 | Movement | walk, **run** or hop, back-hop, air jump, run jump | same | walk, double-tap **impulse dash** (stocks), no air jump | per-char run vs dash, double jump = RFE |
 | Air recovery / tech | ✅ `fall.recover` (xy) | ✅ | ❌ | roadmap C9 |
@@ -94,7 +94,7 @@ attributed. KFM is a **bench-only** fighter: never in `ROSTER`, never shipped.
 | Sprites per char | typically hundreds–thousands (KFM 281) | same | ~65 cells (3/move phase) | Veo smoothing RFE; per-phase hurtboxes need no more cells |
 | Standard anim numbers | ✅ (0 stand, 20 walk, 5000s get-hit …) | ✅ named in `common.const` | 🟡 by cell *name* (`idle-a`, `hit`, …) | action map §7 |
 | **Stages** | layered BG + parallax `delta`, camera bounds/tension, `zoffset`, music | + 3D `.glb` stages, z-axis | single 21:9 painted image, fixed camera, floor line | stage import D3; camera scroll E2 (decision) |
-| Arena width | KFM stage ≈ **6.6 CH** walkable, screen 3.4 CH | same | screen 3.4 CH, walkable **3.0 CH** | our corners are ~2× closer — §6 |
+| Arena width / camera | KFM stage ≈ **6.6 CH** walkable, screen 3.4 CH, camera `boundleft/right` + `screenleft/right` | same | screen 3.4 CH, walkable **3.0 CH** (fixed screen); **optional `MatchRules.camera`** (2026-10-06: midpoint-follow, view-bounded fighters, view-culled projectiles) — not yet wired into FightScene | 3.5:1 outpainted stages give ~6.3 CH (`gen:outpaint`); D9 comparison videos via `playtest:video` |
 | Screenpack / lifebars | `system.def`, `fight.def`, `select.def` | + Lua motif | code-built HUD/menus | ➖ (not a goal) |
 | Modes | arcade, versus, team (simul/turns), survival, training, watch | + tag, netplay, score | arcade (data stub), versus, CPU, training, online, fatality | |
 | Training tools | Ctrl-C clsn, debug text | training mode (dummy, guard, input display) | ✅ F1 boxes / F2 move log / F3 skeleton; Move Tuner; **bench** | frame meter + dummy record E1 |
@@ -227,13 +227,19 @@ Earl (13), Tao (10) and RJ (11) also have long-but-finite light loops.
 Warnings: 84 on-block, 58 on-hit, 46 startup, 43 damage band hits —
 `npm run bench -- --char <id>` lists each.
 
-### 6.2 Engine quirks the bench surfaced (documented, not yet changed)
+### 6.2 Engine quirks the bench surfaced
 
-1. **Takeoff friction** — the jump's launch tick still runs ground friction,
-   so every forward jump travels at **0.85 × `jumpSpeedX`** after tick 1.
-2. **Charge bleed** — releasing the charge direction bleeds 8 from the bank
-   on the same tick you press forward/up, so a charge really needs
-   **`CHARGE_TICKS` + 8 = 43** ticks of hold.
+1. ~~**Takeoff friction**~~ — **resolved 2026-10-06 (D10, MUGEN
+   semantics):** the launch tick no longer runs ground friction, so a jump's
+   air speed is exactly `jumpSpeedX`; `JUMP_SPEED_MULT` 1.6 → 1.4 kept every
+   fighter's measured jump distance within 0.01 CH, and the KFM port now
+   uses MUGEN's `jump.fwd` × scale unmodified (7.634).
+2. ~~**Charge bleed**~~ — **resolved 2026-10-06 (D10):** MUGEN's reference
+   charge `~60$B, F, x` with `time = 10` — hold the charge direction
+   (4-way: down-back counts as back, down-left/right as down) for
+   **`CHARGE_TICKS` = 60**, release, then the opposite direction + button
+   within **`CHARGE_RELEASE_TICKS` = 10**; no bleed. Charge moves are now
+   ~0.3 s slower to set up than the old effective 43 ticks.
 3. **Action buffer expires during hitstop** — the 8-tick buffer counts down
    while frozen, so cancels pressed early in a ≥9-tick hitstop are
    **dropped** (12f hitstop drops almost all early cancels). IKEMEN's
@@ -349,7 +355,7 @@ per-move `hitstop`/`chip`/`blockKnockback`, skills, this doc.
 - C8 `ff` and double-quarter motions; per-char run-vs-dash.
 - C9 Air recovery / tech rolls.
 - C10 Optional IKEMEN systems: guard points, just-defend.
-- C11 Resolve quirks 6.2.1–2 (decision: fix vs keep as house feel).
+- C11 ✅ quirks 6.2.1–2 resolved with MUGEN semantics (2026-10-06).
 
 **Phase D — Content import (play a community character).**
 - D1 SFF v2 decoder (RLE8/RLE5/LZ5/PNG — port IKEMEN `image.go`, MIT) + v1 PCX.

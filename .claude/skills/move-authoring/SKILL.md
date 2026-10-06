@@ -31,8 +31,8 @@ motion — N fresh presses of a button class).
 - **dp** →↓↘ = anti-air / reversal
 - **qcb** ↓↙← = advancing / teleport / lob
 - **bf** back→forward (sequence, NOT a held charge) = rush / horizontal
-- **cbf** hold ← then → (TRUE charge, `CHARGE_TICKS`) = SONIC BOOM / charge projectile ✅
-- **du** hold ↓ then ↑ (TRUE charge, `CHARGE_TICKS`) = FLASH KICK / charge anti-air ✅
+- **cbf** hold ← then → (TRUE charge, MUGEN `~60$B, F`: 60 ticks, ↙ counts, 10-tick release window) = SONIC BOOM / charge projectile ✅
+- **du** hold ↓ then ↑ (TRUE charge, MUGEN `~60$D, U`: same rules) = FLASH KICK / charge anti-air ✅
 - **hcb / hcf** half-circles = command grabs, bigger specials
 - **360** full circle = command grab
 - **Forward-forward (ff) is NOT a special trigger** (dashes are double-tap

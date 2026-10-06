@@ -1525,6 +1525,16 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-10-06 · engine/tools/docs · decisions D1–D10, MUGEN jump + charge,
+  scroll prototype, outpaint test** — engine adopts MUGEN semantics (no
+  takeoff-tick friction, `JUMP_SPEED_MULT` 1.4 keeps distances; charge =
+  60-tick 4-way hold + 10-tick release window), KFM re-fit; optional
+  `MatchRules.camera` (MUGEN/SF2 horizontal scroll, default off);
+  `gen:outpaint` (two-pass side outpainting, incl. tall art) and
+  `playtest:video` (fixed vs scroll comparison renders); `geminiImage`
+  takes `imageSize`. Decisions + backlog in `docs/handoff/02-PLAN.md`.
+  425/425 tests. — Claude (Opus 5.5)
+
 - **2026-10-04 · docs/handoff · unified plan + machine-move pass-off** —
   merged the parallel full-repo audit (P0–P11) and the MKS-1 roadmap into
   `docs/handoff/02-PLAN.md` (one backlog; MKS-1 B–E mapped onto P3/P4/P10,
