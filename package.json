@@ -30,6 +30,7 @@
     "bench": "vite-node tools/fg/bench.ts --",
     "mugen:fetch": "node tools/fg/fetch-mugen.mjs",
     "mugen:import": "vite-node tools/fg/import-mugen.ts --",
+    "mugen:sprites": "vite-node tools/fg/mugen-sprites.ts --",
     "raw:manifest": "node tools/raw-sync.mjs manifest",
     "raw:push": "node tools/raw-sync.mjs push",
     "raw:pull": "node tools/raw-sync.mjs pull",
