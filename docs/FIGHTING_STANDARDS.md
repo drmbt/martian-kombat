@@ -426,8 +426,15 @@ friction and charge bleed?
 - **IKEMEN GO** engine source: MIT — semantics verified against
   `src/char.go`, `src/anim.go`, `data/common1.cns.zss`, `data/common.const`;
   porting `image.go` decoders (D1) is permitted with attribution.
-- **Kung Fu Man** (Elecbyte): CC BY-NC. Raw files stay in gitignored
+- **Kung Fu Man** (Elecbyte): CC BY-NC (noncommercial; the readme makes
+  attribution optional — we attribute anyway). Raw files stay in gitignored
   `assets/raw/mugen/`; committed tables in `src/bench/reference/` carry an
-  attribution `_source` header; KFM never ships in the game.
+  attribution `_source` header. **Since 2026-10-06 (user decision) KFM ships
+  as a SECRET unlockable with his real sprites**: `npm run mugen:sprites`
+  converts `kfm720.sff` into `public/assets/sprites/kfm/` + portraits and
+  writes `src/data/characters/kfm.json` from the port (pinned to it by
+  `parity.test.ts`). **While he ships, Martian Kombat must stay
+  non-commercial** — remove him (roster entry + those files) before any
+  paid/ad-supported release.
 - Any further reference: check its licence before `mugen:import`, record it
   in the port's `_source`, and keep it bench-only unless the licence allows more.

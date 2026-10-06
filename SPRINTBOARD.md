@@ -1525,6 +1525,15 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-10-06 · compat/tools/data/scenes/net · Kung Fu Man secret
+  unlockable (D-KFM)** — SFF v2 sprite decoder + `npm run mugen:sprites`
+  convert KFM's real MUGEN art (kfm720) into our sheet (wide 592-px cells via
+  a per-character `cellW`) + portraits, and write `kfm.json` from the bench
+  port (parity-pinned). Roster `secret` entry behind a "???" select tile:
+  confirming it unlocks him for both players (online `unlock` message,
+  remembered per browser). CC BY-NC: the game stays non-commercial while he
+  ships. Staging documented (per-branch Cloudflare previews). — Claude (Opus 5.5)
+
 - **2026-10-06 · engine/data/scenes/net/tools · pre-ship bug-fix pass** —
   trades resolve against the start-of-tick state (slot 0 no longer always
   wins; strike beats grab, grabs clash); SOCD cleaning in the engine (L+R =

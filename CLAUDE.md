@@ -276,6 +276,7 @@ npm run bench                          # MKS-1 roster audit (engine-measured fra
 npm run bench -- --char vincent        # one fighter's measured table + findings (--md, --parity kfm, --update-baseline)
 npm run mugen:fetch                    # reference content (KFM, stages, IKEMEN data) → gitignored assets/raw/mugen/
 npm run mugen:import -- --def <char.def> --id <id> --fit   # port + auto-fit a MUGEN/IKEMEN char → src/bench/reference/
+npm run mugen:sprites -- --def assets/raw/mugen/chars/kfm720/kfm720.def --id kfm   # real MUGEN art → our sheet/portraits + the secret kfm.json
 npm run raw:pull / raw:push / raw:verify   # private R2 mirror of gitignored assets (docs/RAW_ASSET_STORE.md)
 npm run gen:outpaint -- --stage <id> --mode sides   # widen a stage (two-pass side outpaint; --src/--width for tall art)
 npm run playtest:video -- --stage <id>     # fixed-screen vs scrolling-camera comparison video (assets/raw/playtest/)
@@ -309,6 +310,22 @@ victory line TEXTS + per-move `voiceText` — the schema-lint in
 `src/data/assets.audit.test.ts` enforces the full standard roster-wide).
 Photos in `assets/character-inspo/`, move-set design in `docs/CHARACTERS.md`.
 Characters are data files, not code.
+
+**Secret unlockable: Kung Fu Man** (MUGEN's reference fighter, real Elecbyte
+art, CC BY-NC — the game must stay non-commercial while he ships). Roster
+entry `secret: true` (not `playable`: no VO, audit-lite, kept out of CPU and
+attract pools), always LAST in `ROSTER` so online grid indices never shift.
+The select grid shows a "???" tile; confirming it unlocks him for both players
+(online sends an `unlock` message; remembered per browser in
+`src/data/unlocks.ts`). His sheet uses wider cells (`cellW` 592 — MUGEN
+reach) via `cellWidth(def)` in `src/render/geometry.ts`. Regenerate with
+`npm run mugen:sprites`; never hand-edit `kfm.json`.
+
+**Staging:** every pushed branch gets a Cloudflare Workers preview — the
+GitHub check "Workers Builds: martian-kombat" on the commit links it; the
+stable alias is `https://<branch-with-dashes>-martian-kombat.stayprompin.workers.dev`
+(e.g. `feat-mks1-rescue-handoff-…`). Test there before merging to `main`
+(which deploys martiankombat.com).
 
 Each character JSON carries an optional `stage: "<id>"` **home-stage** field
 (the stage-select dialog badges it; arcade mode will end there). A home stage

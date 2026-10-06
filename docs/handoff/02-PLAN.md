@@ -136,6 +136,7 @@ Workers Static Assets (`wrangler.jsonc`), serving the HEAD build.
 | D1 | **Move `assets/voice-inspo/` + `assets/character-inspo/` to the private R2 bucket** and `git rm` them (no history rewrite now; D2 later). | P9.2 unblocked. |
 | D4 | **Gate card now, simplified touch later.** | P7.2 now; P7.4 = stick + 3–4 buttons, later. |
 | D8 | **All four feel changes**, each A/B-playtested before going roster-wide: KFM hitstop (~8/12/12/15, after P3.5), plus-on-hit mediums/heavies (links), safer on block (lights ≈ −2..+1, mediums ≈ −4), walk toward ~1.5 CH/s. | New **P3.12**. |
+| D-KFM (2026-10-06) | **Ship Kung Fu Man as a secret unlockable with his REAL sprites** (reverses "KFM never ships"); unlocked by one simple action on the select screen, for both players (online too). CC BY-NC ⇒ the game stays non-commercial while he ships. | Done 2026-10-06 (see Handoff log). |
 | D9 (2026-10-06, after the videos) | **SF2 camera ON BY DEFAULT** (fighters always on screen) and **every stage outpainted to ultra-wide 3.5:1**; stages with TALL art outpaint from it and show only its bottom 3.5:1 band until a Marvel vs Capcom-style vertical camera. **Do not write to R2** until the raw-sync logic is updated (see P8.17). | P10.9 E2 done; P8.17 new. |
 | D9 (first pass) | Wanted to SEE it first: render a fixed-vs-scroll playtest comparison (stacked video); test automated outpainting for wider stages (D6 approved for 2 stages × ≤ 3 tries); the 1680×1440 "stages tall" set (Marvel vs Capcom-style high-jump WIP) may get side-outpainting later. | P10.9 E2 in progress. |
 | D10 | **Adopt MUGEN semantics**: no ground friction on the jump takeoff tick, with each fighter's `jumpSpeedX` rescaled to keep MUGEN-like distances (~1.0 CH); MUGEN charge = hold ≥ **60** ticks, down-back/up-back count (4-way `$`), then forward/up + button within **10** ticks of release. | P3.11 rewritten. |
@@ -1073,6 +1074,25 @@ files unasked. Full design: `docs/CHARACTER_STUDIO.md` Phases 4–5 (+ the R2
 ## Handoff log
 
 *(newest first; one entry per session: date · who · done · next · gotchas)*
+
+- **2026-10-06 · staging found + Kung Fu Man unlockable (Claude Opus 5.5).**
+  **Staging exists:** Cloudflare Workers Builds already makes a preview per
+  pushed branch (check "Workers Builds: martian-kombat"); this branch's alias
+  is https://feat-mks1-rescue-handoff-martian-kombat.stayprompin.workers.dev
+  — it served this build and already returns 404 for missing files (prod
+  still 200s until the merge). **D-KFM:** SFF v2 pixel decoder
+  (`src/compat/mugen/sff.ts`: PNG8/raw/RLE8; RLE5/LZ5 throw), converter
+  `npm run mugen:sprites` (AIR → our cell names, scaled exactly like the
+  port, cells auto-widened to 592 for MUGEN reach, portraits from 9000,x),
+  per-character `cellW` render plumbing, roster `secret` + "???" tile unlock
+  (`src/data/unlocks.ts`, lobby `unlock` message). Browser-verified in dev:
+  ??? → unlock → pick → fight; the palm's art sits on its hitbox and lands
+  the ported 90 damage. 457 tests.
+  **Next:** a two-browser online check of the unlock on staging; then the PR.
+  **Gotchas:** `kfm.json` is GENERATED — edit `src/bench/reference/kfm.unlock.json`
+  (name/quotes) and re-run `mugen:sprites`; `parity.test.ts` fails if its fight
+  data drifts from the port. The converter needs the gitignored
+  `assets/raw/mugen/` (npm run mugen:fetch); `sff.test.ts` skips without it.
 
 - **2026-10-06 · pre-ship bug-fix pass (Claude Opus 5.5).** Done: P2.1,
   P2.2, P2.4, P3.1, P3.2, P3.10, P4.0, P4.1, P4.2 (details on each item).
