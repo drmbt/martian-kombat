@@ -1385,7 +1385,10 @@ export function step(s: GameState, rawInputs: [InputFrame, InputFrame], defs: De
     // hitstop) resolves its attack pick NOW — motions and chords are read at
     // press time so wakeup reversals keep their input window — and fires on
     // the first actionable frame. Newest press wins; TTL drops stale ones.
-    if (f.buffered && --f.buffered.ticksLeft <= 0) f.buffered = null;
+    // The TTL pauses while this fighter is frozen in hitstop (IKEMEN
+    // Input.PauseOnHitPause) — otherwise a cancel pressed early in a long
+    // hitstop expired before the freeze ended (P3.5).
+    if (f.buffered && f.hitstop <= 0 && --f.buffered.ticksLeft <= 0) f.buffered = null;
     if (
       s.phase === 'fight' &&
       (BUFFERABLE.has(f.action.kind) || f.hitstop > 0) &&

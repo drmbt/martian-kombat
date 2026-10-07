@@ -69,11 +69,10 @@ describe('physics measurement', () => {
   });
 });
 
-describe('known engine quirks (docs/FIGHTING_STANDARDS.md §6) — flip these when fixed', () => {
-  // ACTION_BUFFER_TICKS (8) keeps counting down while the attacker is frozen
-  // in hitstop, so a cancel pressed early in a ≥9-tick hitstop is dropped.
-  // IKEMEN's standard is Input.PauseOnHitPause = 1 (buffers survive hitpause).
-  // Roadmap C1 fixes it — then this test must assert 'cancelled' for both.
+describe('action buffer survives hitstop (P3.5; was a §6 quirk)', () => {
+  // ACTION_BUFFER_TICKS (8) used to keep counting down while the attacker was
+  // frozen in hitstop, so a cancel pressed early in a ≥9-tick hitstop was
+  // dropped. Now it pauses like IKEMEN's Input.PauseOnHitPause = 1.
   const cancelAfter = (hitstop: number, delay: number): boolean => {
     const defs: Defs = {
       t: testChar('t', {}, {
@@ -95,9 +94,10 @@ describe('known engine quirks (docs/FIGHTING_STANDARDS.md §6) — flip these wh
     });
     return began;
   };
-  it('a cancel input early in a long hitstop is dropped (buffer expires while frozen)', () => {
+  it('a cancel input early in a long hitstop still comes out', () => {
     expect(cancelAfter(8, 1)).toBe(true);
-    expect(cancelAfter(12, 1)).toBe(false);
+    expect(cancelAfter(12, 1)).toBe(true);
+    expect(cancelAfter(15, 1)).toBe(true); // KFM-class heavy hitstop (D8)
   });
 });
 

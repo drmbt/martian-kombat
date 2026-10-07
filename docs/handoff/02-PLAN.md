@@ -472,7 +472,7 @@ KFM parity test. Synthetic fighters for engine tests already exist:
       **Fix:** edge-triggered (fresh press via the buffer) for normals; make
       sure LP+LK chord throws and mash/charge paths still work.
       **Test:** hold HP 180 ticks → 1 attack.
-- [ ] **P3.5 Buffer ages during hitstop — MED [V, both sessions].** The
+- [x] **P3.5 Buffer ages during hitstop — MED [V, both sessions].** *Done 2026-10-07: the action-buffer TTL skips ticks where its owner has `hitstop > 0`; the quirk test is flipped (8/12/15-tick hitstop all cancel; failed on the old code); bench + KFM parity unchanged; FIGHTING_STANDARDS §6/C1 updated.* The
       buffer timer (8) keeps counting during 9–13 tick hitstop, so a cancel
       pressed in the first frames after a heavy connects is dropped (measured:
       hitstop 9 drops a tick-1 cancel; hitstop 12 drops almost all early

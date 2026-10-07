@@ -84,7 +84,7 @@ attributed. KFM is a **bench-only** fighter: never in `ROSTER`, never shipped.
 | Guard break / guard points | ❌ | ✅ | ❌ | optional (C10) |
 | Red life | ❌ | ✅ | ➖ (SF2 ghost bar is cosmetic) | |
 | Power / super meter | ✅ power (default max 3000, 1000/level), `poweradd`, `SuperPause` | ✅ + `LifeToPowerMul` 0.7 / 0.6 | ❌ (RFE "super bar") | roadmap C7 — unlocks ported supers & EX moves |
-| **Input language** | `~` release, `/` hold, `$` 4-way, `+` simultaneous, `>` strict, charge `~60$B, F` (KFM's reference); `command.time` 15, `buffer.time` 1 | same; `Input.PauseOnHitPause = 1` | ✅ 9 motions, mash, PPP/KKK/LPLK chords, **MUGEN charge (60-tick 4-way hold, 10-tick release window)** | `ff`, double-quarter supers missing (C8); buffer-in-hitstop fix (C1) |
+| **Input language** | `~` release, `/` hold, `$` 4-way, `+` simultaneous, `>` strict, charge `~60$B, F` (KFM's reference); `command.time` 15, `buffer.time` 1 | same; `Input.PauseOnHitPause = 1` | ✅ 9 motions, mash, PPP/KKK/LPLK chords, **MUGEN charge (60-tick 4-way hold, 10-tick release window)** | `ff`, double-quarter supers missing (C8); action buffer pauses in hitstop ✅ (C1) |
 | Chains / cancels | trigger-authored (`movecontact`, `time > N`) | same | ✅ data `chains` + `cancel` on contact, 8f window | ours never whiff-cancels (MUGEN can) |
 | Movement | walk, **run** or hop, back-hop, air jump, run jump | same | walk, double-tap **impulse dash** (stocks), no air jump | per-char run vs dash, double jump = RFE |
 | Air recovery / tech | ✅ `fall.recover` (xy) | ✅ | ❌ | roadmap C9 |
@@ -258,10 +258,11 @@ Warnings: 84 on-block, 58 on-hit, 46 startup, 43 damage band hits —
    **`CHARGE_TICKS` = 60**, release, then the opposite direction + button
    within **`CHARGE_RELEASE_TICKS` = 10**; no bleed. Charge moves are now
    ~0.3 s slower to set up than the old effective 43 ticks.
-3. **Action buffer expires during hitstop** — the 8-tick buffer counts down
-   while frozen, so cancels pressed early in a ≥9-tick hitstop are
-   **dropped** (12f hitstop drops almost all early cancels). IKEMEN's
-   standard is `Input.PauseOnHitPause = 1`. Pinned by a quirk test.
+3. ~~**Action buffer expires during hitstop**~~ — **resolved 2026-10-07
+   (P3.5):** the 8-tick action buffer's TTL now pauses while its owner is
+   frozen in hitstop (IKEMEN `Input.PauseOnHitPause = 1`), so an early cancel
+   survives any hitstop (tested at 8/12/15). The motion-input history still
+   records every tick. Unblocks the D8 hitstop raise.
 4. **Double-tap dash** needs ≥ 2 release frames between taps (harmless).
 
 ---
@@ -359,8 +360,7 @@ per-move `hitstop`/`chip`/`blockKnockback`, skills, this doc.
 - B4 Warnings sweep per fighter (identity-aware).
 
 **Phase C — Engine parity primitives (each ships with a vitest).**
-- **C1 Buffer survives hitstop** (IKEMEN `PauseOnHitPause`) — prerequisite
-  for any hitstop increase; flips the quirk test.
+- ~~**C1 Buffer survives hitstop**~~ ✅ 2026-10-07 (P3.5).
 - C2 Juggle points (MUGEN `airjuggle` 15 + per-move cost) and hitstun decay
   — systemic anti-infinite.
 - **C3 Per-phase hurtboxes** derived from baked skeletons (Clsn2 parity:
