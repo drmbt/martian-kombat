@@ -472,6 +472,14 @@ function ownsLiveProjectile(s: GameState, slot: 0 | 1): boolean {
 // heavier buttons win when several land on the same tick
 const BUTTON_PRIORITY = ['hp', 'hk', 'mp', 'mk', 'lp', 'lk'] as const;
 
+/** special-move priority when one input satisfies several (P3.6): the
+ *  harder / more specific motion wins — SF2 resolves overlaps the same way.
+ *  Button chords (PPP/KKK/LPLK, no motion) rank lowest. */
+const MOTION_RANK: Record<Motion, number> = {
+  '360': 6, dp: 5, hcf: 4, hcb: 4, qcf: 3, qcb: 3, cbf: 2, du: 2, bf: 1,
+};
+const STRENGTH_RANK: Record<Strength, number> = { l: 0, m: 1, h: 2 };
+
 interface AttackPick {
   id: string;
   strength?: Strength;
@@ -486,7 +494,10 @@ function pickAttack(
 ): AttackPick | null {
   const f = s.fighters[slot];
   // named specials: each declares its own motion + button class; the button's
-  // strength (L/M/H) selects the variant
+  // strength (L/M/H) selects the variant. When one input satisfies several,
+  // the strongest motion wins, then the strength, then JSON order (P3.6) —
+  // a DP's usual overshoot also completes a qcf, and key order used to win.
+  let best: { id: string; strength: Strength; rank: number; str: number } | null = null;
   for (const [id, m] of Object.entries(def.moves)) {
     if (!m.input) continue;
     let strength: Strength | null;
@@ -506,8 +517,11 @@ function pickAttack(
     if (!strength) continue;
     if (m.input.motion && !motionDone(f, m.input.motion)) continue;
     if (m.projectile && !m.projectile.field && ownsLiveProjectile(s, slot)) continue;
-    return { id, strength };
+    const rank = m.input.mash ? MOTION_RANK['360'] : m.input.motion ? MOTION_RANK[m.input.motion] : 0;
+    const str = STRENGTH_RANK[strength];
+    if (!best || rank > best.rank || (rank === best.rank && str > best.str)) best = { id, strength, rank, str };
   }
+  if (best) return { id: best.id, strength: best.strength };
   // normals are edge-triggered: a HELD button attacks once, not every time the
   // previous attack ends (P3.4). A press made while unactionable was already
   // resolved into f.buffered at press time, so the fresh edge isn't lost.

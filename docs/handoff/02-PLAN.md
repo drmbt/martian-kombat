@@ -481,7 +481,7 @@ KFM parity test. Synthetic fighters for engine tests already exist:
       **Test:** flip the pinned quirk test in `src/bench/framedata.test.ts`
       ("known engine quirks") to expect `cancelled` for both cases.
       **Unblocks:** any hitstop increase (D8).
-- [ ] **P3.6 Special priority = JSON key order — MED [A].** (`step.ts:~452`)
+- [x] **P3.6 Special priority = JSON key order — MED [A].** *Done 2026-10-07 [V]: `pickAttack` collects every matching special and picks by `MOTION_RANK` (360/mash 6 > dp 5 > hcf/hcb 4 > qcf/qcb 3 > cbf/du 2 > bf 1 > chords 0), then strength (h > m > l), then JSON order. Reproduced first: f,d,df,f+P gave the fireball for vincent/chebel/rj/vanessa/ben; now the DP (tests in `src/engine/inputs.test.ts`, incl. a synthetic pair and a plain-qcf control). Bench + KFM parity unchanged.* (`step.ts:~452`)
       A DP with overshoot (f,d,df,f+P) yields the fireball for vincent,
       chebel, rj, vanessa and ben.
       **Fix:** explicit priority (e.g. 360/mash > dp > hcf/hcb > qcf/qcb >

@@ -47,3 +47,55 @@ describe('normals are edge-triggered (P3.4)', () => {
     expect(attackStarts((t) => (t === 0 || t === 25 ? { hp: true } : {}), 90)).toEqual(['hp', 'hp']);
   });
 });
+
+// P3.6 — when one input satisfies several specials, the stronger motion wins
+// (360/mash > dp > hcf/hcb > qcf/qcb > charge > bf > chords), then strength,
+// then JSON key order. It used to be JSON key order alone, so a DP with the
+// usual overshoot (f, d, df, f+P — which also completes qcf) threw the
+// fireball for vincent, chebel, rj, vanessa and ben.
+import { characters } from '../data/characters';
+
+/** f, d, df, f+P for a fighter facing right, held 2 ticks each */
+const DP_OVERSHOOT: Partial6[] = [
+  { right: true }, { right: true }, { down: true }, { down: true },
+  { down: true, right: true }, { down: true, right: true }, { right: true, lp: true },
+];
+
+function firstSpecial(d: Defs, id: string, seq: Partial6[]): string | undefined {
+  const s = benchState(d, id, id, 300);
+  let got: string | undefined;
+  run(s, d, (t) => seq[t] ?? {}, () => ({}), seq.length + 4, (_, st) => {
+    const a = st.fighters[0].action;
+    if (!got && a.kind === 'attack') got = a.moveId;
+  });
+  return got;
+}
+
+describe('special priority (P3.6)', () => {
+  it('a DP with overshoot beats a qcf listed first in the JSON', () => {
+    const d: Defs = {
+      t: testChar('t', {}, {
+        fireball: testMove({ input: { motion: 'qcf', button: 'punch' } }),
+        uppercut: testMove({ input: { motion: 'dp', button: 'punch' } }),
+      }),
+    };
+    expect(firstSpecial(d, 't', DP_OVERSHOOT)).toBe('uppercut');
+  });
+
+  it('a plain qcf still throws the fireball', () => {
+    const d: Defs = {
+      t: testChar('t', {}, {
+        fireball: testMove({ input: { motion: 'qcf', button: 'punch' } }),
+        uppercut: testMove({ input: { motion: 'dp', button: 'punch' } }),
+      }),
+    };
+    const qcf: Partial6[] = [{ down: true }, { down: true }, { down: true, right: true }, { down: true, right: true }, { right: true, lp: true }];
+    expect(firstSpecial(d, 't', qcf)).toBe('fireball');
+  });
+
+  it.each(['vincent', 'chebel', 'rj', 'vanessa', 'ben'])('%s: f,d,df,f+P gives the DP', (id) => {
+    const dp = Object.entries(characters[id].moves).find(([, m]) => m.input?.motion === 'dp' && m.input.button === 'punch')?.[0];
+    expect(dp, `${id} has a punch DP`).toBeTruthy();
+    expect(firstSpecial(characters, id, DP_OVERSHOOT)).toBe(dp);
+  });
+});
