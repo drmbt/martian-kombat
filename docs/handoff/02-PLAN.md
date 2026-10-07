@@ -500,7 +500,7 @@ KFM parity test. Synthetic fighters for engine tests already exist:
         `projRect()`.
       - Remove `types.ts:~278 spriteOffsetY`.
       - Remove the stray `comment` key in `vincent.json` `jhk`.
-- [ ] **P3.8 Juggle limit + chain limit (MKS-1 C2).** Today only combo
+- [x] **P3.8 Juggle limit + chain limit (MKS-1 C2).** *Done 2026-10-07 (engine half; the data half is P4.3): ground hitstun decay — hits 7+ of a combo lose 2 ticks each, floor 1 (`HITSTUN_DECAY_FROM` 6 / `_STEP` 2, chosen by sweep: FROM 4 shaved multi-hit specials' on-hit advantage, 6 changes no single move and no best combo); MUGEN juggle points — pool 15 (`FighterState.juggle`, refilled when the combo ends, hashed), per-move `juggle` (default 4) on hits vs an `airHit` victim, which pass through when the pool can't pay. **Vincent's broken data still unrestored**, the bench reports no `infinite`: MKS-1 errors **2 → 0**, baseline emptied (vincent loop 16+ → 12, ben 16+ → 10). Tests: `src/engine/combolimits.test.ts` (each fails with the rule switched off) + the bench verifier tests.* Today only combo
       scaling (floor 30%) brakes loops, and the bench proves true infinites
       exist (vincent `clp>lk` 15 midscreen / 16+ corner, ben `clk>clp`).
       **Fix:** adopt MUGEN juggle points — a per-victim pool (`airjuggle`,
@@ -572,7 +572,7 @@ the 14 errors: FIGHTING_STANDARDS §6.1.*
       marzipan Symbiosis L 95 (misses vincent 95), plus earl/ben (P4.1).
       Fix to `range ≥ max separation + 8..10`; add the same rule to
       `tools/core/kit.mjs` so the creator can't produce it.
-- [ ] **P4.3 Vincent retune — HIGH balance [V, both sessions].** `lk`
+- [ ] **P4.3 Vincent retune — HIGH balance [V, both sessions].** *(2026-10-07: P3.8's engine rule now ends his and Ben's loops — no MKS-1 errors — but the drifted data below is still wrong: retune it anyway.)* `lk`
       s1/a12/r5, `clp` s1/a9/r7, `cmk` s1/a12/r9 (measured 2f startup; the
       older docs had `lk` 5/3/10); `lk` chains into itself, so mashing LK
       gives 15–19 hits into a dizzy (others: 3–4); the bench measures the

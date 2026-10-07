@@ -227,6 +227,9 @@ export interface MoveDef {
    *  may hit again every `rehit` ticks while active frames remain — each hit
    *  refreshes the victim's reel (and chips through block) */
   rehit?: number;
+  /** MUGEN juggle cost: points this move spends to hit an AIRBORNE combo
+   *  victim (pool JUGGLE_POINTS = 15); default DEFAULT_JUGGLE_COST (4) */
+  juggle?: number;
   /** yoga float: at the first active frame, launch airborne with vy (up) and
    *  fall under this reduced gravity instead of the character's own until
    *  touchdown or until hit — air normals stay available on the way down */
@@ -407,6 +410,9 @@ export interface FighterState {
    *  while a hit lands on an already-reeling fighter, resets to 0 the moment
    *  they leave hitstun/airHit — fuels combo damage scaling */
   comboHits: number;
+  /** juggle points left in the current combo (MUGEN airjuggle; P3.8) —
+   *  refilled to JUGGLE_POINTS when the combo ends */
+  juggle: number;
   /** yoga float: reduced gravity in effect while airborne (0 = normal fall);
    *  cleared on touchdown and when hit out of the air */
   floatGravity: number;

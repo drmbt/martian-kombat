@@ -78,6 +78,23 @@ export const CANCEL_WINDOW_TICKS = 8;
 export const COMBO_SCALE_STEP = 10;
 export const COMBO_SCALE_FLOOR = 30;
 
+// P3.8 — combos must END on their own, even with bad data (MKS-1 C2):
+// ground hitstun decay: hits 1..FROM of a combo keep their full hitstun,
+// each later hit loses STEP more ticks (hit 7: −2, hit 8: −4, …), floored at 1.
+// A chain that links with N frames to spare drops by hit FROM+ceil(N/STEP)+1.
+// FROM = 6 was measured (2026-10-07): it ends every roster loop (vincent's
+// broken clp>lk at 12, ben's clk>clp at 10) without changing any single
+// move's frame data or any fighter's best combo — FROM 4 shaved multi-hit
+// specials' on-hit advantage (cat-scratch H −3 → −7).
+export const HITSTUN_DECAY_FROM = 6;
+export const HITSTUN_DECAY_STEP = 2;
+// MUGEN juggle points: each combo victim has a pool (MUGEN `airjuggle` 15);
+// a hit on an AIRBORNE combo victim (airHit) costs the move's `juggle`
+// (default 4, as on most of Kung Fu Man's moves) and whiffs when the pool
+// can't pay. The pool refills when the combo ends.
+export const JUGGLE_POINTS = 15;
+export const DEFAULT_JUGGLE_COST = 4;
+
 // landing recovery: jumps have consequences — a short unactionable window on
 // touchdown, longer after an air normal that whiffed
 export const LANDING_TICKS = 3;

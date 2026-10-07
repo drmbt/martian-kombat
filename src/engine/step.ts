@@ -47,6 +47,10 @@ import {
   HITSTOP_MEDIUM,
   HITSTOP_SPECIAL,
   INPUT_BUFFER_LEN,
+  HITSTUN_DECAY_FROM,
+  HITSTUN_DECAY_STEP,
+  JUGGLE_POINTS,
+  DEFAULT_JUGGLE_COST,
   INTRO_TICKS,
   KNOCKDOWN_TICKS,
   ROUND_END_TICKS,
@@ -88,6 +92,7 @@ function initFighter(charId: string, def: CharacterDef, slot: 0 | 1): FighterSta
     dashStocks: DASH_STOCKS,
     dashRegen: 0,
     comboHits: 0,
+    juggle: JUGGLE_POINTS,
     floatGravity: 0,
   };
 }
@@ -1067,7 +1072,10 @@ function applyHit(
       d.vx = attackerFacing * hit.knockback * 0.6;
       d.vy = -4.5;
     } else {
-      const stun = hit.counter ? Math.floor(hit.hitstun * COUNTER_HITSTUN_MULT) : hit.hitstun;
+      const base = hit.counter ? Math.floor(hit.hitstun * COUNTER_HITSTUN_MULT) : hit.hitstun;
+      // P3.8 hitstun decay: long ground combos end by themselves
+      const decay = Math.max(0, d.comboHits - HITSTUN_DECAY_FROM) * HITSTUN_DECAY_STEP;
+      const stun = Math.max(1, base - decay);
       d.action = { kind: 'hitstun', frame: stun, counter };
       d.vx = attackerFacing * hit.knockback;
     }
@@ -1093,7 +1101,7 @@ function resolveAttacks(
   // host) always won. Same-tick rules: two strikes both land (a trade); a
   // strike beats a grab (the thrower got hit); two grabs clash and both whiff.
   // `a` is captured: applying the other side's hit REPLACES this fighter's action
-  type Conn = { slot: 0 | 1; a: FighterState['action']; m: ReturnType<typeof resolveMove>; grab: boolean; counter: boolean };
+  type Conn = { slot: 0 | 1; a: FighterState['action']; m: ReturnType<typeof resolveMove>; grab: boolean; counter: boolean; juggle: number };
   const conns: Conn[] = [];
   for (const slot of [0, 1] as const) {
     const f = s.fighters[slot];
@@ -1122,13 +1130,17 @@ function resolveAttacks(
       ) {
         continue;
       }
-      if (grounded(d) && Math.abs(f.x - d.x) <= m.grab.range) conns.push({ slot, a, m, grab: true, counter: false });
+      if (grounded(d) && Math.abs(f.x - d.x) <= m.grab.range) conns.push({ slot, a, m, grab: true, counter: false, juggle: 0 });
       continue;
     }
 
     if (!m.hitbox) continue;
+    // P3.8 juggle points: hitting an airborne combo victim costs the move's
+    // `juggle`; a pool that can't pay means the hit passes through (MUGEN)
+    const juggle = d.action.kind === 'airHit' ? (m.juggle ?? DEFAULT_JUGGLE_COST) : 0;
+    if (juggle > d.juggle) continue;
     if (overlaps(worldBox(f, m.hitbox), defenderHurtRect(d, defs[d.charId]))) {
-      conns.push({ slot, a, m, grab: false, counter: isCounterhit(d, defs) });
+      conns.push({ slot, a, m, grab: false, counter: isCounterhit(d, defs), juggle });
     }
   }
 
@@ -1178,6 +1190,7 @@ function resolveAttacks(
       continue;
     }
     a.lastHitFrame = a.frame;
+    d.juggle -= c.juggle;
     applyHit(s, defSlot, f.facing, {
       damage: m.damage,
       hitstun: m.hitstun,
@@ -1624,7 +1637,10 @@ export function step(s: GameState, rawInputs: [InputFrame, InputFrame], defs: De
     // the combo drops the moment its victim stops reeling (hitstop pauses the
     // reel, so a frozen victim keeps the count)
     const k = f.action.kind;
-    if (k !== 'hitstun' && k !== 'airHit') f.comboHits = 0;
+    if (k !== 'hitstun' && k !== 'airHit') {
+      f.comboHits = 0;
+      f.juggle = JUGGLE_POINTS;
+    }
   }
 
   if (!frozen[0]) updateFighter(s, 0, defs[f1.charId], inputs[0]);

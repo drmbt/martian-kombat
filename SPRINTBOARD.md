@@ -31,7 +31,8 @@
   on idle · `7 DEV EDITOR` (dev builds only: Character Studio, stage-pin
   editor). 3D mode is frozen: dev or `?3d=1` only.
 - **Health:** `tsc` clean · 527/527 vitest (40 files) · `npm run bench`:
-  2 MKS-1 errors (Vincent `clp>lk`, Ben `clk>clp` infinites — 02-PLAN P4.3).
+  **0 MKS-1 errors** (the engine's combo limits ended the last two infinites,
+  P3.8; Vincent's drifted data is still P4.3).
 - **Plan progress:** P0 ✅ · MKS-1 Phase A ✅ · P1 ✅ · P2 ✅ · P3
   3.1/3.2/3.10/3.11 ✅ · P4 4.0–4.2 ✅ · P6 6.1/6.2/6.3/6.5/6.6 ✅ · P8.6(a) ✅
   · P9.1 ✅. **Next:** P3, then P8.5 (generator skip checks). Status

@@ -11,7 +11,7 @@
 
 | Fighter | HP | Walk (CH/s) | Jump air (f) | Jump dist (CH) | Fastest normal (f) | Best combo | Longest chain loop | Errors | Warnings |
 |---|--:|--:|--:|--:|--:|--:|--:|--:|--:|
-| vincent | 1000 | 1.06 | 43 | 1.08 | 2 | 23.2% | 16 ∞ | 1 | 15 |
+| vincent | 1000 | 1.06 | 43 | 1.08 | 2 | 23.2% | 12 | 0 | 15 |
 | yulia | 1080 | 0.99 | 43 | 1.02 | 3 | 24.0% | 8 | 0 | 20 |
 | catherine | 1000 | 1.03 | 43 | 1.06 | 6 | 28.4% | 9 | 0 | 13 |
 | flo | 1020 | 0.87 | 43 | 0.89 | 6 | 19.4% | 5 | 0 | 18 |
@@ -25,10 +25,10 @@
 | ygor | 1080 | 1.05 | 41 | 1.03 | 5 | 16.1% | 5 | 0 | 7 |
 | rapha | 1020 | 0.90 | 43 | 0.93 | 6 | 16.7% | 5 | 0 | 24 |
 | vanessa | 950 | 1.00 | 41 | 0.98 | 5 | 18.7% | 5 | 0 | 18 |
-| earl | 1000 | 0.77 | 43 | 0.79 | 5 | 14.4% | 13 | 0 | 10 |
-| ben | 1000 | 0.65 | 43 | 0.67 | 5 | 14.9% | 16 ∞ | 1 | 16 |
+| earl | 1000 | 0.77 | 43 | 0.79 | 5 | 14.4% | 10 | 0 | 10 |
+| ben | 1000 | 0.65 | 43 | 0.67 | 5 | 14.9% | 10 | 0 | 16 |
 | tao | 1050 | 0.78 | 43 | 0.80 | 5 | 17.1% | 10 | 0 | 13 |
-| rj | 1020 | 0.75 | 41 | 0.73 | 6 | 18.2% | 11 | 0 | 19 |
+| rj | 1020 | 0.75 | 41 | 0.73 | 6 | 18.2% | 10 | 0 | 19 |
 | *kfm (reference)* | 1000 | 1.55 | 37 | 1.02 | 4 | 18.5% | 1 | 0 | 9 |
 
 ## Roster vs reference (class medians)
@@ -82,8 +82,6 @@
 | Throw (throw) | throw | 5 | 8 | 21 | 33 | KD | — | 85 | 4 | — / — |
 
 Best meterless combo: **23.2%** (4 hits) — `lk > lp > mp > rising-glyph(h)`
-
-- ✗ **clp>lk** infinite: [clp > lk] still combos at 16 moves (midscreen 15, corner 16) — e.g. lk > clp > lk
 
 ## YULIA
 
@@ -651,8 +649,6 @@ Best meterless combo: **14.4%** (2 hits) — `mk > pillar(h)`
 | Midnight Munchies (midnight-munchies) H | special | 13 | 5 | 23 | 40 | KD | -15 | 90 | 10 | — / 0.26 |
 
 Best meterless combo: **14.9%** (7 hits) — `mk > hot-coffee(h)`
-
-- ✗ **clk>clp** infinite: [clk > clp] still combos at 16 moves (midscreen 11, corner 16) — e.g. clp > clk > clp
 
 ## TAO
 

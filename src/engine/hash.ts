@@ -78,6 +78,7 @@ export function hashState(s: GameState): number {
     fnv.num(f.dashStocks);
     fnv.num(f.dashRegen);
     fnv.num(f.comboHits);
+    fnv.num(f.juggle);
     fnv.num(f.buffered ? f.buffered.ticksLeft : -1);
     fnv.num(f.inputBuffer.length);
     for (const w of f.inputBuffer) fnv.num(w);
