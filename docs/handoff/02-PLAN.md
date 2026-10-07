@@ -278,7 +278,7 @@ text. Prompt: `docs/handoff/05-NEXT-SPRINT-P1.md`.*
         - concurrency notes → a tools doc.
       - **Keep:** ground rules, stack, determinism, layout, commands,
         pointers.
-- [ ] **P1.3 README.** *(Play link → martiankombat.com done 2026-10-06.)* 18
+- [x] **P1.3 README.** *Done 2026-10-06: 19-row table (18 + KFM secret) generated from `roster.ts` + each JSON's `lore.tagline` / `stage` / `fatality.name`; real modes; removed the rage-meter / Freeman-armor / "GPT Image makes stages" / "8 Martians, 19 stages" claims; stack incl. Cloudflare + rollback; contributor pointer → CLAUDE.md, SPRINTBOARD, 02-PLAN.* *(Play link → martiankombat.com done 2026-10-06.)* 18
       fighters (generate the table from `roster.ts`); the real modes; remove
       unbuilt claims (Yulia rage meter `:24`, Freeman armor `:19`, "GPT Image
       makes stages" `:11`); stack incl. Cloudflare.
