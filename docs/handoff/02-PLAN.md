@@ -487,7 +487,7 @@ KFM parity test. Synthetic fighters for engine tests already exist:
       **Fix:** explicit priority (e.g. 360/mash > dp > hcf/hcb > qcf/qcb >
       charge > du/bf), then strength, then key as a stable tiebreak.
       **Test:** f,d,df,f+P → DP for those 5.
-- [ ] **P3.7 Small engine fixes [A].**
+- [x] **P3.7 Small engine fixes [A].** *Done 2026-10-07 (tests: `src/engine/smallfixes.test.ts`, each behavioural one verified to fail without its fix): a stationary blast (vx 0) pushes the victim away from where it sits (only FRAME_DATA change: marzipan Overgrowth L block push −0.09 → +0.15); corner pushback skips projectile hits (`HitPayload.ranged`); fatality input parsing is `fatalityInputDone()` — LPLK chord + mash handled (LPLK used to crash on `STRENGTH_BITS['LPLK']`); `hash.ts` kinds are a `Record<ActionKind, number>` (taunt added; a missing kind is now a type error); the dead `buf.length - 18` clamp → 0; both inline projectile rects → `projRect()`; `spriteOffsetY` removed from `CharacterDef`, `geometry.footOffset`, the Sprite Editor flatten and the writeback (the character endpoint now always strips it). **Kept on purpose:** the `comment` key in `vincent.json` `jhk` — it documents an intentional art-vs-hitbox divergence and is already excluded from the online sim hash (`NON_SIM_KEYS`).*
       - Stationary blast (`vx=0`) always pushes the victim left (`~:1174`):
         use the attacker's facing.
       - Corner pushback (`~:976`) also shoves a fullscreen projectile

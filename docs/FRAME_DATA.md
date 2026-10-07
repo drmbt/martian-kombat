@@ -338,7 +338,7 @@ Best meterless combo: **23.5%** (4 hits) — `lp > lk > mk > cartwheel(h)`
 | Symbiosis (symbiosis) L | throw | 8 | 4 | 31 | 42 | KD | — | 100 | 10 | — / — |
 | Symbiosis (symbiosis) M | throw | 9 | 4 | 31 | 43 | KD | — | 120 | 10 | — / — |
 | Symbiosis (symbiosis) H | throw | 11 | 4 | 35 | 49 | KD | — | 140 | 10 | — / — |
-| Overgrowth (overgrowth) L | projectile | 44 | 2 | -6 | 39 | KD | +25 | 85 | 10 | — / -0.09 |
+| Overgrowth (overgrowth) L | projectile | 44 | 2 | -6 | 39 | KD | +25 | 85 | 10 | — / 0.15 |
 | Overgrowth (overgrowth) M | projectile | 44 | 2 | -6 | 39 | KD | +25 | 85 | 10 | — / -0.15 |
 | Overgrowth (overgrowth) H | projectile | 44 | 2 | -6 | 39 | KD | +25 | 85 | 10 | — / -0.15 |
 | Spore Bloom (spore-bloom) L | projectile | 17 | 2 | 23 | 41 | -12 | -14 | 18 | 4 | 0.05 / 0.04 |

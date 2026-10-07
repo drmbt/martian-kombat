@@ -5,6 +5,7 @@
 import {
   Box,
   CharacterDef,
+  FatalityDef,
   FighterState,
   GameState,
   InputFrame,
@@ -243,7 +244,7 @@ function freshPress(f: FighterState, mask: number): boolean {
  *  would start a jump, exactly like real players buffer SPDs). */
 function motionDone(f: FighterState, motion: Motion): boolean {
   const buf = f.inputBuffer;
-  const from = Math.max(0, buf.length - 18);
+  const from = 0; // the whole input history (INPUT_BUFFER_LEN ticks) is the motion window
   const fwd = f.facing === 1 ? BIT.right : BIT.left;
   const back = f.facing === 1 ? BIT.left : BIT.right;
 
@@ -359,6 +360,19 @@ function throwChord(f: FighterState): boolean {
     if (!recent) return false;
   }
   return true;
+}
+
+/** Did `f` just complete this fatality's input? Same button grammar as
+ *  specials: PPP/KKK chords, the LPLK throw chord, mash counts, plain
+ *  punch/kick (P3.7: LPLK used to index STRENGTH_BITS['LPLK'] → crash). */
+export function fatalityInputDone(f: FighterState, fat: FatalityDef): boolean {
+  const { button, motion, mash } = fat.input;
+  let pressed: boolean;
+  if (button === 'LPLK') pressed = throwChord(f);
+  else if (button === 'PPP' || button === 'KKK') pressed = comboPress(f, button === 'PPP' ? 'punch' : 'kick');
+  else if (mash) pressed = mashedStrength(f, button, mash) !== null;
+  else pressed = freshStrength(f, button) !== null;
+  return pressed && (!motion || motionDone(f, motion));
 }
 
 /** Effective move for an action: base numbers + the strength's variant patch.
@@ -937,6 +951,9 @@ interface HitPayload {
   knockdown: boolean;
   /** damage dealt through block (heavies/specials); can never KO */
   chip: number;
+  /** a projectile hit: the corner-transfer push never applies to the
+   *  shooter (P3.7 — it used to shove a fullscreen fireball thrower) */
+  ranged?: boolean;
   /** freeze ticks this contact buys the VICTIM (L short, H long, specials most) */
   hitstop: number;
   /** attacker-side freeze when it differs (asymmetric MUGEN pausetime);
@@ -1059,7 +1076,7 @@ function applyHit(
   // corner transfer: if the defender is pinned on a wall, push the attacker
   // back instead so spacing still changes
   const arena = arenaBounds(s);
-  if (d.x <= arena.minX + 1 || d.x >= arena.maxX - 1) {
+  if (!hit.ranged && (d.x <= arena.minX + 1 || d.x >= arena.maxX - 1)) {
     s.fighters[atkSlot].vx = -attackerFacing * hit.knockback * 0.7;
   }
 }
@@ -1243,7 +1260,7 @@ function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputF
     for (const q of s.projectiles) {
       if (p.field || q.field) continue;
       if (p.owner !== q.owner && !dead.has(p) && !dead.has(q)) {
-        const pr = { l: p.x + p.box.x, t: p.y + p.box.y, r: p.x + p.box.x + p.box.w, b: p.y + p.box.y + p.box.h };
+        const pr = projRect(p);
         const qr = { l: q.x + q.box.x, t: q.y + q.box.y, r: q.x + q.box.x + q.box.w, b: q.y + q.box.y + q.box.h };
         if (overlaps(pr, qr)) {
           dead.add(p);
@@ -1265,7 +1282,7 @@ function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputF
     const defSlot = p.owner === 0 ? 1 : 0;
     const d = s.fighters[defSlot];
     if (isInvulnerable(d)) continue;
-    const pr = { l: p.x + p.box.x, t: p.y + p.box.y, r: p.x + p.box.x + p.box.w, b: p.y + p.box.y + p.box.h };
+    const pr = projRect(p);
     // reflectors bounce it back at the sender; lariats phase through it
     const da = d.action;
     if (da.kind === 'attack') {
@@ -1279,7 +1296,10 @@ function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputF
       if (dm.projImmune && inWindow) continue;
     }
     if (overlaps(pr, defenderHurtRect(d, defs[d.charId]))) {
-      applyHit(s, defSlot, (p.vx > 0 ? 1 : -1) as 1 | -1, {
+      // knockback follows the projectile's travel; a stationary blast (vx 0)
+      // pushes the victim AWAY from where it sits (P3.7: it always pushed left)
+      const pushDir: 1 | -1 = p.vx > 0 ? 1 : p.vx < 0 ? -1 : d.x >= p.x ? 1 : -1;
+      applyHit(s, defSlot, pushDir, {
         damage: p.damage,
         hitstun: p.hitstun,
         blockstun: p.blockstun,
@@ -1290,6 +1310,7 @@ function updateProjectiles(s: GameState, defs: Defs, inputs: [InputFrame, InputF
         // rehit damage doesn't stutter the whole match
         hitstop: p.rehit > 0 ? HITSTOP_LIGHT : HITSTOP_SPECIAL,
         freezeAttacker: false, // SF fireballs never freeze the shooter
+        ranged: true, // no corner pushback onto a fullscreen shooter
         counter: isCounterhit(d, defs),
         chip: Math.floor(p.damage * 0.1),
       }, inputs[defSlot]);
@@ -1476,17 +1497,9 @@ export function step(s: GameState, rawInputs: [InputFrame, InputFrame], defs: De
     }
 
     const fat = winnerDef.fatality;
-    const fatCls =
-      fat?.input.button === 'PPP' ? 'punch' : fat?.input.button === 'KKK' ? 'kick' : fat?.input.button;
-    const fatPressed =
-      fat &&
-      (fat.input.button === 'PPP' || fat.input.button === 'KKK'
-        ? comboPress(winner, fatCls as 'punch' | 'kick')
-        : freshStrength(winner, fatCls as 'punch' | 'kick') !== null);
     if (
       fat &&
-      fatPressed &&
-      (!fat.input.motion || motionDone(winner, fat.input.motion)) &&
+      fatalityInputDone(winner, fat) &&
       Math.abs(winner.x - s.fighters[loser].x) <= (fat.range ?? FATALITY_RANGE)
     ) {
       s.phase = 'fatality';

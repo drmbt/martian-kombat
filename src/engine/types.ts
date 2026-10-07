@@ -289,10 +289,6 @@ export interface CharacterDef {
    *  Movement (speeds/velocities) is intentionally NOT scaled. Never read by the
    *  engine at runtime. */
   scale?: number;
-  /** render hint only — extra vertical pixels added to the sprite's draw
-   *  position (positive pushes the art down toward the floor); engine never
-   *  reads it */
-  spriteOffsetY?: number;
   health: number;
   walkSpeed: number;
   backSpeed: number;

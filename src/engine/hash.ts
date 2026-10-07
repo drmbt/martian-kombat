@@ -10,10 +10,14 @@
 import type { ActionKind, GameState, Phase } from './types';
 
 const PHASES: Phase[] = ['intro', 'fight', 'roundEnd', 'finisher', 'fatality', 'matchEnd'];
-const KINDS: ActionKind[] = [
-  'idle', 'walkF', 'walkB', 'crouch', 'prejump', 'air', 'attack', 'airAttack',
-  'hitstun', 'blockstun', 'airHit', 'knockdown', 'getup', 'landing', 'ko', 'dazed',
-];
+// A Record, not an array: adding an ActionKind without an id is now a type
+// error (P3.7 — 'taunt' was missing, so it hashed as -1). Ids are stable;
+// append new kinds at the end.
+const KIND_ID: Record<ActionKind, number> = {
+  idle: 0, walkF: 1, walkB: 2, crouch: 3, prejump: 4, air: 5, attack: 6, airAttack: 7,
+  hitstun: 8, blockstun: 9, airHit: 10, knockdown: 11, getup: 12, landing: 13, ko: 14, dazed: 15,
+  taunt: 16,
+};
 
 const f64 = new Float64Array(1);
 const u32 = new Uint32Array(f64.buffer);
@@ -63,7 +67,7 @@ export function hashState(s: GameState): number {
     fnv.num(f.health);
     fnv.num(f.stun);
     fnv.num(f.hitstop);
-    fnv.num(KINDS.indexOf(f.action.kind));
+    fnv.num(KIND_ID[f.action.kind]);
     fnv.num(f.action.frame);
     // P3.10: hidden state that decides FUTURE ticks — without it a divergence
     // (a dropped buffered press, a charge one tick short) hid until it acted

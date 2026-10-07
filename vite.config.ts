@@ -101,11 +101,11 @@ function editorApi(): Plugin {
         req.on('data', (c) => (body += c));
         req.on('end', () => {
           try {
-            const { id, moves, scale, hurtStand, bodyBox, hurtCrouch, spriteOffsetY, stage } = JSON.parse(body || '{}') as {
+            const { id, moves, scale, hurtStand, bodyBox, hurtCrouch, stage } = JSON.parse(body || '{}') as {
               id?: string;
               moves?: Record<string, unknown>;
               scale?: number;
-              hurtStand?: unknown; bodyBox?: unknown; hurtCrouch?: unknown; spriteOffsetY?: number;
+              hurtStand?: unknown; bodyBox?: unknown; hurtCrouch?: unknown;
               /** home stage: a stage id sets it, null clears it (studio STAGES module) */
               stage?: string | null;
             };
@@ -119,7 +119,7 @@ function editorApi(): Plugin {
             if (hurtStand && typeof hurtStand === 'object') parsed.hurtStand = hurtStand;
             if (bodyBox && typeof bodyBox === 'object') parsed.bodyBox = bodyBox;
             if (hurtCrouch && typeof hurtCrouch === 'object') parsed.hurtCrouch = hurtCrouch;
-            if (typeof spriteOffsetY === 'number') { if (spriteOffsetY === 0) delete parsed.spriteOffsetY; else parsed.spriteOffsetY = spriteOffsetY; }
+            delete parsed.spriteOffsetY; // retired render nudge (sheets are floor-normalized) — never persist it
             if (stage !== undefined) { if (stage === null || stage === '') delete parsed.stage; else if (/^[a-z0-9_-]+$/.test(stage)) parsed.stage = stage; }
             writeFileSync(file, JSON.stringify(parsed, null, 2) + '\n');
             res.statusCode = 200;
