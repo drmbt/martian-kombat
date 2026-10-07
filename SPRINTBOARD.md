@@ -117,6 +117,10 @@ landmines.
 - No `raw:push` (R2 writes) until P8.17 makes it no-clobber. No paid
   generation without a D6 go-ahead. Jobs carried over from an earlier dev
   server load PAUSED; resume them explicitly per character.
+- Don't run `gen-icons` / `gen:fatality` / `studio:run` (even `--mock`) for
+  a fighter whose art already ships: their skip checks look at gitignored
+  intermediates and OVERWRITE the committed art (02-PLAN P8.5, proven
+  2026-10-07).
 - `assets/raw/frames/<id>/` dirs with a `.cellspace` marker (vincent, earl,
   ben) hold KEYED cell-space art — the packer copies them through; never
   re-key or re-pad.

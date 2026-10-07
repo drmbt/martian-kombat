@@ -13,7 +13,9 @@ export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 // E2E-walkable without an API key or a cent spent (CHARACTER_STUDIO §2.8
 // "mock-first everywhere"). ffmpeg draws the images — the same hard
 // dependency packing already has.
-export const genMock = () => process.env.MK_GEN_MOCK === '1';
+// MK_CREATOR_MOCK (the dev server's creator flag) means the same thing — one
+// mock switch for every provider call, CLI or middleware (02-PLAN P2.9).
+export const genMock = () => process.env.MK_GEN_MOCK === '1' || process.env.MK_CREATOR_MOCK === '1';
 
 const MOCK_SIZES = { '16:9': [1280, 720], '21:9': [1680, 720], '1:1': [1024, 1024] };
 const mockCache = new Map();
@@ -48,12 +50,26 @@ export function mockAudio() {
   return buf;
 }
 
-export function loadEnv() {
+/** Read `.env` (or `MK_ENV_FILE`) into a plain object, then let real
+ *  environment variables win. A missing file is fine — the game, mock mode
+ *  and every local-only tool must run with no `.env` at all (02-PLAN P2.9).
+ *  Values may be quoted ("x" / 'x'); a trailing ` # comment` is dropped from
+ *  unquoted values. */
+export function loadEnv(path = process.env.MK_ENV_FILE || join(ROOT, '.env')) {
   const env = {};
-  const raw = readFileSync(join(ROOT, '.env'), 'utf8');
-  for (const line of raw.split('\n')) {
-    const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/);
-    if (m) env[m[1]] = m[2].trim();
+  if (existsSync(path)) {
+    for (const line of readFileSync(path, 'utf8').split(/\r?\n/)) {
+      const m = line.match(/^\s*(?:export\s+)?([A-Z_][A-Z0-9_]*)\s*=\s*(.*)$/);
+      if (!m) continue;
+      let v = m[2].trim();
+      const q = v.match(/^(['"])(.*)\1$/);
+      if (q) v = q[2];
+      else v = v.replace(/\s+#.*$/, '');
+      env[m[1]] = v;
+    }
+  }
+  for (const [k, v] of Object.entries(process.env)) {
+    if (/^[A-Z_][A-Z0-9_]*$/.test(k) && typeof v === 'string' && v !== '') env[k] = v;
   }
   return env;
 }

@@ -23,6 +23,9 @@ function readJsonBody(req: import('node:http').IncomingMessage): Promise<Record<
 }
 
 const okId = (id: unknown): id is string => typeof id === 'string' && SAFE_ID.test(id);
+// one mock switch for the dev server AND the tools it calls: MK_CREATOR_MOCK
+// (the mock launch config) or MK_GEN_MOCK (studio:run --mock) — P2.9
+const mockMode = (): boolean => process.env.MK_CREATOR_MOCK === '1' || process.env.MK_GEN_MOCK === '1';
 // THE chroma-key + scale/pad filters, shared with tools/pack-sheet.mjs via
 // tools/core/keying.mjs. KEY_PAD_CELL includes the pack-time HEADROOM (the
 // old inline copy here omitted it, so editor/creator cells misregistered
@@ -347,7 +350,10 @@ function editorApi(): Plugin {
             const lib = await import('./tools/lib.mjs');
             const env = lib.loadEnv();
             const apiKey = env.GEMINI_API_KEY;
-            if (!apiKey) throw new Error('GEMINI_API_KEY not set in .env');
+            // mock: a placeholder cell, and NEVER written over the real raw
+            // frame below (P2.9 — this endpoint used to spend even in mock)
+            const mock = mockMode();
+            if (!apiKey && !mock) throw new Error('GEMINI_API_KEY not set in .env');
             const scratch = join(tmpdir(), `mk-gen-${id}-${Date.now()}`);
             mkdirSync(scratch, { recursive: true });
             const refPaths: string[] = [];
@@ -359,12 +365,14 @@ function editorApi(): Plugin {
                 refPaths.push(p);
               }
             });
-            const raw = await lib.geminiImage({
-              apiKey,
-              model: 'gemini-3-pro-image',
-              prompt,
-              referencePaths: refPaths,
-            });
+            const raw = mock
+              ? lib.mockImage()
+              : await lib.geminiImage({
+                  apiKey,
+                  model: 'gemini-3-pro-image',
+                  prompt,
+                  referencePaths: refPaths,
+                });
             const rawPath = join(scratch, 'gen.png');
             writeFileSync(rawPath, raw);
             const cellPath = join(scratch, 'cell.png');
@@ -374,7 +382,7 @@ function editorApi(): Plugin {
             // silently reverting the regen; a superseded pixel-edit overlay for
             // the cell is dropped. Only replaces an existing frame file.
             let rawSaved: string | undefined;
-            if (typeof cellName === 'string' && /^[a-z0-9-]+$/.test(cellName)) {
+            if (!mock && typeof cellName === 'string' && /^[a-z0-9-]+$/.test(cellName)) {
               const framesDir = join(root, 'assets/raw/frames', id);
               if (existsSync(framesDir)) {
                 const hit = readdirSync(framesDir).find((f) => new RegExp(`^\\d\\d-${cellName}\\.png$`).test(f));
@@ -386,7 +394,7 @@ function editorApi(): Plugin {
                 }
               }
             }
-            sendJson(res, 200, { ok: true, pngBase64: readFileSync(cellPath).toString('base64'), rawSaved });
+            sendJson(res, 200, { ok: true, pngBase64: readFileSync(cellPath).toString('base64'), rawSaved, ...(mock ? { mock: true } : {}) });
           })
           .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
       });
@@ -407,7 +415,7 @@ function editorApi(): Plugin {
             const lib = await import('./tools/lib.mjs');
             const env = lib.loadEnv();
             const apiKey = env.GEMINI_API_KEY;
-            if (process.env.MK_CREATOR_MOCK === '1' || !apiKey) {
+            if (mockMode() || !apiKey) {
               sendJson(res, 200, { ok: true, mock: true, prompt });
               return;
             }
@@ -503,7 +511,7 @@ function editorApi(): Plugin {
             const lib = await import('./tools/lib.mjs');
             const env = lib.loadEnv();
             const apiKey = env.GEMINI_API_KEY;
-            const mock = process.env.MK_CREATOR_MOCK === '1' || !apiKey;
+            const mock = mockMode() || !apiKey;
             if (mock) {
               sendJson(res, 200, { ok: true, mock: true, kind: String(kind ?? 'sprite') });
               return;
@@ -566,7 +574,7 @@ function editorApi(): Plugin {
             const lib = await import('./tools/lib.mjs');
             const env = lib.loadEnv();
             const apiKey = env.ELEVENLABS_API_KEY;
-            if (process.env.MK_CREATOR_MOCK === '1' || !apiKey) { sendJson(res, 200, { ok: true, mock: true }); return; }
+            if (mockMode() || !apiKey) { sendJson(res, 200, { ok: true, mock: true }); return; }
             const vId = voice === 'f' ? ELEVEN.f : ELEVEN.m;
             // announcer always ElevenLabs; grunts via the Fish clone if one exists, else ElevenLabs
             const useFish = typeof fishModelId === 'string' && !!env.FISH_API_KEY;
@@ -598,7 +606,7 @@ function editorApi(): Plugin {
             const lib = await import('./tools/lib.mjs');
             const env = lib.loadEnv();
             const apiKey = env.ELEVENLABS_API_KEY;
-            if (process.env.MK_CREATOR_MOCK === '1' || !apiKey) { sendJson(res, 200, { ok: true, mock: true, clip }); return; }
+            if (mockMode() || !apiKey) { sendJson(res, 200, { ok: true, mock: true, clip }); return; }
             let buf: Buffer;
             if (clip === 'announcer') {
               buf = await elevenTts(apiKey, ELEVEN.announcer, String(text || name || 'fighter').toUpperCase());
@@ -626,7 +634,7 @@ function editorApi(): Plugin {
             const lib = await import('./tools/lib.mjs');
             const env = lib.loadEnv();
             const apiKey = env.ELEVENLABS_API_KEY;
-            if (process.env.MK_CREATOR_MOCK === '1' || !apiKey) { sendJson(res, 200, { ok: true, mock: true }); return; }
+            if (mockMode() || !apiKey) { sendJson(res, 200, { ok: true, mock: true }); return; }
             let buf: Buffer;
             if (kind === 'sfx') {
               const r = await fetch('https://api.elevenlabs.io/v1/sound-generation', {
@@ -655,7 +663,7 @@ function editorApi(): Plugin {
             if (typeof prompt !== 'string' || !prompt.trim()) throw new Error('empty music prompt');
             const lib = await import('./tools/lib.mjs');
             const apiKey = lib.loadEnv().ELEVENLABS_API_KEY;
-            if (process.env.MK_CREATOR_MOCK === '1' || !apiKey) { sendJson(res, 200, { ok: true, mock: true }); return; }
+            if (mockMode() || !apiKey) { sendJson(res, 200, { ok: true, mock: true }); return; }
             const r = await fetch('https://api.elevenlabs.io/v1/music', {
               method: 'POST',
               headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json' },
@@ -677,7 +685,7 @@ function editorApi(): Plugin {
             const { name, fatalityName, referenceBase64, panelPrompts, only } = b as { name?: string; fatalityName?: string; referenceBase64?: unknown; panelPrompts?: unknown; only?: number };
             const lib = await import('./tools/lib.mjs');
             const apiKey = lib.loadEnv().GEMINI_API_KEY;
-            if (process.env.MK_CREATOR_MOCK === '1' || !apiKey) { sendJson(res, 200, { ok: true, mock: true }); return; }
+            if (mockMode() || !apiKey) { sendJson(res, 200, { ok: true, mock: true }); return; }
             const scratch = join(tmpdir(), `mk-fat-${Date.now()}`); mkdirSync(scratch, { recursive: true });
             const refs = Array.isArray(referenceBase64) ? (referenceBase64 as unknown[]) : [];
             const refPaths: string[] = [];
@@ -715,7 +723,7 @@ function editorApi(): Plugin {
             if (!Array.isArray(samples) || !samples.length) throw new Error('no voice samples');
             const lib = await import('./tools/lib.mjs');
             const key = lib.loadEnv().FISH_API_KEY;
-            if (process.env.MK_CREATOR_MOCK === '1' || !key) { sendJson(res, 200, { ok: true, mock: true }); return; }
+            if (mockMode() || !key) { sendJson(res, 200, { ok: true, mock: true }); return; }
             const fd = new FormData();
             fd.append('type', 'tts'); fd.append('train_mode', 'fast'); fd.append('visibility', 'private');
             fd.append('title', `Martian Kombat — ${id}`);

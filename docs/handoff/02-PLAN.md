@@ -412,7 +412,7 @@ text. Prompt: `docs/archive/handoff-prompts/05-NEXT-SPRINT-P1.md`.*
       explicit, character-scoped resume. Update `src/data/jobs.test.ts`
       (also move it to `tools/` or `src/tools-tests/`, since it tests a tools
       module).
-- [ ] **P2.9 `loadEnv` + mock consistency [V/A].** `tools/lib.mjs:~51-53`
+- [x] **P2.9 `loadEnv` + mock consistency [V/A].** *Done 2026-10-07: `loadEnv(path = MK_ENV_FILE || .env)` tolerates a missing file, lets real env vars win, strips quotes / `export` / trailing comments (CorridorKey's private parser now uses it); `genMock()` honours MK_CREATOR_MOCK too, and the dev server's `mockMode()` honours MK_GEN_MOCK; `/__editor/gen-frame` mocks (placeholder cell, never written over the raw frame). Verified with no `.env` + a fetch-blocking preload: all 9 paid creator endpoints answered mocks with zero network calls, the game boots, and `studio:run --mock --only canonical,icons,audio,fatality` finished 4/4 with zero calls. Tests: `src/data/lib.env.test.ts`. **That run also proved P8.5 [V]** (below).* `tools/lib.mjs:~51-53`
       reads `.env` unconditionally at import, so with no `.env` every tool
       and the middleware throw. That breaks `MK_GEN_MOCK` zero-setup and makes
       endpoints 400 instead of mocking.
@@ -777,7 +777,14 @@ can exhaust its memory.*
 - [ ] **P8.4 `gen-canonical` clobbers icons [A].** Its crop pass
       (`gen-canonical.mjs:~117-128`) writes `portraits/<id>.png`, which
       `gen-icons` owns. Restrict it to `-bust`/`-ko`.
-- [ ] **P8.5 Skip checks look at gitignored intermediates [A].**
+- [ ] **P8.5 Skip checks look at gitignored intermediates — [V] 2026-10-07, do soon.**
+      *Proven by the P2.9 check: `studio:run --char vincent --mock --only
+      icons,fatality` found no `assets/raw/{icons,fatalities}/vincent` and
+      regenerated, OVERWRITING the committed `portraits/vincent.png` and all
+      4 `fatalities/vincent/blue-screen-*.jpg` (with mock placeholders;
+      restored from git). A real run would have spent ~5 images doing the
+      same. Until fixed: never run `gen:icons` / `gen:fatality` /
+      `studio:run` (even `--mock`) for a fighter whose art already ships.*
       (`gen-stage.mjs:~101`, `gen-icons.mjs:~51`, the gen-canonical KO pass,
       `gen-worldmap`.) On a fresh clone they re-spend on assets already
       committed in `public/`. Check the shipped output; regenerate only with
