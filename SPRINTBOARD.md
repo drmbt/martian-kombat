@@ -1525,6 +1525,10 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-10-06 · repo · remote branch cleanup (P9.1)** — deleted
+  `feat/mks1-rescue-handoff`, `feat/character-studio`, `flo-char`,
+  `spike/3d-renderer`, `marzi-char`; kept `feat/3d-mode`. — Claude (Opus 5.5)
+
 - **2026-10-06 · docs · next-sprint handoff** — `docs/handoff/04-NEXT-SPRINT.md`
   (P6.1/6.2/6.3/6.6/6.5 on `perf/p6-loading-memory`); P2.2 verified live
   after the PR #2 deploy. — Claude (Opus 5.5)

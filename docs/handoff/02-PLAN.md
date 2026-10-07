@@ -868,7 +868,7 @@ can exhaust its memory.*
 
 ## P9 — Repo weight & history (all ⛔; the R2 mirror is the backup)
 
-- [ ] **P9.1 Delete merged/stale remote branches ⛔:** `feat/character-studio`
+- [x] **P9.1 Delete merged/stale remote branches ⛔:** *Done 2026-10-06 (user OK): deleted these four + the merged `feat/mks1-rescue-handoff`; `marzi-char`'s tip was `46012d0` if ever needed.* `feat/character-studio`
       (0 ahead), `flo-char` (0), `spike/3d-renderer` (0), `marzi-char` (2
       superseded draft commits). **Keep `feat/3d-mode`** (R2 GLB seam +
       `docs/3D_MODE_R2.md`).
