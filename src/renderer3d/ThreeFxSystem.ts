@@ -3,6 +3,7 @@
 // - instanced blood spray (gore greenlit — direction follows impact velocity)
 // - projectile pool reusing the 2D projectile pngs + additive glow + light
 // Everything is renderer-side; randomness is tick-hashed, never engine RNG.
+import { assetUrl } from '../data/assetUrl';
 import * as THREE from 'three/webgpu';
 import type { CharacterDef, GameState, Projectile } from '../engine';
 import { FLOOR_Y } from '../engine';
@@ -129,16 +130,16 @@ export class ThreeFxSystem {
   }
 
   private fightTextureUrls(charIds: string[]): string[] {
-    const urls = ['spark-hit', 'spark-heavy', 'spark-block', 'dizzy'].map((k) => `${BASE}assets/vfx/${k}.png`);
+    const urls = ['spark-hit', 'spark-heavy', 'spark-block', 'dizzy'].map((k) => `${BASE}${assetUrl(`assets/vfx/${k}.png`)}`);
     for (const id of charIds) {
-      if (HAS_LEGACY_PROJ.has(id)) urls.push(`${BASE}assets/sprites/${id}/projectile.png`);
+      if (HAS_LEGACY_PROJ.has(id)) urls.push(`${BASE}${assetUrl(`assets/sprites/${id}/projectile.png`)}`);
       const def = this.defs[id];
       for (const [moveId, m] of Object.entries(def.moves)) {
         if (m.projectile) {
-          urls.push(`${BASE}assets/sprites/${id}/projectile-${moveId}.png`);
-          if (m.projectile.detonate) urls.push(`${BASE}assets/sprites/${id}/projectile-${moveId}-burst.png`);
+          urls.push(`${BASE}${assetUrl(`assets/sprites/${id}/projectile-${moveId}.png`)}`);
+          if (m.projectile.detonate) urls.push(`${BASE}${assetUrl(`assets/sprites/${id}/projectile-${moveId}-burst.png`)}`);
         }
-        if (m.vfx) urls.push(`${BASE}assets/sprites/${id}/vfx-${moveId}.png`);
+        if (m.vfx) urls.push(`${BASE}${assetUrl(`assets/sprites/${id}/vfx-${moveId}.png`)}`);
       }
     }
     return urls;
@@ -183,8 +184,8 @@ export class ThreeFxSystem {
         e.glow.scale.setScalar(0.0001);
       });
       // one billboard per blend mode, with a spark texture bound
-      this.spawnBillboard(`${BASE}assets/vfx/spark-hit.png`, 480, 300, 0.01, { additive: true });
-      this.spawnBillboard(`${BASE}assets/vfx/spark-heavy.png`, 480, 300, 0.01, { additive: false });
+      this.spawnBillboard(`${BASE}${assetUrl(`assets/vfx/spark-hit.png`)}`, 480, 300, 0.01, { additive: true });
+      this.spawnBillboard(`${BASE}${assetUrl(`assets/vfx/spark-heavy.png`)}`, 480, 300, 0.01, { additive: false });
       // one blood drop + one splat so the instanced pipelines exist
       this.drops[0].alive = true;
       this.drops[0].size = 0.0001;
@@ -195,7 +196,7 @@ export class ThreeFxSystem {
       for (const slot of [0, 1] as const) {
         if (!this.dizzy[slot]) {
           const mat = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false });
-          mat.map = this.texture(`${BASE}assets/vfx/dizzy.png`);
+          mat.map = this.texture(`${BASE}${assetUrl(`assets/vfx/dizzy.png`)}`);
           const mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9), mat);
           mesh.renderOrder = 21;
           mesh.layers.set(FX_LAYER);
@@ -279,7 +280,7 @@ export class ThreeFxSystem {
     const iy = f.y - 150;
 
     if (counter) {
-      this.spawnBillboard(`${BASE}assets/vfx/spark-heavy.png`, ix, iy, 155, {
+      this.spawnBillboard(`${BASE}${assetUrl(`assets/vfx/spark-heavy.png`)}`, ix, iy, 155, {
         tint: 0xff3b30,
         flip: atk.facing === -1,
         additive: true,
@@ -290,7 +291,7 @@ export class ThreeFxSystem {
       const size = move.vfx.size ?? 160;
       const ground = move.vfx.anchor === 'ground';
       this.spawnBillboard(
-        `${BASE}assets/sprites/${atk.charId}/vfx-${a.moveId}.png`,
+        `${BASE}${assetUrl(`assets/sprites/${atk.charId}/vfx-${a.moveId}.png`)}`,
         ground ? f.x : ix,
         ground ? FLOOR_Y - size * 0.3 : iy,
         size,
@@ -300,7 +301,7 @@ export class ThreeFxSystem {
     }
     const tint = new THREE.Color(atkDef.color).getHex();
     this.spawnBillboard(
-      `${BASE}assets/vfx/${heavy ? 'spark-heavy' : 'spark-hit'}.png`,
+      `${BASE}${assetUrl(`assets/vfx/${heavy ? 'spark-heavy' : 'spark-hit'}.png`)}`,
       ix,
       iy,
       heavy ? 135 : 90,
@@ -310,7 +311,7 @@ export class ThreeFxSystem {
 
   spawnBlockFx(state: GameState, slot: 0 | 1): void {
     const f = state.fighters[slot];
-    this.spawnBillboard(`${BASE}assets/vfx/spark-block.png`, f.x + f.facing * 42, f.y - 130, 95, {
+    this.spawnBillboard(`${BASE}${assetUrl(`assets/vfx/spark-block.png`)}`, f.x + f.facing * 42, f.y - 130, 95, {
       tint: 0xa8c8ff,
       flip: f.facing === 1,
       additive: true,
@@ -319,7 +320,7 @@ export class ThreeFxSystem {
 
   spawnDust(state: GameState, slot: 0 | 1): void {
     const f = state.fighters[slot];
-    this.spawnBillboard(`${BASE}assets/vfx/spark-hit.png`, f.x, FLOOR_Y - 16, 95, {
+    this.spawnBillboard(`${BASE}${assetUrl(`assets/vfx/spark-hit.png`)}`, f.x, FLOOR_Y - 16, 95, {
       tint: 0xcbb894,
       additive: true,
     });
@@ -422,9 +423,9 @@ export class ThreeFxSystem {
 
   private projTexture(p: Projectile, ownerChar: string): THREE.Texture | null {
     return (
-      this.texture(`${BASE}assets/sprites/${ownerChar}/projectile-${p.moveId}.png`) ??
+      this.texture(`${BASE}${assetUrl(`assets/sprites/${ownerChar}/projectile-${p.moveId}.png`)}`) ??
       (HAS_LEGACY_PROJ.has(ownerChar)
-        ? this.texture(`${BASE}assets/sprites/${ownerChar}/projectile.png`)
+        ? this.texture(`${BASE}${assetUrl(`assets/sprites/${ownerChar}/projectile.png`)}`)
         : null)
     );
   }
@@ -526,7 +527,7 @@ export class ThreeFxSystem {
       // white quad must never show (the "rotating white square" bug)
       const mat = mesh.material as THREE.MeshBasicMaterial;
       if (!mat.map) {
-        mat.map = this.texture(`${BASE}assets/vfx/dizzy.png`);
+        mat.map = this.texture(`${BASE}${assetUrl(`assets/vfx/dizzy.png`)}`);
         if (mat.map) mat.needsUpdate = true;
       }
       mesh.visible = dazed && mat.map !== null;

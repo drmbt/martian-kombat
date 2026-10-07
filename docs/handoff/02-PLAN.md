@@ -44,13 +44,14 @@
    reproduce first (failing vitest for engine/data; a probe or browser repro
    for UI), then fix. Line numbers drift — re-locate by symbol, they're
    marked `~` when approximate.
-4. **Branching (D7, 2026-10-06): for now, commit phase work to
-   `feat/mks1-rescue-handoff` and open one bigger PR later.** The general
-   policy below applies once the user switches back to PR-per-phase.
-   `main` is believed to auto-deploy martiankombat.com via a
-   Cloudflare dashboard Git build (confirm with the user in P0.5). Work on
-   one branch per phase (`fix/p2-player-traps`, `fix/p3-engine-correctness`,
-   …), small scoped commits (CLAUDE.md conventions: `engine: …`, `ui: …`,
+4. **Branching (confirmed 2026-10-06, after PR #2 merged
+   `feat/mks1-rescue-handoff`):** `main` auto-deploys martiankombat.com via
+   Cloudflare Workers Builds, and every pushed branch gets a preview at
+   `https://<branch-with-dashes>-martian-kombat.stayprompin.workers.dev`
+   (the "Workers Builds: martian-kombat" check links the exact version) —
+   test there before opening the PR. Work on one branch per sprint/phase
+   (e.g. `perf/p6-loading-memory`, `fix/p3-engine-correctness`), small scoped
+   commits (CLAUDE.md conventions: `engine: …`, `ui: …`,
    `tools: …`), open a PR per phase, and let the user merge. Never push to
    `main` or force-push without an explicit OK.
 5. **Every engine behavior change ships with a vitest** (CLAUDE.md rule) and
@@ -78,17 +79,17 @@
 
 | Phase | Theme | Size | State |
 |---|---|---|---|
-| P0 | Restore raw assets + baseline (old-machine rescue → new machine) | S | ☐ |
+| P0 | Restore raw assets + baseline (old-machine rescue → new machine) | S | ✅ 2026-10-06 |
 | MKS-1 A | Standards foundation: bench lab, ratchet, KFM parity, MUGEN parsers | M | ✅ 2026-10-04 |
 | P1 | Truth-in-docs & agent context diet | M | ☐ |
-| P2 | Player-facing traps + cheap infra/security fixes | M | ☐ |
-| P3 | Fight-core correctness & feel (engine, test-first) | M–L | ☐ |
-| P4 | Character data, balance, schema lint | M | ☐ |
+| P2 | Player-facing traps + cheap infra/security fixes | M | ◐ 2.1–2.5 ✅ |
+| P3 | Fight-core correctness & feel (engine, test-first) | M–L | ◐ 3.1/3.2/3.10/3.11 ✅ |
+| P4 | Character data, balance, schema lint | M | ◐ 4.0–4.2 ✅ |
 | P5 | CPU opponent + difficulty | M | ☐ |
-| P6 | Loading, memory, bundle, render perf | L | ☐ |
+| P6 | Loading, memory, bundle, render perf | L | ◐ 6.1/6.2/6.3/6.5/6.6 ✅ |
 | P7 | Mobile & link-sharing | M | ☐ |
 | P8 | Asset pipeline & tooling hygiene | L | ☐ |
-| P9 | Repo weight & history (decision-gated) | M | ☐ |
+| P9 | Repo weight & history (decision-gated) | M | ◐ 9.1 ✅ |
 | P10 | Features & content (arcade mode first) | L | ☐ |
 | P11 | 3D mode: freeze (or delete) | S | ☐ |
 
@@ -129,7 +130,7 @@ Workers Static Assets (`wrangler.jsonc`), serving the HEAD build.
 
 | ID | Decision | Effect on the plan |
 |---|---|---|
-| D7 | **Stack on `feat/mks1-rescue-handoff`**; one bigger PR later (not PR-per-phase for now). | §0.4: commit phase work to this branch until the user says otherwise. |
+| D7 | **Stack on `feat/mks1-rescue-handoff`**; one bigger PR later (not PR-per-phase for now). | Done: merged as PR #2. Now one branch + PR per sprint (§0.4). |
 | D7b | **Unpublish GitHub Pages**; README → martiankombat.com. | P2.5 unblocked. |
 | D5 | **Freeze 3D** (dev-only / `?3d=1`). | P2.1 + P11 as written. |
 | D3 | **Platform now** — finish Character Studio phases 4–5 (jobs/cost UI, R2 publish, custom-fighter registry, auth/moderation). | New **P12**; P8.15 = wire, don't delete; P2.7 (dev-server hardening) becomes a prerequisite. |
@@ -203,7 +204,7 @@ Workers Static Assets (`wrangler.jsonc`), serving the HEAD build.
 - [x] **P0.4 Reconcile in-flight work.** Done 2026-10-04: the MUGEN/IKEMEN
       parity work is MKS-1 Phase A, committed on `feat/mks1-rescue-handoff`
       and folded into this plan (P3, P4, P10.7–P10.9).
-- [x] **P0.5 Deploy/branch policy (D7).** Decided 2026-10-06 (stack on this branch; see §2). Confirm how martiankombat.com
+- [x] **P0.5 Deploy/branch policy (D7).** Decided 2026-10-06; confirmed after PR #2: `main` → Workers Builds → martiankombat.com, per-branch preview URLs, one branch + PR per sprint, the user merges (see §0.4). Confirm how martiankombat.com
       deploys (dashboard Git build on `main`?), whether branch pushes make
       preview builds, the PR-per-phase flow, and when this branch merges.
 
@@ -212,6 +213,12 @@ Workers Static Assets (`wrangler.jsonc`), serving the HEAD build.
 *Why first: the "read SPRINTBOARD before anything" rule makes every agent
 session ingest ~250 KB (~60k+ tokens) plus a 24 KB CLAUDE.md, much of it
 stale. Fixing that makes every later session cheaper and less misled.*
+
+*Re-measured 2026-10-06 (after P6): SPRINTBOARD.md 3,763 lines / 260 KB,
+changelog from `:1524`, 145 entries; CLAUDE.md 461 lines / 30 KB (it GREW —
+MKS-1, KFM, camera, P6 notes). 18 playable fighters + KFM (secret), 27
+stages. Line numbers below are from the audit (2026-10-04) — re-locate by
+text. Prompt: `docs/handoff/05-NEXT-SPRINT-P1.md`.*
 
 - [ ] **P1.1 Restructure `SPRINTBOARD.md` (3,570 lines → ≤ ~200).**
       - Move the changelog (≈ lines 1487–3503, 141 KB, 129 entries)
@@ -258,8 +265,10 @@ stale. Fixing that makes every later session cheaper and less misled.*
           `VITE_ASSET_BASE`;
         - commands missing `studio:run`, `gen:assets`, `gen:worldmap`,
           `gen:busts`, `raw:*`;
-        - lazy-load section contradicted by `prefetchAll`: rewrite as the 5
-          invariants.
+        - lazy-load section: P6 (2026-10-06) already corrected the facts
+          (one persistent loader, HTTP-only prefetch, eviction, `assetUrl()`
+          for every media URL) — condense it to the invariants, keep the
+          `assetUrl()` rule verbatim.
       - **Move out:**
         - pipeline steps 1–8 detail (`:61-183`) → the skills +
           `docs/ASSET_CHECKLIST.md`;
@@ -267,7 +276,7 @@ stale. Fixing that makes every later session cheaper and less misled.*
         - concurrency notes → a tools doc.
       - **Keep:** ground rules, stack, determinism, layout, commands,
         pointers.
-- [ ] **P1.3 README.** Link martiankombat.com (not the dead Pages URL); 18
+- [ ] **P1.3 README.** *(Play link → martiankombat.com done 2026-10-06.)* 18
       fighters (generate the table from `roster.ts`); the real modes; remove
       unbuilt claims (Yulia rage meter `:24`, Freeman armor `:19`, "GPT Image
       makes stages" `:11`); stack incl. Cloudflare.
@@ -308,12 +317,13 @@ stale. Fixing that makes every later session cheaper and less misled.*
         - sprite-qa mentions fal (no fal code exists).
 - [ ] **P1.7 `docs/DEPLOY.md`.** Cover:
       - the real deploy path: Workers Static Assets with assets-only
-        `wrangler.jsonc`, presumably a dashboard Git build (confirm in P0.5);
+        `wrangler.jsonc`, built by Cloudflare Workers Builds from `main`, plus
+        per-branch preview URLs (confirmed 2026-10-06, §0.4);
       - the `_headers` cache policy and `public/.assetsignore`;
       - the two R2 buckets: PUBLIC `martiankombat-assets` (future CDN/3D) and
         PRIVATE `martiankombat-raw` (gitignored source, `raw:*`);
       - `VITE_ASSET_BASE` (only wired on `feat/3d-mode`);
-      - GitHub Pages status (P2.5).
+      - GitHub Pages: unpublished 2026-10-06 (P2.5).
 
 ## P2 — Player-facing traps + cheap infra/security fixes (one PR)
 
@@ -331,7 +341,7 @@ stale. Fixing that makes every later session cheaper and less misled.*
       **Accept:** prod build: L/R on the menu changes nothing; a saved
       `render3d:true` boots 2D; attract never starts DanceScene; a unit test
       for the settings migration.
-- [x] **P2.2 Cloudflare 404 fallback — HIGH [A, verified live by agent].** *Done 2026-10-06 in `wrangler.jsonc` (`"none"`; no client routes exist). The curl acceptance runs after the next deploy.*
+- [x] **P2.2 Cloudflare 404 fallback — HIGH [A, verified live by agent].** *Done 2026-10-06 in `wrangler.jsonc` (`"none"`; no client routes exist). Verified live after the PR #2 deploy: missing files 404, and all 597 lazily-loaded game assets + 43 music tracks return 200.*
       `wrangler.jsonc` `"not_found_handling": "single-page-application"`
       returns `index.html` with HTTP 200 for any missing `.png`/`.mp3`, and
       `public/_headers` then caches it for 7 days. That brings back the
@@ -339,7 +349,7 @@ stale. Fixing that makes every later session cheaper and less misled.*
       has no client routes.
       **Fix:** `"none"`.
       **Accept (after deploy):** `curl -sI https://martiankombat.com/assets/nope.png` → 404.
-- [ ] **P2.3 Pause menu has no keyboard nav — MED [A].** Only the gamepad
+- [x] **P2.3 Pause menu has no keyboard nav — MED [A].** *Done 2026-10-06: browser-verified ESC → ↓/S/↑ → ENTER, P1 LP / P2 MK confirm.* Only the gamepad
       feeds `pauseMenu.move/confirm` (`fightShell.ts:~186-199`), yet the hint
       says "◄► choose, attack confirms". Add arrows/WASD + attack keys +
       Enter.
@@ -352,7 +362,7 @@ stale. Fixing that makes every later session cheaper and less misled.*
       **Fix:** use a non-attack key (Enter/Start), and gate all end-of-match
       navigation on `endNavArmedAt` (`:~245`).
       **Accept:** mashing R through a KO always shows the win screen.
-- [ ] **P2.5 Unpublish stale GitHub Pages ⛔ D7.** It serves the 2026-07-07
+- [x] **P2.5 Unpublish stale GitHub Pages ⛔ D7.** *Done 2026-10-06: README link → martiankombat.com (PR #3); the user ran `gh api -X DELETE repos/drmbt/martian-kombat/pages` — the Pages API and drmbt.github.io/martian-kombat both return 404.* It serves the 2026-07-07
       build (8 fighters), and the README links there. Disable it (repo
       Settings → Pages, or `gh api -X DELETE repos/drmbt/martian-kombat/pages`
       after confirmation), or replace it with a redirect page.
@@ -635,7 +645,7 @@ specials only from >190px, including the throw, which therefore always whiffs.*
 
 ## P6 — Loading, memory, bundle, render perf
 
-- [ ] **P6.1 AssetLoader can hang for the session — HIGH [V, code].**
+- [x] **P6.1 AssetLoader can hang for the session — HIGH [V, code].** *Done 2026-10-06: one persistent `AssetHostScene` loader, per-file settle (filecomplete / loaderror / drained), 90 s XHR timeout, retry after 10 s, `FightScene.preload` via `AssetLoader.barrier`, 12 s cap removed; core in `assetGroups.ts` + 15 stub-loader tests. Repro (1.5 MB/s server): main 12.07/12.04/12.04 s → branch 1.71 s (real download)/0.04/0.04 s.*
       `ensure()` (`src/scenes/assetLoader.ts:~57-77`) resolves on the
       CALLING scene's `load.once(COMPLETE)`. Phaser's `LoaderPlugin.shutdown`
       removes all listeners, so if Select stops mid-download (highlight a
@@ -653,7 +663,7 @@ specials only from >190px, including the throw, which therefore always whiffs.*
       - then remove the 12s cap.
       **Accept:** browser repro (highlight → immediate lock → Versus,
       repeated) never waits; one load per key in the `[MK assets]` log.
-- [ ] **P6.2 `prefetchAll` decodes everything — HIGH mobile [A].**
+- [x] **P6.2 `prefetchAll` decodes everything — HIGH mobile [A].** *Done 2026-10-06: HTTP-cache-only `fetch(url,{priority:'low'})`, ≤ 2 in flight, paused during Versus/Fight (0 fetches in a 20 s fight sample), skipped on saveData / coarse pointer; Select decodes only after a 180 ms rest; `AssetLoader.retainOnly` evicts sheets/stages/fatalities a fight or the Select previews don't need. Menu/attract: main ≈ 90 s → 18 sheets, 58 stage, 72 fatality textures ≈ 1.2 GB RGBA; branch steady 2 sheets ≈ 125 MB over 4 attract cycles.*
       (`assetLoader.ts:~110`, kicked off by `VolumeOverlayScene.ts:~135`.)
       From the menu it downloads every stage/sheet/VO/fatality (~165 MB
       first visit) and decodes all 18 sheets as textures, ≈**523 MB RGBA**
@@ -668,8 +678,8 @@ specials only from >190px, including the throw, which therefore always whiffs.*
         pointers (P7).
       **Accept:** after 2 min on the menu, `__game.textures` holds ≤ 2
       fighter sheets; no frame spikes in a fight.
-- [ ] **P6.3 Zero RGB under alpha=0 in sheets — HIGH value [A, measured on
-      copies].** The packer leaves chroma-key garbage under transparent
+- [x] **P6.3 Zero RGB under alpha=0 in sheets — HIGH value [A, measured on
+      copies].** *Done 2026-10-06: `tools/core/png.mjs` + packer/mugen:sprites/dev endpoints + `tools/clean-alpha.mjs`: 19 sheets 125.2 → 67.4 MB, asserted per file.* The packer leaves chroma-key garbage under transparent
       pixels. Measured: freeman 8.79 → 3.98 MB; all 18 sheets 124 → **68 MB
       (−45%)** as plain PNG, lossless, no runtime change.
       **Fix:** a post-pack step in `tools/core/packer.mjs` plus a one-time
@@ -680,10 +690,10 @@ specials only from >190px, including the throw, which therefore always whiffs.*
       on 3 fighters. Also portraits 4.2 → 0.7 MB, fatalities 13.6 → 9.3 MB,
       stages 6.6 → 4.7 MB. Packer + asset queue + manifest emit/consume
       `.webp`.
-- [ ] **P6.5 Ben's sheet is 1728×4224 [A]**, over the 4096 max texture on
+- [x] **P6.5 Ben's sheet is 1728×4224 [A]** *Done 2026-10-06: `tools/regrid-sheet.mjs` → 2016×3456 (7×9), `fitGrid()` for every packer path, audit lint (≤ 4096 + size = meta grid).*, over the 4096 max texture on
       some GPUs. Re-grid ≤ 4096/side (`gridFor` in `tools/core/cells.mjs`),
       re-meta, and add a lint check.
-- [ ] **P6.6 Cache-busting.** Media URLs aren't hashed (7-day cache) while
+- [x] **P6.6 Cache-busting.** *Done 2026-10-06: `versions` (sha8 of 750 media files) in assetManifest, `assetUrl()` on every runtime media URL (queue, Boot, HUD/win/fatality overlays, music, 3D FX); `_headers` media → immutable, non-overlapping (music manifest.json stays revalidating + `cache:'no-cache'`). Costs +11 KB gz in the main chunk (501.6 → 512.8).* Media URLs aren't hashed (7-day cache) while
       frame data ships in hashed immutable JS, so after a repack a returning
       player runs new frame data against an old sheet. Emit `?v=<sha8>` per
       file from `tools/gen-asset-manifest.mjs` → `assetManifest.json`, use it
@@ -868,7 +878,7 @@ can exhaust its memory.*
 
 ## P9 — Repo weight & history (all ⛔; the R2 mirror is the backup)
 
-- [ ] **P9.1 Delete merged/stale remote branches ⛔:** `feat/character-studio`
+- [x] **P9.1 Delete merged/stale remote branches ⛔:** *Done 2026-10-06 (user OK): deleted these four + the merged `feat/mks1-rescue-handoff`; `marzi-char`'s tip was `46012d0` if ever needed.* `feat/character-studio`
       (0 ahead), `flo-char` (0), `spike/3d-renderer` (0), `marzi-char` (2
       superseded draft commits). **Keep `feat/3d-mode`** (R2 GLB seam +
       `docs/3D_MODE_R2.md`).
@@ -1075,6 +1085,45 @@ files unasked. Full design: `docs/CHARACTER_STUDIO.md` Phases 4–5 (+ the R2
 ## Handoff log
 
 *(newest first; one entry per session: date · who · done · next · gotchas)*
+
+- **2026-10-06 · plan refresh + P1 handoff (Claude Opus 5.5).** Status table
+  corrected (P0 ✅; P2/P3/P4/P9 partial); §0.4 now states the confirmed flow
+  (Workers Builds from `main`, per-branch previews, one PR per sprint).
+  P2.5: user approved unpublishing Pages, the agent's DELETE was blocked by
+  the permission classifier → user runs it. Wrote
+  `docs/handoff/05-NEXT-SPRINT-P1.md` (truth-in-docs sprint) and re-measured
+  P1's numbers. **Next:** user merges PR #3, then P1 on `docs/p1-truth-in-docs`.
+
+- **2026-10-06 · P6 loading & memory (Claude Opus 5.5).** Branch
+  `perf/p6-loading-memory`. Done: **P6.1, P6.2, P6.3, P6.5, P6.6, P2.3**
+  (details + numbers on each item). Measured before → after:
+  - hang repro (highlight → immediate lock → Versus ×3, 1.5 MB/s server):
+    **12.07 / 12.04 / 12.04 s → 1.71 / 0.04 / 0.04 s**; `[MK assets]` shows
+    one `↓ load` per key;
+  - menu + attract (~2–4 min): **18 sheets / 58 stage / 72 fatality
+    textures ≈ 1.2 GB RGBA → steady 2 sheets ≈ 125 MB**;
+  - sprite sheets **125.2 → 67.4 MB** (lossless where A > 0); Ben
+    1728×4224 → 2016×3456;
+  - main chunk 501.6 → 512.8 KB gz (+11 KB = the `versions` map).
+  490/490 tests (37 files), tsc clean, bench unchanged (2 MKS-1 errors).
+  **Next:** staging check on the branch preview, then the PR (user merges).
+  After merge: every asset URL must still 200 (`?v=` is ignored by the
+  static host). Then P6.4 WebP (ask first: lossless vs q90 by eye), P6.7–6.9.
+  **Gotchas:** any new runtime load from `public/assets/` must go through
+  `assetUrl()` (media is now `immutable`). Run `npm run gen:assets` (or
+  `npm run build`) after changing any media — `npx vite build` skips the
+  prebuild and ships stale versions. Eviction removes textures: only call
+  `AssetLoader.retainOnly` where nothing on screen still shows them. The
+  hidden browser pane gives NO rAF after a reload — drive `__game.step`
+  from a setInterval. Don't rebuild a dist that an open page is
+  prefetching from (it 404s mid-build).
+
+- **2026-10-06 · shipped (Claude Opus 5.5).** PR #2 merged to `main`
+  (`83d98b6`) and deployed to martiankombat.com: the live bundle carries the
+  new code, missing files 404, and every asset the game can request (597 +
+  43 music) returns 200. `feat/mks1-rescue-handoff` is fully contained in
+  `main`. **Next sprint:** P6 loading/memory on `perf/p6-loading-memory` —
+  the self-contained agent prompt is `docs/handoff/04-NEXT-SPRINT.md`.
 
 - **2026-10-06 · staging found + Kung Fu Man unlockable (Claude Opus 5.5).**
   **Staging exists:** Cloudflare Workers Builds already makes a preview per

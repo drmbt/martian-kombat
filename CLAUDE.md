@@ -104,7 +104,10 @@ The pipeline turns a photo of a real person into a game-ready sprite sheet:
    plane) so all fighters share one plane, and bake the QA skeleton keypoints
    (`meta.skeletons`, body+hands+feet) shifted to match. The pack `SCALE_PAD` MUST
    stay identical to `pose_qa.py`'s cell scale/pad (HEADROOM) or keypoints/hitboxes
-   misregister.
+   misregister. The packer also zeroes RGB under fully transparent pixels
+   (`tools/core/png.mjs`, asserted visibly identical; ~−45% bytes) and picks
+   a grid ≤ 4096 px per side (`fitGrid`; the asset audit enforces both size
+   and grid).
    For release-quality keying of effect-heavy sprites (flames/smoke/glow),
    `npm run gen:key -- --char <name>` runs the CorridorKey neural keyer —
    self-bootstrapping (clones/installs the sibling repo, MLX weights on Apple
@@ -216,10 +219,23 @@ promise-deduped) as the player moves select → versus → fight:
   picking a stage warms its background.
 - **Versus** is the loading buffer — it pre-warms both fighters + the stage
   before handing off.
-- **FightScene / FightScene3D `preload()`** is the hard barrier: it queues the
-  two fighters + stage so EVERY entry path (dev launch, Studio TEST, arcade,
-  online-direct) is safe, instant when Versus already warmed it. **Fatality
-  panels load in the background DURING the fight** (not needed until FINISH HIM).
+- **FightScene / FightScene3D `preload()`** is the hard barrier: it requests
+  the two fighters + stage through AssetLoader (`AssetLoader.barrier`) so
+  EVERY entry path (dev launch, Studio TEST, arcade, online-direct) is safe,
+  instant when Versus already warmed it. **Fatality panels load in the
+  background DURING the fight** (not needed until FINISH HIM).
+
+Since P6 (2026-10-06): every on-demand load runs on ONE persistent loader
+(`AssetHostScene`, launched by Boot, never stopped) and settles per file —
+success, `loaderror`, or drained — so no request can hang. The background
+prefetch only **warms the HTTP cache** (`fetch`, ≤ 2 at a time, paused during
+Versus/Fight, skipped on data-saver/touch devices) and decodes nothing; a
+fight's preload and the Select previews **evict** decoded sheets/stages they
+don't need (`AssetLoader.retainOnly`). Every media URL carries a content
+version (`assetUrl()` in `src/data/assetUrl.ts`, hashes from
+`gen-asset-manifest`) because `public/_headers` caches media `immutable` —
+**any new code that loads a file from `public/assets/` must wrap its path in
+`assetUrl()`**, or a regenerated file stays stale for a year.
 
 The queue helpers live in `src/scenes/assetQueue.ts` and are **fully
 data-driven**: they read `ROSTER` (playable) for portraits, and each character

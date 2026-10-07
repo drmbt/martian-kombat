@@ -2,6 +2,7 @@
 // ghost bars, round pips, timer, combo counter, debug info line. Reuses the
 // 2D portrait pngs (V15). All DOM writes are cached — the DOM is only
 // touched when a value actually changes (perf pass).
+import { assetUrl } from '../data/assetUrl';
 import type { Defs, GameState } from '../engine';
 import { DASH_REGEN_TICKS, DASH_STOCKS } from '../engine';
 
@@ -43,7 +44,7 @@ export class FightHud {
         `position:absolute;top:10px;${slot === 0 ? 'left' : 'right'}:12px;width:42%;` +
         `display:flex;gap:8px;align-items:flex-start;${slot === 1 ? 'flex-direction:row-reverse;' : ''}`;
       const img = document.createElement('img');
-      img.src = `${import.meta.env.BASE_URL}assets/portraits/${id}.png`;
+      img.src = `${import.meta.env.BASE_URL}${assetUrl(`assets/portraits/${id}.png`)}`;
       img.style.cssText = 'width:52px;height:52px;object-fit:cover;border:2px solid #d8d2c0;background:#222;';
       img.onerror = () => (img.style.display = 'none');
       const col = document.createElement('div');

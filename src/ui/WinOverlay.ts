@@ -3,6 +3,7 @@
 // fallback), "<NAME> WINS" in the winner's color, a random winQuotes taunt,
 // and a navigation prompt line. Built lazily on matchEnd (after the K.O.
 // beat), torn down on dispose (scene restart).
+import { assetUrl } from '../data/assetUrl';
 import type { Defs, GameState } from '../engine';
 
 export interface WinOverlayOpts {
@@ -62,8 +63,8 @@ export class WinOverlay {
       `<div style="font-size:9cqh;font-weight:bold;color:${wDef.color};text-shadow:${titleShadow};letter-spacing:0.6cqh;line-height:1;">${wDef.name.toUpperCase()} WINS</div>` +
       fatal +
       `<div style="display:flex;gap:8cqw;align-items:flex-end;justify-content:center;">` +
-      `<img src="${base}assets/portraits/${winner.charId}.png" style="${bust}">` +
-      `<img src="${base}assets/portraits/${loser.charId}-ko.png" onerror="this.src='${base}assets/portraits/${loser.charId}.png';this.style.filter='grayscale(1) drop-shadow(0 6px 10px rgba(0,0,0,.6))'" style="${bust}transform:scaleX(-1);">` +
+      `<img src="${base}${assetUrl(`assets/portraits/${winner.charId}.png`)}" style="${bust}">` +
+      `<img src="${base}${assetUrl(`assets/portraits/${loser.charId}-ko.png`)}" onerror="this.src='${base}${assetUrl(`assets/portraits/${loser.charId}.png`)}';this.style.filter='grayscale(1) drop-shadow(0 6px 10px rgba(0,0,0,.6))'" style="${bust}transform:scaleX(-1);">` +
       `</div>` +
       `<div style="max-width:74%;font-size:3cqh;font-style:italic;color:#ffd24a;text-shadow:0 2px 5px #000;">“${quote}”</div>` +
       `<div style="font-size:2cqh;letter-spacing:0.2cqh;opacity:.55;">${this.opts.prompt ?? 'SPACE  REMATCH   ·   ENTER  SELECT   ·   ESC  MENU'}</div>`;

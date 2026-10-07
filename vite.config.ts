@@ -29,6 +29,7 @@ const okId = (id: unknown): id is string => typeof id === 'string' && /^[a-z0-9_
 // ~24px against pipeline-packed cells — docs/CHARACTER_STUDIO.md C1).
 import { KEY_PAD_CELL, keyPadSquare, STAGE_COVER } from './tools/core/keying.mjs';
 import { ELEVEN_VOICES } from './tools/lib.mjs';
+import { cleanPngBuffer } from './tools/core/png.mjs';
 const FF_KEY_PAD = KEY_PAD_CELL;
 // portraits are SQUARE (character-select icon aspect) and centered, not floor-aligned
 const FF_KEY_PAD_SQUARE = keyPadSquare(512);
@@ -216,7 +217,7 @@ function editorApi(): Plugin {
             if (manifest !== undefined) {
               writeFileSync(join(backupDir, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
             }
-            writeFileSync(sheetPath, Buffer.from(pngBase64, 'base64'));
+            writeFileSync(sheetPath, cleanPngBuffer(Buffer.from(pngBase64, 'base64')));
             writeFileSync(metaPath, JSON.stringify(meta, null, 2) + '\n');
             // Persist edit overlays so tools/core/packer.mjs keeps these edits
             // when the sheet is later re-packed from assets/raw/frames.
@@ -253,6 +254,7 @@ function editorApi(): Plugin {
             if (!okId(id)) throw new Error('invalid character id');
             if (!existsSync(join(root, 'assets/raw/frames', id))) throw new Error(`no raw frames for ${id}`);
             const { CHARACTERS, buildJobs, gridFor } = await import('./tools/frames-manifest.mjs');
+            const { fitGrid } = await import('./tools/core/cells.mjs');
             const { packCharacter } = await import('./tools/core/packer.mjs');
             const spec = (CHARACTERS as Record<string, unknown>)[id];
             // creator-made characters have no frames-manifest entry: derive the
@@ -266,7 +268,7 @@ function editorApi(): Plugin {
               const metaPath = join(root, 'public/assets/sprites', id, 'meta.json');
               const cols = existsSync(metaPath) ? ((JSON.parse(readFileSync(metaPath, 'utf-8')) as { cols?: number }).cols ?? 8) : 8;
               const n = readdirSync(join(root, 'assets/raw/frames', id)).filter((f) => /^\d\d-.*\.png$/.test(f)).length;
-              grid = { cols, rows: Math.ceil(n / cols) };
+              grid = fitGrid(n, cols);
             }
             // backup like /__editor/sheet
             const spriteDir = join(root, 'public/assets/sprites', id);
@@ -1231,16 +1233,17 @@ function editorApi(): Plugin {
                 writeFileSync(join(editsDir, 'skeletons.json'), JSON.stringify(m.skeletons, null, 2) + '\n');
               }
               const { packCharacter } = await import('./tools/core/packer.mjs');
+              const { fitGrid } = await import('./tools/core/cells.mjs');
               const nCells = Object.keys(rawFrames).filter((f) => /^\d\d-.*\.png$/.test(f)).length;
               const cols = m.cols ?? 6;
               packCharacter(id, {
-                root, spec: undefined, grid: { cols, rows: Math.ceil(nCells / cols) }, expected: nCells,
+                root, spec: undefined, grid: fitGrid(nCells, cols), expected: nCells,
                 log: (msg: string) => server.config.logger.info(msg),
               });
             } else if (typeof sheetBase64 === 'string') {
               // legacy fallback (no raw frames in the payload): trust the
               // client-composited sheet as before
-              writeFileSync(join(spriteDir, 'sheet.png'), Buffer.from(sheetBase64, 'base64'));
+                writeFileSync(join(spriteDir, 'sheet.png'), cleanPngBuffer(Buffer.from(sheetBase64, 'base64')));
               writeFileSync(join(spriteDir, 'meta.json'), JSON.stringify(meta, null, 2) + '\n');
             } else {
               throw new Error('missing rawFrames/sheet');

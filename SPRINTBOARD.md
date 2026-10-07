@@ -1525,6 +1525,68 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-10-06 · infra · GitHub Pages unpublished (P2.5 done)** — the user
+  deleted the Pages site; the API and drmbt.github.io/martian-kombat return
+  404. martiankombat.com is the only public build. — Claude (Opus 5.5)
+
+- **2026-10-06 · docs · P1 handoff + P2.5 status** — new
+  `docs/handoff/05-NEXT-SPRINT-P1.md` (truth-in-docs sprint prompt, with
+  re-measured sizes: SPRINTBOARD 3,763 lines / 260 KB, CLAUDE.md 461 / 30 KB);
+  02-PLAN P1 refreshed. P2.5: the user approved unpublishing GitHub Pages but
+  the agent's DELETE was blocked by the permission classifier — the user runs
+  it. — Claude (Opus 5.5)
+
+- **2026-10-06 · docs · 02-PLAN status refresh** — P0 marked ✅ in the status
+  table (all five items were done); P2/P3/P4/P9 show their completed items;
+  §0.4 branching, P0.5 and P1.7 now state the confirmed deploy path (Workers
+  Builds from `main`, per-branch previews, one PR per sprint) instead of the
+  retired "stack on feat/mks1-rescue-handoff"; P2.5 notes the README half is
+  done. — Claude (Opus 5.5)
+
+- **2026-10-06 · docs · README plays martiankombat.com (P2.5, part)** — the
+  PLAY NOW link pointed at the frozen 2026-07-07 GitHub Pages build.
+  Unpublishing Pages itself waits for the user's go-ahead. — Claude (Opus 5.5)
+
+- **2026-10-06 · scenes/tools · one persistent asset loader, HTTP-only
+  prefetch, eviction, versioned media (P6.1/P6.2/P6.6)** — on-demand loads
+  run on the never-stopped `AssetHostScene` and settle per file (no more
+  stranded promises / 12 s Versus waits); prefetch only warms the HTTP cache
+  (≤ 2, paused in fights, off on data-saver/touch); fights and Select evict
+  sheets they don't show; every media URL carries `?v=<sha8>` from
+  `gen-asset-manifest` and `_headers` caches media `immutable`. Menu/attract
+  memory 1.2 GB → ~125 MB RGBA; hang repro 12 s → 0.04 s. — Claude (Opus 5.5)
+
+- **2026-10-06 · scenes · pause menu keyboard nav (P2.3)** — while paused,
+  either player's bound directions plus arrows/WASD move the selection and any
+  bound attack key or ENTER confirms (ENTER no longer also jumps to char
+  select underneath). Browser-verified: ESC → ↓/S/↑ → ENTER restarts; P1 LP
+  and P2 MK resume. — Claude (Opus 5.5)
+
+- **2026-10-06 · assets/tools · Ben's sheet re-gridded under 4096 px + lint
+  (P6.5)** — 1728×4224 (6×11, over many mobile GPUs' texture max) → 2016×3456
+  (7×9) by `tools/regrid-sheet.mjs` (cells re-tiled in order, verified byte-
+  identical; meta cols/rows updated). `fitGrid()` in `tools/core/cells.mjs`
+  now picks every packer grid (CLI, dev `/__editor/pack`, creator SHIP) so no
+  repack can exceed 4096; `assets.audit.test.ts` fails any sheet > 4096 px or
+  whose size disagrees with its meta grid. Dev sheet-write endpoints also
+  alpha-clean (P6.3). — Claude (Opus 5.5)
+
+- **2026-10-06 · tools/assets · zero RGB under alpha = 0 in every sprite
+  sheet (P6.3)** — dependency-free PNG codec `tools/core/png.mjs`; the packer,
+  `mugen:sprites` and the dev sheet-write endpoints now zero the chroma-key
+  RGB hidden under fully transparent pixels; one-time `tools/clean-alpha.mjs`
+  cleaned the committed sheets: **125.2 → 67.4 MB** (19 sheets incl. kfm/rj/
+  tao), each asserted alpha-identical and RGB-identical wherever A > 0.
+  `mugen:sprites` reproduces the committed KFM sheet byte-for-byte. — Claude (Opus 5.5)
+
+- **2026-10-06 · repo · remote branch cleanup (P9.1)** — deleted
+  `feat/mks1-rescue-handoff`, `feat/character-studio`, `flo-char`,
+  `spike/3d-renderer`, `marzi-char`; kept `feat/3d-mode`. — Claude (Opus 5.5)
+
+- **2026-10-06 · docs · next-sprint handoff** — `docs/handoff/04-NEXT-SPRINT.md`
+  (P6.1/6.2/6.3/6.6/6.5 on `perf/p6-loading-memory`); P2.2 verified live
+  after the PR #2 deploy. — Claude (Opus 5.5)
+
 - **2026-10-06 · data · Kung Fu Man scaled into the roster's height band** —
   his port mapped MUGEN's 93-px stand height to our tallest hurtbox (284), so
   his idle art stood 323 world px vs the roster's 201–279 (median 246);

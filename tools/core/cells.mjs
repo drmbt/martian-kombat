@@ -8,6 +8,7 @@
 // lessons (idle-flicker pins, exaggerated walk strides, LOW/LYING geometric
 // constraints) — see the sprite-generation skill for the craft behind them.
 export { CELL_W, CELL_H } from './coords.mjs';
+import { CELL_W as CW, CELL_H as CH } from './coords.mjs';
 export const COLS = 6;
 export const ROWS = 4;
 
@@ -79,8 +80,21 @@ export function buildJobs(spec) {
   return jobs;
 }
 
+/** Largest texture side every target GPU accepts (many mobile GPUs cap at
+ *  4096). Sheets must fit it on BOTH axes — audited in assets.audit.test.ts. */
+export const MAX_SHEET_PX = 4096;
+
+/** The grid for `n` cells starting from `cols` columns, widened just enough
+ *  that the sheet stays ≤ MAX_SHEET_PX tall (P6.5: Ben's 6-column sheet was
+ *  4224 px). Throws if no grid fits. */
+export function fitGrid(n, cols, cellW = CW, cellH = CH) {
+  let c = Math.max(1, cols);
+  while (Math.ceil(n / c) * cellH > MAX_SHEET_PX) c++;
+  if (c * cellW > MAX_SHEET_PX) throw new Error(`${n} cells of ${cellW}x${cellH} don't fit a ${MAX_SHEET_PX}px texture`);
+  return { cols: c, rows: Math.ceil(n / c) };
+}
+
 export function gridFor(spec) {
   const n = buildJobs(spec).length;
-  const cols = spec.layout === 'v2' ? 8 : COLS;
-  return { cols, rows: Math.ceil(n / cols) };
+  return fitGrid(n, spec.layout === 'v2' ? 8 : COLS);
 }

@@ -34,7 +34,6 @@ import { StudioRail } from '../ui/StudioRail';
 import { SpriteSheetModel, type SheetMeta } from '../ui/spriteSheetModel';
 import { play, playVoice, runCues } from './BootScene';
 import { AssetLoader } from './assetLoader';
-import { queueFighterSprite, queueFighterVO, queueStage } from './assetQueue';
 import { playMusic } from '../audio/music';
 import { getSettings } from '../settings';
 import { diffTick, snapTick, type FightEvent, type TickSnap } from '../presentation/tickEvents';
@@ -336,17 +335,23 @@ export class FightScene extends Phaser.Scene {
     this.stageGuide = false;
   }
 
-  /** Hard barrier for the lazy fight assets: queue the two fighters' sheets/VO
-   *  and the stage. Phaser blocks create() until these load. On the normal
-   *  Select→Versus path the VS screen already warmed them, so nothing is queued
-   *  and this is instant; on cold entries (dev launch, Studio TEST, arcade,
-   *  online-direct) it's the safety net that keeps the fight off capsules. */
+  /** Hard barrier for the lazy fight assets: the two fighters' sheets/VO and
+   *  the stage, requested through AssetLoader (deduped — never a second
+   *  download of what Versus is already streaming). Phaser blocks create()
+   *  until they settle. On the normal Select→Versus path they're already in
+   *  cache and this is instant; on cold entries (dev launch, Studio TEST,
+   *  arcade, online-direct) it's the safety net that keeps the fight off
+   *  capsules. */
   preload(): void {
-    for (const id of new Set(this.chars)) {
-      queueFighterSprite(this, id);
-      queueFighterVO(this, id);
-    }
-    queueStage(this, this.stageId);
+    const ids = [...new Set(this.chars)];
+    // only this fight's sheets/stage stay decoded (attract demos and earlier
+    // matchups would otherwise pile up ~28 MB per sheet)
+    AssetLoader.retainOnly([...ids.flatMap((id) => [`sprite-${id}`, `fat-${id}`]), `stage-${this.stageId}`]);
+    AssetLoader.barrier(
+      this,
+      [...ids.flatMap((id) => [`sprite-${id}`, `vo-${id}`]), `stage-${this.stageId}`],
+      Promise.all([...ids.flatMap((id) => [AssetLoader.fighter(id), AssetLoader.fighterVO(id)]), AssetLoader.stage(this.stageId)]),
+    );
   }
 
   create(): void {
@@ -469,7 +474,7 @@ export class FightScene extends Phaser.Scene {
     // Lazy fatality panels: not needed until FINISH HIM at match end, so pull
     // both fighters' cutscene art in the BACKGROUND now, during the fight — the
     // download is done long before a KO. Missing panels degrade gracefully.
-    for (const id of new Set(this.chars)) void AssetLoader.fatality(this, id);
+    for (const id of new Set(this.chars)) void AssetLoader.fatality(id);
 
     // 'wireframe' is the studio's dev stage TEMPLATE: no art, a sparse
     // programmatic grid (horizon / floor plane / posts) so a character under

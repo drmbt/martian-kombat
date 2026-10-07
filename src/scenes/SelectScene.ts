@@ -33,6 +33,9 @@ const MAP_W = Math.round(MAP_H * MAP_ASPECT);
 const MAP_LEFT = Math.round(STAGE_W / 2 - MAP_W / 2);
 // Home-stage thumbnail flanking the map: P1 in the left gutter, P2 mirrored to
 // the right. Sits above each side's idle sprite, clear of the map's edges.
+type HoverState = { id: string; t: number; decoded: boolean };
+/** a highlighted fighter's sheet decodes only after the cursor rests this long */
+const HOVER_DECODE_MS = 180;
 const SIDE_THUMB_W = 184;
 const SIDE_THUMB_H = Math.round((SIDE_THUMB_W * 9) / 21);
 const SIDE_THUMB_X = 102; // P1 center; P2 = STAGE_W - SIDE_THUMB_X
@@ -76,6 +79,8 @@ export class SelectScene extends Phaser.Scene {
   private sideSprites: (Phaser.GameObjects.Sprite | null)[] = [null, null];
   private sidePodium!: Phaser.GameObjects.Graphics;
   private sideSheet: [string, string] = ['', ''];
+  /** which fighter each cursor rests on, and since when (scene clock) */
+  private hover: [HoverState | null, HoverState | null] = [null, null];
   private sideIdle: [[number, number], [number, number]] = [[0, 1], [0, 1]];
   // home-stage pins over the top map: static dots + a per-player highlight
   // (ring + name label + stage thumbnail) tracking each side's current pick
@@ -125,6 +130,7 @@ export class SelectScene extends Phaser.Scene {
   }
 
   init(data: { cpu?: boolean; training?: boolean; showcase?: boolean; tuner?: boolean; spriteEditor?: boolean; studio?: boolean; module?: string; render3d?: boolean; online?: OnlineSelectData }): void {
+    this.hover = [null, null];
     this.online = data.online ?? null;
     // showcase = a chosen CPU-vs-CPU demo; one controller picks BOTH fighters,
     // exactly like VS CPU, so it rides the same single-controller select flow
@@ -643,7 +649,7 @@ export class SelectScene extends Phaser.Scene {
     announce(this, `ann-${entry.id}`);
     // locked in — start pulling this fighter's VO (kiai/hurt/victory + move
     // call-outs) in the background while the other player / stage is chosen
-    void AssetLoader.fighterVO(this, entry.id);
+    void AssetLoader.fighterVO(entry.id);
     this.redraw();
     if (this.online) {
       this.online.controller.lockChar(entry.id);
@@ -743,13 +749,13 @@ export class SelectScene extends Phaser.Scene {
         // Stage backgrounds are lazy-loaded now — pull this thumbnail's art and
         // drop it into the (blank) tile the moment it streams in. Boot no longer
         // preloads stages, so without this the whole grid shows empty boxes.
-        const key = `bg-stage-${opt.id}`;
+        const key = `bg-stage-${opt.id}`; // thumbnail = the 21:9 art only (not the wide)
         const addThumb = (): void => {
           if (!this.scene.isActive() || !this.stageMode || !this.textures.exists(key)) return;
           this.add.image(x, ty, key).setDisplaySize(tw, th).setDepth(12);
         };
         if (this.textures.exists(key)) addThumb();
-        else void AssetLoader.stage(this, opt.id).then(addThumb);
+        else void AssetLoader.stageThumb(opt.id).then(addThumb);
       }
       const owner = opt.id === 'random' || opt.id === 'test-room' ? null : stageOwner(opt.id, picked, characters);
       const label = owner ? `${opt.name} · ${characters[owner].name}` : opt.name;
@@ -787,7 +793,7 @@ export class SelectScene extends Phaser.Scene {
     play(this, 's-blip', 0.8);
     // head start on the chosen stage's background (VersusScene/FightScene also
     // ensure it — this just overlaps the download with the VS screen)
-    void AssetLoader.stage(this, stage);
+    void AssetLoader.stage(stage);
     // online: BOTH players vote for a stage. The host reconciles (agree → that,
     // disagree → coin flip) and sends the authoritative start, so both peers
     // launch on the identical stage/rules (V25). Never scene.start here.
@@ -1007,7 +1013,20 @@ export class SelectScene extends Phaser.Scene {
       // highlighted fighter's sheet (deduped) so the idle animation streams in.
       // redraw() runs every frame, so the moment it lands the idle branch below
       // picks it up; until then we fall back to the head portrait (boot-loaded).
-      if (!(this.render3d && entry.mesh3d)) void AssetLoader.fighter(this, entry.id);
+      // Only once the cursor RESTS on a fighter (HOVER_DECODE_MS): scrolling
+      // across the grid must not decode every sheet it passes (~28 MB each).
+      if (this.hover[p]?.id !== entry.id) this.hover[p] = { id: entry.id, t: this.time.now, decoded: false };
+      const hv = this.hover[p]!;
+      if (!hv.decoded && this.time.now - hv.t >= HOVER_DECODE_MS && !(this.render3d && entry.mesh3d)) {
+        hv.decoded = true;
+        // keep only what the two side previews show (or are about to) —
+        // browsing the whole grid must not leave every sheet decoded
+        const keep = new Set<string>();
+        for (const h of this.hover) if (h) keep.add(`sprite-${h.id}`);
+        for (const k of this.sideSheet) if (k.startsWith('sheet-')) keep.add(`sprite-${k.slice('sheet-'.length)}`);
+        AssetLoader.retainOnly([...keep], ['sprite']);
+        void AssetLoader.fighter(entry.id);
+      }
       // 3D mode, best-available preview: live GLB idle (SelectPreview3D) →
       // portrait bust while it streams / for sheet-only fighters → 2D sheet.
       this.preview3d?.setChar(p, this.render3d && entry.mesh3d ? entry.id : null);

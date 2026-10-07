@@ -11,3 +11,5 @@ export const MOVES: string[];
 export const V2_BUTTONS: string[];
 export function buildJobs(spec: unknown): { id: string; pose: string }[];
 export function gridFor(spec: unknown): { cols: number; rows: number };
+export const MAX_SHEET_PX: number;
+export function fitGrid(n: number, cols: number, cellW?: number, cellH?: number): { cols: number; rows: number };
