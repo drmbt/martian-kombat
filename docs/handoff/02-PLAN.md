@@ -59,9 +59,11 @@
    `src/engine/`).
 6. **No API spend without approval.** Anything that calls Gemini / OpenAI /
    ElevenLabs / Fish needs a ⛔ D6 go-ahead with an estimated image/call count.
-7. **Close out each session:** tick boxes here, append a dated entry to the
-   Handoff log (done / next / gotchas). Once P1.1 lands, SPRINTBOARD's backlog
-   points at this file — don't duplicate items there.
+7. **Close out each session:** tick boxes here and append a dated entry to
+   the Handoff log (done / next / gotchas) **in the same commit as the work —
+   git log is the changelog** (no per-commit changelog file since P1.1).
+   SPRINTBOARD.md is the short true status + standing landmines and points
+   its backlog at this file — don't duplicate items there.
 8. **Verify commands:** `npx tsc --noEmit` · `npx vitest run` ·
    `npm run bench` (MKS-1 audit; `-- --char <id>` per fighter) ·
    `npx vite build --outDir /tmp/mk-dist` (avoids the prebuild hooks that
@@ -220,7 +222,7 @@ MKS-1, KFM, camera, P6 notes). 18 playable fighters + KFM (secret), 27
 stages. Line numbers below are from the audit (2026-10-04) — re-locate by
 text. Prompt: `docs/handoff/05-NEXT-SPRINT-P1.md`.*
 
-- [ ] **P1.1 Restructure `SPRINTBOARD.md` (3,570 lines → ≤ ~200).**
+- [x] **P1.1 Restructure `SPRINTBOARD.md` (3,570 lines → ≤ ~200).** *Done 2026-10-06: 3,778 lines / 260 KB → 128 lines / 7 KB. Changelog (148 entries) verbatim → `docs/archive/CHANGELOG-2026-summer.md`; header, Sprints 0–28, RFEs, Icebox and old handoff notes verbatim → `docs/archive/SPRINTS-2026-summer.md` (with a known-stale-claims preamble); the new board = true status, backlog pointer, RFEs de-duplicated against P5/P10–P12, pruned Icebox (fullscreen shipped, zoom declined), standing landmines. New rule in CLAUDE.md rule 1, §0.7 and the board header.*
       - Move the changelog (≈ lines 1487–3503, 141 KB, 129 entries)
         verbatim to `docs/archive/CHANGELOG-2026-summer.md`.
       - Move completed Sprints 0–27 detail to `docs/archive/SPRINTS-2026-summer.md`.
@@ -953,7 +955,7 @@ can exhaust its memory.*
       - The stale "lockstep" comment at `webrtc.ts:~60`.
       - SPEC T41–T46 leftovers.
 - [ ] **P10.6 ⛔ D6 content regen backlog:** marzipan frames, bodhi active
-      cells, RJ v2's 4 flagged cells (`SPRINTBOARD.md:~1631-1636`), a
+      cells, RJ v2's 4 flagged cells (`docs/archive/CHANGELOG-2026-summer.md`, "Still open on RJ"), a
       roster-wide CorridorKey re-key (`docs/CORRIDORKEY.md`), and the 16
       inspo'd-but-unbuilt Martians (haidai, jack, jordan, neil, dulcinee,
       puddles, …).

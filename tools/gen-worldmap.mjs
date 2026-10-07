@@ -3,7 +3,7 @@
 // a per-character or per-stage pipeline: a single top-down/oblique map
 // covering the Bombay Beach town grid + Salton Sea shoreline and, to the
 // north across open desert, the Mars College campus. Later work will map
-// stage locations onto this image (see SPRINTBOARD icebox); this script just
+// stage locations onto this image (done: src/data/stage-pins.json); this script just
 // produces the base art.
 //   node tools/gen-worldmap.mjs [--force]
 

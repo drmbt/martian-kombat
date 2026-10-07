@@ -6,12 +6,11 @@ audio assets are AI-generated from real inspiration photos via scripted pipeline
 
 ## Ground rules for agents
 
-1. **Read `SPRINTBOARD.md` before doing anything.** It is the single source of truth
-   for what's done, what's in flight, and what's next. Update its checkboxes and
-   append to its changelog **before every commit**. It doubles as the agent handoff
-   sheet — if you stop mid-task, write a handoff note there. **(Since
-   2026-10-04 the active backlog is `docs/handoff/02-PLAN.md`; it supersedes
-   SPRINTBOARD's "Current"/handoff sections until its P1.1 slims the board.)**
+1. **Read `SPRINTBOARD.md` first** (short true status + standing landmines),
+   then the backlog **`docs/handoff/02-PLAN.md`** (§0 protocol, §1 status, the
+   phase you're on, the newest Handoff-log entries). Tick the backlog
+   checkboxes and update the handoff notes **in the same commit as the work;
+   git log is the changelog.** If you stop mid-task, leave a handoff note.
 2. **Never commit `.env`** or print key values. Keys available (see `.env.example`):
    `GEMINI_API_KEY` (nano-banana image gen + Veo video), `OPENAI_API_KEY`
    (GPT Image), `ELEVENLABS_API_KEY` (SFX/voice), `FAL_KEY` (fal.ai fallback route
