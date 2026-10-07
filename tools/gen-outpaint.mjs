@@ -18,7 +18,7 @@
 //   npm run gen:outpaint -- --stage drive-in --mode sides|pillar [--try 1]
 //                           [--aspect 3.5] [--force]
 //   npm run gen:outpaint -- --stage chiba-roof --mode sides --try 2 \
-//        --src "public/assets/backgrounds/stages tall/chiba-roof.png" --width 2520
+//        --src "assets/stages-tall/chiba-roof.png" --width 2520
 //   npm run gen:outpaint -- --stage mimos --try 3 --from left=2,right=1
 //        # sides mode: every try shares one canvas geometry, so a good side
 //        # from an earlier try is reused (copied) and only the rest re-rolls

@@ -69,3 +69,7 @@ __pycache__/
 *.pyc
 # Ableton sample-analysis sidecars (regenerated on load)
 *.asd
+
+# gen-mesh writes these next to each GLB (local run records, never shipped)
+public/assets/3d/**/*.job.json
+public/assets/3d/**/*.report.json

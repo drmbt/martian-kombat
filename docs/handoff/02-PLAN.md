@@ -371,7 +371,7 @@ text. Prompt: `docs/archive/handoff-prompts/05-NEXT-SPRINT-P1.md`.*
       build (8 fighters), and the README links there. Disable it (repo
       Settings → Pages, or `gh api -X DELETE repos/drmbt/martian-kombat/pages`
       after confirmation), or replace it with a redirect page.
-- [ ] **P2.6 Remove shipped orphans [A].**
+- [x] **P2.6 Remove shipped orphans [A].** *Done 2026-10-07: tall stage art (17 MB, 13 files) moved to `assets/stages-tall/` (source-only; `ai-kitchn` → `ai-kitchen`, so `TALL_ALIAS` is empty; `stages-wide.mjs`/`gen-outpaint`/TOOLS.md updated); deleted `stages/_old/` (2.3 MB), `public/dev/glb-viewer.html`, vanessa's unused `projectile-little-helper.png` (her projectile moves are little-martian + chocolate-head); the 3D `*.job.json`/`*.report.json` sidecars untracked + gitignored (gen-mesh rewrites them each run; `assets/3d/` never deployed). ~19.5 MB less shipped; manifest 750 → 725 versioned files. Kept `vfx/sparks/` (P10.2).*
       - **KEEP `public/assets/backgrounds/stages tall/`** — not an orphan: the
         user's 1680×1440 upward-expanded stages for future Marvel vs
         Capcom-style high-jump air fighting (D9). Move it out of

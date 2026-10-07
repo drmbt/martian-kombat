@@ -6,10 +6,11 @@
 //   sides — how the scene should CONTINUE past the left/right edges
 // Import-safe data module (no side effects).
 
-export const STAGE_SOURCES_TALL = 'public/assets/backgrounds/stages tall';
+// source-only (never shipped): moved out of public/ by 02-PLAN P2.6
+export const STAGE_SOURCES_TALL = 'assets/stages-tall';
 
 /** tall-art filename overrides (folder names that don't match the id) */
-export const TALL_ALIAS = { 'ai-kitchen': 'ai-kitchn' };
+export const TALL_ALIAS = {}; // (the ai-kitchn typo was fixed by renaming the file, P2.6)
 
 /** source art for stages registered outside public/assets/backgrounds/stages */
 export const SOURCE_OVERRIDE = { salton: 'public/assets/backgrounds/salton-shoreline.jpg' };
