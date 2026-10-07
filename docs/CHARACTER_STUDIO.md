@@ -10,6 +10,78 @@
 
 ---
 
+## Quick reference — the dev editor & Studio as built
+
+*(Moved from `CLAUDE.md` by P1.2, 2026-10-06.)*
+
+### Dev-mode front-end editor (BUILT — Sprints 23 & 25; dev-only)
+
+All of this is **dev-only**: registered/reachable only under `import.meta.env.DEV`
+via the title's `7 · DEV EDITOR` item → `EditorMenuScene`, and it writes to disk
+through a **Vite dev-server middleware plugin** (`editorApi()` in `vite.config.ts`,
+`apply:'serve'`) whose `/__editor/*` POST endpoints are compiled OUT of the prod
+build. That middleware is the shared backbone the future character creator reuses.
+
+Built tools (detail: Sprint 25 in `docs/archive/SPRINTS-2026-summer.md`):
+- **Stage Pin editor** — place each stage's pin on the select-screen world map
+  (`/__editor/stage-pins`).
+- **Move Tuner** (`src/ui/MoveTunerPanel.ts`) — 2 fighters in a training sandbox;
+  per-slot Manual / CPU (low/med/high, `src/ai/difficulty.ts`) / Loop-a-move;
+  live frame-data + hitbox inspector; WRITE → character JSON (`/__editor/character`).
+- **Sprite Editor** (`src/ui/SpriteEditorPanel.ts` + `spriteSheetModel.ts`) —
+  sprite grid (select/reorder/clipboard), per-cell scale/normalize/offset, regen
+  keypoints (live DWPose, `/__editor/skeleton-regen`), regen a frame via
+  nano-banana (`/__editor/gen-frame`), draggable hitbox + skeleton joints,
+  auto-hitbox from the skeleton, floor line + soft silhouette box. WRITE composites
+  the sheet → `/__editor/sheet` (timestamped backup before overwrite).
+- **2D skeleton overlay (F3)** — DWPose keypoints are baked into `meta.skeletons`
+  at pack time and replayed live over the sprite (no runtime inference). Debug
+  hotkeys are unified 2D↔3D: **F1 hitboxes · F2 move log · F3 skeleton · F5 stage guide**.
+
+**Character `scale`** (`src/data/characterScale.ts`, was `spriteScale`): one
+uniform multiplier that resizes EVERYTHING about a fighter's size + reach — art
+(via `hurtStand.h`), hurtboxes, hitboxes, joints, projectiles, grab range — about
+the feet origin. Baked at load by `applyScale`; live-edited by `setCharacterScale`
+(re-bakes in place from a cached base). **Two scales exist and differ**: the
+collision `scale` vs the render scale `hurtStand.h*1.32/CELL_H`. Anything drawn
+over the ART (skeleton, auto-hitbox, soft box) uses the RENDER scale; collision
+boxes use `scale`. Do not conflate them.
+
+**Coordinate contract (SOLVED — Sprint 27):** every constant lives ONCE in
+`src/render/coords.json` (accessors: `src/render/coords.ts` for the browser,
+`tools/core/coords.mjs` for Node, `tools/qa/coords.py` for Python) and the
+cell↔world transform lives ONCE in `src/render/geometry.ts` — never re-declare
+FLOOR_FRAC/CELL dims/HEADROOM/the 1.32 art margin. The whole roster is
+floor-normalized (feet on the 338 line, meta v2 with per-cell RTMPose
+skeletons); `SPRITE_FOOT_OFFSET_Y` is 0 and `spriteOffsetY` is gone. There is
+exactly ONE packer: `tools/core/packer.mjs` (CLI `gen:pack`, dev
+`/__editor/pack`, and creator SHIP all run it); Sprite-Editor edits persist as
+overlays in `assets/raw/edits/<id>/` and survive re-packs; frame dirs with a
+`.cellspace` marker (vincent/earl/ben) hold KEYED cell-space art the packer
+copies through.
+
+### Character Studio (Sprint 27 — the unified dev tool; dev-only)
+
+`DEV EDITOR → CHARACTER STUDIO` opens `StudioSelectScene` (the roster
+manager: every fighter as a card — edit / online⇄offline / export .zip /
+guided delete, plus ＋NEW CHARACTER, IMPORT ZIP, and the WIP-drafts shelf).
+Editing opens FightScene's `studio` mode: a top module rail
+(CREATOR · SPRITES · MOVES · STAGES · TEST) over the LIVE fight — the old
+Move Tuner / Sprite Editor menu entries are deep links into it. The creator
+wizard is WYSIWYG: the fight scene IS the preview (`setStudioSubject` mounts
+the draft as the slot-0 fighter — placeholder ghost → real cells as
+generations land; canon fighters inherit their assets on reopen); new
+characters start on the programmatic `wireframe` dev stage; a GAP BAR shows
+per-fighter completeness (cells/throw/skeletons/lore/quotes/VO/voice/music/
+fatality/stage). Kit grammar comes from `tools/core/kit.mjs` (chains/cancels/
+variants — no fighter ships thin). Full plan: Parts 1–3 below;
+history: Sprint 27 in `docs/archive/SPRINTS-2026-summer.md`; open work:
+`docs/handoff/02-PLAN.md` P12. Do not expose any
+dev-editor UI in the shipped build (everything is `apply:'serve'` +
+`import.meta.env.DEV`).
+
+---
+
 ## Part 1 — Audit findings (the state of the world, 2026-07-08)
 
 Sixteen fighters are playable. Three dev tools coexist as separate EditorMenu

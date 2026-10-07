@@ -246,7 +246,7 @@ text. Prompt: `docs/handoff/05-NEXT-SPRINT-P1.md`.*
         - "no fighter uses du" (`:962-964`; flo/yulia do);
         - `spriteOffsetY` prose (`:702-715`, deleted);
         - Tao "no stage" (`:1452`) vs institute (`:1603`).
-- [ ] **P1.2 Slim + correct `CLAUDE.md` (380 lines/24.5 KB → ~130–150).**
+- [x] **P1.2 Slim + correct `CLAUDE.md` (380 lines/24.5 KB → ~130–150).** *Done 2026-10-06: 461 lines / 30 KB → 225 lines / 14 KB (every hard rule kept; the extra ~50 lines over target are the full key-name list, layout and lore/KFM rules). Fixed: 18 fighters, `withBackoff` (it already retries network errors too — the real gap is direct `fetch` calls in `gen-voice.mjs` and the `vite.config.ts` middleware), rollback shipped, online/3D/Cloudflare, full directory + scene list, the dangling "see Architecture", steps 1–7 (+ optional 8), all key names, missing commands, lazy-load condensed to invariants (the `assetUrl()` rule verbatim). Moved: pipeline steps + lazy-load detail + concurrency → new `docs/TOOLS.md`; editor/Studio sections → `docs/CHARACTER_STUDIO.md` "Quick reference". New rules surfaced: no paid gen / no R2 writes, branch policy.*
       `AGENTS.md` is a symlink to it.
       - **Fix:**
         - "Sixteen fighters" → 18 (`:276`);
