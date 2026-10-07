@@ -297,14 +297,14 @@ text. Prompt: `docs/handoff/05-NEXT-SPRINT-P1.md`.*
         haidai dropped.
       - `SPEC.md:14-15,20,44` and `3D_CHARACTER_PIPELINE.md:13` point at the
         deleted `public/assets/meshes`.
-- [ ] **P1.5 Purge retired privacy-gate language** (retired 2026-07-08):
+- [x] **P1.5 Purge retired privacy-gate language** (retired 2026-07-08): *Done 2026-10-06: removed from the new-character description + its retirement note, move-authoring, ASSET_CHECKLIST, CHARACTER_STUDIO (incl. `lore.mjs` marked dropped), CHARACTERS.md's Wave-2 check; CHARACTER_CREATOR is archived and SPRINTBOARD's lines went to the archive with it. `grep -rn "opt-out" .claude docs CLAUDE.md` now hits only `docs/archive/`, the CLAUDE.md retirement line, this item, D1's note and the P1 prompt.*
       `.claude/skills/new-character/SKILL.md:3` (description; contradicts its
       own `:28`), `docs/ASSET_CHECKLIST.md:35`,
       `docs/CHARACTER_STUDIO.md:162,239,536,619`,
       `docs/CHARACTER_CREATOR.md:174,229`, `SPRINTBOARD.md:845-847`.
       Acceptance: `grep -rn "opt-out" .claude docs CLAUDE.md` → archive-only
       hits.
-- [ ] **P1.6 Skills.** (MKS-1 added `fighting-game-standards` and
+- [x] **P1.6 Skills.** *Done 2026-10-06: `.agents/skills` → symlink to `../.claude/skills` (committed with P1.4); new-character: step list (gen-canonical for step 1, no "7-step"), VO source = the JSON `vo` block with gen-audio's tables mirrored until P8.6, `studio:run`; sprite-generation: the a→b chaining labelled as policy that NEITHER the CLI nor the Studio implements yet (code audit) — implement in P8; sprite-qa: the fal mention removed; hit-spark-generator: the wiring pointer → P10.2.* (MKS-1 added `fighting-game-standards` and
       `mugen-import`, and bench gates in move-authoring / new-character.)
       - Replace `.agents/skills/` (a stale one-time Codex mirror from 148a19c
         that still names the privacy gate and old `tools/qa/*vfx*` paths)
