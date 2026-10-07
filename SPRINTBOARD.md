@@ -1525,6 +1525,12 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-10-06 · scenes · pause menu keyboard nav (P2.3)** — while paused,
+  either player's bound directions plus arrows/WASD move the selection and any
+  bound attack key or ENTER confirms (ENTER no longer also jumps to char
+  select underneath). Browser-verified: ESC → ↓/S/↑ → ENTER restarts; P1 LP
+  and P2 MK resume. — Claude (Opus 5.5)
+
 - **2026-10-06 · assets/tools · Ben's sheet re-gridded under 4096 px + lint
   (P6.5)** — 1728×4224 (6×11, over many mobile GPUs' texture max) → 2016×3456
   (7×9) by `tools/regrid-sheet.mjs` (cells re-tiled in order, verified byte-

@@ -9,6 +9,7 @@ import type { Defs, GameState, InputFrame } from '../engine';
 import type { OnlineFightData } from '../net/lobby';
 import { RematchLink } from '../net/rematch';
 import { attackKeyCodes, menuNav, navDefer } from '../input/menu-nav';
+import { getSettings } from '../settings';
 import { play } from './BootScene';
 import { MoveLogModel } from '../presentation/moveLog';
 import type { UiLayer } from '../ui/layer';
@@ -97,6 +98,7 @@ export class FightShell {
           { hint: opts.pauseHint, onNavSound: () => play(scene, 's-blip', 0.4) },
         );
         kb.on('keydown-ESC', () => this.togglePause());
+        this.bindPauseKeys(kb);
         // R restarts the current CPU-vs-CPU matchup at any time
         kb.on('keydown-R', () => this.restartMatch());
         return;
@@ -126,6 +128,8 @@ export class FightShell {
         onNavSound: () => play(scene, 's-blip', 0.4),
       },
     );
+
+    this.bindPauseKeys(kb);
 
     // --- the canonical fight keymap (identical across renderers) ---
     kb.on('keydown-ESC', () => {
@@ -157,6 +161,7 @@ export class FightShell {
       // select underneath (the studio flag was missed here once: pressing
       // ENTER while editing sprite size dumped the user to the main menu)
       if (this.opts.tuner || this.opts.spriteEditor || this.opts.studio) return;
+      if (this.paused) return; // the pause menu owns ENTER (bindPauseKeys)
       const ended = this.opts.state().phase === 'matchEnd';
       if (ended && this.scene.time.now < this.endNavArmedAt) return;
       if (this.opts.online && ended) this.optInRematch();
@@ -173,6 +178,28 @@ export class FightShell {
       if (scene.time.now < this.endNavArmedAt) return;
       if (this.opts.online) this.optInRematch();
       else this.toCharacterSelect();
+    });
+  }
+
+  /** Keyboard nav for the pause dialog (P2.3), matching the pad: either
+   *  player's bound directions, plus arrows/WASD, move the selection; any bound
+   *  attack key or ENTER confirms. */
+  private bindPauseKeys(kb: Phaser.Input.Keyboard.KeyboardPlugin): void {
+    kb.on('keydown', (e: KeyboardEvent) => {
+      if (!this.paused || !this.pauseMenu) return;
+      const binds = getSettings().bindings;
+      const dir = (a: 'up' | 'down' | 'left' | 'right'): boolean => binds.some((b) => b.keys[a] === e.keyCode);
+      const back = dir('up') || dir('left') || [37, 38, 65, 87].includes(e.keyCode);
+      const fwd = dir('down') || dir('right') || [39, 40, 68, 83].includes(e.keyCode);
+      if (back || fwd) {
+        this.pauseMenu.move(back ? -1 : 1);
+        return;
+      }
+      if (e.keyCode === 13 || attackKeyCodes().has(e.keyCode)) {
+        play(this.scene, 's-blip', 0.5);
+        // the item may restart / change scenes — defer, as the pad path does
+        navDefer(this.scene, () => this.pauseMenu?.confirm());
+      }
     });
   }
 
