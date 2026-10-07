@@ -24,6 +24,7 @@
 > | `02-PLAN.md` (this file) | everywhere | the backlog |
 > | `03-NEW-MACHINE-RESUME.md` | this (new) machine, after the rescue | restore + baseline + start the plan |
 > | `RESCUE_REPORT.md` | written by the old machine | what was rescued, versions, gaps |
+| `06-NEXT-SPRINT-P2.md` | a fresh session | the next sprint's self-contained prompt (P2.6–P2.10). Finished prompts move to `docs/archive/handoff-prompts/` |
 
 ---
 
@@ -90,7 +91,7 @@
 | P5 | CPU opponent + difficulty | M | ☐ |
 | P6 | Loading, memory, bundle, render perf | L | ◐ 6.1/6.2/6.3/6.5/6.6 ✅ |
 | P7 | Mobile & link-sharing | M | ☐ |
-| P8 | Asset pipeline & tooling hygiene | L | ☐ |
+| P8 | Asset pipeline & tooling hygiene | L | ◐ 8.6a ✅ |
 | P9 | Repo weight & history (decision-gated) | M | ◐ 9.1 ✅ |
 | P10 | Features & content (arcade mode first) | L | ☐ |
 | P11 | 3D mode: freeze (or delete) | S | ☐ |
@@ -220,7 +221,7 @@ stale. Fixing that makes every later session cheaper and less misled.*
 changelog from `:1524`, 145 entries; CLAUDE.md 461 lines / 30 KB (it GREW —
 MKS-1, KFM, camera, P6 notes). 18 playable fighters + KFM (secret), 27
 stages. Line numbers below are from the audit (2026-10-04) — re-locate by
-text. Prompt: `docs/handoff/05-NEXT-SPRINT-P1.md`.*
+text. Prompt: `docs/archive/handoff-prompts/05-NEXT-SPRINT-P1.md`.*
 
 - [x] **P1.1 Restructure `SPRINTBOARD.md` (3,570 lines → ≤ ~200).** *Done 2026-10-06: 3,778 lines / 260 KB → 128 lines / 7 KB. Changelog (148 entries) verbatim → `docs/archive/CHANGELOG-2026-summer.md`; header, Sprints 0–28, RFEs, Icebox and old handoff notes verbatim → `docs/archive/SPRINTS-2026-summer.md` (with a known-stale-claims preamble); the new board = true status, backlog pointer, RFEs de-duplicated against P5/P10–P12, pruned Icebox (fullscreen shipped, zoom declined), standing landmines. New rule in CLAUDE.md rule 1, §0.7 and the board header.*
       - Move the changelog (≈ lines 1487–3503, 141 KB, 129 entries)
@@ -780,6 +781,15 @@ can exhaust its memory.*
       committed in `public/`. Check the shipped output; regenerate only with
       `--force`.
 - [ ] **P8.6 One generation file per fighter — kill the 8-table drift [A].**
+      *Step (a) DONE 2026-10-06 (`tools/p8-vo-source`): `gen-audio` reads VO
+      texts from the JSON via `tools/core/vo-lines.mjs`; its table is now
+      `voiceSettings` only (earl/ben covered for the first time); hand tags
+      moved to `LINE_TAGS` in `core/vo-emotion.mjs`; `(SFX)` voiceText is
+      never synthesized; real recordings (`RECORDED`: yulia) survive
+      `--force` unless `--include-recorded`; `src/data/voLines.test.ts`
+      guards all of it. A plain `gen:audio` run generates 0 new clips.
+      Still open: `announcerLines` name call-outs (could derive from
+      `ROSTER` names), then steps (b)–(d).*
       Per-fighter generation data is spread over:
       - `frames-manifest.mjs` CHARACTERS (1,930 lines; earl/ben missing, so
         `gen:frames`/`gen:pack`/`gen:key`/`studio:run` fail for them);
@@ -801,6 +811,17 @@ can exhaust its memory.*
       test), (b) fatality, (c) canonical/icons, (d) the frames split + add
       earl/ben.
       **Accept:** no per-fighter tables left in `tools/*.mjs`.
+- [ ] **P8.18 Reference chaining a→b (found in P1's code audit).** The
+      sprite-generation skill's policy (idle-b←idle-a, walk-b←walk-a,
+      startup←idle) is implemented in NEITHER path: `gen-frames` pools those
+      cells referencing only the canonical (`tools/gen-frames.mjs:~107`),
+      and the Studio's `refFor()` (`src/ui/CharacterCreatorPanel.ts:~2166`)
+      only offers canonical/crouch/jump anchors. Do it with P8.6(d) (adding
+      earl/ben to frames-manifest): add a dependent phase in `gen-frames`
+      (a-cells first, then b-cells referencing them — update the
+      three-phase-order note in `docs/TOOLS.md`) and the same refs in the
+      Studio. **Prove it** with a small ⛔ D6 A/B (≈4–8 images: idle-b and
+      walk-b for 2 fighters, chained vs canonical-only) before relying on it.
 - [ ] **P8.7 `.cellspace` dirs receive raw frames [A, likely].** `gen-frames`
       and `/__editor/gen-frame` (`vite.config.ts:~360-371`) write raw green
       frames into vincent/earl/ben's prekeyed dirs, and the packer copies
@@ -1044,7 +1065,10 @@ files unasked. Full design: `docs/CHARACTER_STUDIO.md` Phases 4–5 (+ the R2
         GLBs, `warmup.ts:~66`);
       - `FightScene3D.ts:~415` LOADING forever on boot failure;
       - AO + bloom + 2048 soft shadows at 2× DPR every match (heavy);
-      - the HUD/banner/fatality are duplicated vs 2D.
+      - the HUD/banner/fatality are duplicated vs 2D;
+      - `gen-mesh` reads `public/assets/meshes/` + `public/assets/animations/`,
+        but those sources were removed in `0d18a75` and live in the
+        gitignored `assets/raw/unused-3d-sources/` — point the tool there.
       If D5 = delete: remove `src/renderer3d` (~3.4k lines), the 3D
       scene/UI (~0.9k), DanceScene, the `three` dependency, and the `RENDER`
       settings.
@@ -1091,6 +1115,23 @@ files unasked. Full design: `docs/CHARACTER_STUDIO.md` Phases 4–5 (+ the R2
 
 *(newest first; one entry per session: date · who · done · next · gotchas)*
 
+- **2026-10-06 · P1 merged + P8.6(a) VO source (Claude Opus 5.5).** PR #4
+  (P1) merged as `d225a46`. Branch `tools/p8-vo-source`: `gen-audio` now
+  reads every VO text from the character JSON (`tools/core/vo-lines.mjs`);
+  the old per-fighter text tables are gone (they had drifted in 14 places —
+  vincent's in every line — and lacked earl/ben); hand tags →
+  `LINE_TAGS`; `(SFX)` never synthesized; yulia's real recordings survive
+  `--force`. New `src/data/voLines.test.ts` (24 tests). A plain
+  `gen:audio` run would generate 0 new clips (verified). New to-dos:
+  **P8.18** (a→b reference chaining, with a small paid A/B) and the
+  `gen-mesh` source path (P11). Finished sprint prompts moved to
+  `docs/archive/handoff-prompts/`. **Next:** P2.6–P2.10 on
+  `fix/p2-cleanup-hardening` — prompt `docs/handoff/06-NEXT-SPRINT-P2.md`.
+  **Gotchas:** `announcerLines` (name call-outs) is still a table in
+  gen-audio. Per-line emotion overrides are keyed by the exact JSON text —
+  editing a line's text in the Studio silently drops its override (the
+  test catches it).
+
 - **2026-10-06 · P1 truth-in-docs (Claude Opus 5.5).** Branch
   `docs/p1-truth-in-docs`, P1.1–P1.7 done (details on each item); docs only,
   no code behaviour changed (three source comments re-pointed at moved docs).
@@ -1121,14 +1162,14 @@ files unasked. Full design: `docs/CHARACTER_STUDIO.md` Phases 4–5 (+ the R2
   assets return 200 on martiankombat.com with `immutable` caching. GitHub
   Pages unpublished (P2.5). `perf/p6-loading-memory` deleted (local +
   remote); **`docs/p1-truth-in-docs` created from `main` and pushed** —
-  start P1 with `docs/handoff/05-NEXT-SPRINT-P1.md`.
+  start P1 with `docs/archive/handoff-prompts/05-NEXT-SPRINT-P1.md`.
 
 - **2026-10-06 · plan refresh + P1 handoff (Claude Opus 5.5).** Status table
   corrected (P0 ✅; P2/P3/P4/P9 partial); §0.4 now states the confirmed flow
   (Workers Builds from `main`, per-branch previews, one PR per sprint).
   P2.5: user approved unpublishing Pages, the agent's DELETE was blocked by
   the permission classifier → user runs it. Wrote
-  `docs/handoff/05-NEXT-SPRINT-P1.md` (truth-in-docs sprint) and re-measured
+  `docs/archive/handoff-prompts/05-NEXT-SPRINT-P1.md` (truth-in-docs sprint) and re-measured
   P1's numbers. **Next:** user merges PR #3, then P1 on `docs/p1-truth-in-docs`.
 
 - **2026-10-06 · P6 loading & memory (Claude Opus 5.5).** Branch
@@ -1160,7 +1201,7 @@ files unasked. Full design: `docs/CHARACTER_STUDIO.md` Phases 4–5 (+ the R2
   new code, missing files 404, and every asset the game can request (597 +
   43 music) returns 200. `feat/mks1-rescue-handoff` is fully contained in
   `main`. **Next sprint:** P6 loading/memory on `perf/p6-loading-memory` —
-  the self-contained agent prompt is `docs/handoff/04-NEXT-SPRINT.md`.
+  the self-contained agent prompt is `docs/archive/handoff-prompts/04-NEXT-SPRINT-P6.md`.
 
 - **2026-10-06 · staging found + Kung Fu Man unlockable (Claude Opus 5.5).**
   **Staging exists:** Cloudflare Workers Builds already makes a preview per

@@ -30,11 +30,11 @@
   with rollback) · 4 Training · 5 Demo match · 6 Settings · attract-mode demo
   on idle · `7 DEV EDITOR` (dev builds only: Character Studio, stage-pin
   editor). 3D mode is frozen: dev or `?3d=1` only.
-- **Health:** `tsc` clean · 490/490 vitest (37 files) · `npm run bench`:
+- **Health:** `tsc` clean · 514/514 vitest (38 files) · `npm run bench`:
   2 MKS-1 errors (Vincent `clp>lk`, Ben `clk>clp` infinites — 02-PLAN P4.3).
-- **Plan progress:** P0 ✅ · MKS-1 Phase A ✅ · P1 ✅ (this branch) · P2
-  2.1–2.5 ✅ · P3 3.1/3.2/3.10/3.11 ✅ · P4 4.0–4.2 ✅ · P6 6.1/6.2/6.3/6.5/6.6
-  ✅ · P9.1 ✅. **Next:** P2.6–P2.10, then P3. Status table: 02-PLAN §1.
+- **Plan progress:** P0 ✅ · MKS-1 Phase A ✅ · P1 ✅ · P2 2.1–2.5 ✅ · P3
+  3.1/3.2/3.10/3.11 ✅ · P4 4.0–4.2 ✅ · P6 6.1/6.2/6.3/6.5/6.6 ✅ · P8.6(a) ✅
+  · P9.1 ✅. **Next:** P2.6–P2.10, then P3. Status table: 02-PLAN §1.
 
 ## Backlog
 
@@ -94,8 +94,9 @@ CPU matchup matrix (P10.9), CPU difficulty (P5), Character Studio platform
 
 ## Agent handoff notes
 
-**Current:** P1 truth-in-docs is done on `docs/p1-truth-in-docs` (PR open;
-the user merges). Next session: P2.6–P2.10 (02-PLAN), then P3. The dated
+**Current:** P1 (PR #4) and P8.6(a) — VO texts read from the character
+JSON — are done. **Next session:** P2.6–P2.10 on `fix/p2-cleanup-hardening`;
+paste `docs/handoff/06-NEXT-SPRINT-P2.md` into a fresh session. The dated
 session log is 02-PLAN's **Handoff log**; this section keeps only standing
 landmines.
 
@@ -106,6 +107,10 @@ landmines.
   prebuild and ships stale versions.
 - MKS-1 ratchet: after fixing a balance error, `npm run bench --
   --update-baseline` in the same commit, or `balance.audit.test.ts` fails.
+- VO line texts live ONLY in the character JSON (`vo` + move `voiceText`);
+  `gen-audio.mjs` holds voice settings + announcer lines. Emotion tags go in
+  `LINE_TAGS` (`tools/core/vo-emotion.mjs`), never in the text. Real
+  recordings (`RECORDED`, `tools/core/vo-lines.mjs`) survive `--force`.
 - `kfm.json` is generated (`npm run mugen:sprites`); edit
   `src/bench/reference/kfm.unlock.json` instead. Raw MUGEN content is
   gitignored (`npm run mugen:fetch`) and never goes to R2.
