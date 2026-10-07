@@ -888,9 +888,17 @@ function updateFighter(
 
 // ---------- combat resolution ----------
 
-function defenderHurtRect(f: FighterState, def: CharacterDef): Rect {
+/** the six crouching normals (the flat move dict's 'c' + button ids) — the
+ *  only attacks performed from a crouch. A name prefix is NOT a stance:
+ *  `ceremony`, `cartwheel`, `cossack-spiral` are standing specials (P3.3). */
+const CROUCH_NORMALS = new Set(['clp', 'cmp', 'chp', 'clk', 'cmk', 'chk']);
+
+export function defenderHurtRect(f: FighterState, def: CharacterDef): Rect {
   const a = f.action;
-  const crouched = a.kind === 'crouch' || (a.kind === 'attack' && a.moveId?.startsWith('c'));
+  const crouched =
+    a.kind === 'crouch' ||
+    (a.kind === 'attack' && !!a.moveId && CROUCH_NORMALS.has(a.moveId)) ||
+    (a.kind === 'blockstun' && a.guard === 'crouch');
   return worldBox(f, crouched ? def.hurtCrouch : def.hurtStand);
 }
 

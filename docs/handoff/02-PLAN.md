@@ -457,7 +457,7 @@ KFM parity test. Synthetic fighters for engine tests already exist:
       U+D → up. Record the rule in FIGHTING_STANDARDS §4 (MKS-1 has no
       SOCD rule yet; IKEMEN resolves L+R to neutral).
       **Test:** hold L+R under MP pressure → no advance, no block.
-- [ ] **P3.3 Crouch hurtbox by id prefix — MED [V].**
+- [x] **P3.3 Crouch hurtbox by id prefix — MED [V].** *Done 2026-10-07: `defenderHurtRect` uses the crouch box only for the six crouching normals (`CROUCH_NORMALS`), `crouch`, and blockstun with `guard: 'crouch'`. Fixes 8 specials that were 98 px short (chebel ceremony/crescent-moon, kirby cartwheel/cat-scratch, rapha claw-machine, vanessa chocolate-head, vincent cloud-hands, yulia cossack-spiral) and crouch-blockstun using the standing box. `src/engine/hurtbox.test.ts` (failed on the old code); bench unchanged.*
       `defenderHurtRect` (`step.ts:~847`) uses
       `moveId.startsWith('c')`, so specials like chebel `ceremony`, kirby
       `cartwheel`, yulia `cossack-spiral` and rapha `claw-machine` get the

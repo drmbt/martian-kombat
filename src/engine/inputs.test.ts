@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Defs } from './index';
 import { testChar, testMove } from '../bench/fixtures';
-import { benchState, run } from '../bench/sim';
+import { benchState, run, type Partial6 } from '../bench/sim';
 
 const defs: Defs = {
   t: testChar('t', {}, {
@@ -14,7 +14,7 @@ const defs: Defs = {
 };
 
 /** count attack STARTS (action becomes an attack, or the move restarts) */
-function attackStarts(p1: (t: number) => Record<string, boolean>, ticks = 180): string[] {
+function attackStarts(p1: (t: number) => Partial6, ticks = 180): string[] {
   const s = benchState(defs, 't', 't', 600); // far apart: nothing connects
   const starts: string[] = [];
   let prevKind = s.fighters[0].action.kind;
