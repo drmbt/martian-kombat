@@ -1525,6 +1525,10 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-10-06 · docs · README plays martiankombat.com (P2.5, part)** — the
+  PLAY NOW link pointed at the frozen 2026-07-07 GitHub Pages build.
+  Unpublishing Pages itself waits for the user's go-ahead. — Claude (Opus 5.5)
+
 - **2026-10-06 · scenes/tools · one persistent asset loader, HTTP-only
   prefetch, eviction, versioned media (P6.1/P6.2/P6.6)** — on-demand loads
   run on the never-stopped `AssetHostScene` and settle per file (no more

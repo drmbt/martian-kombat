@@ -1,6 +1,6 @@
 # 🛸 MARTIAN KOMBAT
 
-**▶ PLAY NOW: [drmbt.github.io/martian-kombat](https://drmbt.github.io/martian-kombat/)**
+**▶ PLAY NOW: [martiankombat.com](https://martiankombat.com)**
 
 A Street Fighter / Mortal Kombat–style 2D versus fighting game starring the
 residents of **Mars College** — a popup art residency and off-grid community in
