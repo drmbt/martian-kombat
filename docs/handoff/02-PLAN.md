@@ -9,14 +9,14 @@
 >    port at 100% measured parity (rationale and numbers:
 >    `docs/FIGHTING_STANDARDS.md`; its §10 roadmap is folded in here).
 >
-> Until P1.1 restructures `SPRINTBOARD.md`, **this file supersedes
-> SPRINTBOARD's "Current"/handoff sections** and FIGHTING_STANDARDS §10.
+> Since P1 (2026-10-06) `SPRINTBOARD.md` is a short true-status board that
+> points its backlog here; this file also supersedes FIGHTING_STANDARDS §10.
+> History: `docs/archive/` (SPRINTS/CHANGELOG-2026-summer).
 > The original audit documents are preserved verbatim in
 > `docs/archive/handoff-2026-10-04-audit/`.
 >
-> **Branch:** everything from 2026-10-04 lives on
-> `feat/mks1-rescue-handoff` (pushed). It reaches `main` by PR after the
-> rescue lands (D7).
+> **Branch:** one branch + PR per sprint off `main` (§0.4); the
+> 2026-10-04 work (`feat/mks1-rescue-handoff`) merged as PR #2.
 >
 > | File | Run where | Purpose |
 > |---|---|---|
@@ -83,7 +83,7 @@
 |---|---|---|---|
 | P0 | Restore raw assets + baseline (old-machine rescue → new machine) | S | ✅ 2026-10-06 |
 | MKS-1 A | Standards foundation: bench lab, ratchet, KFM parity, MUGEN parsers | M | ✅ 2026-10-04 |
-| P1 | Truth-in-docs & agent context diet | M | ☐ |
+| P1 | Truth-in-docs & agent context diet | M | ✅ 2026-10-06 |
 | P2 | Player-facing traps + cheap infra/security fixes | M | ◐ 2.1–2.5 ✅ |
 | P3 | Fight-core correctness & feel (engine, test-first) | M–L | ◐ 3.1/3.2/3.10/3.11 ✅ |
 | P4 | Character data, balance, schema lint | M | ◐ 4.0–4.2 ✅ |
@@ -317,7 +317,7 @@ text. Prompt: `docs/handoff/05-NEXT-SPRINT-P1.md`.*
           walk-b←walk-a, startup←idle) isn't implemented in CLI `gen-frames`:
           implement in P8 or label studio-only;
         - sprite-qa mentions fal (no fal code exists).
-- [ ] **P1.7 `docs/DEPLOY.md`.** Cover:
+- [x] **P1.7 `docs/DEPLOY.md`.** *Done 2026-10-06: all six points, plus `not_found_handling: none`, the `?v=<sha8>` / non-overlapping-rules reasoning, and the no-R2-write rule; `.env.example`'s stale "Cloudflare Pages" comments fixed.* Cover:
       - the real deploy path: Workers Static Assets with assets-only
         `wrangler.jsonc`, built by Cloudflare Workers Builds from `main`, plus
         per-branch preview URLs (confirmed 2026-10-06, §0.4);
@@ -1090,6 +1090,31 @@ files unasked. Full design: `docs/CHARACTER_STUDIO.md` Phases 4–5 (+ the R2
 ## Handoff log
 
 *(newest first; one entry per session: date · who · done · next · gotchas)*
+
+- **2026-10-06 · P1 truth-in-docs (Claude Opus 5.5).** Branch
+  `docs/p1-truth-in-docs`, P1.1–P1.7 done (details on each item); docs only,
+  no code behaviour changed (three source comments re-pointed at moved docs).
+  Sizes before → after:
+  - `SPRINTBOARD.md` **3,778 lines / 261 KB → 128 lines / 7 KB** (history
+    moved verbatim to `docs/archive/{SPRINTS,CHANGELOG}-2026-summer.md`,
+    reassembly diff-checked);
+  - `CLAUDE.md` **461 lines / 30 KB → 226 lines / 14 KB** (detail moved to
+    the new `docs/TOOLS.md` and `docs/CHARACTER_STUDIO.md`);
+  - a fresh session's mandatory read (CLAUDE.md + SPRINTBOARD) **~291 KB ≈
+    73k tokens → ~21 KB ≈ 5k tokens**; with 02-PLAN §0–3, one phase and the
+    latest log entries, **~44 KB ≈ 11k tokens**.
+  Checks: tsc clean, 490/490 vitest (37 files), bench 2 MKS-1 errors
+  (unchanged), `npm run build` leaves `git status` clean; every relative
+  `.md` link in the live docs + skills resolves (except the not-yet-written
+  `docs/ARCADE.md` and `docs/3D_MODE_R2.md`, which lives on `feat/3d-mode`).
+  **New protocol:** tick boxes + handoff notes in the same commit; git log is
+  the changelog. **Next:** the user merges the PR; then P2.6–P2.10, then P3.
+  **Gotchas:** the CHARACTER_STUDIO code audit found the sprite-generation
+  skill's a→b reference chaining (idle-b←idle-a, walk-b←walk-a,
+  startup←idle) isn't implemented in EITHER path (P8 work). `gen-mesh` still
+  reads `public/assets/meshes/`, whose sources now sit in
+  `assets/raw/unused-3d-sources/`. The `gen:audio` CLI still reads its own
+  VO tables, not the JSON `vo` block (P8.6), so keep them in sync.
 
 - **2026-10-06 · P6 shipped (Claude Opus 5.5).** PR #3 merged (`6d8e46e`)
   and deployed: the live bundle matches the branch build, all 750 versioned
