@@ -39,9 +39,10 @@ test is green (optional VFX is an eighth, unaudited step). Order matters (later 
    exist, or the audit fails early). Include the `vo` block (6 kiai / 6 hurt /
    4 victory line texts, the durable source) and an `arcade` block. Add a
    generator-script entry in `tools/frames-manifest.mjs` (poses +
-   `extra.projectiles` prompts) and mirror the name + VO texts into
-   `tools/gen-audio.mjs` (its CLI still reads its own tables until 02-PLAN
-   P8.6). Then `npm run bench -- --char <id>`: zero new MKS-1 errors.
+   `extra.projectiles` prompts) and the name call-out to `announcerLines` in
+   `tools/gen-audio.mjs` (plus a `voiceSettings` entry if the fighter has no
+   voice clone). VO line texts are read from the JSON — never copy them into
+   gen-audio. Then `npm run bench -- --char <id>`: zero new MKS-1 errors.
 2. **Canonical sheet** (once) — `node tools/gen-canonical.mjs --char <id>`
    (add the fighter's inspo/face entry in the script) from
    `assets/character-inspo/<name>.jpg` → `assets/raw/canonical/<id>.png`;
@@ -61,8 +62,11 @@ test is green (optional VFX is an eighth, unaudited step). Order matters (later 
    `<id>-ko.png`.
 6. **Audio** — `npm run gen:audio -- --char <id> --concurrency 3`: the name
    call-out + 6 kiai / 6 hurt / 4 victory lines (the exact counts the loader
-   and the audit expect). A per-move call-out is opt-in: set `voice: true` on
-   the move + a `moves: { <moveId>: 'text' }` entry in gen-audio.
+   and the audit expect), all read from the JSON `vo` block. A per-move
+   call-out is opt-in: set `voice: true` + `voiceText` on the move
+   (`"(SFX)"` marks a non-speech clip that is never synthesized).
+   `--force` never overwrites real recordings (`RECORDED` in
+   `tools/core/vo-lines.mjs`; `--include-recorded` overrides).
 7. **Fatality panels** — `npm run gen:fatality -- --char <id>` → 4 cutscene
    panels under `public/assets/fatalities/<id>/<fatality-id>-<n>.jpg`.
 

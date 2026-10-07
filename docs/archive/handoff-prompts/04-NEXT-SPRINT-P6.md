@@ -1,7 +1,7 @@
 # Next sprint — P6 loading & memory (handoff prompt)
 
 > **DONE 2026-10-06 — PR #3.** Kept for reference; the current prompt is
-> `05-NEXT-SPRINT-P1.md`.
+> `05-NEXT-SPRINT-P1.md` (same folder).
 
 Paste everything below the line into a new Claude Code session opened on
 this repo. It is self-contained; the agent should not need this

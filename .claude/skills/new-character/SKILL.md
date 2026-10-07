@@ -75,10 +75,12 @@ prompt (search the location/scene name; combine with `assets/stage-inspo/`).
 7. **VO** — voice-clone if a real sample exists (`gen:voice`, drop clips in
    `assets/voice-inspo/<id>/`). The line TEXTS live in the character JSON's
    `vo` block (exactly 6 kiai / 6 hurt / 4 victory) + per-move `voiceText` —
-   that is the durable source of truth the audit lints. Until 02-PLAN P8.6
-   lands, the `gen:audio` CLI still reads its own `voiceLines` /
-   `announcerLines` tables in `tools/gen-audio.mjs`, so mirror the same texts
-   there before generating.
+   the single source of truth: `gen:audio` reads them via
+   `tools/core/vo-lines.mjs` (never copy texts into gen-audio; it only holds
+   `voiceSettings` + the `announcerLines` name call-out). Per-line emotion
+   overrides go in `LINE_TAGS` in `tools/core/vo-emotion.mjs`, never into
+   the JSON text (ElevenLabs would speak the tag). `"(SFX)"` voiceText = a
+   non-speech clip; real recordings go in `RECORDED` so `--force` skips them.
    Cloned chars route through Fish automatically. Cloned lines get emotion-tagged by context×temperament
    (`tools/core/vo-emotion.mjs`); add the fighter to its `TEMPERAMENT` table and
    audition on a soundboard before baking — see `docs/VO_EMOTION.md`. Announcer
