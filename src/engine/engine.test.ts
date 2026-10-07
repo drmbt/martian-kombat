@@ -22,7 +22,7 @@ import {
   resolveMove,
   step,
 } from './index';
-import { characters } from '../data/characters';
+import { characters } from './__fixtures__/characters';
 
 const P1 = 'vincent';
 const P2 = 'yulia';

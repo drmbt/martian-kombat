@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { BUTTONS, EMPTY_INPUT, hashState, initialState, packInput, step, unpackInput } from './index';
 import type { GameState, InputFrame } from './index';
-import { characters } from '../data/characters';
+import { characters } from './__fixtures__/characters';
 
 function fresh(): GameState {
   const s = initialState('vincent', 'yulia', characters);

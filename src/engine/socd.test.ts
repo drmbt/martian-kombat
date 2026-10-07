@@ -2,7 +2,7 @@
 // (measured: advanced 192 px while blocking 6/6 MPs). Cleaned in the engine:
 // L+R → neutral, U+D → up.
 import { describe, expect, it } from 'vitest';
-import { characters } from '../data/characters';
+import { characters } from './__fixtures__/characters';
 import { benchState, run } from '../bench/sim';
 import { EMPTY_INPUT, cleanSocd } from './index';
 

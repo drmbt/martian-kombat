@@ -433,7 +433,7 @@ After each fix: full suite + `npm run bench` (no new MKS-1 errors) + the
 KFM parity test. Synthetic fighters for engine tests already exist:
 `src/bench/fixtures.ts` (`testChar`, `testMove`) — reuse them for P3.0.*
 
-- [ ] **P3.0 Freeze engine test fixtures.** `src/engine/engine.test.ts`
+- [x] **P3.0 Freeze engine test fixtures.** *Done 2026-10-07: frozen copies of the 10 fighters the engine tests use (cat, catherine, chebel, flo, freeman, gene, kirby, marzipan, vincent, yulia) in `src/engine/__fixtures__/` (loaded through the same `applyScale`), and engine/dash/hash/hurtbox/socd/specials/trades tests point there. Proven: with live `vincent.lp` mangled, all 145 of those tests still pass. Live coverage: new `src/engine/engine.roster.test.ts` (every playable fighter, 900 scripted ticks, in bounds + deterministic replay) plus the bench ratchet; `inputs.test.ts`'s P3.6 per-fighter DP check stays on live data on purpose.* `src/engine/engine.test.ts`
       (130 tests) reads the LIVE roster JSON ~64×, so a Move Tuner write to
       e.g. `vincent.json` silently changes engine coverage. Move to frozen
       fixture defs (`src/bench/fixtures.ts` `testChar`/`testMove`, or

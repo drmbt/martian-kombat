@@ -1,0 +1,586 @@
+{
+  "id": "catherine",
+  "name": "CATHERINE",
+  "color": "#ffd24a",
+  "stage": "ai-kitchen",
+  "winQuotes": [
+    "You came to my kitchen underseasoned.",
+    "Order up. One knockout, plated hot.",
+    "Jazzper had you. I just watched.",
+    "I'm done with you. Jazzper gets the scraps."
+  ],
+  "health": 1000,
+  "walkSpeed": 4.7,
+  "backSpeed": 3.5,
+  "jumpVel": 18,
+  "gravity": 0.9,
+  "prejumpFrames": 3,
+  "bodyBox": {
+    "x": -42,
+    "y": -222,
+    "w": 84,
+    "h": 222
+  },
+  "hurtStand": {
+    "x": -52,
+    "y": -236,
+    "w": 104,
+    "h": 236
+  },
+  "hurtCrouch": {
+    "x": -52,
+    "y": -150,
+    "w": 104,
+    "h": 150
+  },
+  "moves": {
+    "lp": {
+      "startup": 6,
+      "active": 3,
+      "recovery": 11,
+      "damage": 45,
+      "hitstun": 15,
+      "blockstun": 10,
+      "knockback": 8,
+      "hitbox": {
+        "x": 40,
+        "y": -205,
+        "w": 150,
+        "h": 30
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk",
+        "mp"
+      ]
+    },
+    "mp": {
+      "startup": 9,
+      "active": 3,
+      "recovery": 15,
+      "damage": 70,
+      "hitstun": 18,
+      "blockstun": 12,
+      "knockback": 10,
+      "hitbox": {
+        "x": 42,
+        "y": -210,
+        "w": 158,
+        "h": 36
+      },
+      "height": "mid",
+      "cancel": true
+    },
+    "hp": {
+      "startup": 12,
+      "active": 4,
+      "recovery": 21,
+      "damage": 95,
+      "hitstun": 24,
+      "blockstun": 15,
+      "knockback": 12,
+      "hitbox": {
+        "x": 44,
+        "y": -240,
+        "w": 160,
+        "h": 60
+      },
+      "height": "mid",
+      "cancel": true
+    },
+    "lk": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 10,
+      "damage": 40,
+      "hitstun": 14,
+      "blockstun": 9,
+      "knockback": 7,
+      "hitbox": {
+        "x": 36,
+        "y": -85,
+        "w": 110,
+        "h": 34
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
+    },
+    "mk": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 17,
+      "damage": 72,
+      "hitstun": 19,
+      "blockstun": 12,
+      "knockback": 10,
+      "hitbox": {
+        "x": 40,
+        "y": -160,
+        "w": 130,
+        "h": 44
+      },
+      "height": "mid",
+      "cancel": true
+    },
+    "hk": {
+      "startup": 13,
+      "active": 4,
+      "recovery": 21,
+      "damage": 95,
+      "hitstun": 24,
+      "blockstun": 15,
+      "knockback": 12,
+      "hitbox": {
+        "x": 42,
+        "y": -185,
+        "w": 150,
+        "h": 58
+      },
+      "height": "mid",
+      "knockdown": true
+    },
+    "clp": {
+      "startup": 6,
+      "active": 3,
+      "recovery": 11,
+      "damage": 40,
+      "hitstun": 14,
+      "blockstun": 9,
+      "knockback": 7,
+      "hitbox": {
+        "x": 38,
+        "y": -128,
+        "w": 130,
+        "h": 32
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
+    },
+    "cmp": {
+      "startup": 8,
+      "active": 4,
+      "recovery": 15,
+      "damage": 65,
+      "hitstun": 17,
+      "blockstun": 11,
+      "knockback": 9,
+      "hitbox": {
+        "x": 30,
+        "y": -190,
+        "w": 96,
+        "h": 100
+      },
+      "height": "mid",
+      "cancel": true
+    },
+    "chp": {
+      "startup": 11,
+      "active": 5,
+      "recovery": 19,
+      "damage": 88,
+      "hitstun": 23,
+      "blockstun": 14,
+      "knockback": 10,
+      "hitbox": {
+        "x": 26,
+        "y": -246,
+        "w": 92,
+        "h": 148
+      },
+      "height": "mid",
+      "knockdown": true
+    },
+    "clk": {
+      "startup": 6,
+      "active": 3,
+      "recovery": 12,
+      "damage": 40,
+      "hitstun": 14,
+      "blockstun": 9,
+      "knockback": 7,
+      "hitbox": {
+        "x": 36,
+        "y": -32,
+        "w": 120,
+        "h": 32
+      },
+      "height": "low",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
+    },
+    "cmk": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 17,
+      "damage": 68,
+      "hitstun": 18,
+      "blockstun": 11,
+      "knockback": 9,
+      "hitbox": {
+        "x": 40,
+        "y": -34,
+        "w": 150,
+        "h": 34
+      },
+      "height": "low",
+      "cancel": true
+    },
+    "chk": {
+      "startup": 10,
+      "active": 4,
+      "recovery": 22,
+      "damage": 60,
+      "hitstun": 20,
+      "blockstun": 12,
+      "knockback": 8,
+      "hitbox": {
+        "x": 30,
+        "y": -36,
+        "w": 170,
+        "h": 36
+      },
+      "height": "low",
+      "knockdown": true,
+      "forwardVel": 6
+    },
+    "jlp": {
+      "startup": 5,
+      "active": 6,
+      "recovery": 8,
+      "damage": 42,
+      "hitstun": 14,
+      "blockstun": 10,
+      "knockback": 7,
+      "hitbox": {
+        "x": 26,
+        "y": -150,
+        "w": 110,
+        "h": 42
+      },
+      "height": "high"
+    },
+    "jmp": {
+      "startup": 7,
+      "active": 6,
+      "recovery": 10,
+      "damage": 65,
+      "hitstun": 17,
+      "blockstun": 11,
+      "knockback": 9,
+      "hitbox": {
+        "x": 28,
+        "y": -145,
+        "w": 120,
+        "h": 50
+      },
+      "height": "high"
+    },
+    "jhp": {
+      "startup": 9,
+      "active": 7,
+      "recovery": 12,
+      "damage": 88,
+      "hitstun": 21,
+      "blockstun": 13,
+      "knockback": 11,
+      "hitbox": {
+        "x": 28,
+        "y": -150,
+        "w": 130,
+        "h": 60
+      },
+      "height": "high"
+    },
+    "jlk": {
+      "startup": 5,
+      "active": 6,
+      "recovery": 8,
+      "damage": 40,
+      "hitstun": 13,
+      "blockstun": 9,
+      "knockback": 7,
+      "hitbox": {
+        "x": 26,
+        "y": -120,
+        "w": 96,
+        "h": 46
+      },
+      "height": "high"
+    },
+    "jmk": {
+      "startup": 7,
+      "active": 7,
+      "recovery": 10,
+      "damage": 66,
+      "hitstun": 18,
+      "blockstun": 11,
+      "knockback": 9,
+      "hitbox": {
+        "x": 30,
+        "y": -130,
+        "w": 108,
+        "h": 54
+      },
+      "height": "high"
+    },
+    "jhk": {
+      "startup": 10,
+      "active": 7,
+      "recovery": 12,
+      "damage": 90,
+      "hitstun": 22,
+      "blockstun": 13,
+      "knockback": 11,
+      "hitbox": {
+        "x": 30,
+        "y": -140,
+        "w": 118,
+        "h": 58
+      },
+      "height": "high"
+    },
+    "mise-en-place": {
+      "name": "Mise en Place",
+      "input": {
+        "motion": "qcf",
+        "button": "punch"
+      },
+      "startup": 11,
+      "active": 2,
+      "recovery": 20,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "projectile": {
+        "vx": 11,
+        "spawnX": 84,
+        "spawnY": -176,
+        "box": {
+          "x": -34,
+          "y": -20,
+          "w": 68,
+          "h": 40
+        },
+        "damage": 65,
+        "hitstun": 16,
+        "blockstun": 11,
+        "knockback": 7,
+        "count": 2,
+        "spreadVX": 1.5,
+        "spreadY": -26
+      },
+      "variants": {
+        "l": {
+          "startup": 9,
+          "projectile": {
+            "count": 1,
+            "vx": 13
+          }
+        },
+        "h": {
+          "startup": 13,
+          "projectile": {
+            "count": 3,
+            "vx": 9
+          }
+        }
+      }
+    },
+    "order-up": {
+      "name": "Order Up! — Jazzper hits LOW",
+      "input": {
+        "motion": "qcb",
+        "button": "punch"
+      },
+      "startup": 12,
+      "active": 2,
+      "recovery": 24,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "projectile": {
+        "vx": 7.5,
+        "spawnX": 90,
+        "spawnY": -4,
+        "box": {
+          "x": -38,
+          "y": -44,
+          "w": 76,
+          "h": 44
+        },
+        "damage": 75,
+        "hitstun": 20,
+        "blockstun": 14,
+        "knockback": 7,
+        "height": "low",
+        "ttl": 56
+      },
+      "variants": {
+        "l": {
+          "projectile": {
+            "ttl": 28
+          }
+        },
+        "h": {
+          "projectile": {
+            "ttl": -1
+          }
+        }
+      }
+    },
+    "staff-vault": {
+      "name": "Staff Vault",
+      "input": {
+        "motion": "dp",
+        "button": "kick"
+      },
+      "startup": 6,
+      "active": 2,
+      "recovery": 8,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "vault": {
+        "vx": 7,
+        "vy": 15
+      },
+      "variants": {
+        "l": {
+          "vault": {
+            "vx": 1,
+            "vy": 14
+          }
+        },
+        "h": {
+          "vault": {
+            "vx": 11,
+            "vy": 16
+          }
+        }
+      }
+    },
+    "eighty-sixed": {
+      "name": "86'd",
+      "input": {
+        "motion": "hcb",
+        "button": "kick"
+      },
+      "startup": 8,
+      "active": 4,
+      "recovery": 26,
+      "damage": 120,
+      "hitstun": 26,
+      "blockstun": 0,
+      "knockback": 10,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 130
+      },
+      "grabRecoil": 12,
+      "variants": {
+        "l": {
+          "damage": 105,
+          "startup": 7
+        },
+        "h": {
+          "damage": 135,
+          "startup": 10,
+          "grab": {
+            "range": 150
+          }
+        }
+      }
+    },
+    "throw": {
+      "name": "Throw",
+      "input": {
+        "button": "LPLK"
+      },
+      "startup": 4,
+      "active": 2,
+      "recovery": 20,
+      "damage": 85,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 9,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 124
+      },
+      "techable": true
+    }
+  },
+  "fatality": {
+    "id": "dinner-service",
+    "name": "Dinner Service",
+    "input": {
+      "motion": "qcb",
+      "button": "punch"
+    },
+    "panels": 4
+  },
+  "vo": {
+    "kiai": [
+      "Order up!",
+      "Hyah!",
+      "Coming through!",
+      "Special of the day!",
+      "Jazzper, go!",
+      "Yes, chef!"
+    ],
+    "hurt": [
+      "Agh!",
+      "Ow!",
+      "Ouch!",
+      "Hey!",
+      "My apron!",
+      "Watch it!"
+    ],
+    "victory": [
+      "Table for one — the loser's!",
+      "Check, please!",
+      "That's how we plate it!",
+      "Compliments to the chef!"
+    ]
+  },
+  "scale": 1.16,
+  "lore": {
+    "tagline": "Type-A chef. The kitchen runs on time — or else.",
+    "personality": "Fearless leader of the Culinary Academy who brings order, systems thinking, and economies of scale to the desert. Runs the brigade tight; her AI line-cook Jazzper plates the finishing blows.",
+    "backstory": "A trained private chef who transferred the discipline to the Mars experiment, feeding the whole college. Treats a tournament like a dinner rush: mise en place, fire, plate, next."
+  },
+  "arcade": {
+    "motivation": "The Biennale is just the biggest dinner service yet, and Catherine’s kitchen has never missed a ticket. She enters to prove her brigade can plate anyone the desert sends to the pass.",
+    "ending": "Champion, Catherine turns the Biennale into a banquet run on her clock — mise en place across the whole Salton Sea, Jazzper on the line. Everyone eats, and everyone eats on time."
+  }
+}

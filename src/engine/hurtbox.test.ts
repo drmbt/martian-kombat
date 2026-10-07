@@ -3,7 +3,7 @@
 // `cossack-spiral` got the ~100 px shorter crouch box; and crouch-blockstun
 // used the STANDING box. Stance now comes from the action itself.
 import { describe, expect, it } from 'vitest';
-import { characters } from '../data/characters';
+import { characters } from './__fixtures__/characters';
 import { benchState } from '../bench/sim';
 import { defenderHurtRect } from './step';
 import type { FighterState } from './index';

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CHARGE_TICKS, EMPTY_INPUT, GameState, InputFrame, initialState, step } from './index';
 import type { CharacterDef, Defs } from './index';
-import { characters } from '../data/characters';
+import { characters } from './__fixtures__/characters';
 
 const inp = (p: Partial<InputFrame> = {}): InputFrame => ({ ...EMPTY_INPUT, ...p });
 const run = (s: GameState, chars: Defs, n: number, p1: InputFrame = inp(), p2: InputFrame = inp()): void => {
