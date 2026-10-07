@@ -508,9 +508,12 @@ function pickAttack(
     if (m.projectile && !m.projectile.field && ownsLiveProjectile(s, slot)) continue;
     return { id, strength };
   }
+  // normals are edge-triggered: a HELD button attacks once, not every time the
+  // previous attack ends (P3.4). A press made while unactionable was already
+  // resolved into f.buffered at press time, so the fresh edge isn't lost.
   const prefix = stance === 'crouch' ? 'c' : '';
   for (const b of BUTTON_PRIORITY) {
-    if (i[b] && def.moves[prefix + b]) return { id: prefix + b };
+    if (i[b] && freshPress(f, BIT[b]) && def.moves[prefix + b]) return { id: prefix + b };
   }
   return null;
 }

@@ -466,7 +466,7 @@ KFM parity test. Synthetic fighters for engine tests already exist:
       **Fix:** record stance at attack start (`action.crouching`) or an
       explicit MoveDef flag; blockstun keeps the stance.
       **Test:** `ceremony` uses `hurtStand`.
-- [ ] **P3.4 Held button auto-repeats normals — MED [V].**
+- [x] **P3.4 Held button auto-repeats normals — MED [V].** *Done 2026-10-07: normals need a fresh press edge (`freshPress`) in `pickAttack`; buffered presses keep working (resolved at press time). `src/engine/inputs.test.ts`: held HP/down+HP → 1 attack (was 6/8 in 180 ticks — failed on the old code), taps and a recovery-buffered tap still fire. Bench unchanged. Note: the random fight bot rolling the same button on consecutive ticks now counts as one press (slightly fewer CPU attacks, like a human who doesn't release).*
       `pickAttack` (`step.ts:~475`) checks `i[b]` (held). Holding HP fires
       ~6 attacks in 3s.
       **Fix:** edge-triggered (fresh press via the buffer) for normals; make
