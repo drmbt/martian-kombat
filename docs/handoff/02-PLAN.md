@@ -331,7 +331,7 @@ stale. Fixing that makes every later session cheaper and less misled.*
       **Accept:** prod build: L/R on the menu changes nothing; a saved
       `render3d:true` boots 2D; attract never starts DanceScene; a unit test
       for the settings migration.
-- [x] **P2.2 Cloudflare 404 fallback — HIGH [A, verified live by agent].** *Done 2026-10-06 in `wrangler.jsonc` (`"none"`; no client routes exist). The curl acceptance runs after the next deploy.*
+- [x] **P2.2 Cloudflare 404 fallback — HIGH [A, verified live by agent].** *Done 2026-10-06 in `wrangler.jsonc` (`"none"`; no client routes exist). Verified live after the PR #2 deploy: missing files 404, and all 597 lazily-loaded game assets + 43 music tracks return 200.*
       `wrangler.jsonc` `"not_found_handling": "single-page-application"`
       returns `index.html` with HTTP 200 for any missing `.png`/`.mp3`, and
       `public/_headers` then caches it for 7 days. That brings back the
@@ -1075,6 +1075,13 @@ files unasked. Full design: `docs/CHARACTER_STUDIO.md` Phases 4–5 (+ the R2
 ## Handoff log
 
 *(newest first; one entry per session: date · who · done · next · gotchas)*
+
+- **2026-10-06 · shipped (Claude Opus 5.5).** PR #2 merged to `main`
+  (`83d98b6`) and deployed to martiankombat.com: the live bundle carries the
+  new code, missing files 404, and every asset the game can request (597 +
+  43 music) returns 200. `feat/mks1-rescue-handoff` is fully contained in
+  `main`. **Next sprint:** P6 loading/memory on `perf/p6-loading-memory` —
+  the self-contained agent prompt is `docs/handoff/04-NEXT-SPRINT.md`.
 
 - **2026-10-06 · staging found + Kung Fu Man unlockable (Claude Opus 5.5).**
   **Staging exists:** Cloudflare Workers Builds already makes a preview per

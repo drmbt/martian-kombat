@@ -1525,6 +1525,10 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-10-06 · docs · next-sprint handoff** — `docs/handoff/04-NEXT-SPRINT.md`
+  (P6.1/6.2/6.3/6.6/6.5 on `perf/p6-loading-memory`); P2.2 verified live
+  after the PR #2 deploy. — Claude (Opus 5.5)
+
 - **2026-10-06 · data · Kung Fu Man scaled into the roster's height band** —
   his port mapped MUGEN's 93-px stand height to our tallest hurtbox (284), so
   his idle art stood 323 world px vs the roster's 201–279 (median 246);
