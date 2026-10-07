@@ -1525,6 +1525,10 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-10-06 · docs · P6 shipped; P1 branch ready** — PR #3 merged and
+  verified live (750/750 assets 200, media immutable); P6 branch deleted;
+  `docs/p1-truth-in-docs` created; the P1 prompt points at it. — Claude (Opus 5.5)
+
 - **2026-10-06 · infra · GitHub Pages unpublished (P2.5 done)** — the user
   deleted the Pages site; the API and drmbt.github.io/martian-kombat return
   404. martiankombat.com is the only public build. — Claude (Opus 5.5)

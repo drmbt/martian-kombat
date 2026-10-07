@@ -1086,6 +1086,13 @@ files unasked. Full design: `docs/CHARACTER_STUDIO.md` Phases 4–5 (+ the R2
 
 *(newest first; one entry per session: date · who · done · next · gotchas)*
 
+- **2026-10-06 · P6 shipped (Claude Opus 5.5).** PR #3 merged (`6d8e46e`)
+  and deployed: the live bundle matches the branch build, all 750 versioned
+  assets return 200 on martiankombat.com with `immutable` caching. GitHub
+  Pages unpublished (P2.5). `perf/p6-loading-memory` deleted (local +
+  remote); **`docs/p1-truth-in-docs` created from `main` and pushed** —
+  start P1 with `docs/handoff/05-NEXT-SPRINT-P1.md`.
+
 - **2026-10-06 · plan refresh + P1 handoff (Claude Opus 5.5).** Status table
   corrected (P0 ✅; P2/P3/P4/P9 partial); §0.4 now states the confirmed flow
   (Workers Builds from `main`, per-branch previews, one PR per sprint).
