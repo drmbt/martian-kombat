@@ -1525,6 +1525,10 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-10-06 · infra · GitHub Pages unpublished (P2.5 done)** — the user
+  deleted the Pages site; the API and drmbt.github.io/martian-kombat return
+  404. martiankombat.com is the only public build. — Claude (Opus 5.5)
+
 - **2026-10-06 · docs · P1 handoff + P2.5 status** — new
   `docs/handoff/05-NEXT-SPRINT-P1.md` (truth-in-docs sprint prompt, with
   re-measured sizes: SPRINTBOARD 3,763 lines / 260 KB, CLAUDE.md 461 / 30 KB);

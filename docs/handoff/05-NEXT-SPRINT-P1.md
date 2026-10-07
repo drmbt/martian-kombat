@@ -107,7 +107,7 @@ drifted. **Re-locate every claim by its text before editing it.**
    - the two R2 buckets (public `martiankombat-assets`, private
      `martiankombat-raw` via `raw:*`; no writes until P8.17);
    - `VITE_ASSET_BASE` (only on `feat/3d-mode`);
-   - GitHub Pages: the user unpublishes it (see P2.5).
+   - GitHub Pages: unpublished 2026-10-06 (P2.5); martiankombat.com is the only site.
 
 ## Rules that bite
 

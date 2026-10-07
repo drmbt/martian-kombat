@@ -82,7 +82,7 @@
 | P0 | Restore raw assets + baseline (old-machine rescue → new machine) | S | ✅ 2026-10-06 |
 | MKS-1 A | Standards foundation: bench lab, ratchet, KFM parity, MUGEN parsers | M | ✅ 2026-10-04 |
 | P1 | Truth-in-docs & agent context diet | M | ☐ |
-| P2 | Player-facing traps + cheap infra/security fixes | M | ◐ 2.1–2.4 ✅ (2.5 README done, unpublish pending) |
+| P2 | Player-facing traps + cheap infra/security fixes | M | ◐ 2.1–2.5 ✅ |
 | P3 | Fight-core correctness & feel (engine, test-first) | M–L | ◐ 3.1/3.2/3.10/3.11 ✅ |
 | P4 | Character data, balance, schema lint | M | ◐ 4.0–4.2 ✅ |
 | P5 | CPU opponent + difficulty | M | ☐ |
@@ -323,7 +323,7 @@ text. Prompt: `docs/handoff/05-NEXT-SPRINT-P1.md`.*
       - the two R2 buckets: PUBLIC `martiankombat-assets` (future CDN/3D) and
         PRIVATE `martiankombat-raw` (gitignored source, `raw:*`);
       - `VITE_ASSET_BASE` (only wired on `feat/3d-mode`);
-      - GitHub Pages status (P2.5: unpublish pending — the user runs it).
+      - GitHub Pages: unpublished 2026-10-06 (P2.5).
 
 ## P2 — Player-facing traps + cheap infra/security fixes (one PR)
 
@@ -362,7 +362,7 @@ text. Prompt: `docs/handoff/05-NEXT-SPRINT-P1.md`.*
       **Fix:** use a non-attack key (Enter/Start), and gate all end-of-match
       navigation on `endNavArmedAt` (`:~245`).
       **Accept:** mashing R through a KO always shows the win screen.
-- [ ] **P2.5 Unpublish stale GitHub Pages ⛔ D7.** *README link → martiankombat.com done 2026-10-06 (PR #3). The user approved the unpublish 2026-10-06, but the agent's `gh api -X DELETE …/pages` was blocked by the permission classifier — the user runs it (or allows it). The old `deploy` workflow is already gone (last run 2026-07-07) and there is no `gh-pages` branch, so nothing re-publishes; the site's status reads `errored`.* It serves the 2026-07-07
+- [x] **P2.5 Unpublish stale GitHub Pages ⛔ D7.** *Done 2026-10-06: README link → martiankombat.com (PR #3); the user ran `gh api -X DELETE repos/drmbt/martian-kombat/pages` — the Pages API and drmbt.github.io/martian-kombat both return 404.* It serves the 2026-07-07
       build (8 fighters), and the README links there. Disable it (repo
       Settings → Pages, or `gh api -X DELETE repos/drmbt/martian-kombat/pages`
       after confirmation), or replace it with a redirect page.
