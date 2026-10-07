@@ -384,7 +384,7 @@ text. Prompt: `docs/archive/handoff-prompts/05-NEXT-SPRINT-P1.md`.*
       - Keep `public/assets/vfx/sparks/` (P10.2).
       Then `npm run gen:assets` and run the audit test. The R2 mirror from the
       rescue is the backup.
-- [ ] **P2.7 Dev-server hardening — MED security [A].** The `editorApi()`
+- [x] **P2.7 Dev-server hardening — MED security [A].** *Done 2026-10-07: one guard (`tools/core/editor-guard.mjs`) registered ahead of every `/__editor` handler — loopback Host (DNS rebinding), no cross-site Origin / Sec-Fetch-Site, JSON-only writes; ids via `SAFE_ID`, skeleton-regen cell names via `SAFE_FILE`, `fat.id` and the music stage id validated; roster/stage names written with `tsString()`; zip import copies only the fighter's own files (`importPathAllowed`; never clobbers a shipped stage). Verified live: foreign Origin 403, `text/plain` 415, rebinding Host 403, `../x` 400; a same-origin browser write 200. The two body-less POSTs (creator list/canon) are GETs now. `src/data/editorGuard.test.ts`.* The `editorApi()`
       plugin in `vite.config.ts` has ~28 POST endpoints with no Origin check,
       and `readJsonBody` accepts `text/plain`. Any web page open while
       `npm run dev` runs can POST to localhost: spend API credits, call
