@@ -8,7 +8,7 @@
 import { join } from 'node:path';
 import { existsSync, mkdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { ROOT, loadEnv, geminiImage, saveAsset, skip } from './lib.mjs';
+import { ROOT, loadEnv, geminiImage, saveAsset, shippedState } from './lib.mjs';
 
 const env = loadEnv();
 const force = process.argv.includes('--force');
@@ -42,7 +42,10 @@ async function gen(id) {
     return;
   }
   const rawOut = join(ROOT, 'assets/raw/icons', `${id}.png`);
-  if (!skip(rawOut, force)) {
+  const finalOut = join(ROOT, 'public/assets/portraits', `${id}.png`);
+  const state = shippedState(finalOut, rawOut, force); // P8.5: judged by the shipped icon
+  if (state === 'skip') return;
+  if (state === 'generate') {
     const refs = [ref];
     // Kirby/RJ: face photo + canonical sprite for the outfit (and RJ's corrected
     // dark-brown beard — the face photo reads too ginger on its own)

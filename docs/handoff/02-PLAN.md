@@ -91,7 +91,7 @@
 | P5 | CPU opponent + difficulty | M | ☐ |
 | P6 | Loading, memory, bundle, render perf | L | ◐ 6.1/6.2/6.3/6.5/6.6 ✅ |
 | P7 | Mobile & link-sharing | M | ☐ |
-| P8 | Asset pipeline & tooling hygiene | L | ◐ 8.6a ✅ |
+| P8 | Asset pipeline & tooling hygiene | L | ◐ 8.4/8.5/8.6a ✅ |
 | P9 | Repo weight & history (decision-gated) | M | ◐ 9.1 ✅ |
 | P10 | Features & content (arcade mode first) | L | ☐ |
 | P11 | 3D mode: freeze (or delete) | S | ☐ |
@@ -784,10 +784,10 @@ can exhaust its memory.*
       `tools/core/pipeline.mjs:~43` appends `--force` to every step;
       `portrait_crop.py` rejects it, so busts fail and the manifest step is
       skipped. Forward `--force` only to steps that accept it.
-- [ ] **P8.4 `gen-canonical` clobbers icons [A].** Its crop pass
+- [x] **P8.4 `gen-canonical` clobbers icons [A].** *Done 2026-10-07 (with P8.5 — needed so shipped-file skips don't let the crop pre-empt a new fighter's real icon): the crop pass that wrote `portraits/<id>.png` is removed; gen-canonical now writes only the canonical anchor + `<id>-ko.png`.* Its crop pass
       (`gen-canonical.mjs:~117-128`) writes `portraits/<id>.png`, which
       `gen-icons` owns. Restrict it to `-bust`/`-ko`.
-- [ ] **P8.5 Skip checks look at gitignored intermediates — [V] 2026-10-07, do soon.**
+- [x] **P8.5 Skip checks look at gitignored intermediates — [V] 2026-10-07.** *Fixed 2026-10-07: `shippedState(final, raw, force)` in `tools/lib.mjs` → `skip` (shipped file exists) / `derive` (raw only, local) / `generate` (neither, or `--force`); used by gen-icons, gen-fatality, gen-stage, gen-worldmap, gen-vfx and the gen-canonical KO pass. Re-ran the incident with no `.env` + a fetch blocker: `studio:run --char vincent --mock --only canonical,icons,audio,fatality` → 0 assets written (was 5 clobbered), and every generator logs `ships already` for Vincent / van / the world map / VFX. `src/data/lib.shipped.test.ts`. (gen-frames/gen-audio/gen-style-test already wrote their tracked output directly; unchanged.)*
       *Proven by the P2.9 check: `studio:run --char vincent --mock --only
       icons,fatality` found no `assets/raw/{icons,fatalities}/vincent` and
       regenerated, OVERWRITING the committed `portraits/vincent.png` and all
@@ -1133,6 +1133,16 @@ files unasked. Full design: `docs/CHARACTER_STUDIO.md` Phases 4–5 (+ the R2
 ## Handoff log
 
 *(newest first; one entry per session: date · who · done · next · gotchas)*
+
+- **2026-10-07 · P2 + P3 merged, P8.5/P8.4 (Claude Opus 5.5).** PRs #6 (P2)
+  and #7 (P3) merged to `main` (`7ec7f3d`, `01f4088`); their branches
+  deleted. Branch `tools/p8-5-skip-checks`: generators judge by the SHIPPED
+  file (P8.5) and gen-canonical no longer writes the selector icon (P8.4) —
+  the incident command now writes 0 files. 576/576 tests.
+  **Next:** the feel/balance sprint (P3.12 A/B + P4.3 — ask the user which
+  of Vincent's Move-Tuner values were intentional), then P5 → P10.1.
+  **Gotchas:** to regenerate shipped art on purpose, pass `--force` (it
+  costs API calls — D6).
 
 - **2026-10-07 · P3 fight-core correctness (Claude Opus 5.5).** Branch
   `fix/p3-engine-correctness`, stacked on `fix/p2-cleanup-hardening`

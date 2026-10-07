@@ -93,6 +93,23 @@ export function saveAsset(outPath, buffer, prompt) {
   console.log(`  wrote ${outPath} (${(buffer.length / 1024).toFixed(0)}kb)`);
 }
 
+/** What a generator should do for one asset, judged by the SHIPPED file
+ *  (02-PLAN P8.5). Generators keep a gitignored raw intermediate
+ *  (assets/raw/...) and derive the committed file in public/ from it; judging
+ *  by the raw alone made a fresh clone (or an unpulled raw) re-spend on art
+ *  that already ships AND overwrite it.
+ *   - 'generate': --force, or neither file exists → call the API
+ *   - 'skip':     the shipped file exists → touch nothing
+ *   - 'derive':   only the raw exists → rebuild the shipped file locally */
+export function shippedState(finalPath, rawPath, force) {
+  if (force) return 'generate';
+  if (existsSync(finalPath)) {
+    console.log(`  skip ${finalPath.replace(ROOT + '/', '')} (ships already; --force to regen)`);
+    return 'skip';
+  }
+  return rawPath && existsSync(rawPath) ? 'derive' : 'generate';
+}
+
 export function skip(outPath, force) {
   if (!force && existsSync(outPath)) {
     console.log(`  skip ${outPath} (exists; --force to regen)`);

@@ -8,3 +8,6 @@ export function withBackoff<T>(
 export function loadEnv(path?: string): Record<string, string>;
 /** true when MK_GEN_MOCK=1 or MK_CREATOR_MOCK=1 — providers return placeholders */
 export function genMock(): boolean;
+
+/** P8.5: judge a generator step by the SHIPPED file — 'skip' | 'derive' (raw only) | 'generate' */
+export function shippedState(finalPath: string, rawPath: string | null, force: boolean): 'generate' | 'skip' | 'derive';

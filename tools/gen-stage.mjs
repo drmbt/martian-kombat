@@ -13,7 +13,7 @@
 import { join, extname } from 'node:path';
 import { readdirSync, statSync, mkdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { ROOT, loadEnv, geminiImage, saveAsset, skip, pool, concurrencyArg } from './lib.mjs';
+import { ROOT, loadEnv, geminiImage, saveAsset, shippedState, pool, concurrencyArg } from './lib.mjs';
 
 const env = loadEnv();
 const force = process.argv.includes('--force');
@@ -100,7 +100,9 @@ await pool(jobs, concurrency, async ({ id, refs, final }) => {
   }
   const raw = join(ROOT, 'assets/raw/stages', `${id}.png`);
   try {
-    if (!skip(raw, force)) {
+    const state = shippedState(final, raw, force); // P8.5: judged by the shipped stage
+    if (state === 'skip') return;
+    if (state === 'generate') {
       const prompt = `${STAGE_STYLE}\n${COMPOSITE}\nScene: ${scene}`;
       console.log(`[${id}] generating from ${refs.length + 1} reference(s) ...`);
       const buf = await geminiImage({
