@@ -1525,6 +1525,13 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-10-06 · docs · 02-PLAN status refresh** — P0 marked ✅ in the status
+  table (all five items were done); P2/P3/P4/P9 show their completed items;
+  §0.4 branching, P0.5 and P1.7 now state the confirmed deploy path (Workers
+  Builds from `main`, per-branch previews, one PR per sprint) instead of the
+  retired "stack on feat/mks1-rescue-handoff"; P2.5 notes the README half is
+  done. — Claude (Opus 5.5)
+
 - **2026-10-06 · docs · README plays martiankombat.com (P2.5, part)** — the
   PLAY NOW link pointed at the frozen 2026-07-07 GitHub Pages build.
   Unpublishing Pages itself waits for the user's go-ahead. — Claude (Opus 5.5)

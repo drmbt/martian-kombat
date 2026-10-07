@@ -44,13 +44,14 @@
    reproduce first (failing vitest for engine/data; a probe or browser repro
    for UI), then fix. Line numbers drift — re-locate by symbol, they're
    marked `~` when approximate.
-4. **Branching (D7, 2026-10-06): for now, commit phase work to
-   `feat/mks1-rescue-handoff` and open one bigger PR later.** The general
-   policy below applies once the user switches back to PR-per-phase.
-   `main` is believed to auto-deploy martiankombat.com via a
-   Cloudflare dashboard Git build (confirm with the user in P0.5). Work on
-   one branch per phase (`fix/p2-player-traps`, `fix/p3-engine-correctness`,
-   …), small scoped commits (CLAUDE.md conventions: `engine: …`, `ui: …`,
+4. **Branching (confirmed 2026-10-06, after PR #2 merged
+   `feat/mks1-rescue-handoff`):** `main` auto-deploys martiankombat.com via
+   Cloudflare Workers Builds, and every pushed branch gets a preview at
+   `https://<branch-with-dashes>-martian-kombat.stayprompin.workers.dev`
+   (the "Workers Builds: martian-kombat" check links the exact version) —
+   test there before opening the PR. Work on one branch per sprint/phase
+   (e.g. `perf/p6-loading-memory`, `fix/p3-engine-correctness`), small scoped
+   commits (CLAUDE.md conventions: `engine: …`, `ui: …`,
    `tools: …`), open a PR per phase, and let the user merge. Never push to
    `main` or force-push without an explicit OK.
 5. **Every engine behavior change ships with a vitest** (CLAUDE.md rule) and
@@ -78,17 +79,17 @@
 
 | Phase | Theme | Size | State |
 |---|---|---|---|
-| P0 | Restore raw assets + baseline (old-machine rescue → new machine) | S | ☐ |
+| P0 | Restore raw assets + baseline (old-machine rescue → new machine) | S | ✅ 2026-10-06 |
 | MKS-1 A | Standards foundation: bench lab, ratchet, KFM parity, MUGEN parsers | M | ✅ 2026-10-04 |
 | P1 | Truth-in-docs & agent context diet | M | ☐ |
-| P2 | Player-facing traps + cheap infra/security fixes | M | ☐ |
-| P3 | Fight-core correctness & feel (engine, test-first) | M–L | ☐ |
-| P4 | Character data, balance, schema lint | M | ☐ |
+| P2 | Player-facing traps + cheap infra/security fixes | M | ◐ 2.1–2.4 ✅ (2.5 README done, unpublish pending) |
+| P3 | Fight-core correctness & feel (engine, test-first) | M–L | ◐ 3.1/3.2/3.10/3.11 ✅ |
+| P4 | Character data, balance, schema lint | M | ◐ 4.0–4.2 ✅ |
 | P5 | CPU opponent + difficulty | M | ☐ |
 | P6 | Loading, memory, bundle, render perf | L | ◐ 6.1/6.2/6.3/6.5/6.6 ✅ |
 | P7 | Mobile & link-sharing | M | ☐ |
 | P8 | Asset pipeline & tooling hygiene | L | ☐ |
-| P9 | Repo weight & history (decision-gated) | M | ☐ |
+| P9 | Repo weight & history (decision-gated) | M | ◐ 9.1 ✅ |
 | P10 | Features & content (arcade mode first) | L | ☐ |
 | P11 | 3D mode: freeze (or delete) | S | ☐ |
 
@@ -129,7 +130,7 @@ Workers Static Assets (`wrangler.jsonc`), serving the HEAD build.
 
 | ID | Decision | Effect on the plan |
 |---|---|---|
-| D7 | **Stack on `feat/mks1-rescue-handoff`**; one bigger PR later (not PR-per-phase for now). | §0.4: commit phase work to this branch until the user says otherwise. |
+| D7 | **Stack on `feat/mks1-rescue-handoff`**; one bigger PR later (not PR-per-phase for now). | Done: merged as PR #2. Now one branch + PR per sprint (§0.4). |
 | D7b | **Unpublish GitHub Pages**; README → martiankombat.com. | P2.5 unblocked. |
 | D5 | **Freeze 3D** (dev-only / `?3d=1`). | P2.1 + P11 as written. |
 | D3 | **Platform now** — finish Character Studio phases 4–5 (jobs/cost UI, R2 publish, custom-fighter registry, auth/moderation). | New **P12**; P8.15 = wire, don't delete; P2.7 (dev-server hardening) becomes a prerequisite. |
@@ -203,7 +204,7 @@ Workers Static Assets (`wrangler.jsonc`), serving the HEAD build.
 - [x] **P0.4 Reconcile in-flight work.** Done 2026-10-04: the MUGEN/IKEMEN
       parity work is MKS-1 Phase A, committed on `feat/mks1-rescue-handoff`
       and folded into this plan (P3, P4, P10.7–P10.9).
-- [x] **P0.5 Deploy/branch policy (D7).** Decided 2026-10-06 (stack on this branch; see §2). Confirm how martiankombat.com
+- [x] **P0.5 Deploy/branch policy (D7).** Decided 2026-10-06; confirmed after PR #2: `main` → Workers Builds → martiankombat.com, per-branch preview URLs, one branch + PR per sprint, the user merges (see §0.4). Confirm how martiankombat.com
       deploys (dashboard Git build on `main`?), whether branch pushes make
       preview builds, the PR-per-phase flow, and when this branch merges.
 
@@ -308,7 +309,8 @@ stale. Fixing that makes every later session cheaper and less misled.*
         - sprite-qa mentions fal (no fal code exists).
 - [ ] **P1.7 `docs/DEPLOY.md`.** Cover:
       - the real deploy path: Workers Static Assets with assets-only
-        `wrangler.jsonc`, presumably a dashboard Git build (confirm in P0.5);
+        `wrangler.jsonc`, built by Cloudflare Workers Builds from `main`, plus
+        per-branch preview URLs (confirmed 2026-10-06, §0.4);
       - the `_headers` cache policy and `public/.assetsignore`;
       - the two R2 buckets: PUBLIC `martiankombat-assets` (future CDN/3D) and
         PRIVATE `martiankombat-raw` (gitignored source, `raw:*`);
@@ -352,7 +354,7 @@ stale. Fixing that makes every later session cheaper and less misled.*
       **Fix:** use a non-attack key (Enter/Start), and gate all end-of-match
       navigation on `endNavArmedAt` (`:~245`).
       **Accept:** mashing R through a KO always shows the win screen.
-- [ ] **P2.5 Unpublish stale GitHub Pages ⛔ D7.** It serves the 2026-07-07
+- [ ] **P2.5 Unpublish stale GitHub Pages ⛔ D7.** *README link → martiankombat.com done 2026-10-06 (PR #3); the unpublish itself still needs the user's go-ahead.* It serves the 2026-07-07
       build (8 fighters), and the README links there. Disable it (repo
       Settings → Pages, or `gh api -X DELETE repos/drmbt/martian-kombat/pages`
       after confirmation), or replace it with a redirect page.
