@@ -1525,6 +1525,15 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-10-06 · assets/tools · Ben's sheet re-gridded under 4096 px + lint
+  (P6.5)** — 1728×4224 (6×11, over many mobile GPUs' texture max) → 2016×3456
+  (7×9) by `tools/regrid-sheet.mjs` (cells re-tiled in order, verified byte-
+  identical; meta cols/rows updated). `fitGrid()` in `tools/core/cells.mjs`
+  now picks every packer grid (CLI, dev `/__editor/pack`, creator SHIP) so no
+  repack can exceed 4096; `assets.audit.test.ts` fails any sheet > 4096 px or
+  whose size disagrees with its meta grid. Dev sheet-write endpoints also
+  alpha-clean (P6.3). — Claude (Opus 5.5)
+
 - **2026-10-06 · tools/assets · zero RGB under alpha = 0 in every sprite
   sheet (P6.3)** — dependency-free PNG codec `tools/core/png.mjs`; the packer,
   `mugen:sprites` and the dev sheet-write endpoints now zero the chroma-key

@@ -169,6 +169,30 @@ describe('sheet meta shape', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Texture size (P6.5) — every packed sheet must fit a 4096 px texture on BOTH
+// sides (the max on many mobile GPUs; Ben's 6-column sheet was 4224 px tall
+// and failed to upload there), and its pixel size must match meta's grid.
+// Fix an oversized sheet with `node tools/regrid-sheet.mjs --char <id>`.
+// ---------------------------------------------------------------------------
+describe('sheet texture size', () => {
+  const MAX = 4096;
+  const dirs = readdirSync(join(ASSETS, 'sprites')).filter((d) => existsSync(join(ASSETS, 'sprites', d, 'sheet.png')));
+  for (const id of dirs) {
+    it(`${id} sheet.png ≤ ${MAX} px per side and matches its meta grid`, () => {
+      const png = readFileSync(join(ASSETS, 'sprites', id, 'sheet.png'));
+      const w = png.readUInt32BE(16);
+      const h = png.readUInt32BE(20);
+      expect(w, `${id} width`).toBeLessThanOrEqual(MAX);
+      expect(h, `${id} height`).toBeLessThanOrEqual(MAX);
+      const metaPath = join(ASSETS, 'sprites', id, 'meta.json');
+      if (!existsSync(metaPath)) return;
+      const meta = JSON.parse(readFileSync(metaPath, 'utf8')) as { cellW: number; cellH: number; cols: number; rows: number };
+      expect([w, h], `${id} size = cols×cellW, rows×cellH`).toEqual([meta.cols * meta.cellW, meta.rows * meta.cellH]);
+    });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Character schema lint — a playable fighter must carry the full roster-
 // standard kit grammar, not just assets. KNOWN_KIT_GAPS is the Sprint 27
 // Phase 3 backfill list: shrink it, never grow it.
