@@ -75,16 +75,16 @@ attributed. KFM is a **bench-only** fighter: never in `ROSTER`, never shipped.
 | Attack attributes | `attr = S/C/A, N/S/H + A/T/P`; `NotHitBy`/`HitBy` | same | 🟡 `invuln` (all), `projImmune`, throw rules | roadmap C6: invuln classes as data |
 | Priority / trades | `priority = 0–7, Hit/Miss/Dodge` | same | ❌ all simultaneous hits trade | roadmap C5 |
 | Guard flags | `guardflag H/L/M/A` | same | ✅ `height: mid/low/high` | parity (no air-guard by design) |
-| Juggle system | `airjuggle` pool + per-state `juggle` cost | same | ❌ (combo scaling only) | roadmap C2 — infinites exist today (§6) |
+| Juggle system | `airjuggle` pool + per-state `juggle` cost | same | ✅ pool 15, per-move `juggle` (default 4, KFM's usual cost) on hits vs an airborne combo victim (P3.8) | C2 done 2026-10-07 |
 | Combo damage scaling | none built-in (`fall.defence_up`, attack/defence) | none built-in | ✅ 10%/hit after 2, floor 30% | ours is SF-style; keep |
-| Hitstun decay | ❌ | ❌ (char-authored) | ❌ | roadmap C2 (the SF answer to light-chain loops) |
+| Hitstun decay | ❌ | ❌ (char-authored) | ✅ ground hits 7+ of a combo lose 2 ticks each (cumulative, floor 1) — `HITSTUN_DECAY_FROM` 6 / `_STEP` 2 (P3.8) | ends loops even with broken data; no single move's frame data changed |
 | Counter hit | char-authored | lifebar "Counter" message | ✅ 1.5× hitstun, +3 hitstop | |
 | Throws | HitDef `attr NT` + `p2stateno` custom states, `TargetBind` | same | ✅ grab archetypes + universal LP+LK throw with tech window | ours has tech; KFM's doesn't |
 | Dizzy / stun | ❌ | ✅ dizzy points | ✅ stun accumulator | parity |
 | Guard break / guard points | ❌ | ✅ | ❌ | optional (C10) |
 | Red life | ❌ | ✅ | ➖ (SF2 ghost bar is cosmetic) | |
 | Power / super meter | ✅ power (default max 3000, 1000/level), `poweradd`, `SuperPause` | ✅ + `LifeToPowerMul` 0.7 / 0.6 | ❌ (RFE "super bar") | roadmap C7 — unlocks ported supers & EX moves |
-| **Input language** | `~` release, `/` hold, `$` 4-way, `+` simultaneous, `>` strict, charge `~60$B, F` (KFM's reference); `command.time` 15, `buffer.time` 1 | same; `Input.PauseOnHitPause = 1` | ✅ 9 motions, mash, PPP/KKK/LPLK chords, **MUGEN charge (60-tick 4-way hold, 10-tick release window)** | `ff`, double-quarter supers missing (C8); buffer-in-hitstop fix (C1) |
+| **Input language** | `~` release, `/` hold, `$` 4-way, `+` simultaneous, `>` strict, charge `~60$B, F` (KFM's reference); `command.time` 15, `buffer.time` 1 | same; `Input.PauseOnHitPause = 1` | ✅ 9 motions, mash, PPP/KKK/LPLK chords, **MUGEN charge (60-tick 4-way hold, 10-tick release window)** | `ff`, double-quarter supers missing (C8); action buffer pauses in hitstop ✅ (C1) |
 | Chains / cancels | trigger-authored (`movecontact`, `time > N`) | same | ✅ data `chains` + `cancel` on contact, 8f window | ours never whiff-cancels (MUGEN can) |
 | Movement | walk, **run** or hop, back-hop, air jump, run jump | same | walk, double-tap **impulse dash** (stocks), no air jump | per-char run vs dash, double jump = RFE |
 | Air recovery / tech | ✅ `fall.recover` (xy) | ✅ | ❌ | roadmap C9 |
@@ -119,7 +119,7 @@ attributed. KFM is a **bench-only** fighter: never in `ROSTER`, never shipped.
 | hurtbox / hitbox / pushbox | Clsn2 / Clsn1 / `size` width | `hurtStand`+`hurtCrouch` / `hitbox` / `bodyBox` |
 | overhead / low / mid | `guardflag = H` / `L` / `M` | `height: 'high' / 'low' / 'mid'` |
 | knockdown / launcher | `fall = 1`, `ground.type = Trip` | `knockdown: true` |
-| juggle | `juggle` points vs `airjuggle` | ❌ (C2) |
+| juggle | `juggle` points vs `airjuggle` | ✅ `MoveDef.juggle` vs `FighterState.juggle` (P3.8) |
 | chain / link / cancel | `movecontact` + ChangeState triggers | `chains` / link (measured) / `cancel` |
 | reversal / DP / invincible | `NotHitBy` window | `invuln` (+ `invulnFrom`) |
 | command normal / special / super / EX | CMD commands + `power >=` gates | motion `input` / ❌ supers / ❌ EX (C7) |
@@ -228,7 +228,7 @@ cells' forward-most opaque pixels.
 | Fighter | Move | Rule | Detail |
 |---|---|---|---|
 | ~~vincent~~ | ~~`clk`~~ | ~~never-connects~~ | ~~hitbox reaches 22 px; bodies touch at 102 px~~ |
-| vincent | `clp`/`lk` | **infinite** | 15 midscreen / 16+ corner — `lk`,`clp`,`cmk` drifted to 2f startup with 9–12 active frames (older docs: `lk` 5/3/10) |
+| ~~vincent~~ | ~~`clp`/`lk`~~ | ~~**infinite**~~ | ~~15 midscreen / 16+ corner~~ — ended by the engine rule (P3.8): now 12 max. The drifted data (`lk`,`clp`,`cmk` at 2f startup with 9–12 active) is still P4.3 |
 | ~~flo~~ | ~~`lk`~~ | ~~never-connects~~ | ~~reach 34 px vs 88 px~~ |
 | ~~kirby~~ | ~~`cmp`~~ | ~~never-connects~~ | ~~reach 17 px vs 94 px~~ |
 | ~~tao~~ | ~~`chp`~~ | ~~never-connects~~ | ~~hitbox sits behind the fighter (reach −3 px)~~ |
@@ -239,7 +239,7 @@ cells' forward-most opaque pixels.
 | ~~vanessa~~ | ~~throw~~ | ~~throw-out-of-range~~ | ~~91 px can't reach vincent (91 px)~~ |
 | ~~marzipan~~ | ~~Symbiosis L~~ | ~~throw-out-of-range~~ | ~~95 px can't reach vincent (95 px)~~ |
 | ~~earl, ben~~ | ~~`throw`~~ | ~~**unreachable**~~ | ~~no `input` field — the throw can never be performed (also `damage: 0`, range 64)~~ |
-| ben | `clk`/`clp` | **infinite** | 11 midscreen / 16+ corner |
+| ~~ben~~ | ~~`clk`/`clp`~~ | ~~**infinite**~~ | ~~11 midscreen / 16+ corner~~ — now 10 max (P3.8) |
 
 Earl (13), Tao (10) and RJ (11) also have long-but-finite light loops.
 Warnings: 84 on-block, 58 on-hit, 46 startup, 43 damage band hits —
@@ -258,10 +258,11 @@ Warnings: 84 on-block, 58 on-hit, 46 startup, 43 damage band hits —
    **`CHARGE_TICKS` = 60**, release, then the opposite direction + button
    within **`CHARGE_RELEASE_TICKS` = 10**; no bleed. Charge moves are now
    ~0.3 s slower to set up than the old effective 43 ticks.
-3. **Action buffer expires during hitstop** — the 8-tick buffer counts down
-   while frozen, so cancels pressed early in a ≥9-tick hitstop are
-   **dropped** (12f hitstop drops almost all early cancels). IKEMEN's
-   standard is `Input.PauseOnHitPause = 1`. Pinned by a quirk test.
+3. ~~**Action buffer expires during hitstop**~~ — **resolved 2026-10-07
+   (P3.5):** the 8-tick action buffer's TTL now pauses while its owner is
+   frozen in hitstop (IKEMEN `Input.PauseOnHitPause = 1`), so an early cancel
+   survives any hitstop (tested at 8/12/15). The motion-input history still
+   records every tick. Unblocks the D8 hitstop raise.
 4. **Double-tap dash** needs ≥ 2 release frames between taps (harmless).
 
 ---
@@ -359,10 +360,9 @@ per-move `hitstop`/`chip`/`blockKnockback`, skills, this doc.
 - B4 Warnings sweep per fighter (identity-aware).
 
 **Phase C — Engine parity primitives (each ships with a vitest).**
-- **C1 Buffer survives hitstop** (IKEMEN `PauseOnHitPause`) — prerequisite
-  for any hitstop increase; flips the quirk test.
-- C2 Juggle points (MUGEN `airjuggle` 15 + per-move cost) and hitstun decay
-  — systemic anti-infinite.
+- ~~**C1 Buffer survives hitstop**~~ ✅ 2026-10-07 (P3.5).
+- ~~C2 Juggle points (MUGEN `airjuggle` 15 + per-move cost) and hitstun decay
+  — systemic anti-infinite.~~ ✅ 2026-10-07 (P3.8): MKS-1 errors 2 → 0.
 - **C3 Per-phase hurtboxes** derived from baked skeletons (Clsn2 parity:
   whiff punishes, low profiles, extended limbs) — the biggest feel lever.
 - C4 Multiple / per-phase hitboxes (Clsn1 parity: multi-hit, two-part moves).

@@ -86,7 +86,7 @@
 | MKS-1 A | Standards foundation: bench lab, ratchet, KFM parity, MUGEN parsers | M | ✅ 2026-10-04 |
 | P1 | Truth-in-docs & agent context diet | M | ✅ 2026-10-06 |
 | P2 | Player-facing traps + cheap infra/security fixes | M | ✅ 2026-10-07 |
-| P3 | Fight-core correctness & feel (engine, test-first) | M–L | ◐ 3.1/3.2/3.10/3.11 ✅ |
+| P3 | Fight-core correctness & feel (engine, test-first) | M–L | ◐ 3.0–3.11 ✅ · 3.12 (feel A/B) open |
 | P4 | Character data, balance, schema lint | M | ◐ 4.0–4.2 ✅ |
 | P5 | CPU opponent + difficulty | M | ☐ |
 | P6 | Loading, memory, bundle, render perf | L | ◐ 6.1/6.2/6.3/6.5/6.6 ✅ |
@@ -433,7 +433,7 @@ After each fix: full suite + `npm run bench` (no new MKS-1 errors) + the
 KFM parity test. Synthetic fighters for engine tests already exist:
 `src/bench/fixtures.ts` (`testChar`, `testMove`) — reuse them for P3.0.*
 
-- [ ] **P3.0 Freeze engine test fixtures.** `src/engine/engine.test.ts`
+- [x] **P3.0 Freeze engine test fixtures.** *Done 2026-10-07: frozen copies of the 10 fighters the engine tests use (cat, catherine, chebel, flo, freeman, gene, kirby, marzipan, vincent, yulia) in `src/engine/__fixtures__/` (loaded through the same `applyScale`), and engine/dash/hash/hurtbox/socd/specials/trades tests point there. Proven: with live `vincent.lp` mangled, all 145 of those tests still pass. Live coverage: new `src/engine/engine.roster.test.ts` (every playable fighter, 900 scripted ticks, in bounds + deterministic replay) plus the bench ratchet; `inputs.test.ts`'s P3.6 per-fighter DP check stays on live data on purpose.* `src/engine/engine.test.ts`
       (130 tests) reads the LIVE roster JSON ~64×, so a Move Tuner write to
       e.g. `vincent.json` silently changes engine coverage. Move to frozen
       fixture defs (`src/bench/fixtures.ts` `testChar`/`testMove`, or
@@ -457,7 +457,7 @@ KFM parity test. Synthetic fighters for engine tests already exist:
       U+D → up. Record the rule in FIGHTING_STANDARDS §4 (MKS-1 has no
       SOCD rule yet; IKEMEN resolves L+R to neutral).
       **Test:** hold L+R under MP pressure → no advance, no block.
-- [ ] **P3.3 Crouch hurtbox by id prefix — MED [V].**
+- [x] **P3.3 Crouch hurtbox by id prefix — MED [V].** *Done 2026-10-07: `defenderHurtRect` uses the crouch box only for the six crouching normals (`CROUCH_NORMALS`), `crouch`, and blockstun with `guard: 'crouch'`. Fixes 8 specials that were 98 px short (chebel ceremony/crescent-moon, kirby cartwheel/cat-scratch, rapha claw-machine, vanessa chocolate-head, vincent cloud-hands, yulia cossack-spiral) and crouch-blockstun using the standing box. `src/engine/hurtbox.test.ts` (failed on the old code); bench unchanged.*
       `defenderHurtRect` (`step.ts:~847`) uses
       `moveId.startsWith('c')`, so specials like chebel `ceremony`, kirby
       `cartwheel`, yulia `cossack-spiral` and rapha `claw-machine` get the
@@ -466,13 +466,13 @@ KFM parity test. Synthetic fighters for engine tests already exist:
       **Fix:** record stance at attack start (`action.crouching`) or an
       explicit MoveDef flag; blockstun keeps the stance.
       **Test:** `ceremony` uses `hurtStand`.
-- [ ] **P3.4 Held button auto-repeats normals — MED [V].**
+- [x] **P3.4 Held button auto-repeats normals — MED [V].** *Done 2026-10-07: normals need a fresh press edge (`freshPress`) in `pickAttack`; buffered presses keep working (resolved at press time). `src/engine/inputs.test.ts`: held HP/down+HP → 1 attack (was 6/8 in 180 ticks — failed on the old code), taps and a recovery-buffered tap still fire. Bench unchanged. Note: the random fight bot rolling the same button on consecutive ticks now counts as one press (slightly fewer CPU attacks, like a human who doesn't release).*
       `pickAttack` (`step.ts:~475`) checks `i[b]` (held). Holding HP fires
       ~6 attacks in 3s.
       **Fix:** edge-triggered (fresh press via the buffer) for normals; make
       sure LP+LK chord throws and mash/charge paths still work.
       **Test:** hold HP 180 ticks → 1 attack.
-- [ ] **P3.5 Buffer ages during hitstop — MED [V, both sessions].** The
+- [x] **P3.5 Buffer ages during hitstop — MED [V, both sessions].** *Done 2026-10-07: the action-buffer TTL skips ticks where its owner has `hitstop > 0`; the quirk test is flipped (8/12/15-tick hitstop all cancel; failed on the old code); bench + KFM parity unchanged; FIGHTING_STANDARDS §6/C1 updated.* The
       buffer timer (8) keeps counting during 9–13 tick hitstop, so a cancel
       pressed in the first frames after a heavy connects is dropped (measured:
       hitstop 9 drops a tick-1 cancel; hitstop 12 drops almost all early
@@ -481,13 +481,13 @@ KFM parity test. Synthetic fighters for engine tests already exist:
       **Test:** flip the pinned quirk test in `src/bench/framedata.test.ts`
       ("known engine quirks") to expect `cancelled` for both cases.
       **Unblocks:** any hitstop increase (D8).
-- [ ] **P3.6 Special priority = JSON key order — MED [A].** (`step.ts:~452`)
+- [x] **P3.6 Special priority = JSON key order — MED [A].** *Done 2026-10-07 [V]: `pickAttack` collects every matching special and picks by `MOTION_RANK` (360/mash 6 > dp 5 > hcf/hcb 4 > qcf/qcb 3 > cbf/du 2 > bf 1 > chords 0), then strength (h > m > l), then JSON order. Reproduced first: f,d,df,f+P gave the fireball for vincent/chebel/rj/vanessa/ben; now the DP (tests in `src/engine/inputs.test.ts`, incl. a synthetic pair and a plain-qcf control). Bench + KFM parity unchanged.* (`step.ts:~452`)
       A DP with overshoot (f,d,df,f+P) yields the fireball for vincent,
       chebel, rj, vanessa and ben.
       **Fix:** explicit priority (e.g. 360/mash > dp > hcf/hcb > qcf/qcb >
       charge > du/bf), then strength, then key as a stable tiebreak.
       **Test:** f,d,df,f+P → DP for those 5.
-- [ ] **P3.7 Small engine fixes [A].**
+- [x] **P3.7 Small engine fixes [A].** *Done 2026-10-07 (tests: `src/engine/smallfixes.test.ts`, each behavioural one verified to fail without its fix): a stationary blast (vx 0) pushes the victim away from where it sits (only FRAME_DATA change: marzipan Overgrowth L block push −0.09 → +0.15); corner pushback skips projectile hits (`HitPayload.ranged`); fatality input parsing is `fatalityInputDone()` — LPLK chord + mash handled (LPLK used to crash on `STRENGTH_BITS['LPLK']`); `hash.ts` kinds are a `Record<ActionKind, number>` (taunt added; a missing kind is now a type error); the dead `buf.length - 18` clamp → 0; both inline projectile rects → `projRect()`; `spriteOffsetY` removed from `CharacterDef`, `geometry.footOffset`, the Sprite Editor flatten and the writeback (the character endpoint now always strips it). **Kept on purpose:** the `comment` key in `vincent.json` `jhk` — it documents an intentional art-vs-hitbox divergence and is already excluded from the online sim hash (`NON_SIM_KEYS`).*
       - Stationary blast (`vx=0`) always pushes the victim left (`~:1174`):
         use the attacker's facing.
       - Corner pushback (`~:976`) also shoves a fullscreen projectile
@@ -500,7 +500,7 @@ KFM parity test. Synthetic fighters for engine tests already exist:
         `projRect()`.
       - Remove `types.ts:~278 spriteOffsetY`.
       - Remove the stray `comment` key in `vincent.json` `jhk`.
-- [ ] **P3.8 Juggle limit + chain limit (MKS-1 C2).** Today only combo
+- [x] **P3.8 Juggle limit + chain limit (MKS-1 C2).** *Done 2026-10-07 (engine half; the data half is P4.3): ground hitstun decay — hits 7+ of a combo lose 2 ticks each, floor 1 (`HITSTUN_DECAY_FROM` 6 / `_STEP` 2, chosen by sweep: FROM 4 shaved multi-hit specials' on-hit advantage, 6 changes no single move and no best combo); MUGEN juggle points — pool 15 (`FighterState.juggle`, refilled when the combo ends, hashed), per-move `juggle` (default 4) on hits vs an `airHit` victim, which pass through when the pool can't pay. **Vincent's broken data still unrestored**, the bench reports no `infinite`: MKS-1 errors **2 → 0**, baseline emptied (vincent loop 16+ → 12, ben 16+ → 10). Tests: `src/engine/combolimits.test.ts` (each fails with the rule switched off) + the bench verifier tests.* Today only combo
       scaling (floor 30%) brakes loops, and the bench proves true infinites
       exist (vincent `clp>lk` 15 midscreen / 16+ corner, ben `clk>clp`).
       **Fix:** adopt MUGEN juggle points — a per-victim pool (`airjuggle`,
@@ -510,12 +510,22 @@ KFM parity test. Synthetic fighters for engine tests already exist:
       **Accept:** after P4.3 restores Vincent's data, *and* with that data
       unrestored on a scratch copy, the bench reports no `infinite` (the
       engine rule must hold even for broken data). vitests for both.
-- [ ] **P3.9 Split `step.ts` (1,550 lines) — pure refactor, after
+- [x] **P3.9 Split `step.ts` (1,550 lines) — pure refactor, after
       P3.1–P3.8.** Modules: input / attack / combat / projectiles / phases.
       Dedupe gravity integration (×5), attack-start construction (×3) and the
       KO pop (×3); fatality parsing should reuse `pickAttack`.
       **Guard:** record final `hashState` of 3 long seeded random-input sims
       before the refactor and assert they're identical after.
+      *Done 2026-10-07: `step.ts` (1,680 lines) → `world` (geometry, camera,
+      state queries, move resolution, `airStep`/`settle`/`startAttack`/
+      `koPop`), `input`, `attack`, `combat`, `projectiles`, `phases`, and a
+      331-line `step.ts` (the tick + the historical re-exports; acyclic
+      graph). Deduped gravity integration (5 sites → `airStep` + `settle`),
+      attack-start construction (3 → `startAttack`) and the KO pop
+      (3 → `koPop`); fatality parsing already shares the press primitives via
+      `fatalityInputDone` (P3.7). Guard: 5 seeded 20,000-tick random-input
+      matches (fixture + live fighters), hash every 500 ticks — identical
+      after the split and after the dedupes; FRAME_DATA unchanged.*
 - [x] **P3.10 Online compatibility guard.** *Done 2026-10-06: one compat hash = sim-only char data (`NON_SIM_KEYS` ignores quotes/VO/names/vfx) + the stage-arena table (D9) + `simFingerprint` (a scripted 900-tick match through `step()`, so engine changes are caught without a version bump); PROTO 2; `hashState` now covers charge, dash stocks, combo count, buffered press and the input buffer.*
       - Add a build/engine-version field to the lobby hello and refuse
         mismatched peers.
@@ -572,7 +582,7 @@ the 14 errors: FIGHTING_STANDARDS §6.1.*
       marzipan Symbiosis L 95 (misses vincent 95), plus earl/ben (P4.1).
       Fix to `range ≥ max separation + 8..10`; add the same rule to
       `tools/core/kit.mjs` so the creator can't produce it.
-- [ ] **P4.3 Vincent retune — HIGH balance [V, both sessions].** `lk`
+- [ ] **P4.3 Vincent retune — HIGH balance [V, both sessions].** *(2026-10-07: P3.8's engine rule now ends his and Ben's loops — no MKS-1 errors — but the drifted data below is still wrong: retune it anyway.)* `lk`
       s1/a12/r5, `clp` s1/a9/r7, `cmk` s1/a12/r9 (measured 2f startup; the
       older docs had `lk` 5/3/10); `lk` chains into itself, so mashing LK
       gives 15–19 hits into a dizzy (others: 3–4); the bench measures the
@@ -1123,6 +1133,33 @@ files unasked. Full design: `docs/CHARACTER_STUDIO.md` Phases 4–5 (+ the R2
 ## Handoff log
 
 *(newest first; one entry per session: date · who · done · next · gotchas)*
+
+- **2026-10-07 · P3 fight-core correctness (Claude Opus 5.5).** Branch
+  `fix/p3-engine-correctness`, stacked on `fix/p2-cleanup-hardening`
+  (PR #6 — merge that first). Done: **P3.0, P3.3–P3.9** (details on each
+  item); every behaviour fix has a vitest that fails without it.
+  - **P3.5** the action buffer pauses in hitstop (unblocks D8's hitstop raise).
+  - **P3.4** a held button attacks once.
+  - **P3.3** hurtbox stance from the action (8 specials were 98 px short).
+  - **P3.6** special priority by motion (a DP's overshoot no longer throws
+    the fireball).
+  - **P3.7** small fixes (blast direction, ranged corner push, LPLK/mash
+    fatalities, hash kinds, `spriteOffsetY` gone).
+  - **P3.8** hitstun decay + MUGEN juggle points: **MKS-1 errors 2 → 0**
+    with Vincent's broken data still in place (baseline emptied).
+  - **P3.0** frozen engine fixtures + a live-roster smoke test.
+  - **P3.9** `step.ts` split into 7 modules, three dedupes, identical hashes
+    on five 20k-tick random matches.
+  572/572 tests (45 files), tsc clean, bench 0 errors; FRAME_DATA changed in
+  two places only (marzipan Overgrowth L block push, P3.7; the loop-length
+  column, P3.8). A real match in the dev server plays with no console
+  errors. **Next:** P3.12 feel pass — needs the user's A/B playtest
+  (hitstop / plus-on-hit / safer-on-block / walk speed), then P4.3
+  (Vincent's data), P8.5 (generator skip checks). **Gotchas:** engine code
+  now lives in `src/engine/{world,input,attack,combat,projectiles,phases}.ts`
+  — `step.ts` is only the tick; new behaviour tests should use
+  `src/engine/__fixtures__/characters` (frozen), not `src/data/characters`.
+  Online play needs both peers on the same build (the compat hash catches it).
 
 - **2026-10-07 · P2 finished (Claude Opus 5.5).** Branch
   `fix/p2-cleanup-hardening`: P2.6–P2.10 done (details on each item).

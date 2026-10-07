@@ -1,0 +1,617 @@
+{
+  "id": "chebel",
+  "name": "CHEBEL",
+  "color": "#a6392f",
+  "stage": "mimos",
+  "winQuotes": [
+    "The deck told me of your weakness.",
+    "This card? You're a fool.",
+    "Sit. Have tea. Reflect.",
+    "Your card was The Fool. I checked twice.",
+    "The spirits were loud today. You were not."
+  ],
+  "fatality": {
+    "id": "the-reversed",
+    "name": "The Reversed",
+    "input": {
+      "motion": "hcb",
+      "button": "kick"
+    },
+    "panels": 4
+  },
+  "health": 1050,
+  "walkSpeed": 5.2,
+  "backSpeed": 3.7,
+  "jumpVel": 18,
+  "gravity": 0.95,
+  "prejumpFrames": 4,
+  "bodyBox": {
+    "x": -42,
+    "y": -240,
+    "w": 84,
+    "h": 240
+  },
+  "hurtStand": {
+    "x": -52,
+    "y": -256,
+    "w": 104,
+    "h": 256
+  },
+  "hurtCrouch": {
+    "x": -52,
+    "y": -158,
+    "w": 104,
+    "h": 158
+  },
+  "moves": {
+    "lp": {
+      "startup": 4,
+      "active": 3,
+      "recovery": 9,
+      "damage": 44,
+      "hitstun": 14,
+      "blockstun": 9,
+      "knockback": 6,
+      "hitbox": {
+        "x": 47,
+        "y": -227,
+        "w": 55,
+        "h": 46
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
+    },
+    "mp": {
+      "startup": 7,
+      "active": 3,
+      "recovery": 14,
+      "damage": 70,
+      "hitstun": 18,
+      "blockstun": 12,
+      "knockback": 9,
+      "hitbox": {
+        "x": 47,
+        "y": -246,
+        "w": 49,
+        "h": 63
+      },
+      "height": "mid",
+      "cancel": true
+    },
+    "hp": {
+      "startup": 11,
+      "active": 4,
+      "recovery": 20,
+      "damage": 100,
+      "hitstun": 23,
+      "blockstun": 14,
+      "knockback": 12,
+      "hitbox": {
+        "x": 34,
+        "y": -258,
+        "w": 55,
+        "h": 48
+      },
+      "height": "mid",
+      "knockdown": true
+    },
+    "lk": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 9,
+      "damage": 46,
+      "hitstun": 14,
+      "blockstun": 9,
+      "knockback": 6,
+      "hitbox": {
+        "x": 13,
+        "y": -125,
+        "w": 47,
+        "h": 73
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
+    },
+    "mk": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 16,
+      "damage": 76,
+      "hitstun": 20,
+      "blockstun": 13,
+      "knockback": 11,
+      "hitbox": {
+        "x": 12,
+        "y": -126,
+        "w": 48,
+        "h": 74
+      },
+      "height": "mid",
+      "cancel": true
+    },
+    "hk": {
+      "startup": 12,
+      "active": 4,
+      "recovery": 21,
+      "damage": 104,
+      "hitstun": 25,
+      "blockstun": 15,
+      "knockback": 13,
+      "hitbox": {
+        "x": 31,
+        "y": -282,
+        "w": 61,
+        "h": 62
+      },
+      "height": "mid",
+      "knockdown": true
+    },
+    "clp": {
+      "startup": 4,
+      "active": 3,
+      "recovery": 9,
+      "damage": 42,
+      "hitstun": 14,
+      "blockstun": 9,
+      "knockback": 6,
+      "hitbox": {
+        "x": 40,
+        "y": -189,
+        "w": 59,
+        "h": 62
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
+    },
+    "cmp": {
+      "startup": 8,
+      "active": 4,
+      "recovery": 15,
+      "damage": 66,
+      "hitstun": 18,
+      "blockstun": 11,
+      "knockback": 8,
+      "hitbox": {
+        "x": 38,
+        "y": -209,
+        "w": 56,
+        "h": 72
+      },
+      "height": "mid",
+      "cancel": true
+    },
+    "chp": {
+      "startup": 10,
+      "active": 5,
+      "recovery": 20,
+      "damage": 90,
+      "hitstun": 24,
+      "blockstun": 14,
+      "knockback": 10,
+      "hitbox": {
+        "x": 20,
+        "y": -265,
+        "w": 57,
+        "h": 72
+      },
+      "height": "mid",
+      "knockdown": true
+    },
+    "clk": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 10,
+      "damage": 42,
+      "hitstun": 14,
+      "blockstun": 9,
+      "knockback": 6,
+      "hitbox": {
+        "x": 41,
+        "y": -97,
+        "w": 70,
+        "h": 58
+      },
+      "height": "low",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ]
+    },
+    "cmk": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 17,
+      "damage": 74,
+      "hitstun": 19,
+      "blockstun": 12,
+      "knockback": 9,
+      "hitbox": {
+        "x": 40,
+        "y": -97,
+        "w": 70,
+        "h": 58
+      },
+      "height": "low",
+      "cancel": true
+    },
+    "chk": {
+      "startup": 10,
+      "active": 4,
+      "recovery": 21,
+      "damage": 62,
+      "hitstun": 20,
+      "blockstun": 12,
+      "knockback": 8,
+      "hitbox": {
+        "x": 40,
+        "y": -97,
+        "w": 70,
+        "h": 56
+      },
+      "height": "low",
+      "knockdown": true
+    },
+    "jlp": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 8,
+      "damage": 44,
+      "hitstun": 15,
+      "blockstun": 10,
+      "knockback": 6,
+      "hitbox": {
+        "x": 41,
+        "y": -231,
+        "w": 55,
+        "h": 47
+      },
+      "height": "high"
+    },
+    "jmp": {
+      "startup": 6,
+      "active": 6,
+      "recovery": 10,
+      "damage": 68,
+      "hitstun": 18,
+      "blockstun": 12,
+      "knockback": 8,
+      "hitbox": {
+        "x": -32,
+        "y": -216,
+        "w": 62,
+        "h": 48
+      },
+      "height": "high"
+    },
+    "jhp": {
+      "startup": 8,
+      "active": 7,
+      "recovery": 12,
+      "damage": 92,
+      "hitstun": 22,
+      "blockstun": 14,
+      "knockback": 10,
+      "hitbox": {
+        "x": -33,
+        "y": -174,
+        "w": 50,
+        "h": 54
+      },
+      "height": "high"
+    },
+    "jlk": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 8,
+      "damage": 46,
+      "hitstun": 14,
+      "blockstun": 10,
+      "knockback": 6,
+      "hitbox": {
+        "x": 12,
+        "y": -125,
+        "w": 49,
+        "h": 71
+      },
+      "height": "high"
+    },
+    "jmk": {
+      "startup": 6,
+      "active": 7,
+      "recovery": 10,
+      "damage": 76,
+      "hitstun": 19,
+      "blockstun": 12,
+      "knockback": 9,
+      "hitbox": {
+        "x": 12,
+        "y": -126,
+        "w": 48,
+        "h": 73
+      },
+      "height": "high"
+    },
+    "jhk": {
+      "startup": 9,
+      "active": 7,
+      "recovery": 12,
+      "damage": 98,
+      "hitstun": 23,
+      "blockstun": 14,
+      "knockback": 12,
+      "hitbox": {
+        "x": 13,
+        "y": -126,
+        "w": 48,
+        "h": 74
+      },
+      "height": "high"
+    },
+    "spirit-draw": {
+      "name": "Spirit Draw",
+      "input": {
+        "motion": "qcf",
+        "button": "punch"
+      },
+      "startup": 13,
+      "active": 4,
+      "recovery": 24,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "projectile": {
+        "vx": 9,
+        "spawnX": 90,
+        "spawnY": -150,
+        "box": {
+          "x": -30,
+          "y": -30,
+          "w": 60,
+          "h": 60
+        },
+        "damage": 78,
+        "hitstun": 20,
+        "blockstun": 13,
+        "knockback": 10
+      },
+      "variants": {
+        "l": {
+          "projectile": {
+            "vx": 12,
+            "spawnY": -164,
+            "box": {
+              "x": -24,
+              "y": -24,
+              "w": 48,
+              "h": 48
+            },
+            "damage": 60,
+            "knockback": 8
+          }
+        },
+        "h": {
+          "projectile": {
+            "vx": 6,
+            "spawnY": -120,
+            "box": {
+              "x": -36,
+              "y": -40,
+              "w": 72,
+              "h": 80
+            },
+            "damage": 96,
+            "hitstun": 24,
+            "knockback": 12
+          }
+        }
+      },
+      "voiceText": "Spirit, draw!",
+      "voice": true
+    },
+    "crescent-moon": {
+      "name": "Crescent Moon Kick",
+      "input": {
+        "motion": "qcf",
+        "button": "kick"
+      },
+      "startup": 16,
+      "active": 4,
+      "recovery": 22,
+      "damage": 100,
+      "hitstun": 24,
+      "blockstun": 15,
+      "knockback": 12,
+      "hitbox": {
+        "x": 30,
+        "y": -286,
+        "w": 108,
+        "h": 150
+      },
+      "height": "high",
+      "knockdown": true,
+      "forwardVel": 8,
+      "variants": {
+        "l": {
+          "startup": 14,
+          "damage": 84,
+          "forwardVel": 5
+        },
+        "h": {
+          "startup": 18,
+          "damage": 116,
+          "recovery": 24,
+          "forwardVel": 11
+        }
+      },
+      "voiceText": "Crescent moon!",
+      "voice": true
+    },
+    "ceremony": {
+      "name": "Ceremony",
+      "input": {
+        "motion": "dp",
+        "button": "punch"
+      },
+      "startup": 5,
+      "active": 8,
+      "recovery": 26,
+      "damage": 96,
+      "hitstun": 26,
+      "blockstun": 15,
+      "knockback": 9,
+      "hitbox": {
+        "x": 18,
+        "y": -300,
+        "w": 110,
+        "h": 190
+      },
+      "height": "high",
+      "knockdown": true,
+      "invuln": 8,
+      "leap": {
+        "vx": 4,
+        "vy": 17
+      },
+      "variants": {
+        "l": {
+          "invuln": 6,
+          "damage": 82,
+          "leap": {
+            "vx": 3,
+            "vy": 15
+          }
+        },
+        "h": {
+          "invuln": 10,
+          "damage": 110,
+          "recovery": 28,
+          "leap": {
+            "vx": 5,
+            "vy": 19
+          }
+        }
+      },
+      "voiceText": "The ceremony begins.",
+      "voice": true
+    },
+    "unicycle-rush": {
+      "name": "Unicycle Rush",
+      "input": {
+        "motion": "bf",
+        "button": "kick"
+      },
+      "startup": 10,
+      "active": 8,
+      "recovery": 20,
+      "damage": 88,
+      "hitstun": 22,
+      "blockstun": 13,
+      "knockback": 9,
+      "hitbox": {
+        "x": 16,
+        "y": -210,
+        "w": 124,
+        "h": 150
+      },
+      "height": "mid",
+      "knockdown": true,
+      "forwardVel": 15,
+      "variants": {
+        "l": {
+          "forwardVel": 20,
+          "damage": 72,
+          "startup": 8,
+          "recovery": 16
+        },
+        "h": {
+          "forwardVel": 9,
+          "damage": 112,
+          "knockback": 12,
+          "startup": 12,
+          "recovery": 24
+        }
+      },
+      "voiceText": "Hold on!",
+      "voice": true
+    },
+    "throw": {
+      "name": "Throw",
+      "input": {
+        "button": "LPLK"
+      },
+      "startup": 4,
+      "active": 2,
+      "recovery": 20,
+      "damage": 92,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 9,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 96
+      },
+      "tossArc": {
+        "vy": -6.5,
+        "knockbackMult": 1
+      },
+      "techable": true,
+      "voiceText": "Reversed.",
+      "voice": true
+    }
+  },
+  "vo": {
+    "kiai": [
+      "Hyah!",
+      "Vai!",
+      "Draw!",
+      "Ha!",
+      "Voa!",
+      "HA!"
+    ],
+    "hurt": [
+      "Ai!",
+      "Agh!",
+      "Ui!",
+      "Não!",
+      "Tss!",
+      "Ei!"
+    ],
+    "victory": [
+      "The deck never lies.",
+      "This outcome was foretold.",
+      "Sit. Have tea. Reflect.",
+      "You. Reversed."
+    ]
+  },
+  "lore": {
+    "tagline": "The deck told me of your weakness.",
+    "personality": "Mimos co-founder, filmmaker, and animal-spirit tarot reader. Serene and ceremonial; reads the cards mid-fight. Partner of Ygor.",
+    "backstory": "Brazilian multimedia artist who founded the solarpunk café Mimos (born on Saturn, now on Mars) with Ygor. VJ, photographer, tea-ceremony host, and embroiderer of Sintography prints; arrived in 2023 at Vanessa’s invitation."
+  },
+  "arcade": {
+    "motivation": "The animal-spirit deck laid out the entire bracket, so Chebel goes where the cards send her — and the Biennale is long overdue for a proper tea ceremony.",
+    "ending": "Champion, Chebel serves tea to the defeated and reads the desert’s future in the deck. Ygor films the whole thing for the sci-fi cut. The card is The World, upright."
+  }
+}

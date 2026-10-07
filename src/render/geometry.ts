@@ -13,7 +13,6 @@ import { ART_MARGIN, CELL_H, CELL_W, FLOOR_FRAC, SPRITE_FOOT_OFFSET_Y } from './
 /** the minimal slice of CharacterDef the transforms need */
 export interface RenderableDef {
   hurtStand: { h: number };
-  spriteOffsetY?: number;
   /** wider-than-standard cells (body centred); default CELL_W */
   cellW?: number;
 }
@@ -28,9 +27,12 @@ export function renderScale(def: RenderableDef): number {
   return (def.hurtStand.h * ART_MARGIN) / CELL_H;
 }
 
-/** vertical render offset between the collision feet (f.y) and the drawn feet */
-export function footOffset(def: { spriteOffsetY?: number }): number {
-  return SPRITE_FOOT_OFFSET_Y + (def.spriteOffsetY ?? 0);
+/** vertical render offset between the collision feet (f.y) and the drawn feet.
+ *  One global constant (0 since the floor migration); the per-fighter
+ *  `spriteOffsetY` nudge was removed in P3.7 — every sheet is floor-normalized.
+ *  The `def` parameter stays so call sites don't change if that ever returns. */
+export function footOffset(_def?: unknown): number {
+  return SPRITE_FOOT_OFFSET_Y;
 }
 
 /** cell-space point → world, for a fighter at (fx, fy); mirror −1 = facing left */

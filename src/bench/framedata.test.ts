@@ -69,11 +69,10 @@ describe('physics measurement', () => {
   });
 });
 
-describe('known engine quirks (docs/FIGHTING_STANDARDS.md §6) — flip these when fixed', () => {
-  // ACTION_BUFFER_TICKS (8) keeps counting down while the attacker is frozen
-  // in hitstop, so a cancel pressed early in a ≥9-tick hitstop is dropped.
-  // IKEMEN's standard is Input.PauseOnHitPause = 1 (buffers survive hitpause).
-  // Roadmap C1 fixes it — then this test must assert 'cancelled' for both.
+describe('action buffer survives hitstop (P3.5; was a §6 quirk)', () => {
+  // ACTION_BUFFER_TICKS (8) used to keep counting down while the attacker was
+  // frozen in hitstop, so a cancel pressed early in a ≥9-tick hitstop was
+  // dropped. Now it pauses like IKEMEN's Input.PauseOnHitPause = 1.
   const cancelAfter = (hitstop: number, delay: number): boolean => {
     const defs: Defs = {
       t: testChar('t', {}, {
@@ -95,9 +94,10 @@ describe('known engine quirks (docs/FIGHTING_STANDARDS.md §6) — flip these wh
     });
     return began;
   };
-  it('a cancel input early in a long hitstop is dropped (buffer expires while frozen)', () => {
+  it('a cancel input early in a long hitstop still comes out', () => {
     expect(cancelAfter(8, 1)).toBe(true);
-    expect(cancelAfter(12, 1)).toBe(false);
+    expect(cancelAfter(12, 1)).toBe(true);
+    expect(cancelAfter(15, 1)).toBe(true); // KFM-class heavy hitstop (D8)
   });
 });
 
@@ -116,12 +116,21 @@ describe('combo finder', () => {
     expect(c.best!.hits).toBe(3);
   });
 
-  it('detects a self-chaining light that pushback cannot end as infinite', () => {
-    // zero knockback: nothing ever pushes them apart
+  it('the loop verifier flags a chain that outlasts its cap', () => {
+    // zero knockback: nothing ever pushes them apart; a cap of 5 sits below
+    // where hitstun decay (P3.8) ends it, so the detector itself is exercised
     const defs: Defs = { t: testChar('t', {}, { lp: testMove({ chains: ['lp'], knockback: 0, hitstun: 14 }) }) };
     const c = findCombos(defs, 't');
     expect(c.loops.length).toBeGreaterThan(0);
-    expect(verifyLoop(defs, 't', c.loops[0]).infinite).toBe(true);
+    expect(verifyLoop(defs, 't', c.loops[0], 5).infinite).toBe(true);
+  });
+
+  it('hitstun decay ends even a zero-pushback self-chain (P3.8)', () => {
+    const defs: Defs = { t: testChar('t', {}, { lp: testMove({ chains: ['lp'], knockback: 0, hitstun: 14 }) }) };
+    const c = findCombos(defs, 't');
+    const v = verifyLoop(defs, 't', c.loops[0]);
+    expect(v.infinite).toBe(false);
+    expect(v.corner).toBeLessThan(16);
   });
 
   it('pushback ends an ordinary light chain', () => {

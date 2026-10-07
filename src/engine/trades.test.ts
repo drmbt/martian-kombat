@@ -1,7 +1,7 @@
 // P3.1 — same-tick connections resolve against the start-of-tick state, so
 // neither slot wins by evaluation order (online, slot 0 is the host).
 import { describe, expect, it } from 'vitest';
-import { characters } from '../data/characters';
+import { characters } from './__fixtures__/characters';
 import { benchState, run } from '../bench/sim';
 import type { GameState } from './index';
 

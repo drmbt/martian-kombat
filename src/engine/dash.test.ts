@@ -4,7 +4,7 @@
 // broke neutral (corner-to-corner in under a second) and made zoning moot.
 import { describe, expect, it } from 'vitest';
 import { DASH_REGEN_TICKS, DASH_STOCKS, EMPTY_INPUT, GameState, InputFrame, initialState, step } from './index';
-import { characters } from '../data/characters';
+import { characters } from './__fixtures__/characters';
 
 function inp(partial: Partial<InputFrame> = {}): InputFrame {
   return { ...EMPTY_INPUT, ...partial };
