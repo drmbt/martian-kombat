@@ -1,3 +1,10 @@
+> **Archived 2026-10-06** (P1.4). The 3D-renderer + netplay spike spec. Code
+> comments still cite its ids as `SPEC Vnn` / `SPEC Tnn` — look them up here.
+> Its status column is stale: rollback, timesync (T45), fire-once tick events
+> (T44) and desync detection (T42) shipped; the open online items (net-status
+> UI T41, rollback perf audit T43, rejoin T46/T40) moved to 02-PLAN P10.5.
+> `public/assets/meshes/` no longer exists (see `docs/3D_CHARACTER_PIPELINE.md`).
+
 # SPEC — spikes: 3D renderer + netplay
 
 Source doc: `docs/THREE_D_RENDERER_SPIKE.md` (full prose detail: anim map, lighting, model contract).

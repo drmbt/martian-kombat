@@ -79,6 +79,7 @@ assets/
 public/assets/   # game-ready, committed: sprites/ backgrounds/ portraits/ audio/
                  # fatalities/ vfx/ ui/ (3d/ is excluded from the deploy)
 docs/            # design docs; docs/handoff/ = plan + session prompts; docs/archive/ = history
+                 # (incl. SPEC.md — code comments cite its ids as `SPEC Vnn/Tnn`)
 ```
 
 ## Asset pipeline (pointers)

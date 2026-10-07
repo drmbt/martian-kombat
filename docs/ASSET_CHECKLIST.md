@@ -15,8 +15,8 @@ fight via `src/scenes/assetLoader.ts`). The queue helpers are data-driven off
 assets on disk is picked up with **zero loader code** — the same for characters
 made through Claude Code or shipped from the frontend Character Studio. You only
 touch the loader if you add a NEW asset *class* or a new UI surface that shows a
-fighter/stage (then it must `await AssetLoader.*`). See CLAUDE.md → "Lazy asset
-loading — the load contract".
+fighter/stage (then it must `await AssetLoader.*`). See `docs/TOOLS.md` →
+"Lazy asset loading" (and the invariants in CLAUDE.md).
 
 All `gen:*` scripts are idempotent (skip existing files; `--force` regens).
 Raw output lands in `assets/raw/` (gitignored); packed/game-ready files land in
@@ -24,27 +24,41 @@ Raw output lands in `assets/raw/` (gitignored); packed/game-ready files land in
 
 ## New character — the seven steps
 
+**Ask first:** the canonical, frames, icon, audio and fatality generators call
+paid APIs (QA, pack and busts are local) — get the user's go-ahead with an estimated call count (02-PLAN D6). `npm run studio:run
+-- --char <id> --mock` dry-runs the whole DAG at $0 and prints that estimate.
+The Character Studio (`7 · DEV EDITOR`, dev builds) runs the same steps with a
+live preview.
+
 A fighter isn't "done" until **all seven** produce committed art AND the audit
-test is green. Order matters (later steps consume earlier outputs).
+test is green (optional VFX is an eighth, unaudited step). Order matters (later steps consume earlier outputs).
 
 1. **Data** — add `src/data/characters/<id>.json` (frame data, hitboxes, moves,
    `winQuotes`, a `fatality` block) and register the fighter in
-   `src/data/roster.ts` (`playable: true`). Add a generator-script entry for
-   the character in `tools/frames-manifest.mjs` (poses + `extra.projectiles`
-   prompts) and a name + VO lines in `tools/gen-audio.mjs`.
-   - Respect the **privacy opt-out** (lore sheet): never scaffold anyone marked
-     "NO AI PLEASE".
-2. **Canonical sheet** (once) — `npm run gen:styletest` from an inspo photo in
-   `assets/character-inspo/<name>.jpg`; approve the painted-cel candidate.
+   `src/data/roster.ts` (`playable: true` — do this LAST, once the assets
+   exist, or the audit fails early). Include the `vo` block (6 kiai / 6 hurt /
+   4 victory line texts, the durable source) and an `arcade` block. Add a
+   generator-script entry in `tools/frames-manifest.mjs` (poses +
+   `extra.projectiles` prompts) and mirror the name + VO texts into
+   `tools/gen-audio.mjs` (its CLI still reads its own tables until 02-PLAN
+   P8.6). Then `npm run bench -- --char <id>`: zero new MKS-1 errors.
+2. **Canonical sheet** (once) — `node tools/gen-canonical.mjs --char <id>`
+   (add the fighter's inspo/face entry in the script) from
+   `assets/character-inspo/<name>.jpg` → `assets/raw/canonical/<id>.png`;
+   approve it before anything downstream uses it.
 3. **Pose keyframes** — `npm run gen:frames -- --char <id> --concurrency 6`.
    Crouch/lying cells need the low-pose anchor trick (pass a second low
-   reference; see `tools/frames-manifest.mjs` + the memory note).
-4. **Pack** — `npm run gen:pack -- --char <id>` → `public/assets/sprites/<id>/
+   reference; see `tools/frames-manifest.mjs` + the sprite-generation skill).
+   Then QA the RAW frames: `npm run gen:qa -- --char <id> --frames-dir
+   assets/raw/frames/<id>` (sprite-qa skill) and re-roll flagged `--cells`.
+4. **Pack** — `npm run gen:pack -- --char <id> --normalize` → `public/assets/sprites/<id>/
    sheet.png` + `meta.json` (+ keyed per-move `projectile-*.png`). Inspect the
    sheet before trusting it (montage QA — headless-torso / phantom-leg /
    clone guards).
-5. **Portraits** — `node tools/gen-canonical.mjs --char <id>` (no npm alias)
-   → `portraits/<id>.png`, `<id>-bust.png`, and the beaten `<id>-ko.png`.
+5. **Portraits** — `node tools/gen-icons.mjs --char <id>` → the straight-on
+   `portraits/<id>.png`; `npm run gen:busts` → the pose-centered
+   `<id>-bust.png`; `gen-canonical` (step 2) also writes the beaten
+   `<id>-ko.png`.
 6. **Audio** — `npm run gen:audio -- --char <id> --concurrency 3`: the name
    call-out + 6 kiai / 6 hurt / 4 victory lines (the exact counts the loader
    and the audit expect). A per-move call-out is opt-in: set `voice: true` on

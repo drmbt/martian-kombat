@@ -282,7 +282,7 @@ text. Prompt: `docs/handoff/05-NEXT-SPRINT-P1.md`.*
       fighters (generate the table from `roster.ts`); the real modes; remove
       unbuilt claims (Yulia rage meter `:24`, Freeman armor `:19`, "GPT Image
       makes stages" `:11`); stack incl. Cloudflare.
-- [ ] **P1.4 Archive obsolete docs → `docs/archive/`.**
+- [x] **P1.4 Archive obsolete docs → `docs/archive/`.** *Done 2026-10-06: CHARACTER_CREATOR(+_WALKTHROUGH), SPEC.md, THREE_D_RENDERER_SPIKE, WAVE2-VO-CHECKLIST, FATALITY-VIDEO-PROMPTS → `docs/archive/` (creator §6/§9/§16 folded verbatim into CHARACTER_STUDIO Part 5; SPEC gets a banner — code still cites its `SPEC Vnn/Tnn` ids; open T41/T43/T46 carried into P10.5); MOVE_DURATIONS deleted. CHARACTER_STUDIO: built/partial/not-built header from a code re-audit, Part 3 boxes ticked or annotated (◐/✗). CHARACTERS.md: Ben/Tao/RJ added from their JSON, Earl's shipped kit noted, Haidai marked dropped. The meshes path: sources now live in gitignored `assets/raw/unused-3d-sources/` (noted in 3D_CHARACTER_PIPELINE; the tool still reads `public/assets/meshes`).*
       - `CHARACTER_CREATOR.md` + `_WALKTHROUGH` (fold §6 R2, §9 open
         questions, §16 context cache into `CHARACTER_STUDIO.md` first);
       - `SPEC.md` (carry open T41–T46 online items into P10.5);
@@ -953,7 +953,10 @@ can exhaust its memory.*
       - Network-status UI.
       - Desync recovery instead of a hard halt.
       - The stale "lockstep" comment at `webrtc.ts:~60`.
-      - SPEC T41–T46 leftovers.
+      - SPEC leftovers (`docs/archive/SPEC.md`): net-status UI with
+        failure reasons + rollback debug detail (T41), a worst-case rollback
+        perf audit < 2 ms (T43), rejoin/resync with a grace window (T46, the
+        T40 remainder). T42/T44/T45 shipped.
 - [ ] **P10.6 ⛔ D6 content regen backlog:** marzipan frames, bodhi active
       cells, RJ v2's 4 flagged cells (`docs/archive/CHANGELOG-2026-summer.md`, "Still open on RJ"), a
       roster-wide CorridorKey re-key (`docs/CORRIDORKEY.md`), and the 16

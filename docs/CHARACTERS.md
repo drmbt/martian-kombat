@@ -149,14 +149,13 @@ faint glyphs orbiting his hands.
 
 ---
 
-# Wave 2 roster — PROPOSED v2, lore-informed (awaiting approval, 2026-07-04)
+# Wave 2 roster — lore-informed designs (2026-07-04; all built except Haidai)
 
 Eight new fighters chosen from the inspo pool (everyone with both a full-body
 `assets/character-inspo/<name>.jpg` AND a `face/` shot). Designs are grounded
 in the **Martian Lore sheet, Mars People tab** (see CLAUDE.md → Lore source);
-each entry cites its lore hook. Privacy check done 2026-07-04: none of the
-eight opted out ("NO AI PLEASE" = Maya Luna, Peter, Roarke, Summer — never
-build these four).
+each entry cites its lore hook. *(The 2026-07-04 privacy check listed here is
+moot: the game-level privacy rule was retired by Vincent on 2026-07-08.)*
 
 Benched this wave, revisit for Wave 3: **Katana** (war-fan assassin design
 drafted and shelved — lore is thin: "swish (sword sounds)", bass, Tool Camp
@@ -257,6 +256,13 @@ hip glows faintly.
   (KO) · "Chá?" (taunt) · sharp exhale kiai.
 
 ## Earl — "The Madd Wikkid"
+> **As shipped (2026-07):** the design below was replaced in the build. Earl's
+> real kit (`src/data/characters/earl.json`): **Trumpet Blast** (charge ←, →+P,
+> projectile) · **Step** (↓↙←+K) · **Pillar** (→↓↘+P) · **Double** (↓↘→+K) ·
+> throw; fatality **The Final Mix** (→↘↓↙←+P); home stage Star Beach. The
+> recorder trap, Sine Wave and Drop the Bass were not built. The original
+> design is kept for flavor.
+
 **Archetype:** sound zoner with recorded-playback traps.
 **Lore hook:** his actual former stage name. Decades producing and
 engineering records, AAA-game audio director, plays piano/trumpet/bass,
@@ -281,6 +287,9 @@ grey goatee; visible sine-wave distortion ripples off his normals.
   start) · "Mixed. Mastered. Shipped." (KO) · trumpet-stab kiai.
 
 ## Haidai — "The Vibration Priest"
+> **DROPPED** — never built (no JSON, not in `ROSTER`); the design is kept for
+> reference only.
+
 **Archetype:** counter-priest — punishes force by returning it aligned.
 **Lore hook:** "the vibration alignment priest" — Silicon Valley →
 anthropological researcher and digital cultural preservationist → Balinese
@@ -414,6 +423,39 @@ lens when specials start.
   relaxed chuckle (taunt).
 
 ---
+
+# Built later (2026-07): Ben, Tao, RJ
+
+Shipped kits, summarized from the character JSON (the JSON is the source of
+truth; measured frame data: `docs/FRAME_DATA.md`). Inputs: P/K = any punch/kick.
+
+## Ben — "They call BEN."
+**Archetype:** cozy-kitchen zoner. Cozy wonk, bad buddhist, grumpy kitchen
+grandma. Home stage: Dome.
+- **Quesadilla** (←↙↓↘→+P): projectile.
+- **Hot Coffee** (↓↘→+P): projectile.
+- **Kitchen Grandma** (→↓↘+P): reversal.
+- **Midnight Munchies** (←→+P): rush.
+- Throw; fatality **Dinner's Ready** (→↘↓↙←+P).
+
+## Tao — "The desert's philosopher-king" (arcade end boss)
+**Archetype:** imperious zoner-conductor, the M. Bison analog; Biennale
+co-founder. 1050 HP. Home stage: Institute.
+- **Paparazzi Flash** (charge ←, →+P): projectile.
+- **Director's Cut** (↓↙←+K): projectile.
+- **Duende Kick** (→↓↘+K): rising anti-air kick.
+- **Maestro's Advance** (←↙↓↘→+K): advancing rush.
+- Throw **The Dismissal**; fatality **Final Critique** (→↘↓↙←+P).
+
+## RJ — "The Living Skeleton" (v2; Tao's hench goon)
+**Archetype:** deadpan grappler-zoner, the Sagat analog. 1020 HP. Home stage:
+Last Resort. (v1 "The Gatekeeper" is archived in
+`assets/archive/rj-v1-gatekeeper/`.)
+- **BB Gun** (↓↘→+P): projectile.
+- **World's Tallest Ghost** (→↓↘+P): anti-air.
+- **Excavator Charge** (←→+P): rush.
+- **Rattlebones** (→↘↓↙←+P): command grab (skeleton bear-hug).
+- Throw **Evicted**; fatality **For The Birds** (→↘↓↙←+K).
 
 ## Asset-prompt notes
 

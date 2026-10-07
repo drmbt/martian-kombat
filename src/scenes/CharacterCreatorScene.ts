@@ -2,7 +2,7 @@
 // mounts the DOM wizard (CharacterCreatorPanel) over it via a UiLayer — the same
 // "playable stage with dialog overlays" pattern the Sprite Editor uses. Reached
 // from EditorMenuScene → CHARACTER CREATOR (import.meta.env.DEV only). See
-// docs/CHARACTER_CREATOR.md.
+// docs/archive/CHARACTER_CREATOR.md.
 import Phaser from 'phaser';
 import { STAGE_H, STAGE_W } from '../engine';
 import { UiLayer } from '../ui/layer';

@@ -2,7 +2,7 @@
 // Holds everything the wizard assembles: the raw inputs, the (client-side,
 // templated for now) design draft, the async job/asset table, and the growing
 // CharacterDef. On WRITE this becomes <id>.json + meta.json + sheet.png. See
-// docs/CHARACTER_CREATOR.md. All gen goes through /__editor/creator/gen, which
+// docs/archive/CHARACTER_CREATOR.md. All gen goes through /__editor/creator/gen, which
 // mocks (client-drawn placeholders) when GEMINI_API_KEY is absent so the whole
 // flow is walkable with zero setup.
 

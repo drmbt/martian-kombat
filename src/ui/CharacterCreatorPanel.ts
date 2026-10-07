@@ -3,7 +3,7 @@
 // portrait) and D2 (profile + stage/voice upload + first sprite batch that
 // plays as it returns) are functional; D3–D7 are stubs. Generation goes through
 // /__editor/creator/gen, which draws mock placeholders when no GEMINI key is set
-// so the flow is walkable out of the box. See docs/CHARACTER_CREATOR.md.
+// so the flow is walkable out of the box. See docs/archive/CHARACTER_CREATOR.md.
 import {
   CreatorModel, CREATOR_STEPS, makeDraft, BASE_CELLS, ATTACK_CELLS,
   ARCHETYPE_INFO, specialsForArchetype, SPECIAL_ARCHETYPES, controlsForArchetype,

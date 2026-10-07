@@ -5,6 +5,14 @@ and where its cure lives. Everything is automated in `tools/gen-mesh.mjs`
 + `tools/blender_fbx_to_glb.py`; per-rig quirks are MANIFEST FLAGS, never
 runtime special-cases.
 
+> **Status (2026-10-06): 3D is frozen** (dev or `?3d=1` only; 02-PLAN D5/P11).
+> The source FBXs were removed from `public/` in `0d18a75` (the deploy's
+> 25 MiB/file cap) and now live in the gitignored
+> `assets/raw/unused-3d-sources/{meshes,animations}/` (private R2 mirror,
+> `npm run raw:pull`). `gen-mesh` still reads `public/assets/meshes/<char>/`
+> and `public/assets/animations/`, so copy the sources back there (don't
+> commit them) before running it. Paths below are the tool's.
+
 ## The process
 
 1. **Tripo**: generate the character mesh (~20k tris) from the canonical

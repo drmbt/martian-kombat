@@ -1,12 +1,30 @@
 # Character Studio — unification plan
 
-> **Status:** PLAN (Sprint 27 proposal, 2026-07-08). This document is the result of a
+> **Built vs planned (re-audited against the code 2026-10-06, P1.4):**
+> - **Built (Phases 0–3, Sprint 27):** one coords source + geometry, one
+>   packer with edit overlays, one prompt library (`tools/core/`), the atomic
+>   floor/skeleton migration (meta v2, `spriteOffsetY` gone), the Studio as a
+>   FightScene mode (StudioSelect roster manager, CREATOR · SPRITES · MOVES ·
+>   STAGES · TEST rail, WYSIWYG creator, gap bar), kit grammar, Adopt v1,
+>   ZIP import/export, online/offline + guided delete.
+> - **Partial:** `/__editor/jobs` runner + `studio:run` DAG exist but only
+>   from the CLI (no UI, no cost UI); reference chaining covers low-pose
+>   anchors + sequential specials, not the a→b idle/walk/startup links; the
+>   STAGES module assigns but doesn't create; legacy scenes still registered.
+> - **Not built:** single character-write endpoint with provenance, FX
+>   module, context cache, StorageDriver / R2 publish / custom registry,
+>   accounts + moderation. `core/lore.mjs` is dropped.
+> - **Open work lives in `docs/handoff/02-PLAN.md` P12** (platform, D3) —
+>   the checkboxes in Part 3 carry ◐ partial / ✗ not-built notes.
+>
+> **Original status:** PLAN (Sprint 27 proposal, 2026-07-08). This document is the result of a
 > full audit of the Character Creator, Sprite Editor, Move Tuner, the tools/QA
 > pipeline, and the character data/asset tree. It defines the target architecture
 > for a single unified "Character Studio" that creates, tunes, imports, exports,
 > and upgrades complete characters — and the phased build plan to get there.
 > Supersedes the tool-consolidation items left open in Sprint 25/26; builds on
-> (does not replace) `docs/CHARACTER_CREATOR.md` §6 (R2) and §16 (context cache).
+> (does not replace) the creator doc's §6 (R2) and §16 (context cache) — now
+> in Part 5 below.
 
 ---
 
@@ -84,7 +102,7 @@ dev-editor UI in the shipped build (everything is `apply:'serve'` +
 
 ## Part 1 — Audit findings (the state of the world, 2026-07-08)
 
-Sixteen fighters are playable. Three dev tools coexist as separate EditorMenu
+Sixteen fighters were playable (18 by 2026-10). Three dev tools coexist as separate EditorMenu
 entries (Character Creator, Move Tuner, Sprite Editor), all writing through the
 `/__editor/*` Vite middleware. The creator can take a photo to a playable fighter
 end-to-end, but the tools disagree with each other and with the CLI pipeline in
@@ -174,7 +192,7 @@ module-global and never invalidated on HMR (stale re-bake hazard).
   lore/quotes/VO/specials, but lore never feeds *image* prompts (no
   `always`-from-lore clause, no lore-aware fatality beats). There is no tool
   that consults the Martian Lore sheet (the `new-character` skill does it
-  manually); the privacy opt-out check is prompt-side only.
+  manually).
 - **Fatality prompt help is thin**: the canon roster's hand-authored 4-beat
   cinematics + HUSK victim token + IMAGE_SAFETY-soft-fallback craft
   (gen-fatality/gen-canonical) is not shared with the creator, which uses a
@@ -183,7 +201,7 @@ module-global and never invalidated on HMR (stale re-bake hazard).
   creator state but no unified prompt/seed manifest ships with a character;
   the §16 context cache (the token-cost lever the spec is architected around)
   is unbuilt.
-- **No R2 / publish path**: spec'd in `CHARACTER_CREATOR.md` §6
+- **No R2 / publish path**: spec'd in creator §6 (Part 5 below)
   (StorageDriver, publish↑/canonize↓/load↔, env vars) but zero code exists.
 - **QA cruft**: `tools/qa/` mixes load-bearing QA (pose_qa, infer_keypoints,
   normalize_floor, resolve-python) with the hit-spark grid experiment
@@ -199,14 +217,14 @@ module-global and never invalidated on HMR (stale re-bake hazard).
 - The creator's draft persistence + resume (`assets/raw/creator/<id>/`),
   canon-reopen (preserving the original JSON as write-back base), ZIP
   export/import, per-panel fatality beats, per-line VO regen, Fish voice
-  clone, design draft with privacy-opt-out language.
+  clone, design draft.
 - `hitboxFromSkeleton` + `strikeKind` (genuinely shared), the keypoint
   extraction pattern (`infer_keypoints.py` imports from `pose_qa.py` — "one
   place that knows how to talk to rtmlib"), `pool()`/`skip()`/`saveAsset()`
   in `tools/lib.mjs`, the asset manifest gate, the audit test's *concept*.
 - The Sprite Editor's non-destructive model + timestamped backups + the
   scale/offset bake-down ("commit to identity") mechanism.
-- `docs/CHARACTER_CREATOR.md`'s R2 §6 and context-cache §16 designs — sound,
+- the creator doc's R2 §6 and context-cache §16 designs (Part 5) — sound,
   just unbuilt.
 
 ---
@@ -231,7 +249,7 @@ A persistent, **collapsible/hideable** left rail of module panels sits over
 the fight, all driven by one shared, live **CharacterProject**:
 
 ```
-IDENTITY   name · refs · lore (typed / lore-sheet fetch) · design draft · privacy gate
+IDENTITY   name · refs · lore (typed / lore-sheet fetch) · design draft
 LOOK       canonical · portraits (icon/bust/ko) · color · stage (assign existing / create new)
 SPRITES    the Sprite Editor grid, embedded: cells · regen · keypoints · normalize
 MOVES      kit table + the Move Tuner sandbox, embedded: frame data · hitboxes ·
@@ -308,7 +326,7 @@ This is the model `infer_keypoints.py` already proves out. Contents:
 | `geometry.mjs` | `renderScale(def)`, `cellToWorld`, `cellBoxToHitbox`, `worldToCell` — THE coordinate transform, one copy | FightScene/SpriteEditor/Creator's 3–4 hand-rolled copies. **Fixes C4.** |
 | `audio.mjs` | `elevenTts`, `sfxGen`, `musicGen`, voice-ID tables (beside the existing `fishTTS`) | vite's re-declared `elevenTts` + inline fetches, gen-audio's private copies |
 | `kit.mjs` | default-kit builder emitting **full grammar** (chains, L/M/H variants, cancel windows, themed fatality slot) + the archetype catalog (one copy, feeding the design-draft prompt, the creator dropdown, and the move-authoring skill) | `buildFullCharacter`'s thin kit (the ben/earl regression), the 3 archetype-list copies |
-| `lore.mjs` | lore-sheet fetch (public CSV export) + fuzzy match + **hard privacy-opt-out check** + `lore → always/fatality/VO` propagation | the manual skill-side lookup; makes the opt-out machine-enforced |
+| `lore.mjs` | lore-sheet fetch (public CSV export) + fuzzy match + `lore → always/fatality/VO` propagation | the manual skill-side lookup *(not built; see Phase 4)* |
 
 CLI scripts become thin wrappers over core (they keep their `npm run gen:*`
 interfaces — nothing about the CLI workflow changes); vite endpoints call the
@@ -385,7 +403,7 @@ End state (per Sprint 25's own verdict, now actually scheduled):
 
 ### 2.6 Storage seam: local now, R2 next
 
-Implement `CHARACTER_CREATOR.md` §6 as spec'd: a `StorageDriver` with
+Implement creator §6 (Part 5) as spec'd: a `StorageDriver` with
 `LocalRepoStorage` (today's behavior: write into `public/assets` +
 `src/data`) and `R2Storage` (S3-compatible; env-gated; no-ops to
 `public/assets/custom/<id>/` when creds are absent so the resolve/merge/pull
@@ -519,114 +537,113 @@ only genuinely disruptive step) happens exactly once, early, with its test
 fallout handled inside the same phase.
 
 ### Phase 0 — Guardrails + cruft sweep *(no API calls, no behavior risk)*
-- [ ] Delete orphans (haidai, rm-rf, catherine projectile.png + manifest entry);
+- [x] Delete orphans (haidai, rm-rf, catherine projectile.png + manifest entry);
       fix vanessa `voice:true`; gate ThreeFxSystem legacy-projectile load
-- [ ] Extend `assets.audit.test.ts`: bust, orphans, schema lint, meta shape
+- [x] Extend `assets.audit.test.ts`: bust, orphans, schema lint, meta shape
       (lint will initially FAIL on ben/earl/vanessa — that's the point; mark
       the specific known gaps as expected-fail until Phase 3 backfills them)
-- [ ] `tools/core/constants.mjs` + generated `qa/constants.py`; replace all
+- [x] `tools/core/constants.mjs` + generated `qa/constants.py`; replace all
       copies of FLOOR_FRAC/HEADROOM/CELL_*/1.32/SPRITE_FOOT_OFFSET_Y with
       imports (pure refactor, values unchanged)
-- [ ] `tools/core/geometry.mjs`: one `cellBoxToHitbox`/`renderScale`; all
+- [x] `tools/core/geometry.mjs`: one `cellBoxToHitbox`/`renderScale`; all
       three tools import it
-- [ ] QA dir hygiene: move vfx-grid experiments to `tools/vfx/`, drop
+- [x] QA dir hygiene: move vfx-grid experiments to `tools/vfx/`, drop
       `__pycache__`, RTMPose naming, resolver probes onnxruntime,
       `npm run gen:busts` for portrait_crop
-- [ ] characterScale base-cache invalidation on `/__editor/character` write
+- [x] characterScale base-cache invalidation on `/__editor/character` write
 
 ### Phase 1 — One pack path + one prompt library *(no API calls)*
-- [ ] `tools/core/keying.mjs` — and fix the vite `FF_KEY_PAD` headroom
+- [x] `tools/core/keying.mjs` — and fix the vite `FF_KEY_PAD` headroom
       mismatch (C1): all regen/creator cells get HEADROOM=24 like the pipeline
-- [ ] `tools/core/packer.mjs` — pack-sheet.mjs, `/__editor/sheet`, and the
+- [x] `tools/core/packer.mjs` — pack-sheet.mjs, `/__editor/sheet`, and the
       creator write path all call it server-side; `composeSheet()` retires;
       meta v2 emitted; single floor-normalize implementation
-- [ ] Sprite Editor writes cell edits back to raw frames (project dir), then
+- [x] Sprite Editor writes cell edits back to raw frames (project dir), then
       re-packs — the `gen:pack`-clobbers-edits hazard dies here
-- [ ] `tools/core/cells.mjs` + `prompts.mjs` — frames-manifest promoted;
+- [x] `tools/core/cells.mjs` + `prompts.mjs` — frames-manifest promoted;
       creatorModel imports the shared cell contract + prompt builders
       (creator fighters start getting canon-quality prompts)
-- [ ] `tools/core/audio.mjs`; vite + gen-audio share TTS + voice tables
-- [ ] Skills refresh pass 1: `sprite-generation` + `sprite-qa` rewritten
+- [ ] ◐ *Partial: shared `elevenTts`/`ELEVEN_VOICES` live in `tools/lib.mjs`; no `core/audio.mjs`.* `tools/core/audio.mjs`; vite + gen-audio share TTS + voice tables
+- [x] Skills refresh pass 1: `sprite-generation` + `sprite-qa` rewritten
       against core/ (craft lives in core, skills describe how to drive it)
-- [ ] Verify: repack one normalized char (vincent) byte-diff-equal (or
+- [x] Verify: repack one normalized char (vincent) byte-diff-equal (or
       pixel-equal) against current sheet before touching the roster
 
 ### Phase 2 — The atomic floor/skeleton migration *(local compute only)*
-- [ ] Re-pack all 16 from raw frames: normalize + skeletons + meta v2
-- [ ] Delete `SPRITE_FOOT_OFFSET_Y` + every `spriteOffsetY`; derive the 3D
+- [x] Re-pack all 16 from raw frames: normalize + skeletons + meta v2
+- [x] Delete `SPRITE_FOOT_OFFSET_Y` + every `spriteOffsetY`; derive the 3D
       floor constant from shared constants
-- [ ] Cell + projectile inventory sweep: per-fighter list of missing /
+- [x] Cell + projectile inventory sweep: per-fighter list of missing /
       misnamed / inconsistent cells and projectile art (dimensions, key
       color, naming); renames applied; the (small) generation gap list
       presented with cost before firing
-- [ ] Roster hitbox pass: skeleton-measured boxes proposed per fighter,
+- [x] Roster hitbox pass: skeleton-measured boxes proposed per fighter,
       eyeballed in the tuner, written; update the Sprint-19 combo test →
       **suite goes fully green for the first time since Sprint 25**
-- [ ] In-game verification across several pairings + canvas-render sheet QA
+- [x] In-game verification across several pairings + canvas-render sheet QA
       (the montage workflow) — no browser-preview dependence
 
 ### Phase 3 — Studio shell + schema backfill *(JSON-only; ~8 images approved)*
-- [ ] Studio as a **FightScene mode** (`studio: true`, like tuner/spriteEditor
+- [x] Studio as a **FightScene mode** (`studio: true`, like tuner/spriteEditor
       today): collapsible module rail over the live fight scene, shared
       CharacterProject model, Sprite Editor + Move Tuner panels mounted as
       SPRITES/MOVES modules; the creator wizard panels re-hosted (the
       standalone CharacterCreatorScene grid backdrop retires); unified debug
       overlays (F1/F2/F3/F5) live throughout
-- [ ] TEST module: manual / P1-vs-CPU / CPU-vs-CPU / loop-a-move driver
+- [x] TEST module: manual / P1-vs-CPU / CPU-vs-CPU / loop-a-move driver
       controls as a first-class pipeline step, all panels hideable so the
       scene is fully playable
-- [ ] STAGES module: assign an existing stage or create a new named one
+- [ ] ◐ *Partial: assign + pin-editor jump built (`StagesPanel.ts`); in-flow stage creation deferred.* STAGES module: assign an existing stage or create a new named one
       in-flow (gen + register + **world-map pin placement** as one
       transaction — the Stage Pin editor folds in as the module's map
       overlay); registration/asset mismatch cleanup surface (§2.12)
-- [ ] EditorMenu becomes a deep-link launcher into studio modules (Move
+- [ ] ◐ *Partial: deep links built; standalone StagePinEditor/CharacterCreator scenes still registered (P12.5).* EditorMenu becomes a deep-link launcher into studio modules (Move
       Tuner → MOVES+TEST, Sprite Editor → SPRITES, Stages & Map → STAGES);
       standalone `StagePinEditorScene` + creator-scene backdrop retire
-- [ ] Single character-write endpoint with module-scoped merges + provenance;
+- [ ] ✗ *Not built: two `/__editor/character` handlers + `creator/write`, no provenance.* Single character-write endpoint with module-scoped merges + provenance;
       canon-reopen hydrates a project; ZIP import/export moves to the project
       layout
-- [ ] `tools/core/kit.mjs`: full-grammar default kit + one archetype catalog;
+- [x] `tools/core/kit.mjs`: full-grammar default kit + one archetype catalog;
       design-draft prompt emits chains/variants/cancel + themed fatality
-- [ ] Projectile editor in MOVES (§2.10): joint-anchored spawn point,
+- [ ] ◐ *Partial: joint-anchored spawn in MoveTunerPanel; no in-flight preview / chained reroll.* Projectile editor in MOVES (§2.10): joint-anchored spawn point,
       in-flight preview, renderSize/box on shared geometry, ref-chained
       reroll — closes the "no frontend way to fix projectiles" gap
-- [ ] Backfill ben + earl kits (chains/variants/cancel) + themed fatalities
+- [x] Backfill ben + earl kits (chains/variants/cancel) + themed fatalities
       (~8 panels, approved) + vanessa quotes; schema lint goes green
-- [ ] Adopt flow v1: upgrade checklist + diff view over the audit/lint
+- [x] Adopt flow v1: upgrade checklist + diff view over the audit/lint
 
 ### Phase 4 — Auto-pilot + jobs + lore *(mock-tested; one real dogfood run)*
-- [ ] `/__editor/jobs` runner: SSE progress, persistence, cost accounting,
+- [ ] ◐ *Partial: `tools/core/jobs.mjs` + `/__editor/jobs(/stream)` exist; no UI calls them (P12.1).* `/__editor/jobs` runner: SSE progress, persistence, cost accounting,
       pooled concurrency + 429 backoff; manual mode migrates onto jobs
-- [ ] Auto-pilot DAG: seed → design → canonical(vision gate) → frames →
+- [ ] ◐ *Partial: `tools/core/pipeline.mjs` + `npm run studio:run` (CLI); not from the UI, no vision gate (P12.2).* Auto-pilot DAG: seed → design → canonical(vision gate) → frames →
       pack → rig (local skeletons + auto-hitboxes; no pose-rule QA) →
       audio → fatality → vfx → ship, gates pre-approved; headless CLI
       entry point (`npm run studio:run`)
-- [ ] Skills refresh pass 2: `new-character` + `move-authoring` rewritten to
+- [ ] ◐ *Partial: new-character still doesn't cover `studio:run` / the jobs runner.* Skills refresh pass 2: `new-character` + `move-authoring` rewritten to
       drive the job runner/core — CLI character creation with Claude Code
       and the studio become the same pipeline
-- [ ] `tools/core/lore.mjs`: lore-sheet fetch + fuzzy match + machine-enforced
-      privacy opt-out; `alwaysFromLore` feeds frame prompts; lore-aware
+- [ ] ✗ *Not built: DROPPED — the privacy rule it would enforce was retired 2026-07-08; lore is typed/pasted in the creator.* `tools/core/lore.mjs`: lore-sheet fetch + fuzzy match + `alwaysFromLore` feeds frame prompts; lore-aware
       fatality beats + IMAGE_SAFETY soft-fallback (shared with gen-fatality)
-- [ ] Creator FX module: per-move VFX overlays + spark wiring (closes
+- [ ] ✗ *Not built: no FX module (02-PLAN P10.2 for spark wiring).* Creator FX module: per-move VFX overlays + spark wiring (closes
       pipeline step 8); fatality beats get the canon craft library
-- [ ] Cost UI: estimated-call counters, no auto-fire, context cache §16,
+- [ ] ✗ *Not built: no cost UI, no context cache, no seed manifest (P12.1).* Cost UI: estimated-call counters, no auto-fire, context cache §16,
       seed/prompt manifest
-- [ ] Reference-chaining policy (§2.9) implemented in `core/cells.mjs` +
+- [ ] ◐ *Partial: low-pose anchors + sequential specials in both paths; a→b idle/walk/startup chaining in neither.* Reference-chaining policy (§2.9) implemented in `core/cells.mjs` +
       the job DAG: canonical gate, crouch/jump anchors, a→b idle/walk,
       sequential special refs, one-reroll-max
-- [ ] **End-to-end validation**: full auto-pilot run in mock ($0), then ONE
-      real FULL run on a new lore-sheet fighter (opt-out checked; ~70 images
+- [ ] ◐ *Partial: real dogfood run done (Tao, 2026-07-08); full-DAG mock E2E never run.* **End-to-end validation**: full auto-pilot run in mock ($0), then ONE
+      real FULL run on a new lore-sheet fighter (~70 images
       + ~20 TTS), advisory QA only, max one re-run per asset
 
 ### Phase 5 — Storage seam + publish *(no API calls; R2 optional)*
-- [ ] `StorageDriver` + `LocalRepoStorage` + `R2Storage` (env-gated, local
+- [ ] ✗ *Not built: no StorageDriver / R2 publish / registry (P12.3).* `StorageDriver` + `LocalRepoStorage` + `R2Storage` (env-gated, local
       no-op fallback path exercised in dev); PUBLISH in SHIP;
       `custom-characters.json` + `resolveAssetBase` roster merge;
       `npm run r2:push/pull` canonize tools
-- [ ] Roster/stage lifecycle: `hidden` flag honored by select screens +
+- [ ] ◐ *Partial: online/offline (`/__editor/roster-flag`) + guided delete built; no `hidden` flag, no stage delete.* Roster/stage lifecycle: `hidden` flag honored by select screens +
       audit; guided delete (JSON + registration + assets + manifest as one
       transaction) for characters and stages (§2.12)
-- [ ] Docs: CLAUDE.md refresh, ASSET_CHECKLIST points at the studio, final
+- [ ] ◐ *Partial: CLAUDE.md/README/SPRINTBOARD refreshed by P1 (2026-10-06); see 02-PLAN P1.* Docs: CLAUDE.md refresh, ASSET_CHECKLIST points at the studio, final
       skills consistency sweep (passes 1–2 landed in Phases 1/4);
       SPRINTBOARD consolidation
 
@@ -688,8 +705,73 @@ Additional directives (user, 2026-07-08, second pass):
 
 Defaults adopted for the remaining minor questions (flag if wrong):
 - The dev server fetches the public lore sheet (read-only CSV export) at
-  design time; the privacy opt-out column becomes machine-enforced.
+  design time. *(The privacy column it would have enforced was retired
+  2026-07-08.)*
 - Packing becomes server-side-only (dev server + ffmpeg required for SHIP);
   the client compositor is deleted; mock mode keeps a walkable stub.
 - The dogfood subject will be a new fighter chosen from the lore sheet
-  (opt-out column re-checked first), proposed before the run starts.
+  proposed before the run starts.
+
+---
+
+## Part 5 — Carried over from `CHARACTER_CREATOR.md` (archived 2026-10-06)
+
+The creator design doc is archived at `docs/archive/CHARACTER_CREATOR.md`
+(with its walkthrough). These three sections are still the design of record
+for unbuilt Studio work (02-PLAN P12), so they live here now, verbatim.
+Section numbers are the creator doc's.
+
+### 6. Cloudflare R2 — bidirectional (publish ↑ / canonize ↓ / load ↔)
+
+**A storage-adapter interface with two impls** — `LocalRepoStorage` (dev middleware → writes into the
+repo, i.e. straight-to-canon) and `R2Storage` (S3-compatible). The publish step picks by environment.
+
+**Publish ↑** `POST /__editor/publish` (dev) / Worker (prod) bundles a character's asset set + JSON and
+uploads under `custom/<id>/…`, then appends to a **custom-character registry** (`custom-characters.json`,
+remote-fetchable) with the char's `cdnBase`.
+
+**Load ↔ (bring user chars into the shipped game)** — an asset-base indirection `resolveAssetBase(charId)`
+returns `/assets` for built-ins or the char's `cdnBase` for customs; BootScene loads sheet/portraits/
+audio/fatality through it. The custom registry is merged into `ROSTER` at boot.
+
+**Canonize ↓ — the pull-back tool you asked for:** `npm run r2:pull -- --char <id>` (`--list`, `--all`)
+downloads a character's full R2 bundle → `public/assets/**` + `src/data/characters/<id>.json`, registers
+it, runs `gen:assets` + audit. Result: a user-generated character becomes an ordinary committed,
+canon fighter. `npm run r2:push -- --char <id>` is the manual inverse.
+
+**Env (`.env.example`):** `R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET,
+R2_PUBLIC_BASE` (CDN URL). All absent → publish no-ops to `public/assets/custom/<id>/` + local registry,
+exercising the *same* resolve/merge/pull path, so flipping to a real bucket is a base-URL swap.
+
+### 9. Still open / to discuss
+- Prod serverless backend (Cloudflare Worker) shape + auth (who can create in the shipped game?).
+- Moderation/safety gate on user-uploaded photos before generation in prod.
+- Do custom (R2) characters appear in the main roster, or a separate "Custom" tab until canonized?
+- *(Resolved)* **Skeleton route** — in dev the wizard runs skeleton/auto-hitbox via the **local Python
+  DWPose** already wired at `/__editor/skeleton-regen` (`tools/qa/infer_keypoints.py`). **fal is the
+  prod-only** swap for that local call once deployed. Only the LLM + image gen are remote in dev.
+- *(Resolved)* Frame-bake latency — handled by staged **batch approval + live preview** (§3), not a
+  quick-draft sheet. The user is always looking at/tuning the last batch while the next bakes.
+- **Revisit: pull hitbox tuning earlier?** Move *timing* is tuned live in D4/D5; hitboxes are
+  auto-measured + edited in the D6 rig pass (after specials). Open whether a move should also expose its
+  hitbox at D4/D5 so feel+box tune together, vs. the single consolidated rig pass. (Timing-now is fine.)
+
+### 16. Context cache — one Gemini cache per character (the token-cost spine)
+
+Because text (Gemini) and images (nano-banana) are the same provider, the wizard maintains **one
+cached context per character** and every call references it instead of re-uploading:
+
+- **Seed the cache at D1** with the **stable, reused** inputs: the inspo photo, `tools/style.md`
+  (style base + frame rules), and the character-flavor line. These never change per character → cache
+  once, pay once.
+- **Grow it at milestones:** append the approved **canonical** image + the **character bible JSON** as
+  it's finalized (identity, lore, kit, pose-prompt bible). Later image prompts ("same character as the
+  cached reference, now …") lean on the cached canonical for consistency without re-sending it each call.
+- **What references the cache:** the design draft (T1), every single-item reroll, and every image gen
+  (canonical, portraits, KO, all sprite batches, specials, fatality). Only the *delta* (the specific
+  pose instruction + the immediate ref image for a ref-chained cell) is sent per call.
+- **Persist the cache id** in `<id>.creator.json` so resuming the wizard (or a reroll days later) reuses
+  it. Cache lifetime is bounded — on expiry, re-seed from the same stable inputs (deterministic).
+
+Net effect: character reasoning is paid **once** (T1), the heavy inputs are uploaded **once** (cache
+seed), and the long tail of image + reroll calls carries only small deltas.
