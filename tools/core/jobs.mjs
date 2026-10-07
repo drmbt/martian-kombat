@@ -3,7 +3,10 @@
 // dependencies, pooled concurrency, live progress events (the vite adapter
 // turns them into SSE), per-job cost accounting, and persistence across
 // server restarts. Workers must be idempotent/resumable — the gen:* scripts
-// already are (skip-existing), so an interrupted job simply re-queues.
+// already are (skip-existing). Jobs left queued/running by a previous process
+// load as PAUSED and never auto-run: most jobs spend API credits, and a dev
+// server restart must not silently re-spend (02-PLAN P2.8). Resuming is an
+// explicit, character-scoped `resume(char)`.
 // Plain ESM, no deps.
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -28,21 +31,25 @@ export class JobRunner {
     this.persistTimer = null;
     this.idleResolvers = [];
     mkdirSync(dir, { recursive: true });
-    this.load();
-    queueMicrotask(() => this.tick()); // resume any re-queued (interrupted) jobs
+    this.load(); // carried-over work comes back PAUSED — see resume()
   }
 
   statePath() {
     return join(this.dir, 'state.json');
   }
 
-  /** resume across server restarts: interrupted running jobs re-queue */
+  /** load across server restarts: anything a previous process left queued or
+   *  running is PAUSED (never auto-resumed — it may spend money) */
   load() {
     if (!existsSync(this.statePath())) return;
     try {
       const saved = JSON.parse(readFileSync(this.statePath(), 'utf8'));
       for (const j of saved.jobs ?? []) {
-        if (j.status === 'running') { j.status = 'queued'; j.startedAt = undefined; }
+        if (j.status === 'running' || j.status === 'queued') {
+          j.status = 'paused';
+          j.startedAt = undefined;
+          j.cancelRequested = undefined;
+        }
         this.jobs.set(j.id, j);
       }
       this.seq = saved.seq ?? this.jobs.size;
@@ -116,10 +123,30 @@ export class JobRunner {
     return out;
   }
 
+  /** Explicitly resume one character's paused jobs (all of them, or only
+   *  `ids`). A character is REQUIRED: resuming never spills onto another
+   *  fighter's work. Returns the number of jobs re-queued. */
+  resume(char, ids) {
+    if (typeof char !== 'string' || !char) throw new Error('jobs: resume needs a character id');
+    const only = ids ? new Set(ids) : null;
+    let n = 0;
+    for (const job of this.jobs.values()) {
+      if (job.status !== 'paused' || job.char !== char || (only && !only.has(job.id))) continue;
+      job.status = 'queued';
+      this.emit({ type: 'job', job: this.publicJob(job) });
+      n++;
+    }
+    if (n) {
+      this.persist();
+      queueMicrotask(() => this.tick());
+    }
+    return n;
+  }
+
   cancel(id) {
     const job = this.jobs.get(id);
     if (!job) return false;
-    if (job.status === 'queued') {
+    if (job.status === 'queued' || job.status === 'paused') {
       job.status = 'cancelled';
       job.endedAt = Date.now();
       this.emit({ type: 'job', job: this.publicJob(job) });

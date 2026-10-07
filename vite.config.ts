@@ -462,6 +462,15 @@ function editorApi(): Plugin {
               sendJson(res, 200, { ok: true, cancelled: runner.cancel(id) });
               return;
             }
+            if (action === 'resume') {
+              // jobs carried over from a previous dev-server run load PAUSED
+              // (they may spend) — resume is explicit and per character
+              const { char, ids } = b as { char?: string; ids?: unknown };
+              if (!okId(char)) throw new Error('invalid char');
+              const only = Array.isArray(ids) ? ids.filter((x): x is string => typeof x === 'string') : undefined;
+              sendJson(res, 200, { ok: true, resumed: runner.resume(char, only) });
+              return;
+            }
             if (action === 'enqueue-dag') {
               const { char, mock, only, force } = b as { char?: string; mock?: boolean; only?: string[]; force?: boolean };
               if (typeof char !== 'string' || !okId(char)) throw new Error('invalid char');

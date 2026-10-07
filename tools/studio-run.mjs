@@ -62,7 +62,7 @@ runner.subscribe((ev) => {
   if (ev.type === 'log') console.log(`  [${ev.id}] ${ev.line}`);
   if (ev.type === 'job') {
     const j = ev.job;
-    const mark = { queued: '·', running: '◐', done: '✓', error: '✕', skipped: '⤼', cancelled: '⊘' }[j.status] ?? '?';
+    const mark = { queued: '·', paused: '⏸', running: '◐', done: '✓', error: '✕', skipped: '⤼', cancelled: '⊘' }[j.status] ?? '?';
     console.log(`${mark} ${j.label} (${j.status}${j.error ? ': ' + j.error : ''})`);
   }
 });

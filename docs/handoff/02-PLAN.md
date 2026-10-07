@@ -159,8 +159,10 @@ Workers Static Assets (`wrangler.jsonc`), serving the HEAD build.
   `assets/raw/edits/<id>/` must survive any repack. Frame dirs with a
   `.cellspace` marker (vincent/earl/ben) hold KEYED cell-space art: never
   re-key or re-pad them.
-- **Never restore `assets/raw/jobs/`** onto a dev machine until P2.8 lands:
-  the job runner auto-resumes queued paid jobs at dev-server start.
+- **Carried-over jobs load PAUSED** (P2.8, 2026-10-07): the job runner never
+  auto-resumes work from a previous process; `resume(char)` / the
+  `/__editor/jobs` `resume` action is explicit and per character. Don't add
+  an auto-resume back. (`raw:pull` still skips `assets/raw/jobs/` by default.)
 - **Don't regenerate committed art** without D6. Sheet post-processing (P6.3)
   must be proven pixel-identical where alpha > 0.
 - **Lazy-load contract** (CLAUDE.md): any scene that shows a fighter, plays
@@ -402,7 +404,7 @@ text. Prompt: `docs/archive/handoff-prompts/05-NEXT-SPRINT-P1.md`.*
       until this lands.
       **Accept:** curl with a foreign Origin → 403, `text/plain` → 415,
       `../x` id → 400.
-- [ ] **P2.8 Job runner auto-resumes paid work — MED cost [V].**
+- [x] **P2.8 Job runner auto-resumes paid work — MED cost [V].** *Done 2026-10-07: `load()` turns carried-over queued/running jobs into `paused` (no tick at construction); new `resume(char, ids?)` (character required) + the `/__editor/jobs` `resume` action; paused jobs don't keep `idle()` waiting and can be cancelled. Tests in `src/data/jobs.test.ts` (kept beside the other tools tests there — `src/data/` already hosts lib/kit/rawSync tests, so no move).*
       `tools/core/jobs.mjs:~31` `queueMicrotask(() => this.tick())`, and
       `load()` re-queues `running` jobs. Restarting the dev server (or a
       Ctrl-C'd `studio:run`) silently re-spends, even for another character.

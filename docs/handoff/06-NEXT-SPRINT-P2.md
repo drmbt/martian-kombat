@@ -54,8 +54,8 @@ security hole, paid jobs that silently re-spend, `.env`/mock consistency, and
 
 ## Rules that bite
 
-- **No paid API calls** (D6), **no R2 writes** (`raw:push` — P8.17), never
-  restore `assets/raw/jobs/`. Mock everything (`MK_GEN_MOCK=1`).
+- **No paid API calls** (D6), **no R2 writes** (`raw:push` — P8.17), jobs carried over
+  from an earlier dev server stay paused (P2.8). Mock everything (`MK_GEN_MOCK=1`).
 - Restart the dev server after every `vite.config.ts` edit.
 - Before moving/deleting any file: `grep -rn "<name>" src tools .claude docs
   CLAUDE.md vite.config.ts package.json` and fix every hit.
