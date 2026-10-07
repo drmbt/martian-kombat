@@ -510,12 +510,22 @@ KFM parity test. Synthetic fighters for engine tests already exist:
       **Accept:** after P4.3 restores Vincent's data, *and* with that data
       unrestored on a scratch copy, the bench reports no `infinite` (the
       engine rule must hold even for broken data). vitests for both.
-- [ ] **P3.9 Split `step.ts` (1,550 lines) — pure refactor, after
+- [x] **P3.9 Split `step.ts` (1,550 lines) — pure refactor, after
       P3.1–P3.8.** Modules: input / attack / combat / projectiles / phases.
       Dedupe gravity integration (×5), attack-start construction (×3) and the
       KO pop (×3); fatality parsing should reuse `pickAttack`.
       **Guard:** record final `hashState` of 3 long seeded random-input sims
       before the refactor and assert they're identical after.
+      *Done 2026-10-07: `step.ts` (1,680 lines) → `world` (geometry, camera,
+      state queries, move resolution, `airStep`/`settle`/`startAttack`/
+      `koPop`), `input`, `attack`, `combat`, `projectiles`, `phases`, and a
+      331-line `step.ts` (the tick + the historical re-exports; acyclic
+      graph). Deduped gravity integration (5 sites → `airStep` + `settle`),
+      attack-start construction (3 → `startAttack`) and the KO pop
+      (3 → `koPop`); fatality parsing already shares the press primitives via
+      `fatalityInputDone` (P3.7). Guard: 5 seeded 20,000-tick random-input
+      matches (fixture + live fighters), hash every 500 ticks — identical
+      after the split and after the dedupes; FRAME_DATA unchanged.*
 - [x] **P3.10 Online compatibility guard.** *Done 2026-10-06: one compat hash = sim-only char data (`NON_SIM_KEYS` ignores quotes/VO/names/vfx) + the stage-arena table (D9) + `simFingerprint` (a scripted 900-tick match through `step()`, so engine changes are caught without a version bump); PROTO 2; `hashState` now covers charge, dash stocks, combo count, buffered press and the input buffer.*
       - Add a build/engine-version field to the lobby hello and refuse
         mismatched peers.
