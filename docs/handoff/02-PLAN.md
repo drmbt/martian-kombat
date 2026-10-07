@@ -85,7 +85,7 @@
 | P0 | Restore raw assets + baseline (old-machine rescue → new machine) | S | ✅ 2026-10-06 |
 | MKS-1 A | Standards foundation: bench lab, ratchet, KFM parity, MUGEN parsers | M | ✅ 2026-10-04 |
 | P1 | Truth-in-docs & agent context diet | M | ✅ 2026-10-06 |
-| P2 | Player-facing traps + cheap infra/security fixes | M | ◐ 2.1–2.5 ✅ |
+| P2 | Player-facing traps + cheap infra/security fixes | M | ✅ 2026-10-07 |
 | P3 | Fight-core correctness & feel (engine, test-first) | M–L | ◐ 3.1/3.2/3.10/3.11 ✅ |
 | P4 | Character data, balance, schema lint | M | ◐ 4.0–4.2 ✅ |
 | P5 | CPU opponent + difficulty | M | ☐ |
@@ -423,7 +423,7 @@ text. Prompt: `docs/archive/handoff-prompts/05-NEXT-SPRINT-P1.md`.*
       endpoints (ElevenLabs sfx/music, Fish) ignore `MK_GEN_MOCK`.
       **Accept:** with no `.env` + mock vars, the creator flow and
       `studio:run --mock` complete with zero network calls.
-- [ ] **P2.10 `npm audit fix`** (dev-only postcss/nanoid via vite; no
+- [x] **P2.10 `npm audit fix`** *Done 2026-10-07: postcss 8.5.29 / nanoid 3.3.20 / source-map-js 1.2.2 (lockfile only, vite's build chain). Left: `tinypool` + `@vitest/mocker` (critical/moderate) need vitest 5 — test-runner-only, never shipped; deferred with the other majors.* (dev-only postcss/nanoid via vite; no
       majors). Defer vite 8 / vitest 5 / TS 7. **Do not** migrate to Phaser 4.
 
 ## P3 — Fight-core correctness & feel (engine; failing test first)
