@@ -1,6 +1,7 @@
 // Fatality cutscene overlay (SPEC T27/T29): full-bleed panel slideshow
 // reusing the exact 2D jpgs, crossfaded by phaseFrame. Builds lazily on the
 // first fatality tick, hides outside the phase.
+import { assetUrl } from '../data/assetUrl';
 import { FATALITY_TICKS } from '../engine';
 import type { Defs, GameState } from '../engine';
 
@@ -28,7 +29,7 @@ export class FatalityOverlay {
       el.style.cssText = 'position:absolute;inset:0;background:#000;pointer-events:none;z-index:3;';
       for (let n = 1; n <= panels; n++) {
         const img = document.createElement('img');
-        img.src = `${import.meta.env.BASE_URL}assets/fatalities/${owner.charId}/${s.fatality.id}-${n}.jpg`;
+        img.src = `${import.meta.env.BASE_URL}${assetUrl(`assets/fatalities/${owner.charId}/${s.fatality.id}-${n}.jpg`)}`;
         img.style.cssText =
           'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .25s;';
         el.appendChild(img);

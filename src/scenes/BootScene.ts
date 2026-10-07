@@ -16,6 +16,7 @@ import { devBootTarget, rememberDevLaunch } from '../devLaunch';
 // are NO LONGER loaded here — they stream on demand via assetLoader as the
 // player moves select → versus → fight. Boot loads only the light menu set.
 import { queueFighterPortraits, voiceCount, VOICE_COUNTS } from './assetQueue';
+import { assetUrl } from '../data/assetUrl';
 
 const ANNOUNCER = [
   'round-1', 'round-2', 'final-round', 'fight', 'ko', 'time-up',
@@ -62,8 +63,8 @@ export class BootScene extends Phaser.Scene {
     // VO, and fatality panels — is deferred to assetLoader and streams in as the
     // player moves select → versus → fight (see assetQueue / assetLoader). This
     // is what keeps the initial download small.
-    this.load.image('bg-salton', 'assets/backgrounds/salton-shoreline.jpg'); // fallback stage
-    this.load.image('ui-world-map', 'assets/ui/world-map.png');              // select-screen map
+    this.load.image('bg-salton', assetUrl('assets/backgrounds/salton-shoreline.jpg')); // fallback stage
+    this.load.image('ui-world-map', assetUrl('assets/ui/world-map.png'));         // select-screen map
     // portraits: head icon + side bust + defeated bust — the select grid, VS
     // card, health-bar mugshots and win screen. Small, and the select screen
     // needs every fighter's icon up front, so they stay at boot.
@@ -74,12 +75,12 @@ export class BootScene extends Phaser.Scene {
     // generic impact sparks (greyscale, tinted per character at spawn)
     // + the circling dizzy-stars loop drawn over a dazed fighter's head
     for (const v of ['spark-hit', 'spark-heavy', 'spark-block', 'dizzy']) {
-      this.load.image(`vfx-${v}`, `assets/vfx/${v}.png`);
+      this.load.image(`vfx-${v}`, assetUrl(`assets/vfx/${v}.png`));
     }
     // announcer VO (round/fight/ko + name & stage call-outs) and universal SFX
     // are small and wanted early (select-screen name calls, round start).
-    for (const a of ANNOUNCER) this.load.audio(`ann-${a}`, `assets/audio/announcer/${a}.mp3`);
-    for (const s of SFX) this.load.audio(`s-${s}`, `assets/audio/sfx/${s}.mp3`);
+    for (const a of ANNOUNCER) this.load.audio(`ann-${a}`, assetUrl(`assets/audio/announcer/${a}.mp3`));
+    for (const s of SFX) this.load.audio(`s-${s}`, assetUrl(`assets/audio/sfx/${s}.mp3`));
 
     // now that the whole manifest is queued, publish the file count so the
     // preloader can show "N / TOTAL assets" (totalToLoad is final here)
@@ -234,6 +235,9 @@ export class BootScene extends Phaser.Scene {
 
   create(): void {
     applyMusicVolume(); // music manifest fetch was kicked off in preload()
+    // the persistent on-demand asset loader (never stopped) — launched before
+    // any scene that may request fighters/stages
+    this.scene.launch('AssetHost');
     this.scene.launch('Volume'); // persistent quick-volume overlay, above every scene
     const target = devBootTarget();
     if (target) {

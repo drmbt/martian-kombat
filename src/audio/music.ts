@@ -19,6 +19,8 @@
 // empty folders degrade to silence (or keep the current track, for phase
 // overlays like victory/fatality).
 
+import { assetUrl } from '../data/assetUrl';
+
 export type MusicManifest = Record<string, string[]>;
 
 const MUSIC_BASE = 'assets/audio/music/';
@@ -68,7 +70,7 @@ export function pickTrack(
 /** Fetch the manifest once at boot. Missing manifest = no music, no errors. */
 export function initMusic(): void {
   if (manifest) return;
-  fetch(`${MUSIC_BASE}manifest.json`)
+  fetch(`${MUSIC_BASE}manifest.json`, { cache: 'no-cache' })
     .then((r) => (r.ok ? (r.json() as Promise<MusicManifest>) : {}))
     .catch(() => ({}) as MusicManifest)
     .then((m) => {
@@ -93,7 +95,7 @@ export function warmMusic(ctx: string): void {
   if (!manifest || warmed || typeof Audio === 'undefined') return;
   const picked = pickTrack(manifest, [ctx], Math.random);
   if (!picked) return;
-  const el = new Audio(`${MUSIC_BASE}${picked.ctx}/${picked.file}`);
+  const el = new Audio(assetUrl(`${MUSIC_BASE}${picked.ctx}/${picked.file}`));
   el.preload = 'auto';
   el.volume = 0;
   el.load(); // begin fetching now, during boot
@@ -205,7 +207,7 @@ function start(ctx: string, file: string, opts: PlayOpts): void {
     el = warmed.el;
     warmed = null; // consumed
   } else {
-    el = new Audio(`${MUSIC_BASE}${ctx}/${file}`);
+    el = new Audio(assetUrl(`${MUSIC_BASE}${ctx}/${file}`));
     el.preload = 'auto';
   }
   el.volume = 0;

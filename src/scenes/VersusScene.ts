@@ -17,7 +17,6 @@ const MAX_HOLD_MS = 20000; // safety net if audio is blocked and never ends
 // hands off ANYWAY — a stalled sheet/VO/stage download must never freeze the
 // screen forever (FightScene.preload is the real barrier; missing art degrades
 // to capsules, never a hang). Without this the fight would never start.
-const READY_CAP_MS = 12000;
 const PORTRAIT = 270;
 
 interface VersusData {
@@ -84,12 +83,12 @@ export class VersusScene extends Phaser.Scene {
     // 2D sheets are skipped on the 3D path (the renderer uses meshes, warmed
     // below); VO + stage are needed either way.
     const jobs: Promise<unknown>[] = [
-      AssetLoader.fighterVO(this, this.fight.p1),
-      AssetLoader.fighterVO(this, this.fight.p2),
-      AssetLoader.stage(this, this.fight.stage),
+      AssetLoader.fighterVO(this.fight.p1),
+      AssetLoader.fighterVO(this.fight.p2),
+      AssetLoader.stage(this.fight.stage),
     ];
     if (!this.fight.render3d) {
-      jobs.push(AssetLoader.fighter(this, this.fight.p1), AssetLoader.fighter(this, this.fight.p2));
+      jobs.push(AssetLoader.fighter(this.fight.p1), AssetLoader.fighter(this.fight.p2));
     }
     // track per-job completion so the pre-fight bar reflects real progress. On a
     // repeat matchup every job resolves instantly (cache hits) → the bar is full
@@ -233,13 +232,10 @@ export class VersusScene extends Phaser.Scene {
     };
     // usual case: assets already warmed (during select + this VS screen) → go now.
     if (this.assetsReady) { go(); return; }
-    // still streaming: wait for `ready`, BUT never longer than READY_CAP_MS — a
-    // stalled download must not freeze the VS screen forever. FightScene.preload
-    // re-queues anything still missing and degrades to capsules on a miss.
+    // still streaming: wait for `ready`. AssetLoader requests always settle (one
+    // persistent loader, per-file success/error, an XHR timeout — P6.1), so no
+    // cap is needed; a failed file just degrades the fight to capsules.
     this.loadingText?.setVisible(true);
-    let handed = false;
-    const once = (): void => { if (handed) return; handed = true; go(); };
-    void this.ready.then(once);
-    this.time.delayedCall(READY_CAP_MS, once);
+    void this.ready.then(go);
   }
 }

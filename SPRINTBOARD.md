@@ -1525,6 +1525,15 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-10-06 · scenes/tools · one persistent asset loader, HTTP-only
+  prefetch, eviction, versioned media (P6.1/P6.2/P6.6)** — on-demand loads
+  run on the never-stopped `AssetHostScene` and settle per file (no more
+  stranded promises / 12 s Versus waits); prefetch only warms the HTTP cache
+  (≤ 2, paused in fights, off on data-saver/touch); fights and Select evict
+  sheets they don't show; every media URL carries `?v=<sha8>` from
+  `gen-asset-manifest` and `_headers` caches media `immutable`. Menu/attract
+  memory 1.2 GB → ~125 MB RGBA; hang repro 12 s → 0.04 s. — Claude (Opus 5.5)
+
 - **2026-10-06 · scenes · pause menu keyboard nav (P2.3)** — while paused,
   either player's bound directions plus arrows/WASD move the selection and any
   bound attack key or ENTER confirms (ENTER no longer also jumps to char

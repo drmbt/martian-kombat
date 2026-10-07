@@ -85,7 +85,7 @@
 | P3 | Fight-core correctness & feel (engine, test-first) | M–L | ☐ |
 | P4 | Character data, balance, schema lint | M | ☐ |
 | P5 | CPU opponent + difficulty | M | ☐ |
-| P6 | Loading, memory, bundle, render perf | L | ☐ |
+| P6 | Loading, memory, bundle, render perf | L | ◐ 6.1/6.2/6.3/6.5/6.6 ✅ |
 | P7 | Mobile & link-sharing | M | ☐ |
 | P8 | Asset pipeline & tooling hygiene | L | ☐ |
 | P9 | Repo weight & history (decision-gated) | M | ☐ |
@@ -339,7 +339,7 @@ stale. Fixing that makes every later session cheaper and less misled.*
       has no client routes.
       **Fix:** `"none"`.
       **Accept (after deploy):** `curl -sI https://martiankombat.com/assets/nope.png` → 404.
-- [ ] **P2.3 Pause menu has no keyboard nav — MED [A].** Only the gamepad
+- [x] **P2.3 Pause menu has no keyboard nav — MED [A].** *Done 2026-10-06: browser-verified ESC → ↓/S/↑ → ENTER, P1 LP / P2 MK confirm.* Only the gamepad
       feeds `pauseMenu.move/confirm` (`fightShell.ts:~186-199`), yet the hint
       says "◄► choose, attack confirms". Add arrows/WASD + attack keys +
       Enter.
@@ -635,7 +635,7 @@ specials only from >190px, including the throw, which therefore always whiffs.*
 
 ## P6 — Loading, memory, bundle, render perf
 
-- [ ] **P6.1 AssetLoader can hang for the session — HIGH [V, code].**
+- [x] **P6.1 AssetLoader can hang for the session — HIGH [V, code].** *Done 2026-10-06: one persistent `AssetHostScene` loader, per-file settle (filecomplete / loaderror / drained), 90 s XHR timeout, retry after 10 s, `FightScene.preload` via `AssetLoader.barrier`, 12 s cap removed; core in `assetGroups.ts` + 15 stub-loader tests. Repro (1.5 MB/s server): main 12.07/12.04/12.04 s → branch 1.71 s (real download)/0.04/0.04 s.*
       `ensure()` (`src/scenes/assetLoader.ts:~57-77`) resolves on the
       CALLING scene's `load.once(COMPLETE)`. Phaser's `LoaderPlugin.shutdown`
       removes all listeners, so if Select stops mid-download (highlight a
@@ -653,7 +653,7 @@ specials only from >190px, including the throw, which therefore always whiffs.*
       - then remove the 12s cap.
       **Accept:** browser repro (highlight → immediate lock → Versus,
       repeated) never waits; one load per key in the `[MK assets]` log.
-- [ ] **P6.2 `prefetchAll` decodes everything — HIGH mobile [A].**
+- [x] **P6.2 `prefetchAll` decodes everything — HIGH mobile [A].** *Done 2026-10-06: HTTP-cache-only `fetch(url,{priority:'low'})`, ≤ 2 in flight, paused during Versus/Fight (0 fetches in a 20 s fight sample), skipped on saveData / coarse pointer; Select decodes only after a 180 ms rest; `AssetLoader.retainOnly` evicts sheets/stages/fatalities a fight or the Select previews don't need. Menu/attract: main ≈ 90 s → 18 sheets, 58 stage, 72 fatality textures ≈ 1.2 GB RGBA; branch steady 2 sheets ≈ 125 MB over 4 attract cycles.*
       (`assetLoader.ts:~110`, kicked off by `VolumeOverlayScene.ts:~135`.)
       From the menu it downloads every stage/sheet/VO/fatality (~165 MB
       first visit) and decodes all 18 sheets as textures, ≈**523 MB RGBA**
@@ -668,8 +668,8 @@ specials only from >190px, including the throw, which therefore always whiffs.*
         pointers (P7).
       **Accept:** after 2 min on the menu, `__game.textures` holds ≤ 2
       fighter sheets; no frame spikes in a fight.
-- [ ] **P6.3 Zero RGB under alpha=0 in sheets — HIGH value [A, measured on
-      copies].** The packer leaves chroma-key garbage under transparent
+- [x] **P6.3 Zero RGB under alpha=0 in sheets — HIGH value [A, measured on
+      copies].** *Done 2026-10-06: `tools/core/png.mjs` + packer/mugen:sprites/dev endpoints + `tools/clean-alpha.mjs`: 19 sheets 125.2 → 67.4 MB, asserted per file.* The packer leaves chroma-key garbage under transparent
       pixels. Measured: freeman 8.79 → 3.98 MB; all 18 sheets 124 → **68 MB
       (−45%)** as plain PNG, lossless, no runtime change.
       **Fix:** a post-pack step in `tools/core/packer.mjs` plus a one-time
@@ -680,10 +680,10 @@ specials only from >190px, including the throw, which therefore always whiffs.*
       on 3 fighters. Also portraits 4.2 → 0.7 MB, fatalities 13.6 → 9.3 MB,
       stages 6.6 → 4.7 MB. Packer + asset queue + manifest emit/consume
       `.webp`.
-- [ ] **P6.5 Ben's sheet is 1728×4224 [A]**, over the 4096 max texture on
+- [x] **P6.5 Ben's sheet is 1728×4224 [A]** *Done 2026-10-06: `tools/regrid-sheet.mjs` → 2016×3456 (7×9), `fitGrid()` for every packer path, audit lint (≤ 4096 + size = meta grid).*, over the 4096 max texture on
       some GPUs. Re-grid ≤ 4096/side (`gridFor` in `tools/core/cells.mjs`),
       re-meta, and add a lint check.
-- [ ] **P6.6 Cache-busting.** Media URLs aren't hashed (7-day cache) while
+- [x] **P6.6 Cache-busting.** *Done 2026-10-06: `versions` (sha8 of 750 media files) in assetManifest, `assetUrl()` on every runtime media URL (queue, Boot, HUD/win/fatality overlays, music, 3D FX); `_headers` media → immutable, non-overlapping (music manifest.json stays revalidating + `cache:'no-cache'`). Costs +11 KB gz in the main chunk (501.6 → 512.8).* Media URLs aren't hashed (7-day cache) while
       frame data ships in hashed immutable JS, so after a repack a returning
       player runs new frame data against an old sheet. Emit `?v=<sha8>` per
       file from `tools/gen-asset-manifest.mjs` → `assetManifest.json`, use it
@@ -1075,6 +1075,30 @@ files unasked. Full design: `docs/CHARACTER_STUDIO.md` Phases 4–5 (+ the R2
 ## Handoff log
 
 *(newest first; one entry per session: date · who · done · next · gotchas)*
+
+- **2026-10-06 · P6 loading & memory (Claude Opus 5.5).** Branch
+  `perf/p6-loading-memory`. Done: **P6.1, P6.2, P6.3, P6.5, P6.6, P2.3**
+  (details + numbers on each item). Measured before → after:
+  - hang repro (highlight → immediate lock → Versus ×3, 1.5 MB/s server):
+    **12.07 / 12.04 / 12.04 s → 1.71 / 0.04 / 0.04 s**; `[MK assets]` shows
+    one `↓ load` per key;
+  - menu + attract (~2–4 min): **18 sheets / 58 stage / 72 fatality
+    textures ≈ 1.2 GB RGBA → steady 2 sheets ≈ 125 MB**;
+  - sprite sheets **125.2 → 67.4 MB** (lossless where A > 0); Ben
+    1728×4224 → 2016×3456;
+  - main chunk 501.6 → 512.8 KB gz (+11 KB = the `versions` map).
+  490/490 tests (37 files), tsc clean, bench unchanged (2 MKS-1 errors).
+  **Next:** staging check on the branch preview, then the PR (user merges).
+  After merge: every asset URL must still 200 (`?v=` is ignored by the
+  static host). Then P6.4 WebP (ask first: lossless vs q90 by eye), P6.7–6.9.
+  **Gotchas:** any new runtime load from `public/assets/` must go through
+  `assetUrl()` (media is now `immutable`). Run `npm run gen:assets` (or
+  `npm run build`) after changing any media — `npx vite build` skips the
+  prebuild and ships stale versions. Eviction removes textures: only call
+  `AssetLoader.retainOnly` where nothing on screen still shows them. The
+  hidden browser pane gives NO rAF after a reload — drive `__game.step`
+  from a setInterval. Don't rebuild a dist that an open page is
+  prefetching from (it 404s mid-build).
 
 - **2026-10-06 · shipped (Claude Opus 5.5).** PR #2 merged to `main`
   (`83d98b6`) and deployed to martiankombat.com: the live bundle carries the

@@ -16,8 +16,12 @@
 //   stageWide  — { <stage id>: [w, h] } ultra-wide stage art in
 //                backgrounds/stages-wide/ (scrolling-camera arenas; h > w/3.5
 //                means a TALL stage whose bottom band is shown)
+//   versions   — { "assets/<path>": <sha8> } content hash of every media file
+//                the game requests; src/data/assetUrl.ts appends it as ?v= so
+//                public/_headers can cache media `immutable` (P6.6)
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const PUB = join(ROOT, 'public', 'assets');
@@ -77,6 +81,27 @@ for (const f of ls(wideDir).filter((x) => x.endsWith('.jpg')).sort()) {
   if (size) stageWide[f.slice(0, -4)] = size;
 }
 
+// content versions for every media file under public/assets (3D GLBs excluded:
+// the frozen 3D mode loads them unversioned). Sorted so the file diffs cleanly.
+const MEDIA = /\.(png|jpe?g|webp|mp3|ogg|json)$/i;
+const versions = {};
+const walk = (dir) => {
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    if (e.name.startsWith('.')) continue;
+    const p = join(dir, e.name);
+    if (e.isDirectory()) walk(p);
+    else if (MEDIA.test(e.name)) {
+      const rel = relative(join(ROOT, 'public'), p).split('\\').join('/');
+      // the music manifest is re-fetched (no-cache) and must keep a stable URL
+      if (rel === 'assets/audio/music/manifest.json') continue;
+      versions[rel] = createHash('sha1').update(readFileSync(p)).digest('hex').slice(0, 8);
+    }
+  }
+};
+for (const e of existsSync(PUB) ? readdirSync(PUB, { withFileTypes: true }) : []) {
+  if (e.isDirectory() && e.name !== '3d') walk(join(PUB, e.name));
+}
+
 const manifest = {
   stageVo,
   legacyProj: legacyProj.sort(),
@@ -84,10 +109,11 @@ const manifest = {
   moveBurst: moveBurst.sort(),
   moveVfx: moveVfx.sort(),
   stageWide,
+  versions: Object.fromEntries(Object.entries(versions).sort(([a], [b]) => a.localeCompare(b))),
 };
 writeFileSync(OUT, JSON.stringify(manifest, null, 2) + '\n');
 console.log(
   `[asset-manifest] ${stageVo.length} stage VOs · ${legacyProj.length} legacy proj · ` +
     `${moveProj.length} move proj · ${moveBurst.length} bursts · ${moveVfx.length} vfx · ` +
-    `${Object.keys(stageWide).length} wide stages`,
+    `${Object.keys(stageWide).length} wide stages · ${Object.keys(versions).length} versioned files`,
 );

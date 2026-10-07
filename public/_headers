@@ -11,22 +11,24 @@
 /assets/*.css
   Cache-Control: public, max-age=31536000, immutable
 
-# Game media has stable, NON-hashed URLs, so this can't be `immutable`: a
-# regenerated sprite/audio keeps its path, and a cached browser won't see the
-# update until the max-age lapses. One week is a good launch balance (fast
-# repeat visits; changes propagate within 7 days). Lower it while actively
-# regenerating assets, or raise it once they're stable.
+# Game media: every URL the game requests carries a content version
+# (`?v=<sha8>` from src/data/assetManifest.json `versions`, appended by
+# src/data/assetUrl.ts — P6.6), so a regenerated file gets a NEW url and these
+# can be cached forever. Rules must not overlap (Cloudflare merges every
+# matching rule's headers), hence audio is matched by extension: the music
+# manifest.json keeps the default revalidating policy (and is fetched
+# `cache: 'no-cache'`). Anything new loaded from here MUST go through assetUrl.
 /assets/sprites/*
-  Cache-Control: public, max-age=604800
-/assets/audio/*
-  Cache-Control: public, max-age=604800
+  Cache-Control: public, max-age=31536000, immutable
+/assets/audio/*.mp3
+  Cache-Control: public, max-age=31536000, immutable
 /assets/backgrounds/*
-  Cache-Control: public, max-age=604800
+  Cache-Control: public, max-age=31536000, immutable
 /assets/portraits/*
-  Cache-Control: public, max-age=604800
+  Cache-Control: public, max-age=31536000, immutable
 /assets/fatalities/*
-  Cache-Control: public, max-age=604800
+  Cache-Control: public, max-age=31536000, immutable
 /assets/vfx/*
-  Cache-Control: public, max-age=604800
+  Cache-Control: public, max-age=31536000, immutable
 /assets/ui/*
-  Cache-Control: public, max-age=604800
+  Cache-Control: public, max-age=31536000, immutable
