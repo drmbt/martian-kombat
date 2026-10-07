@@ -30,13 +30,13 @@
   with rollback) · 4 Training · 5 Demo match · 6 Settings · attract-mode demo
   on idle · `7 DEV EDITOR` (dev builds only: Character Studio, stage-pin
   editor). 3D mode is frozen: dev or `?3d=1` only.
-- **Health:** `tsc` clean · 527/527 vitest (40 files) · `npm run bench`:
+- **Health:** `tsc` clean · 572/572 vitest (45 files) · `npm run bench`:
   **0 MKS-1 errors** (the engine's combo limits ended the last two infinites,
   P3.8; Vincent's drifted data is still P4.3).
 - **Plan progress:** P0 ✅ · MKS-1 Phase A ✅ · P1 ✅ · P2 ✅ · P3
-  3.1/3.2/3.10/3.11 ✅ · P4 4.0–4.2 ✅ · P6 6.1/6.2/6.3/6.5/6.6 ✅ · P8.6(a) ✅
-  · P9.1 ✅. **Next:** P3, then P8.5 (generator skip checks). Status
-  table: 02-PLAN §1.
+  3.0–3.11 ✅ · P4 4.0–4.2 ✅ · P6 6.1/6.2/6.3/6.5/6.6 ✅ · P8.6(a) ✅
+  · P9.1 ✅. **Next:** P3.12 feel pass (needs your A/B playtest), P4.3,
+  P8.5 (generator skip checks). Status table: 02-PLAN §1.
 
 ## Backlog
 
@@ -96,8 +96,11 @@ CPU matchup matrix (P10.9), CPU difficulty (P5), Character Studio platform
 
 ## Agent handoff notes
 
-**Current:** P2 is done on `fix/p2-cleanup-hardening` (PR open); P3
-(fight-core correctness) follows on a branch stacked on it. The dated
+**Current:** P2 (PR #6) and P3.0–P3.9 (`fix/p3-engine-correctness`,
+stacked on P2 — merge #6 first) are done. P3.12 (feel A/B) waits for the
+user. Engine code is split across `src/engine/{world,input,attack,combat,
+projectiles,phases}.ts`; behaviour tests use the frozen fixtures in
+`src/engine/__fixtures__/`. The dated
 session log is 02-PLAN's **Handoff log**; this section keeps only standing
 landmines.
 

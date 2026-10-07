@@ -86,7 +86,7 @@
 | MKS-1 A | Standards foundation: bench lab, ratchet, KFM parity, MUGEN parsers | M | ✅ 2026-10-04 |
 | P1 | Truth-in-docs & agent context diet | M | ✅ 2026-10-06 |
 | P2 | Player-facing traps + cheap infra/security fixes | M | ✅ 2026-10-07 |
-| P3 | Fight-core correctness & feel (engine, test-first) | M–L | ◐ 3.1/3.2/3.10/3.11 ✅ |
+| P3 | Fight-core correctness & feel (engine, test-first) | M–L | ◐ 3.0–3.11 ✅ · 3.12 (feel A/B) open |
 | P4 | Character data, balance, schema lint | M | ◐ 4.0–4.2 ✅ |
 | P5 | CPU opponent + difficulty | M | ☐ |
 | P6 | Loading, memory, bundle, render perf | L | ◐ 6.1/6.2/6.3/6.5/6.6 ✅ |
@@ -1133,6 +1133,33 @@ files unasked. Full design: `docs/CHARACTER_STUDIO.md` Phases 4–5 (+ the R2
 ## Handoff log
 
 *(newest first; one entry per session: date · who · done · next · gotchas)*
+
+- **2026-10-07 · P3 fight-core correctness (Claude Opus 5.5).** Branch
+  `fix/p3-engine-correctness`, stacked on `fix/p2-cleanup-hardening`
+  (PR #6 — merge that first). Done: **P3.0, P3.3–P3.9** (details on each
+  item); every behaviour fix has a vitest that fails without it.
+  - **P3.5** the action buffer pauses in hitstop (unblocks D8's hitstop raise).
+  - **P3.4** a held button attacks once.
+  - **P3.3** hurtbox stance from the action (8 specials were 98 px short).
+  - **P3.6** special priority by motion (a DP's overshoot no longer throws
+    the fireball).
+  - **P3.7** small fixes (blast direction, ranged corner push, LPLK/mash
+    fatalities, hash kinds, `spriteOffsetY` gone).
+  - **P3.8** hitstun decay + MUGEN juggle points: **MKS-1 errors 2 → 0**
+    with Vincent's broken data still in place (baseline emptied).
+  - **P3.0** frozen engine fixtures + a live-roster smoke test.
+  - **P3.9** `step.ts` split into 7 modules, three dedupes, identical hashes
+    on five 20k-tick random matches.
+  572/572 tests (45 files), tsc clean, bench 0 errors; FRAME_DATA changed in
+  two places only (marzipan Overgrowth L block push, P3.7; the loop-length
+  column, P3.8). A real match in the dev server plays with no console
+  errors. **Next:** P3.12 feel pass — needs the user's A/B playtest
+  (hitstop / plus-on-hit / safer-on-block / walk speed), then P4.3
+  (Vincent's data), P8.5 (generator skip checks). **Gotchas:** engine code
+  now lives in `src/engine/{world,input,attack,combat,projectiles,phases}.ts`
+  — `step.ts` is only the tick; new behaviour tests should use
+  `src/engine/__fixtures__/characters` (frozen), not `src/data/characters`.
+  Online play needs both peers on the same build (the compat hash catches it).
 
 - **2026-10-07 · P2 finished (Claude Opus 5.5).** Branch
   `fix/p2-cleanup-hardening`: P2.6–P2.10 done (details on each item).
