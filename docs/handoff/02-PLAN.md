@@ -95,6 +95,7 @@
 | P9 | Repo weight & history (decision-gated) | M | ◐ 9.1 ✅ |
 | P10 | Features & content (arcade mode first) | L | ☐ |
 | P11 | 3D mode: freeze (or delete) | S | ☐ |
+| P13 | Calibration lab: simulated balance + A/B approval (D11) | L | ☐ |
 
 **After MKS-1 Phase A:** **411/411 vitest** (26 files, ~6s; the ratchet
 test measures the roster in ~4s); `tsc` clean; build unchanged in shape.
@@ -144,6 +145,7 @@ Workers Static Assets (`wrangler.jsonc`), serving the HEAD build.
 | D-KFM (2026-10-06) | **Ship Kung Fu Man as a secret unlockable with his REAL sprites** (reverses "KFM never ships"); unlocked by one simple action on the select screen, for both players (online too). CC BY-NC ⇒ the game stays non-commercial while he ships. | Done 2026-10-06 (see Handoff log). |
 | D9 (2026-10-06, after the videos) | **SF2 camera ON BY DEFAULT** (fighters always on screen) and **every stage outpainted to ultra-wide 3.5:1**; stages with TALL art outpaint from it and show only its bottom 3.5:1 band until a Marvel vs Capcom-style vertical camera. **Do not write to R2** until the raw-sync logic is updated (see P8.17). | P10.9 E2 done; P8.17 new. |
 | D9 (first pass) | Wanted to SEE it first: render a fixed-vs-scroll playtest comparison (stacked video); test automated outpainting for wider stages (D6 approved for 2 stages × ≤ 3 tries); the 1680×1440 "stages tall" set (Marvel vs Capcom-style high-jump WIP) may get side-outpainting later. | P10.9 E2 in progress. |
+| D11 (2026-10-07) | **Calibration lab (new P13).** Tune every fighter in sped-up simulated fights, then A/B each against the original for user approval. Scope: **everything incl. movement** (hitboxes, frame data, damage, walk/jump/dash, health, throw ranges — never art or move lists). Build a **competent sim bot first** (it doubles as P5's hard CPU). The **D8 feel changes become global A/B toggles** in the same session (P3.12 folds in). **Vincent's Move-Tuner values were not intentional** — calibrate him like everyone (P4.3 folds in). | New **P13**; P3.12, P4.3/P4.4 and P10.9 E4 fold into it. |
 | D10 | **Adopt MUGEN semantics**: no ground friction on the jump takeoff tick, with each fighter's `jumpSpeedX` rescaled to keep MUGEN-like distances (~1.0 CH); MUGEN charge = hold ≥ **60** ticks, down-back/up-back count (4-way `$`), then forward/up + button within **10** ticks of release. | P3.11 rewritten. |
 
 ---
@@ -1053,6 +1055,52 @@ can exhaust its memory.*
       - E2 ⛔ D9 optional camera scroll into the 21:9 overscan;
       - E3 alternate palettes (hue-shift shader) for mirror matches;
       - E4 CPU-vs-CPU matchup matrix (deterministic seeds) for win rates.
+
+## P13 — Calibration lab: simulated balance + A/B approval (D11)
+
+*Branch `feat/calibration-lab`. Goal: every fighter tuned against every other
+in fast headless fights, proposed as a per-fighter variant, A/B-able in game
+against the original, applied only on the user's approval. Never touches art
+or move lists. Every engine-facing change keeps determinism; tuning is DATA
+(character JSON transforms), so online compat follows the existing hash.*
+
+- [ ] **P13.1 Fight lab harness.** `src/bench/lab/`: a headless, seeded
+      match runner (two bots, full rounds, real `step()`), a matchup matrix
+      over the playable roster (both slots, N seeds), per-fighter and
+      per-move stats (win rate, damage dealt/taken, time to KO, move usage,
+      hit/whiff/block/punished rates). CLI `npm run lab` → JSON + Markdown
+      report in `assets/raw/lab/` (gitignored). Deterministic: the same
+      seed reproduces the same matrix.
+- [ ] **P13.2 Competent bot** (also P5's hard CPU). `src/ai/`: a per-fighter
+      playbook derived from the bench (`measureMove` reach/startup/on-block,
+      `findCombos` routes, anti-airs, punishers), driving spacing/footsies,
+      blocking (reaction delay), punishing unsafe/whiffed moves, anti-air,
+      throws vs blockers, and the best confirmed combo. Seeded
+      tick-hash decisions (no `Math.random`); reaction + mistake rates
+      parameterize difficulty. Accept: beats the current random CPU ≥ 90%;
+      mirror matches ≈ 50%.
+- [ ] **P13.3 Feel toggles (D8 → global A/B).** Data transforms over the
+      roster, not engine constants: KFM-like hitstop (~8/12/12/15),
+      mediums/heavies +2..+5 on hit, lights ≈ −2..+1 and mediums ≈ −4 on
+      block, walk toward ~1.5 CH/s. A dev toggle switches "feel: current |
+      D8" for both players.
+- [ ] **P13.4 Calibrator.** Per fighter: (a) hitboxes snapped to the drawn
+      limb (skeleton / forward-most opaque pixels, as P4.0); (b) out-of-band
+      MKS-1 metrics moved to the nearest band edge with minimal edits;
+      (c) a balance loop on the P13.1 matrix with the P13.2 bot — small
+      coordinate steps on damage / frame data / movement / health until win
+      rates sit ≈ 45–55% and no matchup is worse than ~35/65; (d) a change
+      budget so a fighter keeps its identity. Gates: 0 MKS-1 errors, no
+      `infinite`, KFM parity untouched. Output: one variant per fighter
+      + the diff and before/after numbers.
+- [ ] **P13.5 Variants + A/B.** Variants live beside the originals
+      (dev-only import); a dev toggle in Training / the Studio swaps any
+      fighter between original and calibrated (and the feel toggle);
+      a report page per fighter (diff, frame data, matchup row before/after).
+- [ ] **P13.6 Approve + apply.** The user approves per fighter (or per
+      move); `npm run calibrate:apply` writes approved values into the real
+      JSON, re-benches, re-baselines, regenerates FRAME_DATA; the rest is
+      discarded. Ship by PR.
 
 ## P12 — Platform: Character Studio phases 4–5 (D3 = platform now)
 
