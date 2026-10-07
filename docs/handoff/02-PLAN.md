@@ -214,6 +214,12 @@ Workers Static Assets (`wrangler.jsonc`), serving the HEAD build.
 session ingest ~250 KB (~60k+ tokens) plus a 24 KB CLAUDE.md, much of it
 stale. Fixing that makes every later session cheaper and less misled.*
 
+*Re-measured 2026-10-06 (after P6): SPRINTBOARD.md 3,763 lines / 260 KB,
+changelog from `:1524`, 145 entries; CLAUDE.md 461 lines / 30 KB (it GREW —
+MKS-1, KFM, camera, P6 notes). 18 playable fighters + KFM (secret), 27
+stages. Line numbers below are from the audit (2026-10-04) — re-locate by
+text. Prompt: `docs/handoff/05-NEXT-SPRINT-P1.md`.*
+
 - [ ] **P1.1 Restructure `SPRINTBOARD.md` (3,570 lines → ≤ ~200).**
       - Move the changelog (≈ lines 1487–3503, 141 KB, 129 entries)
         verbatim to `docs/archive/CHANGELOG-2026-summer.md`.
@@ -259,8 +265,10 @@ stale. Fixing that makes every later session cheaper and less misled.*
           `VITE_ASSET_BASE`;
         - commands missing `studio:run`, `gen:assets`, `gen:worldmap`,
           `gen:busts`, `raw:*`;
-        - lazy-load section contradicted by `prefetchAll`: rewrite as the 5
-          invariants.
+        - lazy-load section: P6 (2026-10-06) already corrected the facts
+          (one persistent loader, HTTP-only prefetch, eviction, `assetUrl()`
+          for every media URL) — condense it to the invariants, keep the
+          `assetUrl()` rule verbatim.
       - **Move out:**
         - pipeline steps 1–8 detail (`:61-183`) → the skills +
           `docs/ASSET_CHECKLIST.md`;
@@ -268,7 +276,7 @@ stale. Fixing that makes every later session cheaper and less misled.*
         - concurrency notes → a tools doc.
       - **Keep:** ground rules, stack, determinism, layout, commands,
         pointers.
-- [ ] **P1.3 README.** Link martiankombat.com (not the dead Pages URL); 18
+- [ ] **P1.3 README.** *(Play link → martiankombat.com done 2026-10-06.)* 18
       fighters (generate the table from `roster.ts`); the real modes; remove
       unbuilt claims (Yulia rage meter `:24`, Freeman armor `:19`, "GPT Image
       makes stages" `:11`); stack incl. Cloudflare.
@@ -315,7 +323,7 @@ stale. Fixing that makes every later session cheaper and less misled.*
       - the two R2 buckets: PUBLIC `martiankombat-assets` (future CDN/3D) and
         PRIVATE `martiankombat-raw` (gitignored source, `raw:*`);
       - `VITE_ASSET_BASE` (only wired on `feat/3d-mode`);
-      - GitHub Pages status (P2.5).
+      - GitHub Pages status (P2.5: unpublish pending — the user runs it).
 
 ## P2 — Player-facing traps + cheap infra/security fixes (one PR)
 
@@ -354,7 +362,7 @@ stale. Fixing that makes every later session cheaper and less misled.*
       **Fix:** use a non-attack key (Enter/Start), and gate all end-of-match
       navigation on `endNavArmedAt` (`:~245`).
       **Accept:** mashing R through a KO always shows the win screen.
-- [ ] **P2.5 Unpublish stale GitHub Pages ⛔ D7.** *README link → martiankombat.com done 2026-10-06 (PR #3); the unpublish itself still needs the user's go-ahead.* It serves the 2026-07-07
+- [ ] **P2.5 Unpublish stale GitHub Pages ⛔ D7.** *README link → martiankombat.com done 2026-10-06 (PR #3). The user approved the unpublish 2026-10-06, but the agent's `gh api -X DELETE …/pages` was blocked by the permission classifier — the user runs it (or allows it). The old `deploy` workflow is already gone (last run 2026-07-07) and there is no `gh-pages` branch, so nothing re-publishes; the site's status reads `errored`.* It serves the 2026-07-07
       build (8 fighters), and the README links there. Disable it (repo
       Settings → Pages, or `gh api -X DELETE repos/drmbt/martian-kombat/pages`
       after confirmation), or replace it with a redirect page.
@@ -1077,6 +1085,14 @@ files unasked. Full design: `docs/CHARACTER_STUDIO.md` Phases 4–5 (+ the R2
 ## Handoff log
 
 *(newest first; one entry per session: date · who · done · next · gotchas)*
+
+- **2026-10-06 · plan refresh + P1 handoff (Claude Opus 5.5).** Status table
+  corrected (P0 ✅; P2/P3/P4/P9 partial); §0.4 now states the confirmed flow
+  (Workers Builds from `main`, per-branch previews, one PR per sprint).
+  P2.5: user approved unpublishing Pages, the agent's DELETE was blocked by
+  the permission classifier → user runs it. Wrote
+  `docs/handoff/05-NEXT-SPRINT-P1.md` (truth-in-docs sprint) and re-measured
+  P1's numbers. **Next:** user merges PR #3, then P1 on `docs/p1-truth-in-docs`.
 
 - **2026-10-06 · P6 loading & memory (Claude Opus 5.5).** Branch
   `perf/p6-loading-memory`. Done: **P6.1, P6.2, P6.3, P6.5, P6.6, P2.3**

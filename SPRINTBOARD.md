@@ -1525,6 +1525,13 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-10-06 · docs · P1 handoff + P2.5 status** — new
+  `docs/handoff/05-NEXT-SPRINT-P1.md` (truth-in-docs sprint prompt, with
+  re-measured sizes: SPRINTBOARD 3,763 lines / 260 KB, CLAUDE.md 461 / 30 KB);
+  02-PLAN P1 refreshed. P2.5: the user approved unpublishing GitHub Pages but
+  the agent's DELETE was blocked by the permission classifier — the user runs
+  it. — Claude (Opus 5.5)
+
 - **2026-10-06 · docs · 02-PLAN status refresh** — P0 marked ✅ in the status
   table (all five items were done); P2/P3/P4/P9 show their completed items;
   §0.4 branching, P0.5 and P1.7 now state the confirmed deploy path (Workers
