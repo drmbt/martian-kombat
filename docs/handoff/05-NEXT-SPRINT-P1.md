@@ -23,12 +23,12 @@ agent can read what it needs in a few thousand tokens and trust all of it.
 
 ## Before you change anything
 
-1. **PR #3 (`perf/p6-loading-memory`) must be merged first**: P1 rewrites
-   files that PR touched. If `git log main` doesn't contain the P6 commits
-   (`scenes: one persistent asset loader…`), stop and ask the user.
-   Otherwise run `git checkout main && git pull` and create
-   **`docs/p1-truth-in-docs`**. Never push to `main`; open a PR at the end
-   and let the user merge.
+1. Work on the branch **`docs/p1-truth-in-docs`** (already created from
+   `main` after PR #3 merged at `6d8e46e`, and pushed): `git checkout
+   docs/p1-truth-in-docs && git pull`. Never push to `main`; open a PR at the
+   end and let the user merge. Its staging preview is
+   https://docs-p1-truth-in-docs-martian-kombat.stayprompin.workers.dev
+   (useful only as a smoke test, since this sprint changes no game code).
 2. Read, in order: `CLAUDE.md`; `docs/handoff/02-PLAN.md` §0 (protocol), §2
    (decisions; don't re-ask), §3 (guardrails), **P1** (all seven items), and
    the newest **Handoff log** entries. Skim `SPRINTBOARD.md` only by its

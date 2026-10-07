@@ -7,8 +7,8 @@ description: Canonical workflow for creating and validating a character's sprite
 
 **QA POSTURE (Sprint 27, locked 2026-07-08): MINIMAL.** Human review in the
 studio/game is the primary QA path. What's load-bearing now: local skeleton
-inference (hitboxes need it — always local Python; fal is shipped-prod only,
-never dev) and a vision look at the MAIN reference images (canonical +
+inference (hitboxes need it — always local Python; a hosted skeleton route
+for a shipped creator is only an idea, nothing in the repo calls one) and a vision look at the MAIN reference images (canonical +
 crouch/jump anchors) before they seed everything downstream. The full
 pose-rule battery below is documented but OPTIONAL — run it only when asked;
 never automate validate→regenerate loops (one re-roll per asset, max).

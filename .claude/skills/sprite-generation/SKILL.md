@@ -28,6 +28,12 @@ crouch/jump anchors early (they ref their whole move families), idle-b refs
 idle-a (not the canonical), walk-b refs walk-a, specials chain sequentially
 (startup←idle; projectile alone; active←startup+projectile+idle;
 recovery←active+idle). One re-roll per asset, max.
+**What the code does today (2026-10-06):** both the CLI (`gen-frames.mjs`) and
+the Studio creator anchor crouch/lying cells on a low-pose reference and chain
+specials sequentially (projectile first). Neither chains idle-b←idle-a,
+walk-b←walk-a or startup←idle — those cells reference only the canonical.
+In the Studio, pass the extra reference by hand when re-rolling. Wiring the
+a→b links into `gen-frames` is 02-PLAN P8 work.
 
 **Staged approval — what "basic sprites" means.** When the creator asks for
 "basic sprites," generate and get sign-off on ONLY the shared foundation cells

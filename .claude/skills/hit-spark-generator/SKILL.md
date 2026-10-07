@@ -97,7 +97,7 @@ cosmetically fine but off-brand). Levers, biggest first:
 
 Samesey-killer stack: **random spark from a tag pool → rotate/mirror to the
 attack angle → jitter position/scale → layer for heavies → deterministic-hash it
-all.** Sprint 24 (SPRINTBOARD) tracks wiring this into the renderer.
+all.** Wiring this into the renderer is `docs/handoff/02-PLAN.md` P10.2.
 
 ## Commands
 ```

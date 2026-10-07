@@ -9,14 +9,14 @@
 >    port at 100% measured parity (rationale and numbers:
 >    `docs/FIGHTING_STANDARDS.md`; its §10 roadmap is folded in here).
 >
-> Until P1.1 restructures `SPRINTBOARD.md`, **this file supersedes
-> SPRINTBOARD's "Current"/handoff sections** and FIGHTING_STANDARDS §10.
+> Since P1 (2026-10-06) `SPRINTBOARD.md` is a short true-status board that
+> points its backlog here; this file also supersedes FIGHTING_STANDARDS §10.
+> History: `docs/archive/` (SPRINTS/CHANGELOG-2026-summer).
 > The original audit documents are preserved verbatim in
 > `docs/archive/handoff-2026-10-04-audit/`.
 >
-> **Branch:** everything from 2026-10-04 lives on
-> `feat/mks1-rescue-handoff` (pushed). It reaches `main` by PR after the
-> rescue lands (D7).
+> **Branch:** one branch + PR per sprint off `main` (§0.4); the
+> 2026-10-04 work (`feat/mks1-rescue-handoff`) merged as PR #2.
 >
 > | File | Run where | Purpose |
 > |---|---|---|
@@ -59,9 +59,11 @@
    `src/engine/`).
 6. **No API spend without approval.** Anything that calls Gemini / OpenAI /
    ElevenLabs / Fish needs a ⛔ D6 go-ahead with an estimated image/call count.
-7. **Close out each session:** tick boxes here, append a dated entry to the
-   Handoff log (done / next / gotchas). Once P1.1 lands, SPRINTBOARD's backlog
-   points at this file — don't duplicate items there.
+7. **Close out each session:** tick boxes here and append a dated entry to
+   the Handoff log (done / next / gotchas) **in the same commit as the work —
+   git log is the changelog** (no per-commit changelog file since P1.1).
+   SPRINTBOARD.md is the short true status + standing landmines and points
+   its backlog at this file — don't duplicate items there.
 8. **Verify commands:** `npx tsc --noEmit` · `npx vitest run` ·
    `npm run bench` (MKS-1 audit; `-- --char <id>` per fighter) ·
    `npx vite build --outDir /tmp/mk-dist` (avoids the prebuild hooks that
@@ -81,7 +83,7 @@
 |---|---|---|---|
 | P0 | Restore raw assets + baseline (old-machine rescue → new machine) | S | ✅ 2026-10-06 |
 | MKS-1 A | Standards foundation: bench lab, ratchet, KFM parity, MUGEN parsers | M | ✅ 2026-10-04 |
-| P1 | Truth-in-docs & agent context diet | M | ☐ |
+| P1 | Truth-in-docs & agent context diet | M | ✅ 2026-10-06 |
 | P2 | Player-facing traps + cheap infra/security fixes | M | ◐ 2.1–2.5 ✅ |
 | P3 | Fight-core correctness & feel (engine, test-first) | M–L | ◐ 3.1/3.2/3.10/3.11 ✅ |
 | P4 | Character data, balance, schema lint | M | ◐ 4.0–4.2 ✅ |
@@ -220,7 +222,7 @@ MKS-1, KFM, camera, P6 notes). 18 playable fighters + KFM (secret), 27
 stages. Line numbers below are from the audit (2026-10-04) — re-locate by
 text. Prompt: `docs/handoff/05-NEXT-SPRINT-P1.md`.*
 
-- [ ] **P1.1 Restructure `SPRINTBOARD.md` (3,570 lines → ≤ ~200).**
+- [x] **P1.1 Restructure `SPRINTBOARD.md` (3,570 lines → ≤ ~200).** *Done 2026-10-06: 3,778 lines / 260 KB → 128 lines / 7 KB. Changelog (148 entries) verbatim → `docs/archive/CHANGELOG-2026-summer.md`; header, Sprints 0–28, RFEs, Icebox and old handoff notes verbatim → `docs/archive/SPRINTS-2026-summer.md` (with a known-stale-claims preamble); the new board = true status, backlog pointer, RFEs de-duplicated against P5/P10–P12, pruned Icebox (fullscreen shipped, zoom declined), standing landmines. New rule in CLAUDE.md rule 1, §0.7 and the board header.*
       - Move the changelog (≈ lines 1487–3503, 141 KB, 129 entries)
         verbatim to `docs/archive/CHANGELOG-2026-summer.md`.
       - Move completed Sprints 0–27 detail to `docs/archive/SPRINTS-2026-summer.md`.
@@ -244,7 +246,7 @@ text. Prompt: `docs/handoff/05-NEXT-SPRINT-P1.md`.*
         - "no fighter uses du" (`:962-964`; flo/yulia do);
         - `spriteOffsetY` prose (`:702-715`, deleted);
         - Tao "no stage" (`:1452`) vs institute (`:1603`).
-- [ ] **P1.2 Slim + correct `CLAUDE.md` (380 lines/24.5 KB → ~130–150).**
+- [x] **P1.2 Slim + correct `CLAUDE.md` (380 lines/24.5 KB → ~130–150).** *Done 2026-10-06: 461 lines / 30 KB → 225 lines / 14 KB (every hard rule kept; the extra ~50 lines over target are the full key-name list, layout and lore/KFM rules). Fixed: 18 fighters, `withBackoff` (it already retries network errors too — the real gap is direct `fetch` calls in `gen-voice.mjs` and the `vite.config.ts` middleware), rollback shipped, online/3D/Cloudflare, full directory + scene list, the dangling "see Architecture", steps 1–7 (+ optional 8), all key names, missing commands, lazy-load condensed to invariants (the `assetUrl()` rule verbatim). Moved: pipeline steps + lazy-load detail + concurrency → new `docs/TOOLS.md`; editor/Studio sections → `docs/CHARACTER_STUDIO.md` "Quick reference". New rules surfaced: no paid gen / no R2 writes, branch policy.*
       `AGENTS.md` is a symlink to it.
       - **Fix:**
         - "Sixteen fighters" → 18 (`:276`);
@@ -276,11 +278,11 @@ text. Prompt: `docs/handoff/05-NEXT-SPRINT-P1.md`.*
         - concurrency notes → a tools doc.
       - **Keep:** ground rules, stack, determinism, layout, commands,
         pointers.
-- [ ] **P1.3 README.** *(Play link → martiankombat.com done 2026-10-06.)* 18
+- [x] **P1.3 README.** *Done 2026-10-06: 19-row table (18 + KFM secret) generated from `roster.ts` + each JSON's `lore.tagline` / `stage` / `fatality.name`; real modes; removed the rage-meter / Freeman-armor / "GPT Image makes stages" / "8 Martians, 19 stages" claims; stack incl. Cloudflare + rollback; contributor pointer → CLAUDE.md, SPRINTBOARD, 02-PLAN.* *(Play link → martiankombat.com done 2026-10-06.)* 18
       fighters (generate the table from `roster.ts`); the real modes; remove
       unbuilt claims (Yulia rage meter `:24`, Freeman armor `:19`, "GPT Image
       makes stages" `:11`); stack incl. Cloudflare.
-- [ ] **P1.4 Archive obsolete docs → `docs/archive/`.**
+- [x] **P1.4 Archive obsolete docs → `docs/archive/`.** *Done 2026-10-06: CHARACTER_CREATOR(+_WALKTHROUGH), SPEC.md, THREE_D_RENDERER_SPIKE, WAVE2-VO-CHECKLIST, FATALITY-VIDEO-PROMPTS → `docs/archive/` (creator §6/§9/§16 folded verbatim into CHARACTER_STUDIO Part 5; SPEC gets a banner — code still cites its `SPEC Vnn/Tnn` ids; open T41/T43/T46 carried into P10.5); MOVE_DURATIONS deleted. CHARACTER_STUDIO: built/partial/not-built header from a code re-audit, Part 3 boxes ticked or annotated (◐/✗). CHARACTERS.md: Ben/Tao/RJ added from their JSON, Earl's shipped kit noted, Haidai marked dropped. The meshes path: sources now live in gitignored `assets/raw/unused-3d-sources/` (noted in 3D_CHARACTER_PIPELINE; the tool still reads `public/assets/meshes`).*
       - `CHARACTER_CREATOR.md` + `_WALKTHROUGH` (fold §6 R2, §9 open
         questions, §16 context cache into `CHARACTER_STUDIO.md` first);
       - `SPEC.md` (carry open T41–T46 online items into P10.5);
@@ -295,14 +297,14 @@ text. Prompt: `docs/handoff/05-NEXT-SPRINT-P1.md`.*
         haidai dropped.
       - `SPEC.md:14-15,20,44` and `3D_CHARACTER_PIPELINE.md:13` point at the
         deleted `public/assets/meshes`.
-- [ ] **P1.5 Purge retired privacy-gate language** (retired 2026-07-08):
+- [x] **P1.5 Purge retired privacy-gate language** (retired 2026-07-08): *Done 2026-10-06: removed from the new-character description + its retirement note, move-authoring, ASSET_CHECKLIST, CHARACTER_STUDIO (incl. `lore.mjs` marked dropped), CHARACTERS.md's Wave-2 check; CHARACTER_CREATOR is archived and SPRINTBOARD's lines went to the archive with it. `grep -rn "opt-out" .claude docs CLAUDE.md` now hits only `docs/archive/`, the CLAUDE.md retirement line, this item, D1's note and the P1 prompt.*
       `.claude/skills/new-character/SKILL.md:3` (description; contradicts its
       own `:28`), `docs/ASSET_CHECKLIST.md:35`,
       `docs/CHARACTER_STUDIO.md:162,239,536,619`,
       `docs/CHARACTER_CREATOR.md:174,229`, `SPRINTBOARD.md:845-847`.
       Acceptance: `grep -rn "opt-out" .claude docs CLAUDE.md` → archive-only
       hits.
-- [ ] **P1.6 Skills.** (MKS-1 added `fighting-game-standards` and
+- [x] **P1.6 Skills.** *Done 2026-10-06: `.agents/skills` → symlink to `../.claude/skills` (committed with P1.4); new-character: step list (gen-canonical for step 1, no "7-step"), VO source = the JSON `vo` block with gen-audio's tables mirrored until P8.6, `studio:run`; sprite-generation: the a→b chaining labelled as policy that NEITHER the CLI nor the Studio implements yet (code audit) — implement in P8; sprite-qa: the fal mention removed; hit-spark-generator: the wiring pointer → P10.2.* (MKS-1 added `fighting-game-standards` and
       `mugen-import`, and bench gates in move-authoring / new-character.)
       - Replace `.agents/skills/` (a stale one-time Codex mirror from 148a19c
         that still names the privacy gate and old `tools/qa/*vfx*` paths)
@@ -315,7 +317,7 @@ text. Prompt: `docs/handoff/05-NEXT-SPRINT-P1.md`.*
           walk-b←walk-a, startup←idle) isn't implemented in CLI `gen-frames`:
           implement in P8 or label studio-only;
         - sprite-qa mentions fal (no fal code exists).
-- [ ] **P1.7 `docs/DEPLOY.md`.** Cover:
+- [x] **P1.7 `docs/DEPLOY.md`.** *Done 2026-10-06: all six points, plus `not_found_handling: none`, the `?v=<sha8>` / non-overlapping-rules reasoning, and the no-R2-write rule; `.env.example`'s stale "Cloudflare Pages" comments fixed.* Cover:
       - the real deploy path: Workers Static Assets with assets-only
         `wrangler.jsonc`, built by Cloudflare Workers Builds from `main`, plus
         per-branch preview URLs (confirmed 2026-10-06, §0.4);
@@ -951,9 +953,12 @@ can exhaust its memory.*
       - Network-status UI.
       - Desync recovery instead of a hard halt.
       - The stale "lockstep" comment at `webrtc.ts:~60`.
-      - SPEC T41–T46 leftovers.
+      - SPEC leftovers (`docs/archive/SPEC.md`): net-status UI with
+        failure reasons + rollback debug detail (T41), a worst-case rollback
+        perf audit < 2 ms (T43), rejoin/resync with a grace window (T46, the
+        T40 remainder). T42/T44/T45 shipped.
 - [ ] **P10.6 ⛔ D6 content regen backlog:** marzipan frames, bodhi active
-      cells, RJ v2's 4 flagged cells (`SPRINTBOARD.md:~1631-1636`), a
+      cells, RJ v2's 4 flagged cells (`docs/archive/CHANGELOG-2026-summer.md`, "Still open on RJ"), a
       roster-wide CorridorKey re-key (`docs/CORRIDORKEY.md`), and the 16
       inspo'd-but-unbuilt Martians (haidai, jack, jordan, neil, dulcinee,
       puddles, …).
@@ -1085,6 +1090,38 @@ files unasked. Full design: `docs/CHARACTER_STUDIO.md` Phases 4–5 (+ the R2
 ## Handoff log
 
 *(newest first; one entry per session: date · who · done · next · gotchas)*
+
+- **2026-10-06 · P1 truth-in-docs (Claude Opus 5.5).** Branch
+  `docs/p1-truth-in-docs`, P1.1–P1.7 done (details on each item); docs only,
+  no code behaviour changed (three source comments re-pointed at moved docs).
+  Sizes before → after:
+  - `SPRINTBOARD.md` **3,778 lines / 261 KB → 128 lines / 7 KB** (history
+    moved verbatim to `docs/archive/{SPRINTS,CHANGELOG}-2026-summer.md`,
+    reassembly diff-checked);
+  - `CLAUDE.md` **461 lines / 30 KB → 226 lines / 14 KB** (detail moved to
+    the new `docs/TOOLS.md` and `docs/CHARACTER_STUDIO.md`);
+  - a fresh session's mandatory read (CLAUDE.md + SPRINTBOARD) **~291 KB ≈
+    73k tokens → ~21 KB ≈ 5k tokens**; with 02-PLAN §0–3, one phase and the
+    latest log entries, **~44 KB ≈ 11k tokens**.
+  Checks: tsc clean, 490/490 vitest (37 files), bench 2 MKS-1 errors
+  (unchanged), `npm run build` leaves `git status` clean; every relative
+  `.md` link in the live docs + skills resolves (except the not-yet-written
+  `docs/ARCADE.md` and `docs/3D_MODE_R2.md`, which lives on `feat/3d-mode`).
+  **New protocol:** tick boxes + handoff notes in the same commit; git log is
+  the changelog. **Next:** the user merges the PR; then P2.6–P2.10, then P3.
+  **Gotchas:** the CHARACTER_STUDIO code audit found the sprite-generation
+  skill's a→b reference chaining (idle-b←idle-a, walk-b←walk-a,
+  startup←idle) isn't implemented in EITHER path (P8 work). `gen-mesh` still
+  reads `public/assets/meshes/`, whose sources now sit in
+  `assets/raw/unused-3d-sources/`. The `gen:audio` CLI still reads its own
+  VO tables, not the JSON `vo` block (P8.6), so keep them in sync.
+
+- **2026-10-06 · P6 shipped (Claude Opus 5.5).** PR #3 merged (`6d8e46e`)
+  and deployed: the live bundle matches the branch build, all 750 versioned
+  assets return 200 on martiankombat.com with `immutable` caching. GitHub
+  Pages unpublished (P2.5). `perf/p6-loading-memory` deleted (local +
+  remote); **`docs/p1-truth-in-docs` created from `main` and pushed** —
+  start P1 with `docs/handoff/05-NEXT-SPRINT-P1.md`.
 
 - **2026-10-06 · plan refresh + P1 handoff (Claude Opus 5.5).** Status table
   corrected (P0 ✅; P2/P3/P4/P9 partial); §0.4 now states the confirmed flow

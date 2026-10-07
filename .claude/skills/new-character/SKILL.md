@@ -1,6 +1,6 @@
 ---
 name: new-character
-description: End-to-end orchestrator for adding a complete playable fighter to Martian Kombat — the ordered 7-step asset pipeline with its decision gates (privacy opt-out, lore-sheet fuzzy search for flavor, plumbing mapping, JSON-from-skeleton, roster + audit last). Use when asked to build, add, scaffold, or finish a new character. Delegates to the move-authoring, sprite-generation, and sprite-qa skills.
+description: End-to-end orchestrator for adding a complete playable fighter to Martian Kombat — the ordered asset pipeline (canonical → JSON → frames → QA → pack → portraits → VO → fatality, optional VFX) with its gates (lore-sheet fuzzy search for flavor, plumbing mapping, JSON-from-skeleton, MKS-1 bench, roster + audit last). Use when asked to build, add, scaffold, or finish a new character. Delegates to the move-authoring, sprite-generation, and sprite-qa skills.
 ---
 
 # New character — end-to-end build
@@ -10,8 +10,12 @@ description: End-to-end orchestrator for adding a complete playable fighter to M
 the same pipeline in-browser with a live fighter preview and a completeness
 gap bar). This skill remains the CLI path; both share `tools/core/`
 (cells/prompts/kit/packer/coords), so the craft is identical either way.
+`npm run studio:run -- --char <id> [--mock]` runs the same asset DAG
+headless (`tools/core/pipeline.mjs` + the jobs runner; `--mock` is $0, a real
+run prints the estimated call count and asks first). Paid generation needs
+the user's go-ahead with that estimate (02-PLAN D6).
 
-A fighter isn't "done" until all seven asset classes exist and `assets.audit`
+A fighter isn't "done" until every required asset class exists and `assets.audit`
 passes — INCLUDING the schema lint: chains/cancels/L-H variants (apply
 `tools/core/kit.mjs` grammar), a techable throw (the locked 5th default
 special), ≥3 winQuotes, a themed (non-placeholder) fatality, AND the
@@ -24,9 +28,6 @@ mode (a stub mode today; the canon arc runs through Mars College's Off Grid
 world into Bombay Beach, past RJ the hench goon, to Tao Ruspoli the end
 boss, crowning the Champion of the Bombay Beach Biennale). Steps have hard ordering dependencies and a few easy-to-forget
 gates. Follow this order; delegate the deep work to the paired skills.
-
-*(The former privacy opt-out gate was retired by Vincent on 2026-07-08 — no
-opt-out check is needed anymore.)*
 
 ## Gate 1 — gather flavor from the lore sheet (fuzzy search by name)
 
@@ -51,8 +52,11 @@ prompt (search the location/scene name; combine with `assets/stage-inspo/`).
 
 ## Step order
 
-1. **Canonical sheet** — `gen-style-test` / place the approved
-   `assets/raw/canonical/<id>.png`. Locked style: `tools/style.md` (painted cel).
+1. **Canonical sheet** — `node tools/gen-canonical.mjs --char <id>` (add the
+   fighter's inspo/face entry in the script first) → the approved
+   `assets/raw/canonical/<id>.png`, the regen anchor. Locked style:
+   `tools/style.md` (painted cel). (`gen-style-test` was the original
+   style-approval run, not the per-fighter step.)
 2. **Author the JSON** — `src/data/characters/<id>.json`, driven by the
    **move-authoring** skill: pick a template, map every special to REAL plumbing
    (never author an unbuilt mechanic), estimate hitboxes from the canonical POSE
@@ -69,9 +73,13 @@ prompt (search the location/scene name; combine with `assets/stage-inspo/`).
    icon; `tools/qa/portrait_crop.py --char <id>` for the pose-centered
    `<id>-bust.png`; `gen-canonical` for the `<id>-ko.png` defeated bust.
 7. **VO** — voice-clone if a real sample exists (`gen:voice`, drop clips in
-   `assets/voice-inspo/<id>/`); author lines in `gen-audio` (`announcerLines` +
-   `voiceLines`: exactly 6 kiai / 6 hurt / 4 victory; cloned chars route through
-   Fish automatically). Cloned lines get emotion-tagged by context×temperament
+   `assets/voice-inspo/<id>/`). The line TEXTS live in the character JSON's
+   `vo` block (exactly 6 kiai / 6 hurt / 4 victory) + per-move `voiceText` —
+   that is the durable source of truth the audit lints. Until 02-PLAN P8.6
+   lands, the `gen:audio` CLI still reads its own `voiceLines` /
+   `announcerLines` tables in `tools/gen-audio.mjs`, so mirror the same texts
+   there before generating.
+   Cloned chars route through Fish automatically. Cloned lines get emotion-tagged by context×temperament
    (`tools/core/vo-emotion.mjs`); add the fighter to its `TEMPERAMENT` table and
    audition on a soundboard before baking — see `docs/VO_EMOTION.md`. Announcer
    name callout uses ElevenLabs (needs paid plan).
@@ -102,7 +110,7 @@ with its assets on disk is the whole contract — the sheet streams on select
 highlight, VO on lock-in, the fatality during the fight. Just confirm in the
 preview that highlighting the new fighter shows its animated idle (not a stuck
 head-portrait), and that a full match renders their sprite + plays their VO. See
-CLAUDE.md → "Lazy asset loading — the load contract".
+`docs/TOOLS.md` → "Lazy asset loading".
 
 ## Home stage
 
