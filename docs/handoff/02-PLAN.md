@@ -1079,12 +1079,12 @@ or move lists. Every engine-facing change keeps determinism; tuning is DATA
       tick-hash decisions (no `Math.random`); reaction + mistake rates
       parameterize difficulty. Accept: beats the current random CPU ≥ 90%;
       mirror matches ≈ 50%.
-- [ ] **P13.3 Feel toggles (D8 → global A/B).** Data transforms over the
+- [x] **P13.3 Feel toggles (D8 → global A/B).** *Done 2026-10-07: `src/bench/lab/feel.ts` `applyFeel(raw, 'd8')` — hitstop 8/12/12/15 where a move has none, mediums/heavies ≥ +3/+2 on hit, lights ≥ −2 / mediums ≥ −4 on block, walk ≥ 1.5 CH/s (back-walk keeps its ratio). Pure data; 0 MKS-1 errors; band warnings 245 → 191 on its own. In game it rides the B side of the A/B (P13.5).* Data transforms over the
       roster, not engine constants: KFM-like hitstop (~8/12/12/15),
       mediums/heavies +2..+5 on hit, lights ≈ −2..+1 and mediums ≈ −4 on
       block, walk toward ~1.5 CH/s. A dev toggle switches "feel: current |
       D8" for both players.
-- [ ] **P13.4 Calibrator.** Per fighter: (a) hitboxes snapped to the drawn
+- [x] **P13.4 Calibrator.** *Done 2026-10-07 (v1): `src/bench/lab/calibrate.ts` + `npm run calibrate` — feel → (A) art hitboxes via `art.ts` (forward opaque pixels of the active cell vs the resting silhouette; only where reach disagrees > 20 px; Catherine skipped — her staff is drawn in idle) → (B) MKS-1 band snap (re-measured, 2 passes) → (C) balance loop on the SmartBot matrix (damage ±8%/round, budget 0.75–1.30; health; reach ±3% for big outliers, budget 0.85–1.15). A stage that adds an MKS-1 error is reverted for that fighter. Run (3 seeds, 8 rounds, ~4.5 min): spread **17–94% → 33–83%**, 13/18 within 41–60%. Outliers at budget (design calls): catherine 83%, ygor 67%, earl 33%, rj 33%.* Per fighter: (a) hitboxes snapped to the drawn
       limb (skeleton / forward-most opaque pixels, as P4.0); (b) out-of-band
       MKS-1 metrics moved to the nearest band edge with minimal edits;
       (c) a balance loop on the P13.1 matrix with the P13.2 bot — small
@@ -1093,11 +1093,11 @@ or move lists. Every engine-facing change keeps determinism; tuning is DATA
       budget so a fighter keeps its identity. Gates: 0 MKS-1 errors, no
       `infinite`, KFM parity untouched. Output: one variant per fighter
       + the diff and before/after numbers.
-- [ ] **P13.5 Variants + A/B.** Variants live beside the originals
+- [x] **P13.5 Variants + A/B.** *Done 2026-10-07: proposals in `src/data/calibration/d8/<id>.json` + `report.md` / `report.json`; DEV-only `src/data/calibration/ab.ts` (dynamic import in main.ts — verified absent from the prod bundle) swaps the shared roster; **F6 in a fight** flips A (original) ⇄ B (calibrated, D8 feel) and restarts, with an on-screen label; ignored online. Browser-verified.* Variants live beside the originals
       (dev-only import); a dev toggle in Training / the Studio swaps any
       fighter between original and calibrated (and the feel toggle);
       a report page per fighter (diff, frame data, matchup row before/after).
-- [ ] **P13.6 Approve + apply.** The user approves per fighter (or per
+- [ ] **P13.6 Approve + apply.** *Tooling ready 2026-10-07: `npm run calibrate:apply -- --chars a,b` (or `--all`) copies approved proposals over the real JSON; then `npm run bench -- --update-baseline && npm run bench -- --md && npx vitest run`. Waiting for the user's per-fighter approval.* The user approves per fighter (or per
       move); `npm run calibrate:apply` writes approved values into the real
       JSON, re-benches, re-baselines, regenerates FRAME_DATA; the rest is
       discarded. Ship by PR.
@@ -1181,6 +1181,23 @@ files unasked. Full design: `docs/CHARACTER_STUDIO.md` Phases 4–5 (+ the R2
 ## Handoff log
 
 *(newest first; one entry per session: date · who · done · next · gotchas)*
+
+- **2026-10-07 · P13 calibration lab v1 (Claude Opus 5.5).** Branch
+  `feat/calibration-lab` (pushed). P13.1–P13.5 done, P13.6 tooling ready.
+  - **SmartBot:** beats the random CPU 96% with the same fighter.
+  - **Lab:** whole-roster matrix in ~15 s.
+  - **Calibrator:** spread 17–94% → 33–83%.
+  - **A/B:** F6 in dev fights.
+  **Next:** the user plays A/B (`npm run dev` → Training → F6) and
+  approves per fighter → `npm run calibrate:apply -- --chars …` → re-bench
+  → PR. Then design calls for the four budget-capped outliers
+  (catherine/ygor up, earl/rj down).
+  **Gotchas:**
+  - The lab bot plays reach-heavy kits best — treat win rates as a signal,
+    not truth, and judge by feel in the A/B.
+  - Proposals are full raw JSON copies: re-run `npm run calibrate` after
+    any roster data edit, or apply would overwrite it.
+  - `matrix` progress / reports land in gitignored `assets/raw/lab/`.
 
 - **2026-10-07 · P2 + P3 merged, P8.5/P8.4 (Claude Opus 5.5).** PRs #6 (P2)
   and #7 (P3) merged to `main` (`7ec7f3d`, `01f4088`); their branches

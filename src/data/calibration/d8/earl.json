@@ -1,0 +1,578 @@
+{
+  "id": "earl",
+  "name": "EARL",
+  "color": "#d3699e",
+  "lore": {
+    "tagline": "They call EARL.",
+    "personality": "Curator of soundly unsound sounds, and an off-the-wagon recovering musician.",
+    "backstory": "Known in a past life as The Madd WIkkid. Mars adjacent since 2020, first time Martian 2026. Teaching music theory. Has an excessive amount of field recording gear. Expert at most things audio. Plays piano, trumpet, and a little bass. Produced and engineered records for a couple of decades. Toured Japan playing piano with a Japanese gospel choir. Expert at technical sound design and was an audio director for AAA games for a while. Getting back to music after a long haitus. Creating a fictional band here on Mars with cartoon band members called The Unhung Zeros. Considers fetishization of proces to be antithetical to the creation of great art. Used to trade stock on Wall Street during the dotcom bubble. Was selected as a mentor to TED fellows. Does not abide charlatainism."
+  },
+  "winQuotes": [
+    "EARL wins. That's music to my ears...",
+    "This was the rehearsal. You should come to the gig.",
+    "You'll never be a star.",
+    "That wasn’t a soundcheck. That was the whole set.",
+    "I don’t abide charlatans. Especially not slow ones."
+  ],
+  "health": 1143,
+  "walkSpeed": 6.4,
+  "backSpeed": 6.4,
+  "jumpVel": 18,
+  "gravity": 0.9,
+  "prejumpFrames": 4,
+  "bodyBox": {
+    "x": -42,
+    "y": -240,
+    "w": 84,
+    "h": 240
+  },
+  "hurtStand": {
+    "x": -52,
+    "y": -256,
+    "w": 104,
+    "h": 256
+  },
+  "hurtCrouch": {
+    "x": -52,
+    "y": -150,
+    "w": 104,
+    "h": 150
+  },
+  "moves": {
+    "lp": {
+      "startup": 4,
+      "active": 3,
+      "recovery": 8,
+      "damage": 39,
+      "hitstun": 12,
+      "blockstun": 9,
+      "knockback": 3,
+      "hitbox": {
+        "x": 65,
+        "y": -219,
+        "w": 75,
+        "h": 47
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "mp": {
+      "startup": 7,
+      "active": 4,
+      "recovery": 13,
+      "damage": 64,
+      "hitstun": 20,
+      "blockstun": 13,
+      "knockback": 5,
+      "hitbox": {
+        "x": 64,
+        "y": -222,
+        "w": 75,
+        "h": 45
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "hp": {
+      "startup": 10,
+      "active": 4,
+      "recovery": 18,
+      "damage": 97,
+      "hitstun": 24,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": 64,
+        "y": -224,
+        "w": 77,
+        "h": 49
+      },
+      "height": "mid",
+      "hitstop": 12
+    },
+    "lk": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 9,
+      "damage": 43,
+      "hitstun": 12,
+      "blockstun": 10,
+      "knockback": 3,
+      "hitbox": {
+        "x": 70,
+        "y": -230,
+        "w": 76,
+        "h": 77
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "mk": {
+      "startup": 8,
+      "active": 4,
+      "recovery": 14,
+      "damage": 67,
+      "hitstun": 21,
+      "blockstun": 14,
+      "knockback": 5,
+      "hitbox": {
+        "x": 63,
+        "y": -210,
+        "w": 84,
+        "h": 61
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "hk": {
+      "startup": 11,
+      "active": 4,
+      "recovery": 19,
+      "damage": 102,
+      "hitstun": 25,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": 33,
+        "y": -315,
+        "w": 86,
+        "h": 74
+      },
+      "height": "mid",
+      "hitstop": 12
+    },
+    "clp": {
+      "startup": 4,
+      "active": 3,
+      "recovery": 8,
+      "damage": 35,
+      "hitstun": 12,
+      "blockstun": 9,
+      "knockback": 3,
+      "hitbox": {
+        "x": 66,
+        "y": -176,
+        "w": 78,
+        "h": 50
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "cmp": {
+      "startup": 7,
+      "active": 4,
+      "recovery": 13,
+      "damage": 62,
+      "hitstun": 20,
+      "blockstun": 13,
+      "knockback": 5,
+      "hitbox": {
+        "x": 52,
+        "y": -229,
+        "w": 70,
+        "h": 52
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "chp": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 17,
+      "damage": 91,
+      "hitstun": 23,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": 26,
+        "y": -270,
+        "w": 70,
+        "h": 55
+      },
+      "height": "mid",
+      "hitstop": 12
+    },
+    "clk": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 9,
+      "damage": 39,
+      "hitstun": 12,
+      "blockstun": 10,
+      "knockback": 3,
+      "hitbox": {
+        "x": 82,
+        "y": -59,
+        "w": 83,
+        "h": 68
+      },
+      "height": "low",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "cmk": {
+      "startup": 8,
+      "active": 4,
+      "recovery": 14,
+      "damage": 64,
+      "hitstun": 21,
+      "blockstun": 14,
+      "knockback": 5,
+      "hitbox": {
+        "x": 76,
+        "y": -134,
+        "w": 76,
+        "h": 70
+      },
+      "height": "low",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "chk": {
+      "startup": 11,
+      "active": 5,
+      "recovery": 20,
+      "damage": 96,
+      "hitstun": 27,
+      "blockstun": 15,
+      "knockback": 8,
+      "hitbox": {
+        "x": 70,
+        "y": -66,
+        "w": 88,
+        "h": 80
+      },
+      "height": "low",
+      "hitstop": 12
+    },
+    "jlp": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 6,
+      "damage": 39,
+      "hitstun": 12,
+      "blockstun": 9,
+      "knockback": 3,
+      "hitbox": {
+        "x": 61,
+        "y": -173,
+        "w": 72,
+        "h": 56
+      },
+      "height": "high",
+      "hitstop": 8
+    },
+    "jmp": {
+      "startup": 6,
+      "active": 6,
+      "recovery": 8,
+      "damage": 64,
+      "hitstun": 16,
+      "blockstun": 9,
+      "knockback": 5,
+      "hitbox": {
+        "x": 40,
+        "y": -158,
+        "w": 65,
+        "h": 58
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jhp": {
+      "startup": 8,
+      "active": 6,
+      "recovery": 10,
+      "damage": 94,
+      "hitstun": 20,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": 71,
+        "y": -216,
+        "w": 82,
+        "h": 52
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jlk": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 6,
+      "damage": 43,
+      "hitstun": 12,
+      "blockstun": 9,
+      "knockback": 3,
+      "hitbox": {
+        "x": 35,
+        "y": -112,
+        "w": 94,
+        "h": 77
+      },
+      "height": "high",
+      "hitstop": 8
+    },
+    "jmk": {
+      "startup": 6,
+      "active": 6,
+      "recovery": 8,
+      "damage": 67,
+      "hitstun": 16,
+      "blockstun": 9,
+      "knockback": 5,
+      "hitbox": {
+        "x": 83,
+        "y": -194,
+        "w": 73,
+        "h": 75
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jhk": {
+      "startup": 9,
+      "active": 6,
+      "recovery": 10,
+      "damage": 99,
+      "hitstun": 20,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": 44,
+        "y": -93,
+        "w": 90,
+        "h": 74
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "throw": {
+      "name": "Throw",
+      "input": {
+        "button": "LPLK"
+      },
+      "startup": 3,
+      "active": 2,
+      "recovery": 20,
+      "damage": 110,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 6,
+      "hitbox": null,
+      "height": "mid",
+      "grab": {
+        "range": 103
+      },
+      "techable": true,
+      "knockdown": true
+    },
+    "bolt": {
+      "name": "Trumpet Blast",
+      "input": {
+        "motion": "cbf",
+        "button": "punch"
+      },
+      "height": "mid",
+      "startup": 13,
+      "active": 2,
+      "recovery": 24,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "projectile": {
+        "vx": 9,
+        "spawnX": 124,
+        "spawnY": -300,
+        "box": {
+          "x": -50,
+          "y": 14,
+          "w": 82,
+          "h": 82
+        },
+        "renderSize": 109,
+        "damage": 60,
+        "hitstun": 18,
+        "blockstun": 12,
+        "knockback": 9
+      },
+      "variants": {
+        "l": {
+          "startup": 11,
+          "projectile": {
+            "vx": 7,
+            "damage": 52
+          }
+        },
+        "h": {
+          "startup": 15,
+          "projectile": {
+            "vx": 11,
+            "damage": 70
+          }
+        }
+      },
+      "hitstop": 15
+    },
+    "step": {
+      "name": "Step",
+      "input": {
+        "motion": "qcb",
+        "button": "kick"
+      },
+      "height": "mid",
+      "startup": 10,
+      "active": 1,
+      "recovery": 18,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "teleport": {
+        "mode": "behind"
+      },
+      "invulnFrom": 6,
+      "invuln": 12,
+      "hitstop": 15
+    },
+    "pillar": {
+      "name": "Pillar",
+      "input": {
+        "motion": "dp",
+        "button": "punch"
+      },
+      "height": "mid",
+      "startup": 5,
+      "active": 8,
+      "recovery": 22,
+      "damage": 104,
+      "hitstun": 20,
+      "blockstun": 12,
+      "knockback": 8,
+      "knockdown": true,
+      "hitbox": {
+        "x": -43,
+        "y": -279,
+        "w": 154,
+        "h": 93
+      },
+      "leap": {
+        "vx": 4,
+        "vy": 16
+      },
+      "invuln": 8,
+      "variants": {
+        "l": {
+          "startup": 4,
+          "damage": 91
+        },
+        "h": {
+          "startup": 7,
+          "damage": 120
+        }
+      },
+      "hitstop": 15
+    },
+    "double": {
+      "name": "Double",
+      "input": {
+        "motion": "qcf",
+        "button": "kick"
+      },
+      "height": "mid",
+      "startup": 9,
+      "active": 4,
+      "recovery": 20,
+      "damage": 91,
+      "hitstun": 18,
+      "blockstun": 12,
+      "knockback": 8,
+      "hitbox": {
+        "x": 40,
+        "y": -230,
+        "w": 80,
+        "h": 238
+      },
+      "forwardVel": 10,
+      "variants": {
+        "l": {
+          "damage": 76,
+          "forwardVel": 7.5
+        },
+        "h": {
+          "damage": 109,
+          "startup": 11,
+          "forwardVel": 12
+        }
+      },
+      "hitstop": 15
+    }
+  },
+  "fatality": {
+    "id": "final-mix",
+    "name": "The Final Mix",
+    "input": {
+      "motion": "hcb",
+      "button": "punch"
+    },
+    "panels": 4
+  },
+  "stage": "star-beach",
+  "vo": {
+    "kiai": [
+      "Ha!",
+      "Ow!",
+      "Take this!",
+      "Come on!",
+      "Hyah!",
+      "NOW!"
+    ],
+    "hurt": [
+      "Ugh!",
+      "Gah!",
+      "Ow!",
+      "Not the face.",
+      "Fuck.",
+      "Oof."
+    ],
+    "victory": [
+      "Too easy!",
+      "Next...",
+      "Predictable.",
+      "Not my band."
+    ]
+  },
+  "arcade": {
+    "motivation": "The Biennale is a stage, and Earl is an off-the-wagon musician who needs exactly one more gig. He enters to conduct the whole tournament like a live set — proving, again, that the sound beats the spectacle.",
+    "ending": "Champion, Earl books The Unhung Zeros to headline the Biennale and takes the stage sober-ish. The mix is perfect and the room is packed. No charlatans made the guest list."
+  }
+}

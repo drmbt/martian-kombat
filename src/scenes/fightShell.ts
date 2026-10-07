@@ -288,7 +288,7 @@ export class FightShell {
     this.pauseMenu?.setVisible(this.paused);
   }
 
-  private restartMatch(): void {
+  restartMatch(): void {
     const o = this.opts;
     // keep showcase so a CPU-vs-CPU demo restarts as CPU-vs-CPU (not human P1)
     this.scene.scene.restart({ p1: o.chars[0], p2: o.chars[1], cpu: o.cpu, training: o.training, showcase: o.showcase, tuner: o.tuner, spriteEditor: o.spriteEditor, studio: o.studio, module: o.module, stage: o.stageId });

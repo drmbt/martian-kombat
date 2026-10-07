@@ -1,0 +1,640 @@
+{
+  "id": "vanessa",
+  "name": "VANESSA",
+  "color": "#a98cff",
+  "stage": "saturn",
+  "winQuotes": [
+    "The Little Martians dreamed this. You were only in it.",
+    "Kneel. The cacao ceremony requires gratitude.",
+    "The ancestors watched. They were not impressed.",
+    "I am the bridge between worlds. You are not crossing.",
+    "Moonchild does not lose. Nyx never did."
+  ],
+  "fatality": {
+    "id": "fired-and-glazed",
+    "name": "Fired & Glazed",
+    "input": {
+      "motion": "hcf",
+      "button": "punch"
+    },
+    "panels": 4
+  },
+  "health": 1040,
+  "walkSpeed": 5.73,
+  "backSpeed": 4.83,
+  "jumpVel": 18,
+  "gravity": 0.95,
+  "prejumpFrames": 4,
+  "bodyBox": {
+    "x": -44,
+    "y": -238,
+    "w": 88,
+    "h": 238
+  },
+  "hurtStand": {
+    "x": -54,
+    "y": -252,
+    "w": 108,
+    "h": 252
+  },
+  "hurtCrouch": {
+    "x": -54,
+    "y": -160,
+    "w": 108,
+    "h": 160
+  },
+  "moves": {
+    "lp": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 10,
+      "damage": 51,
+      "hitstun": 15,
+      "blockstun": 11,
+      "knockback": 7,
+      "hitbox": {
+        "x": 47,
+        "y": -232,
+        "w": 55,
+        "h": 62
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "mp": {
+      "startup": 4,
+      "active": 7,
+      "recovery": 15,
+      "damage": 83,
+      "hitstun": 25,
+      "blockstun": 18,
+      "knockback": 9,
+      "hitbox": {
+        "x": 44,
+        "y": -220,
+        "w": 55,
+        "h": 64
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "hp": {
+      "startup": 12,
+      "active": 4,
+      "recovery": 20,
+      "damage": 119,
+      "hitstun": 24,
+      "blockstun": 15,
+      "knockback": 12,
+      "hitbox": {
+        "x": -8,
+        "y": -247,
+        "w": 115,
+        "h": 200
+      },
+      "height": "mid",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "lk": {
+      "startup": 5,
+      "active": 8,
+      "recovery": 10,
+      "damage": 51,
+      "hitstun": 18,
+      "blockstun": 16,
+      "knockback": 6,
+      "hitbox": {
+        "x": 53,
+        "y": -201,
+        "w": 69,
+        "h": 70
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "mk": {
+      "startup": 9,
+      "active": 7,
+      "recovery": 16,
+      "damage": 92,
+      "hitstun": 26,
+      "blockstun": 19,
+      "knockback": 10,
+      "hitbox": {
+        "x": 16,
+        "y": -116,
+        "w": 63,
+        "h": 67
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "hk": {
+      "startup": 13,
+      "active": 4,
+      "recovery": 21,
+      "damage": 124,
+      "hitstun": 26,
+      "blockstun": 15,
+      "knockback": 13,
+      "hitbox": {
+        "x": 51,
+        "y": -251,
+        "w": 54,
+        "h": 68
+      },
+      "height": "mid",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "clp": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 9,
+      "damage": 47,
+      "hitstun": 14,
+      "blockstun": 10,
+      "knockback": 6,
+      "hitbox": {
+        "x": 23,
+        "y": -141,
+        "w": 80,
+        "h": 127
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "cmp": {
+      "startup": 8,
+      "active": 4,
+      "recovery": 15,
+      "damage": 78,
+      "hitstun": 22,
+      "blockstun": 15,
+      "knockback": 8,
+      "hitbox": {
+        "x": 32,
+        "y": -214,
+        "w": 52,
+        "h": 65
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "chp": {
+      "startup": 11,
+      "active": 5,
+      "recovery": 20,
+      "damage": 108,
+      "hitstun": 24,
+      "blockstun": 14,
+      "knockback": 10,
+      "hitbox": {
+        "x": -26,
+        "y": -202,
+        "w": 73,
+        "h": 107
+      },
+      "height": "mid",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "clk": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 10,
+      "damage": 47,
+      "hitstun": 14,
+      "blockstun": 11,
+      "knockback": 6,
+      "hitbox": {
+        "x": 54,
+        "y": -110,
+        "w": 62,
+        "h": 70
+      },
+      "height": "low",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "cmk": {
+      "startup": 8,
+      "active": 4,
+      "recovery": 16,
+      "damage": 83,
+      "hitstun": 23,
+      "blockstun": 16,
+      "knockback": 9,
+      "hitbox": {
+        "x": 43,
+        "y": -43,
+        "w": 82,
+        "h": 54
+      },
+      "height": "low",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "chk": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 20,
+      "damage": 74,
+      "hitstun": 20,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": 55,
+        "y": -94,
+        "w": 70,
+        "h": 70
+      },
+      "height": "low",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "jlp": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 8,
+      "damage": 49,
+      "hitstun": 15,
+      "blockstun": 10,
+      "knockback": 6,
+      "hitbox": {
+        "x": 42,
+        "y": -162,
+        "w": 63,
+        "h": 57
+      },
+      "height": "high",
+      "hitstop": 8
+    },
+    "jmp": {
+      "startup": 6,
+      "active": 6,
+      "recovery": 10,
+      "damage": 78,
+      "hitstun": 18,
+      "blockstun": 12,
+      "knockback": 8,
+      "hitbox": {
+        "x": 44,
+        "y": -159,
+        "w": 56,
+        "h": 47
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jhp": {
+      "startup": 8,
+      "active": 7,
+      "recovery": 12,
+      "damage": 108,
+      "hitstun": 22,
+      "blockstun": 14,
+      "knockback": 10,
+      "hitbox": {
+        "x": 8,
+        "y": -262,
+        "w": 51,
+        "h": 51
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jlk": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 8,
+      "damage": 47,
+      "hitstun": 14,
+      "blockstun": 10,
+      "knockback": 6,
+      "hitbox": {
+        "x": 2,
+        "y": -112,
+        "w": 57,
+        "h": 68
+      },
+      "height": "high",
+      "hitstop": 8
+    },
+    "jmk": {
+      "startup": 6,
+      "active": 7,
+      "recovery": 10,
+      "damage": 83,
+      "hitstun": 19,
+      "blockstun": 12,
+      "knockback": 9,
+      "hitbox": {
+        "x": 55,
+        "y": -85,
+        "w": 75,
+        "h": 62
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jhk": {
+      "startup": 9,
+      "active": 7,
+      "recovery": 12,
+      "damage": 113,
+      "hitstun": 23,
+      "blockstun": 14,
+      "knockback": 12,
+      "hitbox": {
+        "x": 47,
+        "y": -234,
+        "w": 61,
+        "h": 71
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "little-martian": {
+      "name": "Little Martian",
+      "input": {
+        "motion": "qcf",
+        "button": "punch"
+      },
+      "startup": 14,
+      "active": 3,
+      "recovery": 24,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "projectile": {
+        "vx": 6,
+        "spawnX": 64,
+        "spawnY": -149,
+        "box": {
+          "x": -30,
+          "y": -30,
+          "w": 60,
+          "h": 60
+        },
+        "damage": 70,
+        "hitstun": 20,
+        "blockstun": 12,
+        "knockback": 8,
+        "ttl": 90
+      },
+      "variants": {
+        "l": {
+          "projectile": {
+            "vx": 4.5
+          }
+        },
+        "h": {
+          "projectile": {
+            "vx": 8.5
+          }
+        }
+      },
+      "hitstop": 15
+    },
+    "chocolate-head": {
+      "name": "Chocolate Head",
+      "input": {
+        "motion": "qcb",
+        "button": "punch"
+      },
+      "startup": 16,
+      "active": 2,
+      "recovery": 24,
+      "damage": 26,
+      "hitstun": 0,
+      "blockstun": 36,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "projectile": {
+        "vx": 4,
+        "vy": -13,
+        "gravity": 0.7,
+        "spawnX": 40,
+        "spawnY": -196,
+        "box": {
+          "x": -40,
+          "y": -54,
+          "w": 80,
+          "h": 108
+        },
+        "damage": 16,
+        "hitstun": 8,
+        "blockstun": 6,
+        "knockback": 2,
+        "ttl": 150,
+        "rehit": 28
+      },
+      "variants": {
+        "l": {
+          "projectile": {
+            "vx": 2.6,
+            "ttl": 110
+          }
+        },
+        "h": {
+          "projectile": {
+            "vx": 5.6,
+            "ttl": 200
+          }
+        }
+      },
+      "hitstop": 15
+    },
+    "teleportal": {
+      "name": "Teleportal",
+      "input": {
+        "motion": "qcb",
+        "button": "kick"
+      },
+      "startup": 12,
+      "active": 2,
+      "recovery": 14,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "invuln": 16,
+      "voice": true,
+      "teleport": {
+        "mode": "behind"
+      },
+      "voiceText": "Dream.",
+      "hitstop": 15
+    },
+    "euc-crash": {
+      "name": "EUC Crash",
+      "input": {
+        "motion": "bf",
+        "button": "punch"
+      },
+      "startup": 11,
+      "active": 8,
+      "recovery": 22,
+      "damage": 105,
+      "hitstun": 22,
+      "blockstun": 20,
+      "knockback": 12,
+      "hitbox": {
+        "x": -11,
+        "y": -233,
+        "w": 110,
+        "h": 173
+      },
+      "height": "mid",
+      "knockdown": true,
+      "forwardVel": 15,
+      "variants": {
+        "l": {
+          "forwardVel": 10,
+          "damage": 87,
+          "recovery": 18
+        },
+        "h": {
+          "forwardVel": 19,
+          "damage": 119,
+          "recovery": 28
+        }
+      },
+      "hitstop": 15
+    },
+    "spoken-word": {
+      "name": "Spoken Word",
+      "input": {
+        "motion": "dp",
+        "button": "punch"
+      },
+      "startup": 6,
+      "active": 8,
+      "recovery": 26,
+      "damage": 108,
+      "hitstun": 22,
+      "blockstun": 14,
+      "knockback": 10,
+      "hitbox": {
+        "x": 10,
+        "y": -349,
+        "w": 118,
+        "h": 220
+      },
+      "height": "mid",
+      "knockdown": true,
+      "invuln": 8,
+      "variants": {
+        "l": {
+          "damage": 80,
+          "invuln": 6,
+          "recovery": 20,
+          "hitbox": {
+            "x": 8,
+            "y": -320,
+            "w": 100,
+            "h": 180
+          }
+        },
+        "h": {
+          "damage": 122,
+          "invuln": 10,
+          "recovery": 32
+        }
+      },
+      "hitstop": 15
+    },
+    "throw": {
+      "name": "Throw",
+      "input": {
+        "button": "LPLK"
+      },
+      "startup": 4,
+      "active": 2,
+      "recovery": 20,
+      "damage": 98,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 9,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 111
+      },
+      "tossArc": {
+        "vy": -6.5,
+        "knockbackMult": 1
+      },
+      "techable": true
+    }
+  },
+  "scale": 0.91,
+  "vo": {
+    "kiai": [
+      "Verdelis!",
+      "Little Martians!",
+      "Cacao!",
+      "Awaken!",
+      "The ancestors!",
+      "Hah!"
+    ],
+    "hurt": [
+      "Ai!",
+      "Merda!",
+      "Caralho!",
+      "Porra!",
+      "Ai, não!",
+      "Puta que pariu!"
+    ],
+    "victory": [
+      "The Little Martians dreamed this.",
+      "Say thank you. The ceremony requires it.",
+      "The ancestors are pleased.",
+      "Dear human: you are forgettable."
+    ]
+  },
+  "lore": {
+    "tagline": "The High Priestess of Mars. The Little Martians dreamed you here.",
+    "personality": "Mars’s high priestess — once Nyx, now Moonchild. Serene, oracular, ceremonial; channels the Little Martians and the ancestors. Married to the Code Weaver.",
+    "backstory": "Arrived in Mars’s first year fleeing a collapsing country and began the ancestors’ clay-worship that the priest Sofy recognized as a priesthood. Her cacao gratitude ceremony and the Little Martians — future descendants who speak through her dreams and her AI characters — made her the bridge Pseudo renamed Moonchild."
+  },
+  "arcade": {
+    "motivation": "The Little Martians showed Vanessa the tournament in a dream — a ceremony she must complete. She climbs the ladder as High Priestess to consecrate the Biennale, ending at the Patron Prince’s throne. Her partner, the Code Weaver, is somewhere in the bracket too.",
+    "ending": "Champion, Moonchild consecrates the desert. The Little Martians speak through the winning banner, and the cacao gratitude ceremony becomes the Biennale’s founding rite. The ancestors, at last, are pleased."
+  }
+}

@@ -21,6 +21,10 @@ import { LaunchData, rememberDevLaunch } from './devLaunch';
 const devWindow = window as unknown as { __mkScenePatch?: boolean; __game?: Phaser.Game };
 
 if (import.meta.env.DEV) {
+  // dev-only: calibration A/B (02-PLAN P13.5) — F6 in a fight flips between
+  // the shipped roster and the calibrated proposals. Dynamic import inside
+  // the DEV branch, so prod never bundles it.
+  void import('./data/calibration/ab').then((m) => m.installAB());
   // dev-only: paint uncaught errors on screen — a crashed rAF loop otherwise
   // looks like "the game froze" with no clue why
   const showError = (msg: string): void => {

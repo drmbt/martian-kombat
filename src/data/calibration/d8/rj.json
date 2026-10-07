@@ -1,0 +1,615 @@
+{
+  "id": "rj",
+  "name": "RJ",
+  "color": "#e8e4d8",
+  "stage": "last-resort",
+  "lore": {
+    "tagline": "A well-defined living skeleton, standing head and clavicle above a miasma of screaming ghosts.",
+    "personality": "A deadpan desert raconteur and ghost artist who talks like a dusty dictionary — obscure vocabulary, infinite patience, a BB gun, and a mini-excavator he rides like a horse. Adamant that he is not a golem, homunculus, or puppet coaxed to life by dark magic.",
+    "backstory": "RJ builds the white sheet-ghost installations that haunt Bombay Beach, crowned by the World's Tallest Ghost over the Ghost Theater. He is an expert at everything from MS-DOS to snake-wrangling (in a strictly supervisory capacity, phone in hand). As the Biennale's gatekeeper he is the last door between a challenger and the Patron Prince — and when his patience runs out, the flesh goes and the skeleton answers."
+  },
+  "winQuotes": [
+    "I know words like 'burgeomeister.' You knew none of them.",
+    "I watched a man run MS-DOS from a crashing plane. This was less impressive.",
+    "Get off my lot.",
+    "You know nothing of bats."
+  ],
+  "vo": {
+    "kiai": [
+      "Go on, git!!!",
+      "Hup!",
+      "YAW!!!",
+      "Hyah!",
+      "Hyee-YAH!",
+      "Whooooa."
+    ],
+    "hurt": [
+      "Ngh!",
+      "Dang.",
+      "Rude.",
+      "Ow, hell.",
+      "Tsk.",
+      "FUUUCK!!!"
+    ],
+    "victory": [
+      "Get. Off. My. Lot.",
+      "Well, I reckon that's that.",
+      "The ghosts saw everything.",
+      "Your problem is, you've got no style"
+    ]
+  },
+  "arcade": {
+    "motivation": "RJ doesn't care who wins the Biennale — he cares who tramples his lot getting there. Tao pays him in diesel and birdseed to watch the gate, and RJ watches it the way the desert watches everything: patiently, with a BB gun across his knees. Anyone who wants the Patron Prince answers to the gun, the ghosts, and the skeleton first.",
+    "ending": "With Tao dethroned, RJ shrugs and gets back to work. There's a new ghost to raise — the tallest yet — and somebody left an art car axle-deep in the mud again. Bombay Beach never needed a champion. It needed a caretaker, and it always had one."
+  },
+  "fatality": {
+    "id": "for-the-birds",
+    "name": "For The Birds",
+    "input": {
+      "motion": "hcb",
+      "button": "kick"
+    },
+    "panels": 4
+  },
+  "health": 1150,
+  "walkSpeed": 6.4,
+  "backSpeed": 6.4,
+  "jumpVel": 17.5,
+  "gravity": 0.92,
+  "prejumpFrames": 5,
+  "scale": 1,
+  "bodyBox": {
+    "x": -44,
+    "y": -242,
+    "w": 88,
+    "h": 242
+  },
+  "hurtStand": {
+    "x": -54,
+    "y": -256,
+    "w": 108,
+    "h": 256
+  },
+  "hurtCrouch": {
+    "x": -54,
+    "y": -152,
+    "w": 108,
+    "h": 152
+  },
+  "moves": {
+    "lp": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 10,
+      "damage": 59,
+      "hitstun": 16,
+      "blockstun": 11,
+      "knockback": 5,
+      "hitbox": {
+        "x": -1,
+        "y": -225,
+        "w": 126,
+        "h": 26
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "mp": {
+      "startup": 9,
+      "active": 3,
+      "recovery": 15,
+      "damage": 94,
+      "hitstun": 21,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": 9,
+        "y": -223,
+        "w": 111,
+        "h": 41
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "hp": {
+      "startup": 12,
+      "active": 4,
+      "recovery": 21,
+      "damage": 133,
+      "hitstun": 20,
+      "blockstun": 15,
+      "knockback": 8,
+      "hitbox": {
+        "x": 42,
+        "y": -256,
+        "w": 99,
+        "h": 67
+      },
+      "height": "mid",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "lk": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 11,
+      "damage": 58,
+      "hitstun": 14,
+      "blockstun": 12,
+      "knockback": 3,
+      "hitbox": {
+        "x": 1,
+        "y": -197,
+        "w": 113,
+        "h": 70
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "mk": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 16,
+      "damage": 99,
+      "hitstun": 23,
+      "blockstun": 16,
+      "knockback": 8,
+      "hitbox": {
+        "x": -48,
+        "y": -231,
+        "w": 169,
+        "h": 230
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "hk": {
+      "startup": 13,
+      "active": 4,
+      "recovery": 21,
+      "damage": 137,
+      "hitstun": 20,
+      "blockstun": 15,
+      "knockback": 8,
+      "hitbox": {
+        "x": -49,
+        "y": -247,
+        "w": 175,
+        "h": 246
+      },
+      "height": "mid",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "clp": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 9,
+      "damage": 52,
+      "hitstun": 12,
+      "blockstun": 10,
+      "knockback": 3,
+      "hitbox": {
+        "x": 8,
+        "y": -124,
+        "w": 87,
+        "h": 24
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "cmp": {
+      "startup": 8,
+      "active": 4,
+      "recovery": 14,
+      "damage": 80,
+      "hitstun": 21,
+      "blockstun": 14,
+      "knockback": 5,
+      "hitbox": {
+        "x": 8,
+        "y": -120,
+        "w": 105,
+        "h": 25
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "chp": {
+      "startup": 10,
+      "active": 4,
+      "recovery": 19,
+      "damage": 117,
+      "hitstun": 25,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": 54,
+        "y": -201,
+        "w": 95,
+        "h": 64
+      },
+      "height": "mid",
+      "hitstop": 12
+    },
+    "clk": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 10,
+      "damage": 52,
+      "hitstun": 13,
+      "blockstun": 11,
+      "knockback": 3,
+      "hitbox": {
+        "x": 8,
+        "y": -110,
+        "w": 113,
+        "h": 102
+      },
+      "height": "low",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "cmk": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 15,
+      "damage": 84,
+      "hitstun": 22,
+      "blockstun": 15,
+      "knockback": 5,
+      "hitbox": {
+        "x": 57,
+        "y": -54,
+        "w": 80,
+        "h": 55
+      },
+      "height": "low",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "chk": {
+      "startup": 12,
+      "active": 5,
+      "recovery": 22,
+      "damage": 120,
+      "hitstun": 20,
+      "blockstun": 17,
+      "knockback": 8,
+      "hitbox": {
+        "x": 8,
+        "y": -176,
+        "w": 94,
+        "h": 93
+      },
+      "height": "low",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "jlp": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 6,
+      "damage": 55,
+      "hitstun": 12,
+      "blockstun": 9,
+      "knockback": 3,
+      "hitbox": {
+        "x": -31,
+        "y": -261,
+        "w": 130,
+        "h": 227
+      },
+      "height": "high",
+      "hitstop": 8
+    },
+    "jmp": {
+      "startup": 6,
+      "active": 6,
+      "recovery": 8,
+      "damage": 86,
+      "hitstun": 20,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": -31,
+        "y": -265,
+        "w": 147,
+        "h": 231
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jhp": {
+      "startup": 8,
+      "active": 6,
+      "recovery": 10,
+      "damage": 123,
+      "hitstun": 20,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": -31,
+        "y": -272,
+        "w": 135,
+        "h": 238
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jlk": {
+      "startup": 5,
+      "active": 6,
+      "recovery": 6,
+      "damage": 58,
+      "hitstun": 12,
+      "blockstun": 9,
+      "knockback": 3,
+      "hitbox": {
+        "x": -17,
+        "y": -111,
+        "w": 96,
+        "h": 91
+      },
+      "height": "high",
+      "hitstop": 8
+    },
+    "jmk": {
+      "startup": 7,
+      "active": 6,
+      "recovery": 8,
+      "damage": 88,
+      "hitstun": 20,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": 14,
+        "y": -105,
+        "w": 104,
+        "h": 82
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jhk": {
+      "startup": 9,
+      "active": 6,
+      "recovery": 10,
+      "damage": 127,
+      "hitstun": 20,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": 36,
+        "y": -184,
+        "w": 84,
+        "h": 33
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "throw": {
+      "name": "Evicted",
+      "input": {
+        "button": "LPLK"
+      },
+      "startup": 4,
+      "active": 2,
+      "recovery": 21,
+      "damage": 120,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 10,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 120
+      },
+      "tossArc": {
+        "vy": -7,
+        "knockbackMult": 1
+      },
+      "techable": true,
+      "voiceText": "Evicted!",
+      "voice": true
+    },
+    "bb-gun": {
+      "name": "BB Gun",
+      "input": {
+        "motion": "qcf",
+        "button": "punch"
+      },
+      "startup": 12,
+      "active": 2,
+      "recovery": 24,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "projectile": {
+        "vx": 11,
+        "spawnX": 104,
+        "spawnY": -186,
+        "box": {
+          "x": -22,
+          "y": -18,
+          "w": 44,
+          "h": 36
+        },
+        "renderSize": 60,
+        "damage": 62,
+        "hitstun": 17,
+        "blockstun": 11,
+        "knockback": 8
+      },
+      "voiceText": "Plink!",
+      "voice": true,
+      "variants": {
+        "l": {
+          "startup": 10,
+          "projectile": {
+            "damage": 53,
+            "vx": 9
+          }
+        },
+        "h": {
+          "startup": 15,
+          "projectile": {
+            "damage": 71,
+            "vx": 13
+          }
+        }
+      },
+      "hitstop": 15
+    },
+    "tallest-ghost": {
+      "name": "World's Tallest Ghost",
+      "input": {
+        "motion": "dp",
+        "button": "punch"
+      },
+      "startup": 5,
+      "active": 8,
+      "recovery": 26,
+      "damage": 125,
+      "hitstun": 22,
+      "blockstun": 14,
+      "knockback": 9,
+      "knockdown": true,
+      "height": "mid",
+      "hitbox": {
+        "x": -68,
+        "y": -256,
+        "w": 139,
+        "h": 259
+      },
+      "leap": {
+        "vx": 3,
+        "vy": 17
+      },
+      "invuln": 8,
+      "voiceText": "Boo!",
+      "voice": true,
+      "variants": {
+        "l": {
+          "startup": 3,
+          "damage": 107,
+          "invuln": 6,
+          "recovery": 22
+        },
+        "h": {
+          "startup": 7,
+          "damage": 143,
+          "invuln": 10,
+          "recovery": 32
+        }
+      },
+      "hitstop": 15
+    },
+    "excavator-charge": {
+      "name": "Excavator Charge",
+      "input": {
+        "motion": "bf",
+        "button": "punch"
+      },
+      "startup": 12,
+      "active": 8,
+      "recovery": 24,
+      "damage": 120,
+      "hitstun": 22,
+      "blockstun": 24,
+      "knockback": 12,
+      "knockdown": true,
+      "height": "mid",
+      "hitbox": {
+        "x": -73,
+        "y": -183,
+        "w": 197,
+        "h": 181
+      },
+      "forwardVel": 15,
+      "voiceText": "Dig in!",
+      "voice": true,
+      "variants": {
+        "l": {
+          "forwardVel": 11,
+          "damage": 99,
+          "recovery": 20
+        },
+        "h": {
+          "forwardVel": 19,
+          "damage": 137,
+          "recovery": 30
+        }
+      },
+      "hitstop": 15
+    },
+    "rattlebones": {
+      "name": "Rattlebones",
+      "input": {
+        "motion": "hcb",
+        "button": "punch"
+      },
+      "startup": 7,
+      "active": 3,
+      "recovery": 30,
+      "damage": 168,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 8,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 105
+      },
+      "tossArc": {
+        "vy": -5,
+        "knockbackMult": 1
+      },
+      "voiceText": "C'mere.",
+      "voice": true,
+      "variants": {
+        "l": {
+          "startup": 6,
+          "damage": 146,
+          "recovery": 26
+        },
+        "h": {
+          "startup": 7,
+          "damage": 193,
+          "recovery": 36
+        }
+      }
+    }
+  }
+}

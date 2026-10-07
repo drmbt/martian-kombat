@@ -1,0 +1,648 @@
+{
+  "id": "vincent",
+  "name": "VINCENT",
+  "color": "#58e6d9",
+  "stage": "van",
+  "winQuotes": [
+    "Well well well, look what we have here",
+    "I took everything you had. It wasn't much.",
+    "Offense can't be given, only taken. You took plenty.",
+    "I am the signal. You are just noise.",
+    "The mirror reflects the truth, and the truth reflects your weakness."
+  ],
+  "health": 986,
+  "walkSpeed": 7.1,
+  "backSpeed": 5.25,
+  "jumpVel": 18,
+  "gravity": 0.9,
+  "prejumpFrames": 3,
+  "bodyBox": {
+    "x": -51,
+    "y": -267,
+    "w": 102,
+    "h": 267
+  },
+  "hurtStand": {
+    "x": -63,
+    "y": -284,
+    "w": 127,
+    "h": 284
+  },
+  "hurtCrouch": {
+    "x": -63,
+    "y": -183,
+    "w": 127,
+    "h": 183
+  },
+  "moves": {
+    "lp": {
+      "startup": 4,
+      "active": 3,
+      "recovery": 9,
+      "damage": 44,
+      "hitstun": 14,
+      "blockstun": 10,
+      "knockback": 7,
+      "hitbox": {
+        "x": 56,
+        "y": -214,
+        "w": 77,
+        "h": 58
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk",
+        "mp"
+      ],
+      "hitstop": 8
+    },
+    "mp": {
+      "startup": 7,
+      "active": 3,
+      "recovery": 13,
+      "damage": 68,
+      "hitstun": 19,
+      "blockstun": 12,
+      "knockback": 9,
+      "hitbox": {
+        "x": 58,
+        "y": -220,
+        "w": 67,
+        "h": 70
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "hp": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 17,
+      "damage": 88,
+      "hitstun": 23,
+      "blockstun": 14,
+      "knockback": 11,
+      "hitbox": {
+        "x": 49,
+        "y": -220,
+        "w": 63,
+        "h": 68
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "lk": {
+      "startup": 2,
+      "active": 12,
+      "recovery": 5,
+      "damage": 39,
+      "hitstun": 17,
+      "blockstun": 15,
+      "knockback": 6,
+      "hitbox": {
+        "x": 57,
+        "y": -180,
+        "w": 72,
+        "h": 74
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "mk": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 16,
+      "damage": 73,
+      "hitstun": 23,
+      "blockstun": 16,
+      "knockback": 10,
+      "hitbox": {
+        "x": 41,
+        "y": -223,
+        "w": 77,
+        "h": 67
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "hk": {
+      "startup": 6,
+      "active": 16,
+      "recovery": 9,
+      "damage": 97,
+      "hitstun": 24,
+      "blockstun": 15,
+      "knockback": 12,
+      "hitbox": {
+        "x": 71,
+        "y": -241,
+        "w": 79,
+        "h": 66
+      },
+      "height": "mid",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "clp": {
+      "startup": 2,
+      "active": 9,
+      "recovery": 7,
+      "damage": 39,
+      "hitstun": 16,
+      "blockstun": 14,
+      "knockback": 6,
+      "hitbox": {
+        "x": 63,
+        "y": -171,
+        "w": 65,
+        "h": 59
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "cmp": {
+      "startup": 7,
+      "active": 4,
+      "recovery": 14,
+      "damage": 63,
+      "hitstun": 21,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": 59,
+        "y": -219,
+        "w": 61,
+        "h": 69
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "chp": {
+      "startup": 10,
+      "active": 5,
+      "recovery": 18,
+      "damage": 88,
+      "hitstun": 23,
+      "blockstun": 14,
+      "knockback": 10,
+      "hitbox": {
+        "x": 45,
+        "y": -237,
+        "w": 54,
+        "h": 74
+      },
+      "height": "mid",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "clk": {
+      "startup": 2,
+      "active": 10,
+      "recovery": 8,
+      "damage": 39,
+      "hitstun": 18,
+      "blockstun": 16,
+      "knockback": 6,
+      "hitbox": {
+        "x": 48,
+        "y": -115,
+        "w": 76,
+        "h": 59
+      },
+      "height": "low",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "cmk": {
+      "startup": 4,
+      "active": 12,
+      "recovery": 9,
+      "damage": 63,
+      "hitstun": 24,
+      "blockstun": 17,
+      "knockback": 8,
+      "hitbox": {
+        "x": 90,
+        "y": -56,
+        "w": 63,
+        "h": 67
+      },
+      "height": "low",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "chk": {
+      "startup": 8,
+      "active": 4,
+      "recovery": 19,
+      "damage": 63,
+      "hitstun": 20,
+      "blockstun": 13,
+      "knockback": 8,
+      "hitbox": {
+        "x": 71,
+        "y": -148,
+        "w": 66,
+        "h": 72
+      },
+      "height": "low",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "jlp": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 8,
+      "damage": 44,
+      "hitstun": 14,
+      "blockstun": 10,
+      "knockback": 6,
+      "hitbox": {
+        "x": 63,
+        "y": -222,
+        "w": 61,
+        "h": 71
+      },
+      "height": "high",
+      "hitstop": 8
+    },
+    "jmp": {
+      "startup": 6,
+      "active": 6,
+      "recovery": 10,
+      "damage": 63,
+      "hitstun": 17,
+      "blockstun": 11,
+      "knockback": 8,
+      "hitbox": {
+        "x": 59,
+        "y": -220,
+        "w": 62,
+        "h": 68
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jhp": {
+      "startup": 8,
+      "active": 7,
+      "recovery": 12,
+      "damage": 83,
+      "hitstun": 21,
+      "blockstun": 13,
+      "knockback": 10,
+      "hitbox": {
+        "x": -29,
+        "y": -240,
+        "w": 140,
+        "h": 228
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jlk": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 8,
+      "damage": 39,
+      "hitstun": 13,
+      "blockstun": 9,
+      "knockback": 6,
+      "hitbox": {
+        "x": 21,
+        "y": -116,
+        "w": 73,
+        "h": 71
+      },
+      "height": "high",
+      "hitstop": 8
+    },
+    "jmk": {
+      "startup": 6,
+      "active": 7,
+      "recovery": 10,
+      "damage": 63,
+      "hitstun": 18,
+      "blockstun": 11,
+      "knockback": 9,
+      "hitbox": {
+        "x": 59,
+        "y": -169,
+        "w": 74,
+        "h": 65
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jhk": {
+      "startup": 9,
+      "active": 7,
+      "recovery": 12,
+      "damage": 88,
+      "hitstun": 22,
+      "blockstun": 13,
+      "knockback": 11,
+      "comment": "hitbox is authored, NOT pose-measured: the drawn crescent-kick leg sits high (measured y=-218) but jhk's role is an air overhead that must reach a grounded/crouching defender on descent — an art-vs-intent divergence, so the box is intentionally lower/bigger than the limb. Do not --calibrate-force this cell.",
+      "hitbox": {
+        "x": 47,
+        "y": -185,
+        "w": 54,
+        "h": 57
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "sigil-bolt": {
+      "name": "Sigil Bolt",
+      "input": {
+        "motion": "qcf",
+        "button": "punch"
+      },
+      "startup": 13,
+      "active": 2,
+      "recovery": 24,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "projectile": {
+        "vx": 10,
+        "spawnX": 122,
+        "spawnY": -200,
+        "box": {
+          "x": 16,
+          "y": -16,
+          "w": 56,
+          "h": 56
+        },
+        "damage": 70,
+        "hitstun": 18,
+        "blockstun": 12,
+        "knockback": 9,
+        "renderSize": 116
+      },
+      "variants": {
+        "l": {
+          "projectile": {
+            "vx": 6
+          }
+        },
+        "h": {
+          "projectile": {
+            "vx": 14
+          }
+        }
+      },
+      "hitstop": 15
+    },
+    "cloud-hands": {
+      "name": "Cloud Hands",
+      "input": {
+        "motion": "qcb",
+        "button": "punch"
+      },
+      "startup": 9,
+      "active": 10,
+      "recovery": 18,
+      "damage": 78,
+      "hitstun": 22,
+      "blockstun": 16,
+      "knockback": 9,
+      "hitbox": {
+        "x": 58,
+        "y": -219,
+        "w": 57,
+        "h": 90
+      },
+      "height": "mid",
+      "forwardVel": 12,
+      "variants": {
+        "l": {
+          "forwardVel": 6,
+          "active": 6,
+          "damage": 58,
+          "recovery": 14
+        },
+        "h": {
+          "forwardVel": 16,
+          "damage": 92,
+          "recovery": 22
+        }
+      },
+      "hitstop": 15
+    },
+    "rising-glyph": {
+      "name": "Rising Glyph",
+      "input": {
+        "motion": "dp",
+        "button": "punch"
+      },
+      "startup": 5,
+      "active": 10,
+      "recovery": 24,
+      "damage": 88,
+      "hitstun": 24,
+      "blockstun": 14,
+      "knockback": 9,
+      "hitbox": {
+        "x": -36,
+        "y": -321,
+        "w": 161,
+        "h": 158
+      },
+      "height": "mid",
+      "knockdown": true,
+      "invuln": 8,
+      "variants": {
+        "l": {
+          "damage": 68,
+          "invuln": 6,
+          "recovery": 18,
+          "hitbox": {
+            "x": 10,
+            "y": -305,
+            "w": 112,
+            "h": 229
+          },
+          "leap": {
+            "vx": 1.5,
+            "vy": 11
+          }
+        },
+        "h": {
+          "damage": 102,
+          "invuln": 10,
+          "recovery": 30,
+          "leap": {
+            "vx": 3.5,
+            "vy": 17
+          }
+        }
+      },
+      "leap": {
+        "vx": 4.5,
+        "vy": 18
+      },
+      "vfx": {
+        "size": 180,
+        "anchor": "impact"
+      },
+      "voice": true,
+      "voiceText": "(SFX)",
+      "hitstop": 15
+    },
+    "redirect": {
+      "name": "Redirect",
+      "input": {
+        "motion": "bf",
+        "button": "punch"
+      },
+      "startup": 4,
+      "active": 14,
+      "recovery": 12,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": {
+        "x": 31,
+        "y": -252,
+        "w": 85,
+        "h": 150
+      },
+      "height": "mid",
+      "reflect": true,
+      "variants": {
+        "l": {
+          "active": 10,
+          "recovery": 10
+        },
+        "h": {
+          "active": 22,
+          "recovery": 16
+        }
+      },
+      "voice": true,
+      "voiceText": "Back at ya!",
+      "hitstop": 15
+    },
+    "matrix-teleport": {
+      "name": "Matrix Teleport",
+      "input": {
+        "motion": "qcf",
+        "button": "kick"
+      },
+      "startup": 28,
+      "active": 4,
+      "recovery": 20,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "teleport": {
+        "mode": "behind",
+        "mirror": true
+      },
+      "invulnFrom": 14,
+      "invuln": 24,
+      "voice": true,
+      "voiceText": "(SFX)",
+      "hitstop": 15
+    },
+    "throw": {
+      "name": "Throw",
+      "input": {
+        "button": "LPLK"
+      },
+      "startup": 4,
+      "active": 8,
+      "recovery": 20,
+      "damage": 83,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 9,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 165
+      },
+      "tossArc": {
+        "vy": -10.5,
+        "knockbackMult": 1.5
+      },
+      "techable": true,
+      "voice": true,
+      "voiceText": "YEET!"
+    }
+  },
+  "fatality": {
+    "id": "blue-screen",
+    "name": "Blue Screen",
+    "input": {
+      "motion": "qcb",
+      "button": "punch"
+    },
+    "panels": 4
+  },
+  "vo": {
+    "kiai": [
+      "Huh!",
+      "Raw!",
+      "Chop.",
+      "Fuck you.",
+      "Ha!",
+      "Pow!"
+    ],
+    "hurt": [
+      "Fuck.",
+      "Oof.",
+      "Ihck!",
+      "Awweee",
+      "Scheiße!",
+      "God damn it!"
+    ],
+    "victory": [
+      "Balance restored.",
+      "The circuit is complete.",
+      "As it was written.",
+      "You were only noise?"
+    ]
+  },
+  "lore": {
+    "tagline": "Chaotic evil with a heart of gold — and root on the MarsNAS.",
+    "personality": "Multimedia artist and creative coder who teaches by ranting; DJ, stand-up, live-coder, professor of the dark arts. Sees every fight as signal versus noise and keeps the receipts.",
+    "backstory": "Rolled into Mars in 2022 in a spray-paint-riddled 2004 Dodge Sprinter and never really left. Runs the Media Cave, co-founded Promp Industries with Flo, is a founding Data Daddy, and stewards the MarsNAS — the living archive and shared lore of Mars College."
+  },
+  "arcade": {
+    "motivation": "To Vincent the whole ladder is just noise around his signal — and every fighter is a recording worth keeping. He enters to prove it, and to feed the MarsNAS one more chapter of Mars’s living lore.",
+    "ending": "Champion of the Biennale, Vincent uploads the entire tournament to the MarsNAS as its definitive record, annotated and archived. Somewhere in the desert the Sprinter’s engine turns over, and the signal rolls on to the next town."
+  }
+}

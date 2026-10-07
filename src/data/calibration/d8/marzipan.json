@@ -1,0 +1,629 @@
+{
+  "id": "marzipan",
+  "name": "MARZIPAN",
+  "color": "#7fbf5f",
+  "stage": "salton",
+  "winQuotes": [
+    "Everything composts eventually. Now it's your turn.",
+    "I don't fight. I cultivate. You were the weeds.",
+    "Your roots were too shallow. Now you're fertilizer.",
+    "I hope you'll still collaborate with me.",
+    "Cyanobacteria invented oxygen. I invented your defeat."
+  ],
+  "fatality": {
+    "id": "compost",
+    "name": "Compost",
+    "input": {
+      "motion": "qcb",
+      "button": "punch"
+    },
+    "panels": 4
+  },
+  "health": 1150,
+  "walkSpeed": 6.35,
+  "backSpeed": 5.6,
+  "jumpVel": 16,
+  "gravity": 0.62,
+  "prejumpFrames": 5,
+  "bodyBox": {
+    "x": -44,
+    "y": -240,
+    "w": 88,
+    "h": 240
+  },
+  "hurtStand": {
+    "x": -54,
+    "y": -254,
+    "w": 108,
+    "h": 254
+  },
+  "hurtCrouch": {
+    "x": -54,
+    "y": -160,
+    "w": 108,
+    "h": 160
+  },
+  "moves": {
+    "lp": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 11,
+      "damage": 54,
+      "hitstun": 15,
+      "blockstun": 12,
+      "knockback": 7,
+      "hitbox": {
+        "x": 47,
+        "y": -207,
+        "w": 76,
+        "h": 59
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "mp": {
+      "startup": 9,
+      "active": 3,
+      "recovery": 15,
+      "damage": 87,
+      "hitstun": 21,
+      "blockstun": 14,
+      "knockback": 10,
+      "hitbox": {
+        "x": 47,
+        "y": -204,
+        "w": 60,
+        "h": 58
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "hp": {
+      "startup": 12,
+      "active": 4,
+      "recovery": 20,
+      "damage": 121,
+      "hitstun": 24,
+      "blockstun": 15,
+      "knockback": 12,
+      "hitbox": {
+        "x": 46,
+        "y": -202,
+        "w": 60,
+        "h": 56
+      },
+      "height": "mid",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "lk": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 10,
+      "damage": 52,
+      "hitstun": 14,
+      "blockstun": 11,
+      "knockback": 6,
+      "hitbox": {
+        "x": 51,
+        "y": -100,
+        "w": 70,
+        "h": 70
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "mk": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 16,
+      "damage": 95,
+      "hitstun": 23,
+      "blockstun": 16,
+      "knockback": 10,
+      "hitbox": {
+        "x": 58,
+        "y": -209,
+        "w": 63,
+        "h": 72
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "hk": {
+      "startup": 13,
+      "active": 4,
+      "recovery": 21,
+      "damage": 125,
+      "hitstun": 26,
+      "blockstun": 15,
+      "knockback": 13,
+      "hitbox": {
+        "x": 55,
+        "y": -217,
+        "w": 58,
+        "h": 65
+      },
+      "height": "mid",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "clp": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 10,
+      "damage": 50,
+      "hitstun": 14,
+      "blockstun": 11,
+      "knockback": 6,
+      "hitbox": {
+        "x": 50,
+        "y": -140,
+        "w": 73,
+        "h": 51
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "cmp": {
+      "startup": 8,
+      "active": 4,
+      "recovery": 15,
+      "damage": 83,
+      "hitstun": 22,
+      "blockstun": 15,
+      "knockback": 8,
+      "hitbox": {
+        "x": -24,
+        "y": -142,
+        "w": 101,
+        "h": 89
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "chp": {
+      "startup": 10,
+      "active": 5,
+      "recovery": 20,
+      "damage": 112,
+      "hitstun": 24,
+      "blockstun": 15,
+      "knockback": 10,
+      "hitbox": {
+        "x": -24,
+        "y": -142,
+        "w": 97,
+        "h": 102
+      },
+      "height": "mid",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "clk": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 10,
+      "damage": 50,
+      "hitstun": 14,
+      "blockstun": 11,
+      "knockback": 6,
+      "hitbox": {
+        "x": 52,
+        "y": -94,
+        "w": 64,
+        "h": 69
+      },
+      "height": "low",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "cmk": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 16,
+      "damage": 89,
+      "hitstun": 23,
+      "blockstun": 16,
+      "knockback": 9,
+      "hitbox": {
+        "x": 50,
+        "y": -59,
+        "w": 72,
+        "h": 71
+      },
+      "height": "low",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "chk": {
+      "startup": 10,
+      "active": 6,
+      "recovery": 22,
+      "damage": 83,
+      "hitstun": 20,
+      "blockstun": 18,
+      "knockback": 8,
+      "hitbox": {
+        "x": 52,
+        "y": -46,
+        "w": 71,
+        "h": 54
+      },
+      "height": "low",
+      "knockdown": true,
+      "forwardVel": 6,
+      "hitstop": 12
+    },
+    "jlp": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 8,
+      "damage": 52,
+      "hitstun": 15,
+      "blockstun": 10,
+      "knockback": 6,
+      "hitbox": {
+        "x": 50,
+        "y": -158,
+        "w": 58,
+        "h": 56
+      },
+      "height": "high",
+      "hitstop": 8
+    },
+    "jmp": {
+      "startup": 6,
+      "active": 6,
+      "recovery": 10,
+      "damage": 83,
+      "hitstun": 18,
+      "blockstun": 12,
+      "knockback": 8,
+      "hitbox": {
+        "x": 44,
+        "y": -203,
+        "w": 65,
+        "h": 57
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jhp": {
+      "startup": 8,
+      "active": 7,
+      "recovery": 12,
+      "damage": 112,
+      "hitstun": 22,
+      "blockstun": 14,
+      "knockback": 10,
+      "hitbox": {
+        "x": 46,
+        "y": -171,
+        "w": 63,
+        "h": 48
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jlk": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 8,
+      "damage": 50,
+      "hitstun": 14,
+      "blockstun": 10,
+      "knockback": 6,
+      "hitbox": {
+        "x": -19,
+        "y": -193,
+        "w": 124,
+        "h": 162
+      },
+      "height": "high",
+      "hitstop": 8
+    },
+    "jmk": {
+      "startup": 6,
+      "active": 7,
+      "recovery": 10,
+      "damage": 87,
+      "hitstun": 19,
+      "blockstun": 12,
+      "knockback": 9,
+      "hitbox": {
+        "x": 65,
+        "y": -145,
+        "w": 63,
+        "h": 72
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jhk": {
+      "startup": 9,
+      "active": 7,
+      "recovery": 12,
+      "damage": 116,
+      "hitstun": 23,
+      "blockstun": 14,
+      "knockback": 12,
+      "hitbox": {
+        "x": 56,
+        "y": -175,
+        "w": 63,
+        "h": 73
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "symbiosis": {
+      "name": "Symbiosis",
+      "input": {
+        "motion": "hcb",
+        "button": "punch"
+      },
+      "startup": 7,
+      "active": 4,
+      "recovery": 30,
+      "damage": 146,
+      "hitstun": 30,
+      "blockstun": 0,
+      "knockback": 5,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 110
+      },
+      "heal": 60,
+      "variants": {
+        "l": {
+          "damage": 121,
+          "startup": 7,
+          "grab": {
+            "range": 105
+          }
+        },
+        "h": {
+          "damage": 170,
+          "startup": 7,
+          "recovery": 34,
+          "grab": {
+            "range": 130
+          }
+        }
+      }
+    },
+    "overgrowth": {
+      "name": "Overgrowth",
+      "input": {
+        "motion": "qcf",
+        "button": "punch"
+      },
+      "startup": 1,
+      "active": 2,
+      "recovery": 34,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "projectile": {
+        "vx": 0,
+        "spawnX": 220,
+        "spawnY": 0,
+        "box": {
+          "x": -18,
+          "y": -18,
+          "w": 36,
+          "h": 18
+        },
+        "damage": 0,
+        "hitstun": 0,
+        "blockstun": 0,
+        "knockback": 0,
+        "fuse": 30,
+        "detonate": {
+          "box": {
+            "x": -35,
+            "y": -260,
+            "w": 70,
+            "h": 260
+          },
+          "damage": 85,
+          "hitstun": 26,
+          "blockstun": 15,
+          "knockback": 7,
+          "ttl": 16
+        }
+      },
+      "variants": {
+        "l": {
+          "projectile": {
+            "spawnX": 80
+          }
+        },
+        "h": {
+          "projectile": {
+            "spawnX": 360
+          }
+        }
+      },
+      "hitstop": 15
+    },
+    "spore-bloom": {
+      "name": "Spore Bloom",
+      "input": {
+        "motion": "qcb",
+        "button": "punch"
+      },
+      "startup": 16,
+      "active": 2,
+      "recovery": 22,
+      "damage": 21,
+      "hitstun": 0,
+      "blockstun": 24,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "projectile": {
+        "vx": 1.2,
+        "spawnX": 90,
+        "spawnY": -160,
+        "box": {
+          "x": -45,
+          "y": -55,
+          "w": 90,
+          "h": 110
+        },
+        "damage": 18,
+        "hitstun": 8,
+        "blockstun": 6,
+        "knockback": 2,
+        "ttl": 150,
+        "rehit": 30
+      },
+      "variants": {
+        "l": {
+          "projectile": {
+            "ttl": 100
+          }
+        },
+        "h": {
+          "projectile": {
+            "ttl": 210
+          }
+        }
+      },
+      "hitstop": 15
+    },
+    "vine-spear": {
+      "name": "Vine Spear",
+      "input": {
+        "motion": "bf",
+        "button": "punch"
+      },
+      "startup": 14,
+      "active": 2,
+      "recovery": 28,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "projectile": {
+        "vx": 13,
+        "spawnX": 80,
+        "spawnY": -160,
+        "box": {
+          "x": -26,
+          "y": -14,
+          "w": 52,
+          "h": 28
+        },
+        "damage": 65,
+        "hitstun": 22,
+        "blockstun": 12,
+        "knockback": 4,
+        "ttl": 45,
+        "knockdown": true,
+        "pull": true
+      },
+      "variants": {
+        "l": {
+          "projectile": {
+            "ttl": 28
+          }
+        },
+        "h": {
+          "projectile": {
+            "vx": 16
+          }
+        }
+      },
+      "hitstop": 15
+    },
+    "throw": {
+      "name": "Throw",
+      "input": {
+        "button": "LPLK"
+      },
+      "startup": 4,
+      "active": 2,
+      "recovery": 20,
+      "damage": 103,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 9,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 114
+      },
+      "techable": true
+    }
+  },
+  "vo": {
+    "kiai": [
+      "Grow!",
+      "Bloom!",
+      "Ha!",
+      "Symbiosis!",
+      "Photosynthesize!",
+      "Take root!"
+    ],
+    "hurt": [
+      "Oh!",
+      "Ow!",
+      "Ugh!",
+      "Hey now!",
+      "Aah!",
+      "My roots!"
+    ],
+    "victory": [
+      "Please, collaborate with me.",
+      "Nature always wins.",
+      "Grow with me, or don't.",
+      "Everything composts eventually."
+    ]
+  },
+  "lore": {
+    "tagline": "Everything composts eventually. Now it’s your turn.",
+    "personality": "Microbiologist and print-shop steward who sees every fight as an ecosystem. Patient, symbiotic, and faintly menacing — would rather cultivate than compete.",
+    "backstory": "A PhD microbiologist (cyanobacteria, photosynthetic hydrogen) who runs the Nomicon Press on Mars. Arrived in 2022 after a chance meeting with Pseudo at a regional burn; cut-up poet, newsletter-maker, and Burning Man builder since 2012."
+  },
+  "arcade": {
+    "motivation": "To Marzipan the tournament is a succession event — the desert reclaiming itself. He enters to compost the old order and seed something regenerative in the ruins.",
+    "ending": "Champion, Marzipan lets the Biennale grounds go feral: cyanobacteria in the fountains, vines through the sculptures, a living installation with no curator. Everything composts eventually. Nature wins."
+  }
+}

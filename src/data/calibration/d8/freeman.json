@@ -1,0 +1,597 @@
+{
+  "id": "freeman",
+  "name": "FREEMAN",
+  "color": "#f0e0a0",
+  "stage": "chiba",
+  "winQuotes": [
+    "This isn't violence; it's alignment.",
+    "Prosperity finds the still. You found the floor.",
+    "I anchored my root chakra. You anchored the dirt.",
+    "I built the ground you’re lying on.",
+    "Be still. You’ve had enough motion."
+  ],
+  "fatality": {
+    "id": "ego-death",
+    "name": "Ego Death",
+    "input": {
+      "motion": "hcb",
+      "button": "punch"
+    },
+    "panels": 4
+  },
+  "health": 1099,
+  "walkSpeed": 6.42,
+  "backSpeed": 6.42,
+  "jumpVel": 18,
+  "gravity": 0.9,
+  "prejumpFrames": 4,
+  "bodyBox": {
+    "x": -44,
+    "y": -248,
+    "w": 88,
+    "h": 248
+  },
+  "hurtStand": {
+    "x": -54,
+    "y": -262,
+    "w": 108,
+    "h": 262
+  },
+  "hurtCrouch": {
+    "x": -54,
+    "y": -165,
+    "w": 108,
+    "h": 165
+  },
+  "moves": {
+    "lp": {
+      "startup": 4,
+      "active": 3,
+      "recovery": 10,
+      "damage": 49,
+      "hitstun": 15,
+      "blockstun": 11,
+      "knockback": 7,
+      "hitbox": {
+        "x": 57,
+        "y": -236,
+        "w": 69,
+        "h": 51
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "mp": {
+      "startup": 8,
+      "active": 3,
+      "recovery": 15,
+      "damage": 78,
+      "hitstun": 21,
+      "blockstun": 14,
+      "knockback": 9,
+      "hitbox": {
+        "x": 65,
+        "y": -242,
+        "w": 51,
+        "h": 73
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "hp": {
+      "startup": 11,
+      "active": 4,
+      "recovery": 20,
+      "damage": 109,
+      "hitstun": 24,
+      "blockstun": 15,
+      "knockback": 12,
+      "hitbox": {
+        "x": 59,
+        "y": -240,
+        "w": 51,
+        "h": 71
+      },
+      "height": "mid",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "lk": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 10,
+      "damage": 47,
+      "hitstun": 14,
+      "blockstun": 11,
+      "knockback": 6,
+      "hitbox": {
+        "x": 59,
+        "y": -104,
+        "w": 64,
+        "h": 79
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "mk": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 17,
+      "damage": 88,
+      "hitstun": 24,
+      "blockstun": 17,
+      "knockback": 11,
+      "hitbox": {
+        "x": 45,
+        "y": -186,
+        "w": 77,
+        "h": 65
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "hk": {
+      "startup": 13,
+      "active": 4,
+      "recovery": 21,
+      "damage": 115,
+      "hitstun": 26,
+      "blockstun": 15,
+      "knockback": 13,
+      "hitbox": {
+        "x": 23,
+        "y": -277,
+        "w": 68,
+        "h": 67
+      },
+      "height": "mid",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "clp": {
+      "startup": 4,
+      "active": 3,
+      "recovery": 10,
+      "damage": 45,
+      "hitstun": 14,
+      "blockstun": 11,
+      "knockback": 6,
+      "hitbox": {
+        "x": 50,
+        "y": -163,
+        "w": 74,
+        "h": 51
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "cmp": {
+      "startup": 8,
+      "active": 4,
+      "recovery": 15,
+      "damage": 74,
+      "hitstun": 22,
+      "blockstun": 15,
+      "knockback": 8,
+      "hitbox": {
+        "x": 47,
+        "y": -228,
+        "w": 60,
+        "h": 76
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "chp": {
+      "startup": 10,
+      "active": 5,
+      "recovery": 20,
+      "damage": 101,
+      "hitstun": 24,
+      "blockstun": 15,
+      "knockback": 10,
+      "hitbox": {
+        "x": 33,
+        "y": -252,
+        "w": 66,
+        "h": 63
+      },
+      "height": "mid",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "clk": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 11,
+      "damage": 45,
+      "hitstun": 14,
+      "blockstun": 12,
+      "knockback": 6,
+      "hitbox": {
+        "x": 56,
+        "y": -118,
+        "w": 60,
+        "h": 73
+      },
+      "height": "low",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "cmk": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 17,
+      "damage": 80,
+      "hitstun": 24,
+      "blockstun": 17,
+      "knockback": 9,
+      "hitbox": {
+        "x": 29,
+        "y": -45,
+        "w": 73,
+        "h": 57
+      },
+      "height": "low",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "chk": {
+      "startup": 10,
+      "active": 4,
+      "recovery": 21,
+      "damage": 74,
+      "hitstun": 20,
+      "blockstun": 15,
+      "knockback": 8,
+      "hitbox": {
+        "x": 29,
+        "y": -45,
+        "w": 73,
+        "h": 57
+      },
+      "height": "low",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "jlp": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 8,
+      "damage": 49,
+      "hitstun": 15,
+      "blockstun": 10,
+      "knockback": 6,
+      "hitbox": {
+        "x": 49,
+        "y": -168,
+        "w": 57,
+        "h": 61
+      },
+      "height": "high",
+      "hitstop": 8
+    },
+    "jmp": {
+      "startup": 6,
+      "active": 6,
+      "recovery": 10,
+      "damage": 76,
+      "hitstun": 18,
+      "blockstun": 12,
+      "knockback": 8,
+      "hitbox": {
+        "x": 47,
+        "y": -160,
+        "w": 65,
+        "h": 67
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jhp": {
+      "startup": 8,
+      "active": 7,
+      "recovery": 12,
+      "damage": 103,
+      "hitstun": 22,
+      "blockstun": 14,
+      "knockback": 10,
+      "hitbox": {
+        "x": 55,
+        "y": -237,
+        "w": 58,
+        "h": 72
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jlk": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 8,
+      "damage": 47,
+      "hitstun": 14,
+      "blockstun": 10,
+      "knockback": 6,
+      "hitbox": {
+        "x": 4,
+        "y": -221,
+        "w": 95,
+        "h": 180
+      },
+      "height": "high",
+      "hitstop": 8
+    },
+    "jmk": {
+      "startup": 6,
+      "active": 7,
+      "recovery": 10,
+      "damage": 82,
+      "hitstun": 19,
+      "blockstun": 12,
+      "knockback": 9,
+      "hitbox": {
+        "x": -20,
+        "y": -245,
+        "w": 126,
+        "h": 214
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jhk": {
+      "startup": 9,
+      "active": 7,
+      "recovery": 12,
+      "damage": 107,
+      "hitstun": 23,
+      "blockstun": 14,
+      "knockback": 12,
+      "hitbox": {
+        "x": 53,
+        "y": -185,
+        "w": 68,
+        "h": 47
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "breathwork": {
+      "name": "Breathwork",
+      "input": {
+        "motion": "dp",
+        "button": "punch"
+      },
+      "startup": 5,
+      "active": 8,
+      "recovery": 26,
+      "damage": 105,
+      "hitstun": 26,
+      "blockstun": 15,
+      "knockback": 9,
+      "hitbox": {
+        "x": -97,
+        "y": -264,
+        "w": 197,
+        "h": 267
+      },
+      "height": "high",
+      "knockdown": true,
+      "invuln": 8,
+      "leap": {
+        "vx": 4,
+        "vy": 17
+      },
+      "variants": {
+        "l": {
+          "invuln": 6,
+          "damage": 91,
+          "leap": {
+            "vx": 3,
+            "vy": 15
+          }
+        },
+        "h": {
+          "invuln": 10,
+          "damage": 117,
+          "recovery": 28,
+          "leap": {
+            "vx": 5,
+            "vy": 19
+          }
+        }
+      },
+      "voiceText": "Inhale.",
+      "voice": true,
+      "hitstop": 15
+    },
+    "sun-salutation": {
+      "name": "Sun Salutation",
+      "input": {
+        "motion": "qcf",
+        "button": "punch"
+      },
+      "startup": 12,
+      "active": 6,
+      "recovery": 24,
+      "damage": 120,
+      "hitstun": 26,
+      "blockstun": 18,
+      "knockback": 10,
+      "hitbox": {
+        "x": -5,
+        "y": -231,
+        "w": 107,
+        "h": 110
+      },
+      "height": "mid",
+      "knockdown": true,
+      "forwardVel": 5,
+      "variants": {
+        "l": {
+          "forwardVel": 3,
+          "damage": 101,
+          "recovery": 22
+        },
+        "h": {
+          "forwardVel": 7,
+          "damage": 136,
+          "recovery": 28
+        }
+      },
+      "voiceText": "Salute the sun.",
+      "voice": true,
+      "hitstop": 15
+    },
+    "presence": {
+      "name": "Presence",
+      "input": {
+        "motion": "qcb",
+        "button": "kick"
+      },
+      "startup": 7,
+      "active": 6,
+      "recovery": 22,
+      "damage": 99,
+      "hitstun": 24,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": -5,
+        "y": -223,
+        "w": 104,
+        "h": 83
+      },
+      "height": "mid",
+      "knockdown": true,
+      "forwardVel": 6,
+      "invuln": 14,
+      "variants": {
+        "l": {
+          "startup": 6,
+          "invuln": 12,
+          "forwardVel": 8,
+          "damage": 85
+        },
+        "h": {
+          "startup": 7,
+          "invuln": 16,
+          "damage": 113,
+          "recovery": 24
+        }
+      },
+      "voiceText": "Be present.",
+      "voice": true,
+      "hitstop": 15
+    },
+    "yoga-float": {
+      "name": "Yoga Float",
+      "input": {
+        "motion": "qcb",
+        "button": "punch"
+      },
+      "startup": 8,
+      "active": 2,
+      "recovery": 8,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "float": {
+        "vy": 12,
+        "gravity": 0.35
+      },
+      "voiceText": "Rise.",
+      "voice": true,
+      "hitstop": 15
+    },
+    "throw": {
+      "name": "Throw",
+      "input": {
+        "button": "LPLK"
+      },
+      "startup": 4,
+      "active": 2,
+      "recovery": 20,
+      "damage": 94,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 9,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 119
+      },
+      "tossArc": {
+        "vy": -10.5,
+        "knockbackMult": 1.5
+      },
+      "techable": true,
+      "voiceText": "CROW!",
+      "voice": true
+    }
+  },
+  "vo": {
+    "kiai": [
+      "Hah!",
+      "Hyah!",
+      "Be still.",
+      "Breathe.",
+      "Release.",
+      "Hm!"
+    ],
+    "hurt": [
+      "Ugh!",
+      "Ah!",
+      "Hmph!",
+      "Unmoved.",
+      "Hnh!",
+      "Grounded."
+    ],
+    "victory": [
+      "Peace, achieved.",
+      "The mind bends steel.",
+      "Namaste... now leave.",
+      "Stillness prevails."
+    ]
+  },
+  "scale": 0.98,
+  "lore": {
+    "tagline": "Stillness prevails. The mind bends steel.",
+    "personality": "Startup-founder-turned-off-grid-guru with an unmoveable calm. Frames combat as alignment, not violence, and rides an electric unicycle to the arena.",
+    "backstory": "Left Silicon Valley for an off-grid coding-and-yoga bootcamp in Bangalore, then came to Bombay Beach at Tao Ruspoli’s invitation and founded Mars — the twenty acres of desert this whole world stands on. Builds monolithic pallet-rack cathedrals and preaches remote work as a path to sustainability."
+  },
+  "arcade": {
+    "motivation": "Freeman broke the ground this whole world stands on. He climbs the ladder not for the title but for a reckoning with the Patron Prince who once invited him to the desert — a quiet reminder of who built Mars first.",
+    "ending": "Champion, Freeman declines the throne. He rides the electric unicycle back to the pallet-rack cathedrals of Mars, having proven that stillness outlasts spectacle. The desert exhales."
+  }
+}

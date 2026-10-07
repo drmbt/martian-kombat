@@ -1,0 +1,608 @@
+{
+  "id": "bodhi",
+  "name": "BODHI",
+  "color": "#e6b84f",
+  "stage": "dojo",
+  "winQuotes": [
+    "Your chart said this would happen.",
+    "That tension you were holding? Released.",
+    "Book a follow-up. You have deep-rooted issues.",
+    "You carry so much tension.",
+    "The stars predicted this outcome."
+  ],
+  "fatality": {
+    "id": "full-realignment",
+    "name": "Full Realignment",
+    "input": {
+      "motion": "hcb",
+      "button": "kick"
+    },
+    "panels": 4
+  },
+  "health": 1101,
+  "walkSpeed": 6.06,
+  "backSpeed": 4.38,
+  "jumpVel": 18,
+  "gravity": 0.95,
+  "prejumpFrames": 4,
+  "bodyBox": {
+    "x": -44,
+    "y": -244,
+    "w": 88,
+    "h": 244
+  },
+  "hurtStand": {
+    "x": -54,
+    "y": -258,
+    "w": 108,
+    "h": 258
+  },
+  "hurtCrouch": {
+    "x": -54,
+    "y": -162,
+    "w": 108,
+    "h": 162
+  },
+  "moves": {
+    "lp": {
+      "startup": 4,
+      "active": 3,
+      "recovery": 10,
+      "damage": 46,
+      "hitstun": 15,
+      "blockstun": 11,
+      "knockback": 7,
+      "hitbox": {
+        "x": 51,
+        "y": -229,
+        "w": 71,
+        "h": 54
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "mp": {
+      "startup": 7,
+      "active": 3,
+      "recovery": 14,
+      "damage": 72,
+      "hitstun": 20,
+      "blockstun": 13,
+      "knockback": 9,
+      "hitbox": {
+        "x": 56,
+        "y": -223,
+        "w": 61,
+        "h": 50
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "hp": {
+      "startup": 11,
+      "active": 8,
+      "recovery": 16,
+      "damage": 101,
+      "hitstun": 24,
+      "blockstun": 15,
+      "knockback": 12,
+      "hitbox": {
+        "x": -4,
+        "y": -269,
+        "w": 116,
+        "h": 137
+      },
+      "height": "mid",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "lk": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 10,
+      "damage": 44,
+      "hitstun": 14,
+      "blockstun": 11,
+      "knockback": 6,
+      "hitbox": {
+        "x": 14,
+        "y": -195,
+        "w": 74,
+        "h": 51
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "mk": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 16,
+      "damage": 75,
+      "hitstun": 23,
+      "blockstun": 16,
+      "knockback": 11,
+      "hitbox": {
+        "x": 34,
+        "y": -159,
+        "w": 67,
+        "h": 155
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "hk": {
+      "startup": 13,
+      "active": 8,
+      "recovery": 16,
+      "damage": 102,
+      "hitstun": 26,
+      "blockstun": 15,
+      "knockback": 13,
+      "hitbox": {
+        "x": 51,
+        "y": -217,
+        "w": 51,
+        "h": 39
+      },
+      "height": "mid",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "clp": {
+      "startup": 4,
+      "active": 3,
+      "recovery": 10,
+      "damage": 43,
+      "hitstun": 14,
+      "blockstun": 11,
+      "knockback": 6,
+      "hitbox": {
+        "x": 63,
+        "y": -215,
+        "w": 59,
+        "h": 47
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "cmp": {
+      "startup": 8,
+      "active": 4,
+      "recovery": 15,
+      "damage": 66,
+      "hitstun": 22,
+      "blockstun": 15,
+      "knockback": 8,
+      "hitbox": {
+        "x": 35,
+        "y": -180,
+        "w": 72,
+        "h": 61
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "chp": {
+      "startup": 10,
+      "active": 5,
+      "recovery": 20,
+      "damage": 89,
+      "hitstun": 24,
+      "blockstun": 15,
+      "knockback": 10,
+      "hitbox": {
+        "x": 5,
+        "y": -193,
+        "w": 64,
+        "h": 57
+      },
+      "height": "mid",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "clk": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 11,
+      "damage": 41,
+      "hitstun": 14,
+      "blockstun": 12,
+      "knockback": 6,
+      "hitbox": {
+        "x": 51,
+        "y": -79,
+        "w": 67,
+        "h": 71
+      },
+      "height": "low",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "cmk": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 17,
+      "damage": 72,
+      "hitstun": 24,
+      "blockstun": 17,
+      "knockback": 9,
+      "hitbox": {
+        "x": 47,
+        "y": -52,
+        "w": 68,
+        "h": 59
+      },
+      "height": "low",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "chk": {
+      "startup": 10,
+      "active": 4,
+      "recovery": 21,
+      "damage": 71,
+      "hitstun": 20,
+      "blockstun": 15,
+      "knockback": 8,
+      "hitbox": {
+        "x": 48,
+        "y": -51,
+        "w": 67,
+        "h": 57
+      },
+      "height": "low",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "jlp": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 8,
+      "damage": 44,
+      "hitstun": 15,
+      "blockstun": 10,
+      "knockback": 6,
+      "hitbox": {
+        "x": 47,
+        "y": -151,
+        "w": 67,
+        "h": 54
+      },
+      "height": "high",
+      "hitstop": 8
+    },
+    "jmp": {
+      "startup": 6,
+      "active": 6,
+      "recovery": 10,
+      "damage": 68,
+      "hitstun": 18,
+      "blockstun": 12,
+      "knockback": 8,
+      "hitbox": {
+        "x": 18,
+        "y": -176,
+        "w": 54,
+        "h": 53
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jhp": {
+      "startup": 8,
+      "active": 7,
+      "recovery": 12,
+      "damage": 91,
+      "hitstun": 22,
+      "blockstun": 14,
+      "knockback": 10,
+      "hitbox": {
+        "x": -13,
+        "y": -257,
+        "w": 76,
+        "h": 213
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jlk": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 8,
+      "damage": 43,
+      "hitstun": 14,
+      "blockstun": 10,
+      "knockback": 6,
+      "hitbox": {
+        "x": 8,
+        "y": -199,
+        "w": 81,
+        "h": 148
+      },
+      "height": "high",
+      "hitstop": 8
+    },
+    "jmk": {
+      "startup": 6,
+      "active": 7,
+      "recovery": 10,
+      "damage": 73,
+      "hitstun": 19,
+      "blockstun": 12,
+      "knockback": 9,
+      "hitbox": {
+        "x": 50,
+        "y": -141,
+        "w": 68,
+        "h": 76
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jhk": {
+      "startup": 9,
+      "active": 7,
+      "recovery": 12,
+      "damage": 95,
+      "hitstun": 23,
+      "blockstun": 14,
+      "knockback": 12,
+      "hitbox": {
+        "x": 20,
+        "y": -50,
+        "w": 77,
+        "h": 53
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "deep-tissue": {
+      "name": "Deep Tissue",
+      "input": {
+        "motion": "360",
+        "button": "punch"
+      },
+      "startup": 6,
+      "active": 4,
+      "recovery": 28,
+      "damage": 162,
+      "hitstun": 34,
+      "blockstun": 0,
+      "knockback": 6,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 120
+      },
+      "variants": {
+        "l": {
+          "damage": 145,
+          "startup": 5,
+          "grab": {
+            "range": 100
+          }
+        },
+        "h": {
+          "damage": 162,
+          "startup": 7,
+          "recovery": 32,
+          "grab": {
+            "range": 150
+          }
+        }
+      },
+      "vfx": {
+        "size": 240,
+        "anchor": "ground"
+      }
+    },
+    "table-work": {
+      "name": "Table Work",
+      "input": {
+        "motion": "qcb",
+        "button": "kick"
+      },
+      "startup": 7,
+      "active": 3,
+      "recovery": 24,
+      "damage": 114,
+      "hitstun": 28,
+      "blockstun": 0,
+      "knockback": 7,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 113
+      },
+      "variants": {
+        "l": {
+          "startup": 6,
+          "damage": 101,
+          "grab": {
+            "range": 110
+          }
+        },
+        "h": {
+          "startup": 7,
+          "damage": 128,
+          "recovery": 26,
+          "grab": {
+            "range": 119
+          }
+        }
+      }
+    },
+    "ascendant": {
+      "name": "Ascendant",
+      "input": {
+        "motion": "dp",
+        "button": "punch"
+      },
+      "startup": 5,
+      "active": 8,
+      "recovery": 26,
+      "damage": 95,
+      "hitstun": 26,
+      "blockstun": 15,
+      "knockback": 9,
+      "hitbox": {
+        "x": 4,
+        "y": -257,
+        "w": 87,
+        "h": 140
+      },
+      "height": "high",
+      "knockdown": true,
+      "invuln": 8,
+      "leap": {
+        "vx": 4,
+        "vy": 17
+      },
+      "variants": {
+        "l": {
+          "invuln": 6,
+          "damage": 81,
+          "leap": {
+            "vx": 3,
+            "vy": 15
+          }
+        },
+        "h": {
+          "invuln": 10,
+          "damage": 106,
+          "recovery": 28,
+          "leap": {
+            "vx": 5,
+            "vy": 19
+          }
+        }
+      },
+      "hitstop": 15
+    },
+    "retrograde": {
+      "name": "Retrograde",
+      "input": {
+        "motion": "qcf",
+        "button": "kick"
+      },
+      "startup": 9,
+      "active": 8,
+      "recovery": 20,
+      "damage": 79,
+      "hitstun": 22,
+      "blockstun": 16,
+      "knockback": 9,
+      "hitbox": {
+        "x": 43,
+        "y": -82,
+        "w": 67,
+        "h": 49
+      },
+      "height": "low",
+      "knockdown": true,
+      "forwardVel": 15,
+      "variants": {
+        "l": {
+          "forwardVel": 20,
+          "damage": 64,
+          "startup": 7,
+          "recovery": 16
+        },
+        "h": {
+          "forwardVel": 8,
+          "damage": 104,
+          "knockback": 12,
+          "startup": 11,
+          "recovery": 24
+        }
+      },
+      "hitstop": 15
+    },
+    "throw": {
+      "name": "Throw",
+      "input": {
+        "button": "LPLK"
+      },
+      "startup": 4,
+      "active": 2,
+      "recovery": 20,
+      "damage": 92,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 9,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 100
+      },
+      "tossArc": {
+        "vy": -10.5,
+        "knockbackMult": 1.5
+      },
+      "techable": true
+    }
+  },
+  "vo": {
+    "kiai": [
+      "Hyah!",
+      "Breathe.",
+      "Release!",
+      "Deep tissue!",
+      "Hold still.",
+      "Ha!"
+    ],
+    "hurt": [
+      "Oof!",
+      "Agh!",
+      "That's a knot—!",
+      "Hnh!",
+      "Okay—",
+      "Mercury retrograde!"
+    ],
+    "victory": [
+      "Realigned.",
+      "Session's over.",
+      "The stars are aligned.",
+      "Not today."
+    ]
+  },
+  "lore": {
+    "tagline": "You carry so much tension. Let me release it.",
+    "personality": "Thai-bodywork practitioner and astrologer who reads your chart before he reads your guard. Unnervingly calm hands; frames a beating as a session.",
+    "backstory": "Brought bodywork to Mars in 2024, built one of its first self-organized camps in 2025, and now runs the Community Laboratory. Knows your rising sign and every knot in your back."
+  },
+  "arcade": {
+    "motivation": "The stars told Bodhi the Biennale is badly out of alignment, and he’s the practitioner on call. He climbs the ladder giving the whole desert a full-body session, one opponent at a time.",
+    "ending": "Champion, Bodhi books everyone a follow-up and realigns the desert’s chart. Mercury is finally direct. The tension of a hundred fights releases all at once, and Bombay Beach sleeps well for the first time in years."
+  },
+  "scale": 0.94
+}

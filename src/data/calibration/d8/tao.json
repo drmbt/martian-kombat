@@ -1,0 +1,627 @@
+{
+  "id": "tao",
+  "name": "TAO",
+  "color": "#d36983",
+  "stage": "institute",
+  "lore": {
+    "tagline": "The desert's philosopher-king awaits your challenge.",
+    "personality": "Imperious, worldly, and effortlessly charming, Tao conducts himself like an orchestra conductor and the battle like a symphony. He is an untouchable philosopher-king, a patron of the arts who sees this contest not as a brawl, but as the ultimate form of creative expression, a dialogue of Being he is destined to win.",
+    "backstory": "Born into Italian aristocracy and educated in Californian philosophy, Tao Ruspoli has always walked between worlds. After a storied career as a filmmaker and musician, he found his true calling in the desert, founding the Bombay Beach Biennale. Now, as its patron prince, he orchestrates this grand tournament, seeking a challenger whose spirit is worthy of shaping the future of art on the Salton Sea."
+  },
+  "winQuotes": [
+    "A fleeting, yet beautiful, performance.",
+    "Consider this an education in Dasein.",
+    "The Biennale requires a higher caliber of artist.",
+    "Being reveals itself in the fall. You revealed little.",
+    "The desert remembers only its philosopher-king."
+  ],
+  "vo": {
+    "kiai": [
+      "Presto!",
+      "Adagio!",
+      "Crescendo!",
+      "Fin!",
+      "Ancora!",
+      "Bravo!"
+    ],
+    "hurt": [
+      "Crude.",
+      "Hmph.",
+      "Uncouth.",
+      "Tedious.",
+      "No...",
+      "Enough."
+    ],
+    "victory": [
+      "The performance is over.",
+      "A flawed composition.",
+      "You lack authenticity.",
+      "Return when you've practiced."
+    ]
+  },
+  "arcade": {
+    "motivation": "As the Patron Prince of the Bombay Beach Biennale, Tao Ruspoli does not seek challengers; he *is* the challenge. He has orchestrated this tournament as the ultimate piece of performance art, a search for an authentic being whose will can shape the desert itself. He awaits at the heart of his creation, ready to judge the final contestant.",
+    "ending": "Having proven that no challenger possesses the vision to lead the Biennale, Tao stands alone amidst the desert art. He raises a hand, and the sculptures begin to move, rearranging themselves into a new, grander installation under his sole direction. The desert has found its undisputed philosopher-king, and his magnum opus has only just begun."
+  },
+  "fatality": {
+    "id": "final-critique",
+    "name": "Final Critique",
+    "input": {
+      "motion": "hcb",
+      "button": "punch"
+    },
+    "panels": 4
+  },
+  "health": 1125,
+  "walkSpeed": 6.35,
+  "backSpeed": 6.35,
+  "jumpVel": 18,
+  "gravity": 0.9,
+  "prejumpFrames": 4,
+  "scale": 1,
+  "bodyBox": {
+    "x": -44,
+    "y": -240,
+    "w": 88,
+    "h": 240
+  },
+  "hurtStand": {
+    "x": -54,
+    "y": -254,
+    "w": 108,
+    "h": 254
+  },
+  "hurtCrouch": {
+    "x": -54,
+    "y": -158,
+    "w": 108,
+    "h": 158
+  },
+  "moves": {
+    "lp": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 9,
+      "damage": 50,
+      "hitstun": 12,
+      "blockstun": 10,
+      "knockback": 3,
+      "hitbox": {
+        "x": 48,
+        "y": -222,
+        "w": 57,
+        "h": 51
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "mp": {
+      "startup": 8,
+      "active": 3,
+      "recovery": 14,
+      "damage": 81,
+      "hitstun": 20,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": 30,
+        "y": -233,
+        "w": 59,
+        "h": 65
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "hp": {
+      "startup": 11,
+      "active": 4,
+      "recovery": 19,
+      "damage": 113,
+      "hitstun": 20,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": -43,
+        "y": -229,
+        "w": 158,
+        "h": 231
+      },
+      "height": "mid",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "lk": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 10,
+      "damage": 48,
+      "hitstun": 13,
+      "blockstun": 11,
+      "knockback": 3,
+      "hitbox": {
+        "x": 20,
+        "y": -110,
+        "w": 89,
+        "h": 83
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "mk": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 15,
+      "damage": 85,
+      "hitstun": 22,
+      "blockstun": 15,
+      "knockback": 8,
+      "hitbox": {
+        "x": 53,
+        "y": -237,
+        "w": 58,
+        "h": 64
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "hk": {
+      "startup": 12,
+      "active": 4,
+      "recovery": 20,
+      "damage": 117,
+      "hitstun": 20,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": 24,
+        "y": -263,
+        "w": 60,
+        "h": 67
+      },
+      "height": "mid",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "clp": {
+      "startup": 4,
+      "active": 3,
+      "recovery": 8,
+      "damage": 43,
+      "hitstun": 12,
+      "blockstun": 9,
+      "knockback": 3,
+      "hitbox": {
+        "x": 44,
+        "y": -144,
+        "w": 61,
+        "h": 51
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "cmp": {
+      "startup": 7,
+      "active": 4,
+      "recovery": 13,
+      "damage": 69,
+      "hitstun": 20,
+      "blockstun": 13,
+      "knockback": 5,
+      "hitbox": {
+        "x": 41,
+        "y": -211,
+        "w": 57,
+        "h": 70
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "chp": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 18,
+      "damage": 101,
+      "hitstun": 24,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": -30,
+        "y": -269,
+        "w": 94,
+        "h": 122
+      },
+      "height": "mid",
+      "hitstop": 12
+    },
+    "clk": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 9,
+      "damage": 43,
+      "hitstun": 12,
+      "blockstun": 10,
+      "knockback": 3,
+      "hitbox": {
+        "x": 46,
+        "y": -39,
+        "w": 55,
+        "h": 53
+      },
+      "height": "low",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "cmk": {
+      "startup": 8,
+      "active": 4,
+      "recovery": 14,
+      "damage": 71,
+      "hitstun": 21,
+      "blockstun": 14,
+      "knockback": 5,
+      "hitbox": {
+        "x": 45,
+        "y": -42,
+        "w": 57,
+        "h": 57
+      },
+      "height": "low",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "chk": {
+      "startup": 11,
+      "active": 5,
+      "recovery": 21,
+      "damage": 104,
+      "hitstun": 20,
+      "blockstun": 16,
+      "knockback": 8,
+      "hitbox": {
+        "x": 44,
+        "y": -42,
+        "w": 58,
+        "h": 57
+      },
+      "height": "low",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "jlp": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 6,
+      "damage": 45,
+      "hitstun": 12,
+      "blockstun": 9,
+      "knockback": 3,
+      "hitbox": {
+        "x": 43,
+        "y": -205,
+        "w": 61,
+        "h": 52
+      },
+      "height": "high",
+      "hitstop": 8
+    },
+    "jmp": {
+      "startup": 6,
+      "active": 6,
+      "recovery": 8,
+      "damage": 73,
+      "hitstun": 16,
+      "blockstun": 9,
+      "knockback": 5,
+      "hitbox": {
+        "x": 39,
+        "y": -215,
+        "w": 62,
+        "h": 46
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jhp": {
+      "startup": 8,
+      "active": 6,
+      "recovery": 10,
+      "damage": 106,
+      "hitstun": 20,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": -9,
+        "y": -247,
+        "w": 94,
+        "h": 191
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jlk": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 6,
+      "damage": 48,
+      "hitstun": 12,
+      "blockstun": 9,
+      "knockback": 3,
+      "hitbox": {
+        "x": -2,
+        "y": -100,
+        "w": 64,
+        "h": 64
+      },
+      "height": "high",
+      "hitstop": 8
+    },
+    "jmk": {
+      "startup": 6,
+      "active": 6,
+      "recovery": 8,
+      "damage": 75,
+      "hitstun": 20,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": 32,
+        "y": -195,
+        "w": 79,
+        "h": 77
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jhk": {
+      "startup": 9,
+      "active": 6,
+      "recovery": 10,
+      "damage": 110,
+      "hitstun": 20,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": 51,
+        "y": -205,
+        "w": 59,
+        "h": 71
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "throw": {
+      "name": "The Dismissal",
+      "input": {
+        "button": "LPLK"
+      },
+      "startup": 4,
+      "active": 2,
+      "recovery": 20,
+      "damage": 104,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 9,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 120
+      },
+      "tossArc": {
+        "vy": -6.5,
+        "knockbackMult": 1
+      },
+      "techable": true,
+      "voiceText": "You bore me.",
+      "voice": true
+    },
+    "paparazzi-flash": {
+      "name": "Paparazzi Flash",
+      "input": {
+        "motion": "cbf",
+        "button": "punch"
+      },
+      "startup": 12,
+      "active": 2,
+      "recovery": 24,
+      "damage": 0,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "projectile": {
+        "vx": 10,
+        "spawnX": 96,
+        "spawnY": -176,
+        "box": {
+          "x": -30,
+          "y": -30,
+          "w": 60,
+          "h": 60
+        },
+        "renderSize": 84,
+        "damage": 72,
+        "hitstun": 19,
+        "blockstun": 13,
+        "knockback": 9
+      },
+      "voiceText": "Smile!",
+      "voice": true,
+      "variants": {
+        "l": {
+          "startup": 10,
+          "projectile": {
+            "damage": 61,
+            "vx": 8
+          }
+        },
+        "h": {
+          "startup": 15,
+          "projectile": {
+            "damage": 83,
+            "vx": 12
+          }
+        }
+      },
+      "hitstop": 15
+    },
+    "directors-cut": {
+      "name": "Director's Cut",
+      "input": {
+        "motion": "qcb",
+        "button": "kick"
+      },
+      "startup": 18,
+      "active": 2,
+      "recovery": 27,
+      "damage": 1,
+      "hitstun": 0,
+      "blockstun": 36,
+      "knockback": 0,
+      "hitbox": null,
+      "height": "mid",
+      "projectile": {
+        "vx": 0,
+        "spawnX": 120,
+        "spawnY": -120,
+        "box": {
+          "x": -40,
+          "y": -56,
+          "w": 80,
+          "h": 112
+        },
+        "renderSize": 120,
+        "damage": 26,
+        "hitstun": 12,
+        "blockstun": 9,
+        "knockback": 3,
+        "ttl": 130,
+        "rehit": 18
+      },
+      "voiceText": "Action!",
+      "voice": true,
+      "variants": {
+        "l": {
+          "startup": 16,
+          "projectile": {
+            "damage": 22,
+            "ttl": 104
+          }
+        },
+        "h": {
+          "startup": 21,
+          "projectile": {
+            "damage": 30,
+            "ttl": 163
+          }
+        }
+      },
+      "hitstop": 15
+    },
+    "duende-kick": {
+      "name": "Duende Kick",
+      "input": {
+        "motion": "dp",
+        "button": "kick"
+      },
+      "startup": 5,
+      "active": 8,
+      "recovery": 24,
+      "damage": 106,
+      "hitstun": 20,
+      "blockstun": 12,
+      "knockback": 8,
+      "knockdown": true,
+      "height": "mid",
+      "hitbox": {
+        "x": 20,
+        "y": -248,
+        "w": 77,
+        "h": 124
+      },
+      "leap": {
+        "vx": 4,
+        "vy": 16
+      },
+      "invuln": 8,
+      "voiceText": "¡Olé!",
+      "voice": true,
+      "variants": {
+        "l": {
+          "startup": 3,
+          "damage": 90
+        },
+        "h": {
+          "startup": 7,
+          "damage": 121
+        }
+      },
+      "hitstop": 15
+    },
+    "maestros-advance": {
+      "name": "Maestro's Advance",
+      "input": {
+        "motion": "hcf",
+        "button": "kick"
+      },
+      "startup": 9,
+      "active": 5,
+      "recovery": 21,
+      "damage": 95,
+      "hitstun": 19,
+      "blockstun": 12,
+      "knockback": 9,
+      "knockdown": true,
+      "height": "mid",
+      "hitbox": {
+        "x": 2,
+        "y": -237,
+        "w": 99,
+        "h": 127
+      },
+      "forwardVel": 10,
+      "voiceText": "Andante!",
+      "voice": true,
+      "variants": {
+        "l": {
+          "startup": 7,
+          "damage": 81,
+          "forwardVel": 7.5
+        },
+        "h": {
+          "startup": 12,
+          "damage": 108,
+          "forwardVel": 12
+        }
+      },
+      "hitstop": 15
+    }
+  }
+}

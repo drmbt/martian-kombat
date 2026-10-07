@@ -96,8 +96,10 @@ CPU matchup matrix (P10.9), CPU difficulty (P5), Character Studio platform
 
 ## Agent handoff notes
 
-**Current:** P2, P3.0–P3.9 and P8.4/8.5 are on `main`. P3.12 (feel A/B)
-and P4.3 (Vincent retune) wait for the user. Engine code is split across `src/engine/{world,input,attack,combat,
+**Current:** P13 calibration lab on `feat/calibration-lab`: proposals in
+`src/data/calibration/d8/` (report.md), A/B with **F6** in dev fights; waits
+for the user's per-fighter approval (`npm run calibrate:apply`). P3.12 and
+P4.3 are folded into P13 (D11). Engine code is split across `src/engine/{world,input,attack,combat,
 projectiles,phases}.ts`; behaviour tests use the frozen fixtures in
 `src/engine/__fixtures__/`. The dated
 session log is 02-PLAN's **Handoff log**; this section keeps only standing

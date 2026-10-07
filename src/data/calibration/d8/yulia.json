@@ -1,0 +1,633 @@
+{
+  "id": "yulia",
+  "name": "YULIA",
+  "color": "#ff5a48",
+  "stage": "chiba-roof",
+  "winQuotes": [
+    "Stand up. Or don't. It changes nothing.",
+    "I have already forgotten your name.",
+    "Я даже не вспотела.\n(I did not even sweat.)",
+    "Слабость — это выбор.\n(Weakness is a choice.)"
+  ],
+  "fatality": {
+    "id": "heart-breaker",
+    "name": "Heart Breaker",
+    "input": {
+      "motion": "qcb",
+      "button": "punch"
+    },
+    "panels": 4
+  },
+  "health": 1150,
+  "walkSpeed": 6.95,
+  "backSpeed": 5.29,
+  "jumpVel": 19,
+  "gravity": 0.95,
+  "prejumpFrames": 4,
+  "bodyBox": {
+    "x": -45,
+    "y": -241,
+    "w": 90,
+    "h": 241
+  },
+  "hurtStand": {
+    "x": -55,
+    "y": -255,
+    "w": 110,
+    "h": 255
+  },
+  "hurtCrouch": {
+    "x": -55,
+    "y": -163,
+    "w": 110,
+    "h": 163
+  },
+  "moves": {
+    "lp": {
+      "startup": 5,
+      "active": 3,
+      "recovery": 10,
+      "damage": 65,
+      "hitstun": 15,
+      "blockstun": 11,
+      "knockback": 7,
+      "hitbox": {
+        "x": 40,
+        "y": -212,
+        "w": 68,
+        "h": 49
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "mp": {
+      "startup": 8,
+      "active": 3,
+      "recovery": 14,
+      "damage": 98,
+      "hitstun": 20,
+      "blockstun": 13,
+      "knockback": 9,
+      "hitbox": {
+        "x": 36,
+        "y": -210,
+        "w": 66,
+        "h": 48
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "hp": {
+      "startup": 11,
+      "active": 4,
+      "recovery": 19,
+      "damage": 136,
+      "hitstun": 25,
+      "blockstun": 15,
+      "knockback": 13,
+      "hitbox": {
+        "x": 41,
+        "y": -220,
+        "w": 66,
+        "h": 48
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "lk": {
+      "startup": 2,
+      "active": 19,
+      "recovery": 2,
+      "damage": 59,
+      "hitstun": 21,
+      "blockstun": 19,
+      "knockback": 6,
+      "hitbox": {
+        "x": 60,
+        "y": -189,
+        "w": 62,
+        "h": 67
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk",
+        "mk"
+      ],
+      "hitstop": 8
+    },
+    "mk": {
+      "startup": 9,
+      "active": 11,
+      "recovery": 10,
+      "damage": 103,
+      "hitstun": 24,
+      "blockstun": 17,
+      "knockback": 10,
+      "hitbox": {
+        "x": 42,
+        "y": -210,
+        "w": 70,
+        "h": 61
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "hk": {
+      "startup": 12,
+      "active": 10,
+      "recovery": 20,
+      "damage": 143,
+      "hitstun": 26,
+      "blockstun": 20,
+      "knockback": 13,
+      "hitbox": {
+        "x": 42,
+        "y": -211,
+        "w": 71,
+        "h": 62
+      },
+      "height": "mid",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "clp": {
+      "startup": 5,
+      "active": 6,
+      "recovery": 7,
+      "damage": 59,
+      "hitstun": 14,
+      "blockstun": 11,
+      "knockback": 6,
+      "hitbox": {
+        "x": 36,
+        "y": -136,
+        "w": 65,
+        "h": 49
+      },
+      "height": "mid",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "cmp": {
+      "startup": 7,
+      "active": 4,
+      "recovery": 14,
+      "damage": 91,
+      "hitstun": 21,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": 20,
+        "y": -253,
+        "w": 54,
+        "h": 58
+      },
+      "height": "mid",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "chp": {
+      "startup": 10,
+      "active": 5,
+      "recovery": 19,
+      "damage": 124,
+      "hitstun": 24,
+      "blockstun": 14,
+      "knockback": 10,
+      "hitbox": {
+        "x": 38,
+        "y": -208,
+        "w": 54,
+        "h": 67
+      },
+      "height": "mid",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "clk": {
+      "startup": 5,
+      "active": 12,
+      "recovery": 10,
+      "damage": 59,
+      "hitstun": 22,
+      "blockstun": 20,
+      "knockback": 6,
+      "hitbox": {
+        "x": 44,
+        "y": -39,
+        "w": 66,
+        "h": 53
+      },
+      "height": "low",
+      "chains": [
+        "lp",
+        "lk",
+        "clp",
+        "clk"
+      ],
+      "hitstop": 8
+    },
+    "cmk": {
+      "startup": 9,
+      "active": 10,
+      "recovery": 12,
+      "damage": 98,
+      "hitstun": 25,
+      "blockstun": 18,
+      "knockback": 9,
+      "hitbox": {
+        "x": 43,
+        "y": -39,
+        "w": 67,
+        "h": 53
+      },
+      "height": "low",
+      "cancel": true,
+      "hitstop": 12
+    },
+    "chk": {
+      "startup": 9,
+      "active": 4,
+      "recovery": 20,
+      "damage": 91,
+      "hitstun": 20,
+      "blockstun": 14,
+      "knockback": 8,
+      "hitbox": {
+        "x": 48,
+        "y": -52,
+        "w": 60,
+        "h": 65
+      },
+      "height": "low",
+      "knockdown": true,
+      "hitstop": 12
+    },
+    "jlp": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 8,
+      "damage": 63,
+      "hitstun": 15,
+      "blockstun": 10,
+      "knockback": 6,
+      "hitbox": {
+        "x": 40,
+        "y": -178,
+        "w": 64,
+        "h": 54
+      },
+      "height": "high",
+      "hitstop": 8
+    },
+    "jmp": {
+      "startup": 6,
+      "active": 6,
+      "recovery": 10,
+      "damage": 91,
+      "hitstun": 18,
+      "blockstun": 12,
+      "knockback": 8,
+      "hitbox": {
+        "x": 38,
+        "y": -209,
+        "w": 68,
+        "h": 52
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jhp": {
+      "startup": 8,
+      "active": 7,
+      "recovery": 12,
+      "damage": 124,
+      "hitstun": 22,
+      "blockstun": 14,
+      "knockback": 10,
+      "hitbox": {
+        "x": -32,
+        "y": -221,
+        "w": 93,
+        "h": 181
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jlk": {
+      "startup": 4,
+      "active": 6,
+      "recovery": 8,
+      "damage": 59,
+      "hitstun": 14,
+      "blockstun": 10,
+      "knockback": 6,
+      "hitbox": {
+        "x": -1,
+        "y": -98,
+        "w": 63,
+        "h": 69
+      },
+      "height": "high",
+      "hitstop": 8
+    },
+    "jmk": {
+      "startup": 6,
+      "active": 7,
+      "recovery": 10,
+      "damage": 98,
+      "hitstun": 19,
+      "blockstun": 12,
+      "knockback": 9,
+      "hitbox": {
+        "x": 32,
+        "y": -209,
+        "w": 73,
+        "h": 57
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "jhk": {
+      "startup": 9,
+      "active": 7,
+      "recovery": 12,
+      "damage": 130,
+      "hitstun": 23,
+      "blockstun": 14,
+      "knockback": 12,
+      "hitbox": {
+        "x": 39,
+        "y": -217,
+        "w": 73,
+        "h": 51
+      },
+      "height": "high",
+      "hitstop": 12
+    },
+    "cossack-spiral": {
+      "name": "Cossack Spiral",
+      "input": {
+        "motion": "bf",
+        "button": "kick"
+      },
+      "startup": 10,
+      "active": 8,
+      "recovery": 20,
+      "damage": 110,
+      "hitstun": 24,
+      "blockstun": 16,
+      "knockback": 10,
+      "hitbox": {
+        "x": -50,
+        "y": -231,
+        "w": 161,
+        "h": 231
+      },
+      "height": "mid",
+      "knockdown": true,
+      "forwardVel": 16,
+      "variants": {
+        "l": {
+          "forwardVel": 22,
+          "damage": 83,
+          "startup": 8,
+          "recovery": 16
+        },
+        "h": {
+          "forwardVel": 6,
+          "damage": 148,
+          "knockback": 13,
+          "startup": 12,
+          "recovery": 24
+        }
+      },
+      "hitstop": 15
+    },
+    "backbend-guillotine": {
+      "name": "Backbend Guillotine",
+      "input": {
+        "motion": "qcb",
+        "button": "kick"
+      },
+      "startup": 5,
+      "active": 18,
+      "recovery": 17,
+      "damage": 124,
+      "hitstun": 24,
+      "blockstun": 27,
+      "knockback": 9,
+      "hitbox": {
+        "x": -4,
+        "y": -237,
+        "w": 114,
+        "h": 156
+      },
+      "height": "high",
+      "knockdown": true,
+      "variants": {
+        "l": {
+          "startup": 11,
+          "damage": 103
+        },
+        "h": {
+          "startup": 17,
+          "damage": 143,
+          "knockback": 11
+        }
+      },
+      "voiceText": "Take That!",
+      "voice": true,
+      "hitstop": 15
+    },
+    "volga-piledriver": {
+      "name": "Volga Piledriver",
+      "input": {
+        "motion": "360",
+        "button": "punch"
+      },
+      "startup": 7,
+      "active": 15,
+      "recovery": 9,
+      "damage": 208,
+      "hitstun": 30,
+      "blockstun": 0,
+      "knockback": 6,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 122
+      },
+      "variants": {
+        "l": {
+          "damage": 181,
+          "startup": 5,
+          "grab": {
+            "range": 102
+          }
+        },
+        "h": {
+          "damage": 211,
+          "startup": 7,
+          "grab": {
+            "range": 153
+          },
+          "recovery": 32
+        }
+      },
+      "vfx": {
+        "size": 240,
+        "anchor": "ground"
+      },
+      "voiceText": "Hyah!",
+      "voice": true
+    },
+    "braid-lariat": {
+      "name": "Braid Lariat",
+      "input": {
+        "button": "PPP"
+      },
+      "startup": 4,
+      "active": 24,
+      "recovery": 14,
+      "damage": 91,
+      "hitstun": 20,
+      "blockstun": 22,
+      "knockback": 9,
+      "hitbox": {
+        "x": 59,
+        "y": -193,
+        "w": 73,
+        "h": 45
+      },
+      "height": "mid",
+      "projImmune": true,
+      "voiceText": "Oh yeah!",
+      "voice": true,
+      "hitstop": 15
+    },
+    "sickle-kick": {
+      "name": "Sickle Kick",
+      "input": {
+        "motion": "du",
+        "button": "kick"
+      },
+      "startup": 10,
+      "active": 24,
+      "recovery": 18,
+      "damage": 51,
+      "hitstun": 16,
+      "blockstun": 12,
+      "knockback": 5,
+      "hitbox": {
+        "x": 45,
+        "y": -218,
+        "w": 81,
+        "h": 196
+      },
+      "height": "mid",
+      "forwardVel": 7,
+      "rehit": 8,
+      "variants": {
+        "l": {
+          "forwardVel": 4,
+          "active": 16
+        },
+        "h": {
+          "forwardVel": 9,
+          "active": 30,
+          "recovery": 22
+        }
+      },
+      "voiceText": "Oh, la la!",
+      "voice": true,
+      "hitstop": 15
+    },
+    "throw": {
+      "name": "Throw",
+      "input": {
+        "button": "LPLK"
+      },
+      "startup": 4,
+      "active": 2,
+      "recovery": 20,
+      "damage": 130,
+      "hitstun": 0,
+      "blockstun": 0,
+      "knockback": 9,
+      "hitbox": null,
+      "height": "mid",
+      "knockdown": true,
+      "grab": {
+        "range": 117
+      },
+      "tossArc": {
+        "vy": -10.5,
+        "knockbackMult": 1.5
+      },
+      "techable": true,
+      "voiceText": "Hah!",
+      "voice": true
+    }
+  },
+  "vo": {
+    "kiai": [
+      "Terrific.",
+      "Fantastic!",
+      "Oh yeah?",
+      "Hah!",
+      "Hyah!",
+      "Wee!",
+      "Ha!"
+    ],
+    "hurt": [
+      "What?",
+      "Ow!",
+      "Ugh.",
+      "Stop it.",
+      "No.",
+      "No, no, no!",
+      "Oh, stop it.",
+      "Boyna!",
+      "Ugh.",
+      "Boyna, boyna!",
+      "Bah!",
+      "Whee!"
+    ],
+    "victory": [
+      "Oi oi oi!",
+      "Oh, la la!",
+      "Chippies!",
+      "Ah, ah!",
+      "Oh yeah!"
+    ]
+  },
+  "scale": 1.09,
+  "lore": {
+    "tagline": "Hungry experimentalist. Spirit animal: snacks.",
+    "personality": "The newest Martian: a self-taught coder and junior network engineer who maps everything from LAN topologies to childhood memories. Yoga teacher with a cold competitive streak, unbothered and always mid-snack.",
+    "backstory": "Arrived in 2026 and immediately started charting the Bombay-Mars network the way she charts poetic maps of the places she grew up. Working her way toward software developer while nurturing a Nasty AI chatbot."
+  },
+  "arcade": {
+    "motivation": "Yulia is mapping Mars completely, and the tournament is the last uncharted subnet. Each fighter is just another node to trace; she climbs the ladder the way she maps a network — methodically, unbothered, snacking.",
+    "ending": "The map is finished; the title is almost incidental. Her Nasty AI chatbot narrates the victory in a voice she trained herself, Yulia shrugs, and goes to find a snack."
+  }
+}

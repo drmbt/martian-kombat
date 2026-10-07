@@ -448,10 +448,13 @@ export class FightScene extends Phaser.Scene {
         { key: 'F1', act: () => (this.debugBoxes = !this.debugBoxes) },
         { key: 'F3', act: () => (this.showSkeleton = !this.showSkeleton) },
         { key: 'F5', act: () => (this.stageGuide = !this.stageGuide) },
+        // DEV: calibration A/B (P13.5) — flip original ⇄ calibrated, restart
+        { key: 'F6', act: () => this.toggleCalibrationAB() },
       ],
       pauseHint:
-        'ESC/START resume · ◄► choose, attack confirms · F1 hitboxes · F2 move log · F3 skeleton · F5 stage guide · ` perf',
+        'ESC/START resume · ◄► choose, attack confirms · F1 hitboxes · F2 move log · F3 skeleton · F5 stage guide · F6 A/B (dev) · ` perf',
     });
+    this.showABLabel();
     this.winOverlay = new WinOverlay(this.uiLayer.root, characters, {
       revealFrame: WIN_REVEAL_FRAME, // the "<NAME> WINS" beat lands + breathes first
       prompt: this.online ? 'SPACE  REMATCH   ·   ESC  QUIT' : 'SPACE  REMATCH   ·   ENTER  SELECT',
@@ -878,6 +881,29 @@ export class FightScene extends Phaser.Scene {
   }
 
   /** Sandbox rules: frozen clock, refilling health, rounds never end. */
+  /** DEV: calibration A/B (02-PLAN P13.5) — installed by main.ts in dev only.
+   *  Flips every calibrated fighter between the shipped data (A) and the
+   *  proposal (B), then restarts the match so health/rules re-initialize. */
+  private toggleCalibrationAB(): void {
+    const ab = (window as unknown as { __mkAB?: { toggle: () => string; count: number } }).__mkAB;
+    if (!import.meta.env.DEV || !ab || this.online || !ab.count) return;
+    ab.toggle();
+    this.shell.restartMatch();
+  }
+
+  /** DEV: show which side of the calibration A/B this match is on */
+  private showABLabel(): void {
+    const ab = (window as unknown as { __mkAB?: { label: () => string; count: number } }).__mkAB;
+    if (!import.meta.env.DEV || !ab || this.online || !ab.count) return;
+    this.add
+      .text(STAGE_W / 2, STAGE_H - 14, `${ab.label()}   ·   F6 flips A/B`, {
+        fontFamily: 'monospace', fontSize: '12px', color: '#ffe08a', backgroundColor: '#000000aa', padding: { x: 6, y: 2 },
+      })
+      .setOrigin(0.5, 1)
+      .setScrollFactor(0)
+      .setDepth(1000);
+  }
+
   private trainingUpkeep(): void {
     const s = this.state;
     s.timer = s.rules.roundTicks;
