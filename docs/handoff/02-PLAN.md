@@ -24,7 +24,7 @@
 > | `02-PLAN.md` (this file) | everywhere | the backlog |
 > | `03-NEW-MACHINE-RESUME.md` | this (new) machine, after the rescue | restore + baseline + start the plan |
 > | `RESCUE_REPORT.md` | written by the old machine | what was rescued, versions, gaps |
-| `06-NEXT-SPRINT-P2.md` | a fresh session | the next sprint's self-contained prompt (P2.6–P2.10). Finished prompts move to `docs/archive/handoff-prompts/` |
+| `NN-NEXT-SPRINT-*.md` | a fresh session | the next sprint's self-contained prompt, when one is written. Finished prompts move to `docs/archive/handoff-prompts/` |
 
 ---
 
@@ -1124,6 +1124,26 @@ files unasked. Full design: `docs/CHARACTER_STUDIO.md` Phases 4–5 (+ the R2
 
 *(newest first; one entry per session: date · who · done · next · gotchas)*
 
+- **2026-10-07 · P2 finished (Claude Opus 5.5).** Branch
+  `fix/p2-cleanup-hardening`: P2.6–P2.10 done (details on each item).
+  - **P2.7** the `/__editor` API refuses other web pages: verified live
+    (foreign Origin 403, `text/plain` 415, rebinding Host 403, `../x` 400;
+    a same-origin browser write still 200).
+  - **P2.8** carried-over jobs load paused; resume is per character.
+  - **P2.9** no `.env` needed; one mock switch; proven with a fetch-blocking
+    preload (zero network calls).
+  - **P2.6** ~19.5 MB less shipped; tall stage art → `assets/stages-tall/`.
+  - **P2.10** lockfile-only audit fix.
+  527/527 tests (40 files), tsc clean, bench 2 errors, build clean.
+  **Found:** P8.5 is real — a `studio:run --mock` on Vincent overwrote his
+  committed portrait + 4 fatality panels with placeholders (restored from
+  git; the placeholder raws deleted). A real run would have spent ~5 images
+  doing the same. Standing warning on SPRINTBOARD; worth fixing before any
+  generation. **Next:** P3 (fight-core correctness) on a branch stacked on
+  this one. **Gotchas:** `.claude/launch.json` is unchanged; to test
+  no-network, `NODE_OPTIONS="--import <preload that throws on fetch>"`
+  propagates to `studio:run`'s child scripts.
+
 - **2026-10-06 · P1 merged + P8.6(a) VO source (Claude Opus 5.5).** PR #4
   (P1) merged as `d225a46`. Branch `tools/p8-vo-source`: `gen-audio` now
   reads every VO text from the character JSON (`tools/core/vo-lines.mjs`);
@@ -1135,7 +1155,7 @@ files unasked. Full design: `docs/CHARACTER_STUDIO.md` Phases 4–5 (+ the R2
   **P8.18** (a→b reference chaining, with a small paid A/B) and the
   `gen-mesh` source path (P11). Finished sprint prompts moved to
   `docs/archive/handoff-prompts/`. **Next:** P2.6–P2.10 on
-  `fix/p2-cleanup-hardening` — prompt `docs/handoff/06-NEXT-SPRINT-P2.md`.
+  `fix/p2-cleanup-hardening` — prompt `docs/archive/handoff-prompts/06-NEXT-SPRINT-P2.md`.
   **Gotchas:** `announcerLines` (name call-outs) is still a table in
   gen-audio. Per-line emotion overrides are keyed by the exact JSON text —
   editing a line's text in the Studio silently drops its override (the
