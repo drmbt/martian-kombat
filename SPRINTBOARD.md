@@ -1525,6 +1525,14 @@ fixed-screen SF2 framing is intentional).
 
 *(newest first; add one entry per commit: date · scope · what changed · by whom/agent)*
 
+- **2026-10-06 · tools/assets · zero RGB under alpha = 0 in every sprite
+  sheet (P6.3)** — dependency-free PNG codec `tools/core/png.mjs`; the packer,
+  `mugen:sprites` and the dev sheet-write endpoints now zero the chroma-key
+  RGB hidden under fully transparent pixels; one-time `tools/clean-alpha.mjs`
+  cleaned the committed sheets: **125.2 → 67.4 MB** (19 sheets incl. kfm/rj/
+  tao), each asserted alpha-identical and RGB-identical wherever A > 0.
+  `mugen:sprites` reproduces the committed KFM sheet byte-for-byte. — Claude (Opus 5.5)
+
 - **2026-10-06 · repo · remote branch cleanup (P9.1)** — deleted
   `feat/mks1-rescue-handoff`, `feat/character-studio`, `flo-char`,
   `spike/3d-renderer`, `marzi-char`; kept `feat/3d-mode`. — Claude (Opus 5.5)

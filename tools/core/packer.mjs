@@ -11,6 +11,7 @@
 //     merged over the QA-report keypoints at pack time (editor joint drags).
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { cleanSheetFile } from './png.mjs';
 import { mkdirSync, readdirSync, writeFileSync, readFileSync, existsSync, rmSync, copyFileSync } from 'node:fs';
 import { CELL_W, CELL_H, FLOOR_FRAC, HEADROOM } from './coords.mjs';
 import { chromaKey, SCALE_PAD } from './keying.mjs';
@@ -121,6 +122,15 @@ export function packCharacter(charId, opts) {
     '-frames:v', '1',
     join(outDir, 'sheet.png'),
   ]);
+  // P6.3: zero the chroma-key RGB left under fully transparent pixels (≈ −45%
+  // bytes, visibly identical — cleanSheetFile asserts it) before anything
+  // reads the sheet back
+  {
+    const sheetPath = join(outDir, 'sheet.png');
+    const src = readFileSync(sheetPath);
+    const { out } = cleanSheetFile(src, `${charId}/sheet.png`);
+    if (out.length < src.length) writeFileSync(sheetPath, out);
+  }
 
   // meta v2: records the convention the sheet was packed under, so tools can
   // detect v1 (pre-Sprint-27) sheets that still need the floor migration.

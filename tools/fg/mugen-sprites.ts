@@ -24,6 +24,7 @@ import { parseCharDef } from '../../src/compat/mugen/files';
 import { findSprite, readSffV2, spriteRgba, type SffV2 } from '../../src/compat/mugen/sff';
 import { CELL_H, CELL_W, FLOOR_FRAC, HEADROOM, ORIGIN_FEET } from '../../src/render/coords';
 import { renderScale } from '../../src/render/geometry';
+import { encodePng, zeroTransparentRgb } from '../core/png.mjs';
 
 const args = process.argv.slice(2);
 const opt = (n: string, d?: string): string | undefined => (args.includes(`--${n}`) ? args[args.indexOf(`--${n}`) + 1] : d);
@@ -179,7 +180,10 @@ names.forEach((name, i) => {
   for (let y = 0; y < CELL_H; y++) sheet.set(c.subarray(y * cellW * 4, (y + 1) * cellW * 4), ((oy + y) * COLS * cellW + ox) * 4);
 });
 const spriteDir = join(ROOT, 'public/assets/sprites', id);
-writePng(sheet, COLS * cellW, rows * CELL_H, join(spriteDir, 'sheet.png'));
+// P6.3: hidden RGB zeroed + our deterministic encoder (same bytes every run)
+zeroTransparentRgb({ width: COLS * cellW, height: rows * CELL_H, data: sheet });
+mkdirSync(spriteDir, { recursive: true });
+writeFileSync(join(spriteDir, 'sheet.png'), encodePng({ width: COLS * cellW, height: rows * CELL_H, data: sheet }));
 writeFileSync(join(spriteDir, 'meta.json'), `${JSON.stringify({
   version: 2, cellW, cellH: CELL_H, cols: COLS, rows, floorFrac: FLOOR_FRAC, headroom: HEADROOM,
   normalized: true, frames: names, skeletons: {},
