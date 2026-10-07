@@ -1064,14 +1064,14 @@ against the original, applied only on the user's approval. Never touches art
 or move lists. Every engine-facing change keeps determinism; tuning is DATA
 (character JSON transforms), so online compat follows the existing hash.*
 
-- [ ] **P13.1 Fight lab harness.** `src/bench/lab/`: a headless, seeded
+- [x] **P13.1 Fight lab harness.** *Done 2026-10-07: `src/bench/lab/match.ts` (`runMatch`: full match on the `dojo` wide arena with the camera, per-side damage / hits / blocks / punished + per-move used/connected/hit/blocked) and `matrix.ts` (`runMatrix` + `matrixMarkdown`: every unordered pair, both slot orders, seeds swapped across slots); CLI `npm run lab` (`--seeds`, `--chars`, `--reaction`, `--mistake`) → `assets/raw/lab/<stamp>/`. Whole roster, 2 seeds: 4.9M ticks in ~15 s. Deterministic (tested).* `src/bench/lab/`: a headless, seeded
       match runner (two bots, full rounds, real `step()`), a matchup matrix
       over the playable roster (both slots, N seeds), per-fighter and
       per-move stats (win rate, damage dealt/taken, time to KO, move usage,
       hit/whiff/block/punished rates). CLI `npm run lab` → JSON + Markdown
       report in `assets/raw/lab/` (gitignored). Deterministic: the same
       seed reproduces the same matrix.
-- [ ] **P13.2 Competent bot** (also P5's hard CPU). `src/ai/`: a per-fighter
+- [x] **P13.2 Competent bot** (also P5's hard CPU). *Done 2026-10-07: `src/ai/playbook.ts` (bench-measured pokes, punishers, anti-airs, projectiles, throws, airs, verified combo routes, fastest overhead) + `src/ai/smart.ts` `SmartBot` (reaction-delayed reads, blocking at the right height, wakeup guard, punish on block / recovery / landing, anti-air, grab avoidance, scored neutral offense over every move, combo confirms, interruptible queue). Measured: vs the random CPU with the SAME fighter 96% (69/72); across matchups 89%; smart-vs-smart mirrors ≈ even. Tests: `src/bench/lab/lab.test.ts`.* `src/ai/`: a per-fighter
       playbook derived from the bench (`measureMove` reach/startup/on-block,
       `findCombos` routes, anti-airs, punishers), driving spacing/footsies,
       blocking (reaction delay), punishing unsafe/whiffed moves, anti-air,

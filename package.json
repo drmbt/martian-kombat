@@ -28,6 +28,7 @@
     "gen:busts": "node tools/qa/run.mjs portrait_crop.py --all",
     "studio:run": "node tools/studio-run.mjs",
     "bench": "vite-node tools/fg/bench.ts --",
+    "lab": "vite-node tools/fg/lab.ts --",
     "mugen:fetch": "node tools/fg/fetch-mugen.mjs",
     "mugen:import": "vite-node tools/fg/import-mugen.ts --",
     "mugen:sprites": "vite-node tools/fg/mugen-sprites.ts --",
