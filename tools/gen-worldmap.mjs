@@ -8,7 +8,7 @@
 //   node tools/gen-worldmap.mjs [--force]
 
 import { join } from 'node:path';
-import { ROOT, loadEnv, geminiImage, saveAsset, skip } from './lib.mjs';
+import { ROOT, loadEnv, geminiImage, saveAsset, shippedState } from './lib.mjs';
 
 const env = loadEnv();
 const force = process.argv.includes('--force');
@@ -28,7 +28,9 @@ No readable text, no labels, no pins, no UI chrome, no watermark, no sky, no smo
 const raw = join(ROOT, 'assets/raw/world-map.png');
 const final = join(ROOT, 'public/assets/ui/world-map.png');
 
-if (!skip(raw, force)) {
+const state = shippedState(final, raw, force); // P8.5: judged by the shipped map
+if (state === 'skip') process.exit(0);
+if (state === 'generate') {
   console.log('generating world map...');
   const buf = await geminiImage({
     apiKey: env.GEMINI_API_KEY,

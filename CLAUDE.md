@@ -91,7 +91,8 @@ step-by-step reference (models, gotchas, concurrency, backoff) is
 **`docs/ASSET_CHECKLIST.md`**. Invoke the skills for that work (see Conventions).
 Hard rules that live here:
 
-- Scripts are idempotent and resumable (skip existing, `--force` regens). Raw
+- Scripts are idempotent and resumable: they skip any asset that already
+  SHIPS in `public/` (`shippedState`, `tools/lib.mjs`); `--force` regens. Raw
   output goes to `assets/raw/` (gitignored); only game-ready files land in
   `public/assets/`. Log each prompt to a `.prompt.txt` sidecar.
 - Image gen uses `gemini-3-pro-image` (never flash). Stages keep the locked
@@ -144,7 +145,7 @@ npm run gen:assets / gen:music     # rescan public/assets/ / music folders -> ma
 npm run gen:frames|gen:qa|gen:pack|gen:key -- --char <id>   # sprites (see docs/TOOLS.md)
 npm run gen:busts | gen:stages | gen:outpaint | gen:worldmap | gen:audio | gen:voice
 npm run gen:fatality | gen:vfx | gen:mesh | gen:styletest
-node tools/gen-canonical.mjs --char <id>   # canonical sheet + portraits + KO bust
+node tools/gen-canonical.mjs --char <id>   # canonical sheet (regen anchor) + KO bust
 npm run studio:run                 # Character Studio auto-pilot DAG (CLI)
 npm run mugen:fetch | mugen:import | mugen:sprites   # MUGEN reference content (gitignored raws)
 npm run raw:pull | raw:verify | raw:status | raw:manifest   # private R2 mirror (raw:push/snapshot: see rule 3)

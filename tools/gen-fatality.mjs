@@ -6,7 +6,7 @@
 import { join } from 'node:path';
 import { mkdirSync, existsSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { ROOT, loadEnv, geminiImage, saveAsset, skip, pool, concurrencyArg } from './lib.mjs';
+import { ROOT, loadEnv, geminiImage, saveAsset, shippedState, pool, concurrencyArg } from './lib.mjs';
 
 const env = loadEnv();
 const force = process.argv.includes('--force');
@@ -169,7 +169,9 @@ async function genPanel(charId, spec, i) {
   const raw = join(ROOT, 'assets/raw/fatalities', charId, `${spec.id}-${i + 1}.png`);
   const final = join(ROOT, 'public/assets/fatalities', charId, `${spec.id}-${i + 1}.jpg`);
   try {
-    if (!skip(raw, force)) {
+    const state = shippedState(final, raw, force); // P8.5: judged by the shipped panel
+    if (state === 'skip') return;
+    if (state === 'generate') {
       const prompt = `${PANEL_STYLE}\n${spec.panels[i]}`;
       console.log(`[${charId}] ${spec.id} panel ${i + 1}/${spec.panels.length} ...`);
       const buf = await geminiImage({

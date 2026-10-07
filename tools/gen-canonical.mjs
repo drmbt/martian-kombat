@@ -1,14 +1,13 @@
 // Generate canonical painted-cel character sheets (locked style, tools/style.md)
-// for the whole roster into assets/raw/canonical/, then crop head-and-shoulders
-// portraits into public/assets/portraits/. Also generates a beaten-and-bloodied
-// "defeated" bust per character (public/assets/portraits/<id>-ko.png) for the
+// for the whole roster into assets/raw/canonical/ (the committed regen
+// anchors). Also generates a beaten-and-bloodied "defeated" bust per character (public/assets/portraits/<id>-ko.png) for the
 // post-match win-quote screen. Vincent & Yulia reuse their approved style-test
 // canon. Requires ffmpeg.  node tools/gen-canonical.mjs [--char <id>] [--force]
 
 import { join } from 'node:path';
 import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { ROOT, loadEnv, geminiImage, saveAsset, skip } from './lib.mjs';
+import { ROOT, loadEnv, geminiImage, saveAsset, skip, shippedState } from './lib.mjs';
 
 const env = loadEnv();
 const force = process.argv.includes('--force');
@@ -112,20 +111,9 @@ for (const id of canonicalIds) {
   saveAsset(out, buf, prompt);
 }
 
-// head-and-shoulders portraits: upper-center crop of the canonical sheet
-for (const id of [...Object.keys(REUSE), ...Object.keys(FLAVOR), ...(only ? [only] : [])]) {
-  if (only && id !== only) continue; // --char scopes EVERY pass (an unscoped
-  // portrait loop once resurrected a deleted orphan portrait from stale raws)
-  const src = join(CANON, `${id}.png`);
-  const out = join(PORTRAITS, `${id}.png`);
-  if (!existsSync(src) || skip(out, force)) continue;
-  execFileSync('ffmpeg', [
-    '-y', '-loglevel', 'error', '-i', src,
-    '-vf', 'chromakey=0x00B140:0.15:0.06,crop=in_w*0.46:in_w*0.46:in_w*0.27:in_h*0.02,scale=160:160',
-    '-frames:v', '1', out,
-  ]);
-  console.log(`  portrait ${id}`);
-}
+// (P8.4: the old "upper-center crop of the canonical" pass that wrote
+// portraits/<id>.png is gone — that file is the straight-on selector icon and
+// belongs to tools/gen-icons.mjs; busts come from tools/qa/portrait_crop.py.)
 
 // beaten-and-bloodied defeated busts -> public/assets/portraits/<id>-ko.png
 const KORAW = join(CANON, 'ko'); // raw busts (gitignored with the rest of assets/raw)
@@ -136,7 +124,11 @@ for (const id of new Set([...Object.keys(REUSE), ...Object.keys(FLAVOR), ...(onl
   const inspo = join(ROOT, `assets/character-inspo/${id}.jpg`);
   if (!existsSync(canonical)) continue; // need the canon as the identity/style anchor
   const raw = join(KORAW, `${id}.png`);
-  if (!skip(raw, force)) {
+  const out = join(PORTRAITS, `${id}-ko.png`);
+  // P8.5: judged by the SHIPPED KO bust, not the raw
+  const state = shippedState(out, raw, force);
+  if (state === 'skip') continue;
+  if (state === 'generate') {
     console.log(`ko-portrait ${id} ...`);
     // the straight-on select portrait is the cleanest, keyed, canon-correct face
     // — use it as the PRIMARY reference so the KO matches the shipped portrait,
@@ -169,8 +161,7 @@ for (const id of new Set([...Object.keys(REUSE), ...Object.keys(FLAVOR), ...(onl
     }
     if (!done) console.warn(`  ko-portrait ${id} SKIPPED — rerun later or hand-make`);
   }
-  const out = join(PORTRAITS, `${id}-ko.png`);
-  if (existsSync(raw) && !skip(out, force)) {
+  if (existsSync(raw)) {
     // bust is already square-ish and centered — just key the green and scale
     execFileSync('ffmpeg', [
       '-y', '-loglevel', 'error', '-i', raw,

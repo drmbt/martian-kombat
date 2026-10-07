@@ -9,8 +9,9 @@
 
 ## Asset generation pipeline
 
-Pipeline rules: scripts must be idempotent and resumable (skip files that exist,
-`--force` to regen). Raw output goes to `assets/raw/` (gitignored); only packed,
+Pipeline rules: scripts must be idempotent and resumable (skip files that exist —
+judged by the SHIPPED file via `shippedState()` in `tools/lib.mjs`, never only
+by a gitignored raw (P8.5) — `--force` to regen). Raw output goes to `assets/raw/` (gitignored); only packed,
 game-ready files land in `public/assets/` (committed). Log prompts used into a
 sidecar `.prompt.txt` next to each generated asset so results are reproducible.
 
