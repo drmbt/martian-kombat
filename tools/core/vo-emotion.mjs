@@ -52,6 +52,37 @@ const TEMPERAMENT = {
   rj: { kiai: '(confident)', hurt: '(groaning)', victory: '(sarcastic)', move: '(confident)' },
 };
 
+/** Per-LINE overrides, keyed by roster id → category → exact line text (as it
+ *  appears in the character JSON). These were inline "(tag) text" prefixes in
+ *  gen-audio's old tables; the JSON holds clean text (ElevenLabs would speak a
+ *  tag aloud), so the hand-tuned reads live here. `(raw)` = no tag at all.
+ *  `(screaming)` / `(angry)` were used on the shipped clips as-is. A test
+ *  (src/data/voLines.test.ts) fails if a key stops matching a JSON line. */
+const LINE_TAGS = {
+  freeman: {
+    hurt: { 'Unmoved.': '(calm)' },
+    victory: { 'Namaste... now leave.': '(calm)' },
+  },
+  gene: {
+    victory: { "I'm bullish on this one!": '(excited)' },
+  },
+  chebel: {
+    kiai: { 'HA!': '(shouting)' },
+    hurt: { 'Ui!': '(raw)' },
+  },
+  rj: {
+    kiai: {
+      'Go on, git!!!': '(shouting)',
+      'YAW!!!': '(shouting)',
+      'Hyah!': '(raw)',
+      'Hyee-YAH!': '(raw)',
+      'Whooooa.': '(raw)',
+    },
+    hurt: { 'Ngh!': '(raw)', 'FUUUCK!!!': '(screaming)' },
+    victory: { 'Get. Off. My. Lot.': '(angry)' },
+  },
+};
+
 const VALID_CATEGORIES = new Set(['kiai', 'hurt', 'victory', 'move']);
 
 /** Resolve the leading Fish tag (with parens) for a fighter+context, or ''. */
@@ -62,12 +93,14 @@ export function emotionTag(charId, category) {
 }
 
 /** Prepend the resolved tag to the spoken text (Fish clone path ONLY).
- *  Idempotent: a line that already starts with a (tag) is returned untouched,
- *  so hand-authored per-line overrides win. A leading `(raw)` is an explicit
+ *  Idempotent: a line that already starts with a (tag) is returned untouched;
+ *  LINE_TAGS supplies the hand-tuned per-line tags for clean JSON text. A leading `(raw)` is an explicit
  *  "no emotion" escape — it's stripped and the bare text returned untagged
  *  (for short grunts a clone reads cleaner with no tag at all). */
 export function withEmotion(charId, category, text) {
-  const t = String(text ?? '');
+  let t = String(text ?? '');
+  const line = LINE_TAGS[charId]?.[category]?.[t];
+  if (line) t = `${line} ${t}`; // a per-line override beats the temperament
   const raw = t.match(/^\s*\(raw\)\s*/i);
   if (raw) return t.slice(raw[0].length); // explicit no-tag
   if (/^\s*\([a-z][a-z\s-]*\)/i.test(t)) return t; // already tagged
@@ -75,4 +108,4 @@ export function withEmotion(charId, category, text) {
   return tag ? `${tag} ${t}` : t;
 }
 
-export { DEFAULT_BY_CATEGORY, TEMPERAMENT };
+export { DEFAULT_BY_CATEGORY, TEMPERAMENT, LINE_TAGS };

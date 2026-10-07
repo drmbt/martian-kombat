@@ -55,7 +55,8 @@ their row here, never hand-edit the tag into the line text.
   docs; the canonical short list lives in `vo-emotion.mjs`'s header.
 - **One tag, at the sentence start.** S1 applies a leading tag to the line.
   `withEmotion` is idempotent — a line that already starts with `(tag)` is left
-  alone, so a hand-authored per-line override wins over the table.
+  alone. Per-line overrides live in `LINE_TAGS` (keyed by the exact JSON line
+  text; `(raw)` = no tag); a test fails if a key stops matching a line.
 
 ## Workflow
 
