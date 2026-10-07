@@ -63,19 +63,44 @@ describe('JobRunner', () => {
     expect(job.cost.assetsWritten).toBe(3);
   });
 
-  it('persists state and re-queues interrupted running jobs on load', async () => {
+  it('loads carried-over work PAUSED and never runs it on its own (P2.8)', async () => {
     const dir = tmp();
     const a = new JobRunner({ dir, workers: { t: async () => wait(5) } });
-    const done = a.enqueue({ kind: 't', label: 'finished' });
+    const done = a.enqueue({ kind: 't', label: 'interrupted', char: 'vincent' });
     await a.idle();
-    // simulate a crash mid-job: hand-mark a persisted job as running
+    // simulate a crash mid-job + a still-queued job for ANOTHER fighter
     done.status = 'running';
+    a.jobs.set('jx', { ...done, id: 'jx', label: 'queued-other', char: 'yulia', status: 'queued' });
     a.persist();
     await wait(400); // let the debounced persist flush
-    const b = new JobRunner({ dir, workers: { t: async () => undefined } });
-    expect(b.list().find((j) => j.label === 'finished')?.status).toBe('queued');
+    let ran = 0;
+    const b = new JobRunner({ dir, workers: { t: async () => { ran++; } } });
+    const status = (label: string) => b.list().find((j) => j.label === label)?.status;
+    expect(status('interrupted')).toBe('paused');
+    expect(status('queued-other')).toBe('paused');
+    await b.idle(); // paused work doesn't keep the runner busy…
+    await wait(30);
+    expect(ran).toBe(0); // …and nothing ran (= nothing spent)
+  });
+
+  it('resumes paused jobs only for the named character', async () => {
+    const dir = tmp();
+    const a = new JobRunner({ dir, workers: { t: async () => undefined } });
+    const v = a.enqueue({ kind: 't', label: 'v', char: 'vincent' });
+    await a.idle();
+    v.status = 'running';
+    a.jobs.set('jy', { ...v, id: 'jy', label: 'y', char: 'yulia', status: 'queued' });
+    a.persist();
+    await wait(400);
+    const ran: string[] = [];
+    const b = new JobRunner({ dir, workers: { t: async (job: Job) => { ran.push(job.label); } } });
+    expect(() => b.resume('')).toThrow();
+    expect(b.resume('vincent')).toBe(1);
     await b.idle();
-    expect(b.list().find((j) => j.label === 'finished')?.status).toBe('done');
+    expect(ran).toEqual(['v']);
+    expect(b.list().find((j) => j.label === 'y')?.status).toBe('paused');
+    expect(b.cancel('jy')).toBe(true); // paused work can be dropped
+    expect(b.list().find((j) => j.label === 'y')?.status).toBe('cancelled');
   });
 
   it('cancels queued jobs and skips their dependents', async () => {

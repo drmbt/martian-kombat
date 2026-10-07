@@ -49,8 +49,9 @@ recursive); per-char overrides go in `meshes/<char>/animations/`.
 
 ## Debug tools
 
-- `public/dev/glb-viewer.html?glb=<url>&fixnormals=1` — minimal
-  WebGL-vs-WebGPU side-by-side viewer, no game code. First stop when a
+- The minimal WebGL-vs-WebGPU GLB viewer (`public/dev/glb-viewer.html`,
+  `?glb=<url>&fixnormals=1`) was deleted in P2.6 — it shipped to prod and
+  was broken there; recover it with `git log --all -- public/dev/glb-viewer.html`. First stop when a
   model looks wrong: if both backends agree, the GLB is the problem.
 - Blender headless render probes live in the session history — but
   remember workbench hides alpha-blend problems.

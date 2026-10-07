@@ -30,11 +30,12 @@
   with rollback) · 4 Training · 5 Demo match · 6 Settings · attract-mode demo
   on idle · `7 DEV EDITOR` (dev builds only: Character Studio, stage-pin
   editor). 3D mode is frozen: dev or `?3d=1` only.
-- **Health:** `tsc` clean · 514/514 vitest (38 files) · `npm run bench`:
+- **Health:** `tsc` clean · 527/527 vitest (40 files) · `npm run bench`:
   2 MKS-1 errors (Vincent `clp>lk`, Ben `clk>clp` infinites — 02-PLAN P4.3).
-- **Plan progress:** P0 ✅ · MKS-1 Phase A ✅ · P1 ✅ · P2 2.1–2.5 ✅ · P3
+- **Plan progress:** P0 ✅ · MKS-1 Phase A ✅ · P1 ✅ · P2 ✅ · P3
   3.1/3.2/3.10/3.11 ✅ · P4 4.0–4.2 ✅ · P6 6.1/6.2/6.3/6.5/6.6 ✅ · P8.6(a) ✅
-  · P9.1 ✅. **Next:** P2.6–P2.10, then P3. Status table: 02-PLAN §1.
+  · P9.1 ✅. **Next:** P3, then P8.5 (generator skip checks). Status
+  table: 02-PLAN §1.
 
 ## Backlog
 
@@ -94,9 +95,8 @@ CPU matchup matrix (P10.9), CPU difficulty (P5), Character Studio platform
 
 ## Agent handoff notes
 
-**Current:** P1 (PR #4) and P8.6(a) — VO texts read from the character
-JSON — are done. **Next session:** P2.6–P2.10 on `fix/p2-cleanup-hardening`;
-paste `docs/handoff/06-NEXT-SPRINT-P2.md` into a fresh session. The dated
+**Current:** P2 is done on `fix/p2-cleanup-hardening` (PR open); P3
+(fight-core correctness) follows on a branch stacked on it. The dated
 session log is 02-PLAN's **Handoff log**; this section keeps only standing
 landmines.
 
@@ -115,8 +115,12 @@ landmines.
   `src/bench/reference/kfm.unlock.json` instead. Raw MUGEN content is
   gitignored (`npm run mugen:fetch`) and never goes to R2.
 - No `raw:push` (R2 writes) until P8.17 makes it no-clobber. No paid
-  generation without a D6 go-ahead. Never restore `assets/raw/jobs/` before
-  P2.8 (the job runner auto-resumes paid jobs).
+  generation without a D6 go-ahead. Jobs carried over from an earlier dev
+  server load PAUSED; resume them explicitly per character.
+- Don't run `gen-icons` / `gen:fatality` / `studio:run` (even `--mock`) for
+  a fighter whose art already ships: their skip checks look at gitignored
+  intermediates and OVERWRITE the committed art (02-PLAN P8.5, proven
+  2026-10-07).
 - `assets/raw/frames/<id>/` dirs with a `.cellspace` marker (vincent, earl,
   ben) hold KEYED cell-space art — the packer copies them through; never
   re-key or re-pad.

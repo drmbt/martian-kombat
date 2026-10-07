@@ -22,7 +22,10 @@ function readJsonBody(req: import('node:http').IncomingMessage): Promise<Record<
   });
 }
 
-const okId = (id: unknown): id is string => typeof id === 'string' && /^[a-z0-9_-]+$/.test(id);
+const okId = (id: unknown): id is string => typeof id === 'string' && SAFE_ID.test(id);
+// one mock switch for the dev server AND the tools it calls: MK_CREATOR_MOCK
+// (the mock launch config) or MK_GEN_MOCK (studio:run --mock) — P2.9
+const mockMode = (): boolean => process.env.MK_CREATOR_MOCK === '1' || process.env.MK_GEN_MOCK === '1';
 // THE chroma-key + scale/pad filters, shared with tools/pack-sheet.mjs via
 // tools/core/keying.mjs. KEY_PAD_CELL includes the pack-time HEADROOM (the
 // old inline copy here omitted it, so editor/creator cells misregistered
@@ -30,6 +33,7 @@ const okId = (id: unknown): id is string => typeof id === 'string' && /^[a-z0-9_
 import { KEY_PAD_CELL, keyPadSquare, STAGE_COVER } from './tools/core/keying.mjs';
 import { ELEVEN_VOICES } from './tools/lib.mjs';
 import { cleanPngBuffer } from './tools/core/png.mjs';
+import { checkEditorRequest, importPathAllowed, SAFE_FILE, SAFE_ID, tsString } from './tools/core/editor-guard.mjs';
 const FF_KEY_PAD = KEY_PAD_CELL;
 // portraits are SQUARE (character-select icon aspect) and centered, not floor-aligned
 const FF_KEY_PAD_SQUARE = keyPadSquare(512);
@@ -48,6 +52,17 @@ function editorApi(): Plugin {
     name: 'mk-editor-api',
     apply: 'serve',
     configureServer(server) {
+      // P2.7: one guard in front of EVERY /__editor endpoint — loopback Host,
+      // no cross-site Origin, JSON-only writes (tools/core/editor-guard.mjs).
+      // Registered first, so it runs before any handler below.
+      server.middlewares.use('/__editor', (req, res, next) => {
+        const verdict = checkEditorRequest(req.method, req.headers);
+        if (verdict.ok) return next();
+        res.statusCode = verdict.status;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ ok: false, error: verdict.error }));
+      });
+
       // POST /__editor/stage-pins  { "<stageId>": { "x": 0..1, "y": 0..1 }, ... }
       // -> writes src/data/stage-pins.json (normalized world-map coords).
       server.middlewares.use('/__editor/stage-pins', (req, res, next) => {
@@ -136,7 +151,7 @@ function editorApi(): Plugin {
         const rosPath = join(root, 'src/data/roster.ts');
         let ros = readFileSync(rosPath, 'utf-8');
         if (!new RegExp(`id: '${id}'`).test(ros)) {
-          ros = ros.replace(/(\n\];)/, `\n  { id: '${id}', name: '${disp}', playable: true },$1`);
+          ros = ros.replace(/(\n\];)/, `\n  { id: '${id}', name: ${tsString(disp)}, playable: true },$1`);
           writeFileSync(rosPath, ros);
         }
       };
@@ -145,7 +160,7 @@ function editorApi(): Plugin {
         let st = readFileSync(stagesPath, 'utf-8');
         if (!new RegExp(`'${stageId}'`).test(st)) {
           const sName = (stageName && stageName.trim() ? stageName : stageId).toUpperCase();
-          st = st.replace(/(\n\];)/, `\n  stage('${stageId}', '${sName}'),$1`);
+          st = st.replace(/(\n\];)/, `\n  stage('${stageId}', ${tsString(sName)}),$1`);
           writeFileSync(stagesPath, st);
         }
       };
@@ -305,7 +320,7 @@ function editorApi(): Plugin {
             const scratch = join(tmpdir(), `mk-kp-${id}-${Date.now()}`);
             mkdirSync(scratch, { recursive: true });
             for (const c of cells as { name?: unknown; pngBase64?: unknown }[]) {
-              if (typeof c.name !== 'string' || typeof c.pngBase64 !== 'string') continue;
+              if (typeof c.name !== 'string' || typeof c.pngBase64 !== 'string' || !SAFE_FILE.test(c.name)) continue;
               writeFileSync(join(scratch, `${c.name}.png`), Buffer.from(c.pngBase64, 'base64'));
             }
             const { resolvePython } = await import('./tools/qa/resolve-python.mjs');
@@ -335,7 +350,10 @@ function editorApi(): Plugin {
             const lib = await import('./tools/lib.mjs');
             const env = lib.loadEnv();
             const apiKey = env.GEMINI_API_KEY;
-            if (!apiKey) throw new Error('GEMINI_API_KEY not set in .env');
+            // mock: a placeholder cell, and NEVER written over the real raw
+            // frame below (P2.9 — this endpoint used to spend even in mock)
+            const mock = mockMode();
+            if (!apiKey && !mock) throw new Error('GEMINI_API_KEY not set in .env');
             const scratch = join(tmpdir(), `mk-gen-${id}-${Date.now()}`);
             mkdirSync(scratch, { recursive: true });
             const refPaths: string[] = [];
@@ -347,12 +365,14 @@ function editorApi(): Plugin {
                 refPaths.push(p);
               }
             });
-            const raw = await lib.geminiImage({
-              apiKey,
-              model: 'gemini-3-pro-image',
-              prompt,
-              referencePaths: refPaths,
-            });
+            const raw = mock
+              ? lib.mockImage()
+              : await lib.geminiImage({
+                  apiKey,
+                  model: 'gemini-3-pro-image',
+                  prompt,
+                  referencePaths: refPaths,
+                });
             const rawPath = join(scratch, 'gen.png');
             writeFileSync(rawPath, raw);
             const cellPath = join(scratch, 'cell.png');
@@ -362,7 +382,7 @@ function editorApi(): Plugin {
             // silently reverting the regen; a superseded pixel-edit overlay for
             // the cell is dropped. Only replaces an existing frame file.
             let rawSaved: string | undefined;
-            if (typeof cellName === 'string' && /^[a-z0-9-]+$/.test(cellName)) {
+            if (!mock && typeof cellName === 'string' && /^[a-z0-9-]+$/.test(cellName)) {
               const framesDir = join(root, 'assets/raw/frames', id);
               if (existsSync(framesDir)) {
                 const hit = readdirSync(framesDir).find((f) => new RegExp(`^\\d\\d-${cellName}\\.png$`).test(f));
@@ -374,7 +394,7 @@ function editorApi(): Plugin {
                 }
               }
             }
-            sendJson(res, 200, { ok: true, pngBase64: readFileSync(cellPath).toString('base64'), rawSaved });
+            sendJson(res, 200, { ok: true, pngBase64: readFileSync(cellPath).toString('base64'), rawSaved, ...(mock ? { mock: true } : {}) });
           })
           .catch((err) => sendJson(res, 400, { ok: false, error: String(err) }));
       });
@@ -395,7 +415,7 @@ function editorApi(): Plugin {
             const lib = await import('./tools/lib.mjs');
             const env = lib.loadEnv();
             const apiKey = env.GEMINI_API_KEY;
-            if (process.env.MK_CREATOR_MOCK === '1' || !apiKey) {
+            if (mockMode() || !apiKey) {
               sendJson(res, 200, { ok: true, mock: true, prompt });
               return;
             }
@@ -450,6 +470,15 @@ function editorApi(): Plugin {
               sendJson(res, 200, { ok: true, cancelled: runner.cancel(id) });
               return;
             }
+            if (action === 'resume') {
+              // jobs carried over from a previous dev-server run load PAUSED
+              // (they may spend) — resume is explicit and per character
+              const { char, ids } = b as { char?: string; ids?: unknown };
+              if (!okId(char)) throw new Error('invalid char');
+              const only = Array.isArray(ids) ? ids.filter((x): x is string => typeof x === 'string') : undefined;
+              sendJson(res, 200, { ok: true, resumed: runner.resume(char, only) });
+              return;
+            }
             if (action === 'enqueue-dag') {
               const { char, mock, only, force } = b as { char?: string; mock?: boolean; only?: string[]; force?: boolean };
               if (typeof char !== 'string' || !okId(char)) throw new Error('invalid char');
@@ -482,7 +511,7 @@ function editorApi(): Plugin {
             const lib = await import('./tools/lib.mjs');
             const env = lib.loadEnv();
             const apiKey = env.GEMINI_API_KEY;
-            const mock = process.env.MK_CREATOR_MOCK === '1' || !apiKey;
+            const mock = mockMode() || !apiKey;
             if (mock) {
               sendJson(res, 200, { ok: true, mock: true, kind: String(kind ?? 'sprite') });
               return;
@@ -545,7 +574,7 @@ function editorApi(): Plugin {
             const lib = await import('./tools/lib.mjs');
             const env = lib.loadEnv();
             const apiKey = env.ELEVENLABS_API_KEY;
-            if (process.env.MK_CREATOR_MOCK === '1' || !apiKey) { sendJson(res, 200, { ok: true, mock: true }); return; }
+            if (mockMode() || !apiKey) { sendJson(res, 200, { ok: true, mock: true }); return; }
             const vId = voice === 'f' ? ELEVEN.f : ELEVEN.m;
             // announcer always ElevenLabs; grunts via the Fish clone if one exists, else ElevenLabs
             const useFish = typeof fishModelId === 'string' && !!env.FISH_API_KEY;
@@ -577,7 +606,7 @@ function editorApi(): Plugin {
             const lib = await import('./tools/lib.mjs');
             const env = lib.loadEnv();
             const apiKey = env.ELEVENLABS_API_KEY;
-            if (process.env.MK_CREATOR_MOCK === '1' || !apiKey) { sendJson(res, 200, { ok: true, mock: true, clip }); return; }
+            if (mockMode() || !apiKey) { sendJson(res, 200, { ok: true, mock: true, clip }); return; }
             let buf: Buffer;
             if (clip === 'announcer') {
               buf = await elevenTts(apiKey, ELEVEN.announcer, String(text || name || 'fighter').toUpperCase());
@@ -605,7 +634,7 @@ function editorApi(): Plugin {
             const lib = await import('./tools/lib.mjs');
             const env = lib.loadEnv();
             const apiKey = env.ELEVENLABS_API_KEY;
-            if (process.env.MK_CREATOR_MOCK === '1' || !apiKey) { sendJson(res, 200, { ok: true, mock: true }); return; }
+            if (mockMode() || !apiKey) { sendJson(res, 200, { ok: true, mock: true }); return; }
             let buf: Buffer;
             if (kind === 'sfx') {
               const r = await fetch('https://api.elevenlabs.io/v1/sound-generation', {
@@ -634,7 +663,7 @@ function editorApi(): Plugin {
             if (typeof prompt !== 'string' || !prompt.trim()) throw new Error('empty music prompt');
             const lib = await import('./tools/lib.mjs');
             const apiKey = lib.loadEnv().ELEVENLABS_API_KEY;
-            if (process.env.MK_CREATOR_MOCK === '1' || !apiKey) { sendJson(res, 200, { ok: true, mock: true }); return; }
+            if (mockMode() || !apiKey) { sendJson(res, 200, { ok: true, mock: true }); return; }
             const r = await fetch('https://api.elevenlabs.io/v1/music', {
               method: 'POST',
               headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json' },
@@ -656,7 +685,7 @@ function editorApi(): Plugin {
             const { name, fatalityName, referenceBase64, panelPrompts, only } = b as { name?: string; fatalityName?: string; referenceBase64?: unknown; panelPrompts?: unknown; only?: number };
             const lib = await import('./tools/lib.mjs');
             const apiKey = lib.loadEnv().GEMINI_API_KEY;
-            if (process.env.MK_CREATOR_MOCK === '1' || !apiKey) { sendJson(res, 200, { ok: true, mock: true }); return; }
+            if (mockMode() || !apiKey) { sendJson(res, 200, { ok: true, mock: true }); return; }
             const scratch = join(tmpdir(), `mk-fat-${Date.now()}`); mkdirSync(scratch, { recursive: true });
             const refs = Array.isArray(referenceBase64) ? (referenceBase64 as unknown[]) : [];
             const refPaths: string[] = [];
@@ -694,7 +723,7 @@ function editorApi(): Plugin {
             if (!Array.isArray(samples) || !samples.length) throw new Error('no voice samples');
             const lib = await import('./tools/lib.mjs');
             const key = lib.loadEnv().FISH_API_KEY;
-            if (process.env.MK_CREATOR_MOCK === '1' || !key) { sendJson(res, 200, { ok: true, mock: true }); return; }
+            if (mockMode() || !key) { sendJson(res, 200, { ok: true, mock: true }); return; }
             const fd = new FormData();
             fd.append('type', 'tts'); fd.append('train_mode', 'fast'); fd.append('visibility', 'private');
             fd.append('title', `Martian Kombat — ${id}`);
@@ -1108,7 +1137,7 @@ function editorApi(): Plugin {
             }
             // fatality
             const fat = def.fatality as { id?: string } | undefined;
-            if (Array.isArray(p.fatalityPanels) && p.fatalityPanels.length && fat?.id) {
+            if (Array.isArray(p.fatalityPanels) && p.fatalityPanels.length && fat && okId(fat.id)) {
               const d = join(A, 'fatalities', id); mkdirSync(d, { recursive: true });
               p.fatalityPanels.forEach((pan, i) => writeFileSync(join(d, `${fat.id}-${i + 1}.jpg`), Buffer.from(pan, 'base64')));
             } else delete def.fatality;
@@ -1172,11 +1201,28 @@ function editorApi(): Plugin {
             const id = def.id;
             const disp = typeof def.name === 'string' && def.name ? def.name : id.toUpperCase();
 
+            // only this fighter's OWN files (and its home stage art if that
+            // stage doesn't ship yet) — a bundle must never overwrite anyone
+            // else's assets (P2.7; rules in tools/core/editor-guard.mjs)
             const assets = join(stage, 'assets');
+            const homeStage = typeof def.stage === 'string' && okId(def.stage) ? def.stage : undefined;
+            const homeExists = !!homeStage && existsSync(join(root, 'public/assets/backgrounds/stages', `${homeStage}.jpg`));
+            const skipped: string[] = [];
             for (const sub of ['sprites', 'portraits', 'audio', 'fatalities', 'backgrounds']) {
               const src = join(assets, sub);
-              if (existsSync(src)) cpSync(src, join(root, 'public/assets', sub), { recursive: true });
+              if (!existsSync(src)) continue;
+              cpSync(src, join(root, 'public/assets', sub), {
+                recursive: true,
+                filter: (from) => {
+                  if (statSync(from).isDirectory()) return true;
+                  const rel = from.slice(assets.length + 1).split('\\').join('/');
+                  const ok = importPathAllowed(rel, id, homeStage, homeExists);
+                  if (!ok) skipped.push(rel);
+                  return ok;
+                },
+              });
             }
+            if (skipped.length) console.warn(`[editor] import ${id}: skipped ${skipped.length} file(s) outside its own assets:`, skipped.slice(0, 10));
             const rawFrames = join(stage, 'assets/raw/frames', id);
             if (existsSync(rawFrames)) cpSync(rawFrames, join(root, 'assets/raw/frames', id), { recursive: true, force: true });
             const rawProgress = join(stage, 'raw');
@@ -1301,7 +1347,7 @@ function editorApi(): Plugin {
             // stage music (generated or BYO) → the character's stage folder + a default fallback
             if (typeof musicBase64 === 'string') {
               const stageId = (def as { stage?: string }).stage;
-              for (const dir of [stageId ? `stages/${stageId}` : null, 'stages/default'].filter(Boolean) as string[]) {
+              for (const dir of [okId(stageId) ? `stages/${stageId}` : null, 'stages/default'].filter(Boolean) as string[]) {
                 const mdir = join(audioRoot, 'music', dir);
                 mkdirSync(mdir, { recursive: true });
                 writeFileSync(join(mdir, `${id}-theme.mp3`), Buffer.from(musicBase64, 'base64'));
@@ -1318,7 +1364,7 @@ function editorApi(): Plugin {
             }
             // fatality: write panels + KEEP the block (else drop it so BootScene won't 404)
             const fat = cleanDef.fatality as { id?: string; panels?: number } | undefined;
-            if (Array.isArray(fatalityPanels) && fatalityPanels.length && fat?.id) {
+            if (Array.isArray(fatalityPanels) && fatalityPanels.length && fat && okId(fat.id)) {
               const fatDir = join(root, 'public/assets/fatalities', id);
               mkdirSync(fatDir, { recursive: true });
               fatalityPanels.forEach((p, i) => writeFileSync(join(fatDir, `${fat.id}-${i + 1}.jpg`), Buffer.from(p, 'base64')));

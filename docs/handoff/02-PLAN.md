@@ -24,7 +24,7 @@
 > | `02-PLAN.md` (this file) | everywhere | the backlog |
 > | `03-NEW-MACHINE-RESUME.md` | this (new) machine, after the rescue | restore + baseline + start the plan |
 > | `RESCUE_REPORT.md` | written by the old machine | what was rescued, versions, gaps |
-| `06-NEXT-SPRINT-P2.md` | a fresh session | the next sprint's self-contained prompt (P2.6–P2.10). Finished prompts move to `docs/archive/handoff-prompts/` |
+| `NN-NEXT-SPRINT-*.md` | a fresh session | the next sprint's self-contained prompt, when one is written. Finished prompts move to `docs/archive/handoff-prompts/` |
 
 ---
 
@@ -85,7 +85,7 @@
 | P0 | Restore raw assets + baseline (old-machine rescue → new machine) | S | ✅ 2026-10-06 |
 | MKS-1 A | Standards foundation: bench lab, ratchet, KFM parity, MUGEN parsers | M | ✅ 2026-10-04 |
 | P1 | Truth-in-docs & agent context diet | M | ✅ 2026-10-06 |
-| P2 | Player-facing traps + cheap infra/security fixes | M | ◐ 2.1–2.5 ✅ |
+| P2 | Player-facing traps + cheap infra/security fixes | M | ✅ 2026-10-07 |
 | P3 | Fight-core correctness & feel (engine, test-first) | M–L | ◐ 3.1/3.2/3.10/3.11 ✅ |
 | P4 | Character data, balance, schema lint | M | ◐ 4.0–4.2 ✅ |
 | P5 | CPU opponent + difficulty | M | ☐ |
@@ -159,8 +159,10 @@ Workers Static Assets (`wrangler.jsonc`), serving the HEAD build.
   `assets/raw/edits/<id>/` must survive any repack. Frame dirs with a
   `.cellspace` marker (vincent/earl/ben) hold KEYED cell-space art: never
   re-key or re-pad them.
-- **Never restore `assets/raw/jobs/`** onto a dev machine until P2.8 lands:
-  the job runner auto-resumes queued paid jobs at dev-server start.
+- **Carried-over jobs load PAUSED** (P2.8, 2026-10-07): the job runner never
+  auto-resumes work from a previous process; `resume(char)` / the
+  `/__editor/jobs` `resume` action is explicit and per character. Don't add
+  an auto-resume back. (`raw:pull` still skips `assets/raw/jobs/` by default.)
 - **Don't regenerate committed art** without D6. Sheet post-processing (P6.3)
   must be proven pixel-identical where alpha > 0.
 - **Lazy-load contract** (CLAUDE.md): any scene that shows a fighter, plays
@@ -369,7 +371,7 @@ text. Prompt: `docs/archive/handoff-prompts/05-NEXT-SPRINT-P1.md`.*
       build (8 fighters), and the README links there. Disable it (repo
       Settings → Pages, or `gh api -X DELETE repos/drmbt/martian-kombat/pages`
       after confirmation), or replace it with a redirect page.
-- [ ] **P2.6 Remove shipped orphans [A].**
+- [x] **P2.6 Remove shipped orphans [A].** *Done 2026-10-07: tall stage art (17 MB, 13 files) moved to `assets/stages-tall/` (source-only; `ai-kitchn` → `ai-kitchen`, so `TALL_ALIAS` is empty; `stages-wide.mjs`/`gen-outpaint`/TOOLS.md updated); deleted `stages/_old/` (2.3 MB), `public/dev/glb-viewer.html`, vanessa's unused `projectile-little-helper.png` (her projectile moves are little-martian + chocolate-head); the 3D `*.job.json`/`*.report.json` sidecars untracked + gitignored (gen-mesh rewrites them each run; `assets/3d/` never deployed). ~19.5 MB less shipped; manifest 750 → 725 versioned files. Kept `vfx/sparks/` (P10.2).*
       - **KEEP `public/assets/backgrounds/stages tall/`** — not an orphan: the
         user's 1680×1440 upward-expanded stages for future Marvel vs
         Capcom-style high-jump air fighting (D9). Move it out of
@@ -384,7 +386,7 @@ text. Prompt: `docs/archive/handoff-prompts/05-NEXT-SPRINT-P1.md`.*
       - Keep `public/assets/vfx/sparks/` (P10.2).
       Then `npm run gen:assets` and run the audit test. The R2 mirror from the
       rescue is the backup.
-- [ ] **P2.7 Dev-server hardening — MED security [A].** The `editorApi()`
+- [x] **P2.7 Dev-server hardening — MED security [A].** *Done 2026-10-07: one guard (`tools/core/editor-guard.mjs`) registered ahead of every `/__editor` handler — loopback Host (DNS rebinding), no cross-site Origin / Sec-Fetch-Site, JSON-only writes; ids via `SAFE_ID`, skeleton-regen cell names via `SAFE_FILE`, `fat.id` and the music stage id validated; roster/stage names written with `tsString()`; zip import copies only the fighter's own files (`importPathAllowed`; never clobbers a shipped stage). Verified live: foreign Origin 403, `text/plain` 415, rebinding Host 403, `../x` 400; a same-origin browser write 200. The two body-less POSTs (creator list/canon) are GETs now. `src/data/editorGuard.test.ts`.* The `editorApi()`
       plugin in `vite.config.ts` has ~28 POST endpoints with no Origin check,
       and `readJsonBody` accepts `text/plain`. Any web page open while
       `npm run dev` runs can POST to localhost: spend API credits, call
@@ -402,7 +404,7 @@ text. Prompt: `docs/archive/handoff-prompts/05-NEXT-SPRINT-P1.md`.*
       until this lands.
       **Accept:** curl with a foreign Origin → 403, `text/plain` → 415,
       `../x` id → 400.
-- [ ] **P2.8 Job runner auto-resumes paid work — MED cost [V].**
+- [x] **P2.8 Job runner auto-resumes paid work — MED cost [V].** *Done 2026-10-07: `load()` turns carried-over queued/running jobs into `paused` (no tick at construction); new `resume(char, ids?)` (character required) + the `/__editor/jobs` `resume` action; paused jobs don't keep `idle()` waiting and can be cancelled. Tests in `src/data/jobs.test.ts` (kept beside the other tools tests there — `src/data/` already hosts lib/kit/rawSync tests, so no move).*
       `tools/core/jobs.mjs:~31` `queueMicrotask(() => this.tick())`, and
       `load()` re-queues `running` jobs. Restarting the dev server (or a
       Ctrl-C'd `studio:run`) silently re-spends, even for another character.
@@ -410,7 +412,7 @@ text. Prompt: `docs/archive/handoff-prompts/05-NEXT-SPRINT-P1.md`.*
       explicit, character-scoped resume. Update `src/data/jobs.test.ts`
       (also move it to `tools/` or `src/tools-tests/`, since it tests a tools
       module).
-- [ ] **P2.9 `loadEnv` + mock consistency [V/A].** `tools/lib.mjs:~51-53`
+- [x] **P2.9 `loadEnv` + mock consistency [V/A].** *Done 2026-10-07: `loadEnv(path = MK_ENV_FILE || .env)` tolerates a missing file, lets real env vars win, strips quotes / `export` / trailing comments (CorridorKey's private parser now uses it); `genMock()` honours MK_CREATOR_MOCK too, and the dev server's `mockMode()` honours MK_GEN_MOCK; `/__editor/gen-frame` mocks (placeholder cell, never written over the raw frame). Verified with no `.env` + a fetch-blocking preload: all 9 paid creator endpoints answered mocks with zero network calls, the game boots, and `studio:run --mock --only canonical,icons,audio,fatality` finished 4/4 with zero calls. Tests: `src/data/lib.env.test.ts`. **That run also proved P8.5 [V]** (below).* `tools/lib.mjs:~51-53`
       reads `.env` unconditionally at import, so with no `.env` every tool
       and the middleware throw. That breaks `MK_GEN_MOCK` zero-setup and makes
       endpoints 400 instead of mocking.
@@ -421,7 +423,7 @@ text. Prompt: `docs/archive/handoff-prompts/05-NEXT-SPRINT-P1.md`.*
       endpoints (ElevenLabs sfx/music, Fish) ignore `MK_GEN_MOCK`.
       **Accept:** with no `.env` + mock vars, the creator flow and
       `studio:run --mock` complete with zero network calls.
-- [ ] **P2.10 `npm audit fix`** (dev-only postcss/nanoid via vite; no
+- [x] **P2.10 `npm audit fix`** *Done 2026-10-07: postcss 8.5.29 / nanoid 3.3.20 / source-map-js 1.2.2 (lockfile only, vite's build chain). Left: `tinypool` + `@vitest/mocker` (critical/moderate) need vitest 5 — test-runner-only, never shipped; deferred with the other majors.* (dev-only postcss/nanoid via vite; no
       majors). Defer vite 8 / vitest 5 / TS 7. **Do not** migrate to Phaser 4.
 
 ## P3 — Fight-core correctness & feel (engine; failing test first)
@@ -775,7 +777,14 @@ can exhaust its memory.*
 - [ ] **P8.4 `gen-canonical` clobbers icons [A].** Its crop pass
       (`gen-canonical.mjs:~117-128`) writes `portraits/<id>.png`, which
       `gen-icons` owns. Restrict it to `-bust`/`-ko`.
-- [ ] **P8.5 Skip checks look at gitignored intermediates [A].**
+- [ ] **P8.5 Skip checks look at gitignored intermediates — [V] 2026-10-07, do soon.**
+      *Proven by the P2.9 check: `studio:run --char vincent --mock --only
+      icons,fatality` found no `assets/raw/{icons,fatalities}/vincent` and
+      regenerated, OVERWRITING the committed `portraits/vincent.png` and all
+      4 `fatalities/vincent/blue-screen-*.jpg` (with mock placeholders;
+      restored from git). A real run would have spent ~5 images doing the
+      same. Until fixed: never run `gen:icons` / `gen:fatality` /
+      `studio:run` (even `--mock`) for a fighter whose art already ships.*
       (`gen-stage.mjs:~101`, `gen-icons.mjs:~51`, the gen-canonical KO pass,
       `gen-worldmap`.) On a fresh clone they re-spend on assets already
       committed in `public/`. Check the shipped output; regenerate only with
@@ -1115,6 +1124,26 @@ files unasked. Full design: `docs/CHARACTER_STUDIO.md` Phases 4–5 (+ the R2
 
 *(newest first; one entry per session: date · who · done · next · gotchas)*
 
+- **2026-10-07 · P2 finished (Claude Opus 5.5).** Branch
+  `fix/p2-cleanup-hardening`: P2.6–P2.10 done (details on each item).
+  - **P2.7** the `/__editor` API refuses other web pages: verified live
+    (foreign Origin 403, `text/plain` 415, rebinding Host 403, `../x` 400;
+    a same-origin browser write still 200).
+  - **P2.8** carried-over jobs load paused; resume is per character.
+  - **P2.9** no `.env` needed; one mock switch; proven with a fetch-blocking
+    preload (zero network calls).
+  - **P2.6** ~19.5 MB less shipped; tall stage art → `assets/stages-tall/`.
+  - **P2.10** lockfile-only audit fix.
+  527/527 tests (40 files), tsc clean, bench 2 errors, build clean.
+  **Found:** P8.5 is real — a `studio:run --mock` on Vincent overwrote his
+  committed portrait + 4 fatality panels with placeholders (restored from
+  git; the placeholder raws deleted). A real run would have spent ~5 images
+  doing the same. Standing warning on SPRINTBOARD; worth fixing before any
+  generation. **Next:** P3 (fight-core correctness) on a branch stacked on
+  this one. **Gotchas:** `.claude/launch.json` is unchanged; to test
+  no-network, `NODE_OPTIONS="--import <preload that throws on fetch>"`
+  propagates to `studio:run`'s child scripts.
+
 - **2026-10-06 · P1 merged + P8.6(a) VO source (Claude Opus 5.5).** PR #4
   (P1) merged as `d225a46`. Branch `tools/p8-vo-source`: `gen-audio` now
   reads every VO text from the character JSON (`tools/core/vo-lines.mjs`);
@@ -1126,7 +1155,7 @@ files unasked. Full design: `docs/CHARACTER_STUDIO.md` Phases 4–5 (+ the R2
   **P8.18** (a→b reference chaining, with a small paid A/B) and the
   `gen-mesh` source path (P11). Finished sprint prompts moved to
   `docs/archive/handoff-prompts/`. **Next:** P2.6–P2.10 on
-  `fix/p2-cleanup-hardening` — prompt `docs/handoff/06-NEXT-SPRINT-P2.md`.
+  `fix/p2-cleanup-hardening` — prompt `docs/archive/handoff-prompts/06-NEXT-SPRINT-P2.md`.
   **Gotchas:** `announcerLines` (name call-outs) is still a table in
   gen-audio. Per-line emotion overrides are keyed by the exact JSON text —
   editing a line's text in the Studio silently drops its override (the

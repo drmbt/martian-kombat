@@ -7,7 +7,7 @@ export interface Job {
   payload: Record<string, unknown>;
   deps: string[];
   estCost: Record<string, number>;
-  status: 'queued' | 'running' | 'done' | 'error' | 'skipped' | 'cancelled';
+  status: 'queued' | 'paused' | 'running' | 'done' | 'error' | 'skipped' | 'cancelled';
   log: string[];
   cost: Record<string, number>;
   error?: string;
@@ -39,6 +39,8 @@ export class JobRunner {
   enqueueDag(specs: { key: string; kind: string; label?: string; char?: string; payload?: Record<string, unknown>; deps?: string[]; estCost?: Record<string, number> }[]): Job[];
   subscribe(fn: (ev: JobEvent) => void): () => void;
   cancel(id: string): boolean;
+  /** re-queue one character's paused (carried-over) jobs; returns how many */
+  resume(char: string, ids?: string[]): number;
   list(): Job[];
   idle(): Promise<void>;
   busy(): boolean;

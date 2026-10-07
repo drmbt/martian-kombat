@@ -22,7 +22,7 @@ import {
   copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync,
 } from 'node:fs';
 import { join } from 'node:path';
-import { ROOT } from './lib.mjs';
+import { ROOT, loadEnv } from './lib.mjs';
 import { CHARACTERS } from './frames-manifest.mjs';
 
 const CK_REPO = 'https://github.com/nikopueringer/CorridorKey.git';
@@ -35,19 +35,9 @@ const SHOT_PREFIX = 'mk-'; // our shots in ClipsForInference, so foreign clips a
 
 // CorridorKey lives as a sibling clone, never a submodule (its checkpoints
 // are GBs and its license is NC-flavored — see docs/CORRIDORKEY.md).
-function loadOptionalEnv() {
-  try {
-    const raw = readFileSync(join(ROOT, '.env'), 'utf8');
-    const env = {};
-    for (const line of raw.split('\n')) {
-      const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/);
-      if (m) env[m[1]] = m[2].trim();
-    }
-    return env;
-  } catch {
-    return {}; // no API keys needed here; .env is optional for keying
-  }
-}
+// .env is optional for keying (no API keys needed) — loadEnv tolerates a
+// missing file and lets real environment variables win.
+const loadOptionalEnv = () => loadEnv();
 const env = loadOptionalEnv();
 const CK = env.CORRIDORKEY_DIR || join(ROOT, '..', 'CorridorKey');
 const CHECKPOINTS = join(CK, 'CorridorKeyModule', 'checkpoints');

@@ -48,11 +48,12 @@ so other machines can pull what you added.
 
 ## What is never mirrored
 
-- **`assets/raw/jobs/` is not restored by default.** The Studio job runner
-  auto-resumes queued *paid* jobs when the dev server starts, so restoring a
-  stale queue can spend money. `pull` skips it unless you pass
-  `--include-jobs`, and `verify` reports those entries as skipped rather than
-  missing. Leave it that way until P2.8 (docs/handoff/02-PLAN.md) lands.
+- **`assets/raw/jobs/` is not restored by default.** It's a stale queue from
+  another machine. `pull` skips it unless you pass `--include-jobs`, and
+  `verify` reports those entries as skipped rather than missing. Since P2.8
+  (2026-10-07) a restored queue is harmless anyway: the runner loads
+  carried-over jobs as *paused* and only an explicit per-character resume
+  runs them.
 - **`assets/raw/mugen/`** is third-party reference content (Kung Fu Man is
   CC BY-NC). Don't redistribute it, not even to a private bucket. Re-fetch it
   with `npm run mugen:fetch`.

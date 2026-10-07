@@ -707,7 +707,7 @@ export class CharacterCreatorPanel {
     row.appendChild(status);
     bar.appendChild(row);
     this.bodyEl.appendChild(bar);
-    void fetch('/__editor/creator/list', { method: 'POST' }).then(async (r) => {
+    void fetch('/__editor/creator/list').then(async (r) => {
       const j = (await r.json()) as { drafts?: { id: string; name: string; step: number }[] };
       row.replaceChildren();
       const drafts = j.drafts ?? [];
@@ -724,7 +724,7 @@ export class CharacterCreatorPanel {
     const canonStatus = el('span', 'font-size:11px;color:#7d94a0;', 'loading…');
     canonRow.appendChild(canonStatus);
     bar.append(canonTitle, canonRow);
-    void fetch('/__editor/creator/canon', { method: 'POST' }).then(async (r) => {
+    void fetch('/__editor/creator/canon').then(async (r) => {
       const j = (await r.json()) as { fighters?: { id: string; name: string }[] };
       canonRow.replaceChildren();
       const fighters = j.fighters ?? [];

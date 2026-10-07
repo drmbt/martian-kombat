@@ -96,7 +96,7 @@ The pipeline turns a photo of a real person into a game-ready sprite sheet:
    via `stageArena()` in `src/data/stages.ts`) over an **ultra-wide 3.5:1**
    stage. `npm run gen:outpaint -- --stage <id>` (two-pass side outpainting;
    add a style/edge note to `tools/stages-wide.mjs` after LOOKING at the art)
-   uses the TALL art in `public/assets/backgrounds/stages tall/` when present
+   uses the TALL art in `assets/stages-tall/` (source-only, never shipped) when present
    (only its bottom 3.5:1 band is shown until a Marvel vs Capcom-style vertical
    camera exists). Review `assets/raw/stages-wide/<id>/tryN-*.wide.jpg`
    (seams, duplicated props, colour drift — `reviewFlag` in the report),
